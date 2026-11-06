@@ -9,12 +9,12 @@ extends WorldMap
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TTTTT..T.T..T...TTT......T..TTT...G...TT",
-	"TTT........f.........R................TT",
-	"TT....H.........o...............C.....TT",
+	"TTTTT..T.T..T...TTT......T..TTT.......TT",
+	"TTT........f.........R.......K...J....TT",
+	"TT....H.........o.....................TT",
 	"TTT........................Q..........TT",
-	"TT..X.....B.........'......==..V......TT",
-	"TTT....==...b..............==....h...kTT",
+	"TT..X.....B.........'......==.........TT",
+	"TTT....==...b..............==........hTT",
 	"TTT..f.==..................==...........",
 	"TT.....=================================",
 	"TTT....=================================",
@@ -79,8 +79,8 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			var door := _add_building(cell, Vector2i(3, 3), "res://assets/sprites/house.png", 1)
 			_interactables[door] = "door"
 			_spawn_cell = door + Vector2i.DOWN
-		"G":
-			_add_building(cell, Vector2i(3, 6), "res://assets/sprites/barn.png")
+		"K", "J":
+			_place_plot("coop" if ch == "K" else "barn", cell)
 		"B":
 			_add_building(cell, Vector2i(1, 1), "res://assets/sprites/shipping_bin.png")
 			_interactables[cell] = "bin"
@@ -119,11 +119,12 @@ func _after_build() -> void:
 	add_child(_mail_alert)
 	Mail.mail_changed.connect(_update_mail_alert)
 	_update_mail_alert()
+	_spawn_animals()
 
 
 func _warp_for(cell: Vector2i) -> Dictionary:
 	if cell.x >= _map_size.x - 1:
-		return {"map": "village", "cell": Vector2i(2, clampi(cell.y, 9, 10))}
+		return {"map": "village", "cell": Vector2i(2, 9 + clampi(cell.y, 9, 10) + 1)}
 	return {}
 
 
@@ -147,9 +148,13 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 				EventBus.toast("La boîte aux lettres est vide.")
 		"door":
 			Sfx.play("door")
-			EventBus.sleep_requested.emit()
+			EventBus.map_change_requested.emit("home", Vector2i(6, 6))
 		"bin":
 			_ship_selected()
+		_:
+			var parts := kind.split(":")
+			if parts.size() == 2:
+				_interact_plot(parts[0], parts[1])
 
 
 func _act_on_ground(cell: Vector2i) -> bool:
@@ -189,11 +194,82 @@ func _act_on_ground(cell: Vector2i) -> bool:
 
 
 ## Toucher un coffre l'ouvre (sauf pioche en main : elle le ramasse).
+## Toucher un animal qui se promène le caresse.
 func act_on(cell: Vector2i) -> void:
+	var animal := _animal_at(cell)
+	if animal != null and not fishing.busy():
+		var index: int = animal.get_meta("animal_index")
+		var a: Dictionary = Animals.animals[index]
+		player.face_towards(cell - player_cell())
+		player.play_use()
+		if Animals.pet(index):
+			Sfx.play("harvest")
+			Fx.burst(_entities, animal.position + Vector2(0, -10), [Color(1, 0.45, 0.55), Color(1, 0.75, 0.8)], 8, 35.0)
+			EventBus.toast("Tu caresses %s. Ça lui fait plaisir !" % a.name)
+		else:
+			EventBus.toast("%s a déjà eu ses caresses aujourd'hui." % a.name)
+		return
 	if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe" and not fishing.busy():
 		EventBus.chest_requested.emit(cell)
 		return
 	super(cell)
+
+
+# ------------------------------------------------------------ bâtiments d'élevage
+var plots: Dictionary = {}  # "coop"/"barn" -> {"cell": Vector2i, "size": Vector2i, "door": Vector2i}
+
+
+func _place_plot(id: String, cell: Vector2i) -> void:
+	var info := Animals.building_info(id)
+	var size := Vector2i(int(info.size[0]), int(info.size[1]))
+	var door := cell + Vector2i(int(info.get("door", 1)), size.y - 1)
+	plots[id] = {"cell": cell, "size": size, "door": door}
+	if Animals.is_built(id):
+		_add_building(cell, size, "res://assets/sprites/house_gray.png" if id == "coop" else "res://assets/sprites/store.png", int(info.get("door", 1)))
+		_interactables[door] = "animals:" + id
+	elif Animals.under_construction(id):
+		_interactables[door] = "construction:" + id
+		_interactables[cell] = "construction:" + id
+	else:
+		_interactables[door] = "plot:" + id
+		_interactables[cell] = "plot:" + id
+
+
+func _interact_plot(kind: String, id: String) -> void:
+	var name := str(Animals.building_info(id).get("name", id))
+	match kind:
+		"animals":
+			Sfx.play("door")
+			EventBus.animals_requested.emit(id)
+		"construction":
+			EventBus.message_requested.emit(name, "Le chantier avance : encore %d jour(s) et Mathis aura terminé." % int(Animals.buildings[id].days_left))
+		"plot":
+			EventBus.message_requested.emit("Terrain à bâtir", "Un emplacement parfait pour un %s. Mathis, le charpentier du village, peut le construire." % name.to_lower())
+
+
+## En journée, par beau temps, les animaux se promènent devant leur bâtiment.
+func _spawn_animals() -> void:
+	var hour := TimeManager.minutes / 60.0
+	if hour < 7.0 or hour >= 18.0 or TimeManager.is_raining() or TimeManager.season == 3:
+		return
+	for i in Animals.animals.size():
+		var a: Dictionary = Animals.animals[i]
+		if not plots.has(a.building) or not Animals.is_built(a.building):
+			continue
+		var critter := Critter.new()
+		critter.kind = str(a.type)
+		critter.frame = int(Animals.animal_info(a.type).get("frame", 0))
+		critter.position = cell_center(plots[a.building].door + Vector2i(randi_range(-1, 1), 2)) + Vector2(randf_range(-6, 6), 0)
+		critter.set_meta("animal_index", i)
+		_entities.add_child(critter)
+
+
+func _animal_at(cell: Vector2i) -> Node2D:
+	var center := cell_center(cell)
+	for child in _entities.get_children():
+		if child is Critter and child.has_meta("animal_index") and child.position.distance_to(center) < 13.0:
+			return child
+	return null
 
 
 func is_walkable(cell: Vector2i) -> bool:

@@ -35,8 +35,17 @@ var _weather_kind: String = ""
 var _water_mat: StandardMaterial3D
 var _cam_target: Vector3
 var _is_mine: bool = false
+var _is_home: bool = false
+var _lanterns: Array[OmniLight3D] = []  # lanternes du village, allumées le soir
+var _lantern_glows: Array[MeshInstance3D] = []
 
-const NPC_MODELS := ["character-b", "character-c", "character-d", "character-e", "character-f"]
+const NPC_MODELS := ["character-b", "character-c", "character-d", "character-e", "character-f",
+	"character-g", "character-h", "character-i", "character-j", "character-k"]
+## Animaux (Cube Pets) : espèce -> [modèle, hauteur à l'écran en cases]
+const PET_MODELS := {
+	"chicken": ["animal-chick", 0.42], "bunny": ["animal-bunny", 0.45], "cat": ["animal-cat", 0.45],
+	"dog": ["animal-dog", 0.6], "pig": ["animal-pig", 0.62], "cow": ["animal-cow", 0.95],
+}
 ## Objet -> modèle 3D (sinon : l'icône pixel en panneau face caméra)
 const ITEM_MODELS := {
 	"carrot": ["food", "carrot", 0.9], "turnip": ["food", "radish", 0.9], "cabbage": ["food", "cabbage", 1.0],
@@ -67,11 +76,14 @@ func setup(world: WorldMap) -> void:
 	map = world
 	current = self
 	_is_mine = map is MineLevel
+	_is_home = map is HomeMap
 	_build_environment()
 	_static = Node3D.new()
 	add_child(_static)
 	if _is_mine:
 		_build_mine()
+	elif _is_home:
+		_build_home()
 	else:
 		_build_ground()
 		_build_props()
@@ -93,6 +105,7 @@ func setup(world: WorldMap) -> void:
 	TimeManager.time_changed.connect(_update_light)
 	TimeManager.day_started.connect(_on_day_started)
 	Settings.changed.connect(_update_camera.bind(true))
+	EventBus.npc_bubble.connect(_on_npc_bubble)
 	_update_light(0, 0)
 	_update_weather()
 	_cam_target = _to3d(map.player.position)
@@ -199,6 +212,20 @@ func _model(pack: String, model: String, scale: float = 1.0) -> Node3D:
 	var n := Models.instance(Models.path(pack, model))
 	n.scale = Vector3.ONE * scale
 	return n
+
+
+## Modèle mis à l'échelle pour que sa plus grande dimension fasse `size` cases.
+func _fitted(pack: String, model: String, size: float) -> Node3D:
+	var n := _model(pack, model, 1.0)
+	n.scale = Vector3.ONE * size / maxf(_model_size(n), 0.05)
+	return n
+
+
+func _put(node: Node3D, at: Vector3, rot: float = 0.0) -> Node3D:
+	node.position = at
+	node.rotation.y = rot
+	_static.add_child(node)
+	return node
 
 
 ## Écran -> case visée (rayon de la caméra contre le sol).
@@ -360,6 +387,15 @@ func _build_props() -> void:
 				_place(batch, "nature", "fence_simple", c, 1.0, 0.0)
 			"P", "Q":
 				_place(batch, "nature", "sign", c, 2.2, 0.0)
+			"n":
+				_village_lantern(cell)
+			"s":
+				if chars.get(cell + Vector2i.LEFT, "") != "s":
+					var stall := _fitted("town", "stall-green" if _hash(cell) % 2 == 0 else "stall-red", 2.0)
+					_put(stall, c + Vector3(0.5 if chars.get(cell + Vector2i.RIGHT, "") == "s" else 0.0, 0, 0))
+					for k in 3:
+						var food := _fitted("food", ["tomato", "carrot", "cabbage", "corn", "leek"][(_hash(cell) + k) % 5], 0.22)
+						_put(food, c + Vector3(0.1 + k * 0.32, 0.55, 0.15))
 			".":
 				if TimeManager.season != 3 and _hash(cell) % 9 == 0:
 					_place(batch, "nature", "grass", c, 1.4, rot)
@@ -390,20 +426,44 @@ func _build_buildings(chars: Dictionary) -> void:
 					_static.add_child(_mail_alert)
 		elif map is Village and Village.BUILDINGS.has(ch):
 			var b: Array = Village.BUILDINGS[ch]
+			var size: Vector2i = b[1]
+			var front := _cell3d(cell + Vector2i(0, size.y))  # première case devant la façade
 			match str(b[0]):
 				"store":
-					_house(cell, b[1], b[3], "wall", Color(0.85, 0.35, 0.3))
-					var stall := _model("town", "stall-red", 1.0)
-					stall.position = _cell3d(cell + Vector2i(4, 2))
-					_static.add_child(stall)
-				"gaston", "mairie":
-					_house(cell, b[1], b[3], "wall", Color(0.42, 0.5, 0.62))
-				"odette", "lina":
-					_house(cell, b[1], b[3], "wall-wood", Color(0.78, 0.3, 0.25) if b[0] == "odette" else Color(0.35, 0.55, 0.75))
-				"well":
-					var f := _model("town", "fountain-round-detail", 0.5)
-					f.position = _cell3d(cell) + Vector3(0, 0, 0.5)
-					_static.add_child(f)
+					_house(cell, size, b[3], "wall", Color(0.85, 0.35, 0.3))
+					_put(_fitted("town", "banner-red", 0.9), front + Vector3(-0.35, 0, -0.45))
+					_put(_fitted("survival", "barrel", 0.45), front + Vector3(3.4, 0, -0.4))
+				"mairie":
+					_house(cell, size, b[3], "wall", Color(0.32, 0.42, 0.62))
+					_put(_fitted("town", "banner-green", 0.9), front + Vector3(-0.35, 0, -0.45))
+					_put(_fitted("town", "banner-green", 0.9), front + Vector3(size.x - 0.65, 0, -0.45))
+				"gaston":
+					_house(cell, size, b[3], "wall", Color(0.3, 0.3, 0.34))
+					_put(_fitted("survival", "campfire-pit", 0.6), front + Vector3(size.x - 0.6, 0, -0.4))
+				"menuiserie":
+					_house(cell, size, b[3], "wall-wood", Color(0.55, 0.36, 0.22))
+					_put(_fitted("survival", "workbench", 0.8), front + Vector3(size.x - 0.5, 0, -0.35), PI)
+					_put(_fitted("nature", "log_stack", 0.8), front + Vector3(-0.5, 0, -0.9))
+				"cooperative":
+					_house(cell, size, b[3], "wall", Color(0.36, 0.6, 0.32))
+					_put(_fitted("town", "stall-green", 1.6), front + Vector3(size.x + 0.2, 0, -0.9), -PI / 2.0)
+					_put(_fitted("survival", "box-large", 0.5), front + Vector3(-0.5, 0, -0.6))
+					_put(_fitted("survival", "barrel", 0.45), front + Vector3(-0.5, 0, -1.3))
+				"ranch":
+					_house(cell, size, b[3], "wall-wood", Color(0.75, 0.25, 0.2))
+					_put(_fitted("town", "cart", 1.1), front + Vector3(size.x + 0.4, 0, -1.0), 0.4)
+				"odette":
+					_house(cell, size, b[3], "wall-wood", Color(0.78, 0.3, 0.25))
+					_put(_fitted("nature", "pot_large", 0.4), front + Vector3(-0.3, 0, -0.45))
+				"lina":
+					_house(cell, size, b[3], "wall-wood", Color(0.35, 0.55, 0.75))
+					_put(_fitted("nature", "pot_small", 0.35), front + Vector3(size.x - 0.3, 0, -0.45))
+				"jules":
+					_house(cell, size, b[3], "wall-wood", Color(0.3, 0.55, 0.5))
+					_put(_fitted("survival", "tent", 0.9), front + Vector3(size.x + 0.4, 0, -1.2), -0.5)
+				"fountain":
+					var f := _fitted("town", "fountain-round-detail", 2.2)
+					_put(f, Vector3(cell.x + 1.0, 0, cell.y + 1.0))
 				"mine":
 					for dx in 3:
 						var rock := _model("nature", "cliff_block_rock" if dx != 1 else "cliff_cave_rock", 1.0)
@@ -411,6 +471,8 @@ func _build_buildings(chars: Dictionary) -> void:
 						rock.position = Vector3(cell.x + dx + 0.5, 0, cell.y + 1.5 - (0.0 if dx != 1 else 0.33 * 6 - 0.33))
 						rock.rotation.y = PI if dx == 1 else 0.0
 						_static.add_child(rock)
+		if map is Farm and (ch == "K" or ch == "J"):
+			_farm_plot("coop" if ch == "K" else "barn")
 		if ch == "N":
 			var anvil := _model("survival", "workbench-anvil", 2.2)
 			anvil.position = _cell3d(cell)
@@ -442,6 +504,118 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 	var chimney := _model("town", "chimney", 1.0)
 	chimney.position = Vector3(x0 + w - 0.7, 2.3, z0 + 0.8)
 	root.add_child(chimney)
+	root.add_child(_smoke(chimney.position + Vector3(0, 0.9, 0)))
+
+
+## Fumée de cheminée : quelques bouffées grises qui montent et s'effacent.
+func _smoke(at: Vector3) -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	var puff := SphereMesh.new()
+	puff.radius = 0.12
+	puff.height = 0.24
+	puff.radial_segments = 8
+	puff.rings = 4
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.85, 0.85, 0.88, 0.55)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.vertex_color_use_as_albedo = true
+	puff.material = mat
+	p.mesh = puff
+	p.amount = 7
+	p.lifetime = 3.0
+	p.preprocess = 3.0
+	p.direction = Vector3(0.3, 1, 0)
+	p.spread = 12.0
+	p.gravity = Vector3(0.15, 0.25, 0)
+	p.initial_velocity_min = 0.25
+	p.initial_velocity_max = 0.4
+	p.scale_amount_min = 0.7
+	p.scale_amount_max = 1.2
+	var curve := Curve.new()
+	curve.add_point(Vector2(0, 0.5))
+	curve.add_point(Vector2(1, 2.0))
+	p.scale_amount_curve = curve
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0.8))
+	fade.set_color(1, Color(1, 1, 1, 0.0))
+	p.color_ramp = fade
+	p.position = at
+	return p
+
+
+## Lanterne du village (et sa lumière, allumée le soir).
+func _village_lantern(cell: Vector2i) -> void:
+	var c := _cell3d(cell)
+	var lantern := _fitted("town", "lantern", 1.3)
+	_put(lantern, c)
+	var glow := MeshInstance3D.new()
+	var bulb := SphereMesh.new()
+	bulb.radius = 0.09
+	bulb.height = 0.18
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.85, 0.45)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.75, 0.35)
+	mat.emission_energy_multiplier = 2.0
+	bulb.material = mat
+	glow.mesh = bulb
+	glow.position = c + Vector3(0, 1.05, 0)
+	glow.visible = false
+	_static.add_child(glow)
+	_lantern_glows.append(glow)
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.78, 0.45)
+	light.omni_range = 3.2
+	light.light_energy = 1.3
+	light.position = c + Vector3(0, 1.1, 0.2)
+	light.visible = false
+	_static.add_child(light)
+	_lanterns.append(light)
+
+
+## Emplacement de bâtiment d'élevage à la ferme : terrain balisé, chantier
+## (échafaudage) ou bâtiment terminé.
+func _farm_plot(id: String) -> void:
+	var plots: Dictionary = map.get("plots")
+	if not plots.has(id):
+		return
+	var plot: Dictionary = plots[id]
+	var cell: Vector2i = plot.cell
+	var size: Vector2i = plot.size
+	var door := int(Animals.building_info(id).get("door", 1))
+	if Animals.is_built(id):
+		if id == "coop":
+			_house(cell, size, door, "wall-wood", Color(0.85, 0.7, 0.35))
+		else:
+			_house(cell, size, door, "wall-wood", Color(0.72, 0.22, 0.18))
+		var hay := _fitted("nature", "log_stack" if id == "barn" else "pot_small", 0.5)
+		_put(hay, _cell3d(cell + Vector2i(size.x - 1, size.y)) + Vector3(0.3, 0, -0.35))
+		return
+	var center := Vector3(cell.x + size.x / 2.0, 0, cell.y + size.y / 2.0)
+	if Animals.under_construction(id):
+		_put(_fitted("survival", "structure-floor", float(maxi(size.x, size.y))), center)
+		_put(_fitted("survival", "structure", float(size.x) * 0.9), center + Vector3(0, 0, -0.2))
+		_put(_fitted("survival", "resource-wood", 0.6), center + Vector3(size.x / 2.0 + 0.3, 0, size.y / 2.0 - 0.3))
+		_put(_fitted("survival", "resource-stone", 0.5), center + Vector3(-size.x / 2.0 - 0.2, 0, size.y / 2.0 - 0.3))
+		return
+	# Terrain libre : piquets aux coins et panneau
+	for corner: Vector2 in [Vector2(0, 0), Vector2(size.x, 0), Vector2(0, size.y), Vector2(size.x, size.y)]:
+		var post := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(0.08, 0.35, 0.08)
+		box.material = _flat_material(Color(0.6, 0.42, 0.25))
+		post.mesh = box
+		_put(post, Vector3(cell.x + corner.x, 0.17, cell.y + corner.y))
+	var rope := MeshInstance3D.new()
+	var outline := BoxMesh.new()
+	outline.size = Vector3(size.x, 0.02, size.y)
+	var rmat := _flat_material(Color(0.62, 0.5, 0.32, 0.45))
+	rmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	outline.material = rmat
+	rope.mesh = outline
+	_put(rope, center + Vector3(0, 0.01, 0))
+	_put(_fitted("nature", "sign", 0.6), _cell3d(cell + Vector2i(door, size.y - 1)))
 
 
 func _wall(parent: Node3D, model: String, at: Vector3, rot: float) -> void:
@@ -490,6 +664,102 @@ func _roof(origin: Vector3, w: float, d: float, color: Color) -> MeshInstance3D:
 	mi.material_override = mat
 	mi.position = origin
 	return mi
+
+
+# ------------------------------------------------------------ maison
+## Intérieur chaleureux : plancher, murs en bois, lit, cuisine, cheminée.
+func _build_home() -> void:
+	_env.background_color = Color(0.08, 0.05, 0.04)
+	var chars: Dictionary = map.get("_ground_chars")
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for cell: Vector2i in chars:
+		var ch: String = chars[cell]
+		if ch == "#":
+			continue
+		var plank := Color(0.66, 0.46, 0.3) if (cell.x + cell.y * 3) % 4 != 0 else Color(0.6, 0.41, 0.26)
+		if ch == "r":
+			plank = Color(0.7, 0.28, 0.25) if (cell.x + cell.y) % 2 == 0 else Color(0.78, 0.36, 0.28)
+		elif ch == "D":
+			plank = Color(0.4, 0.27, 0.17)
+		_quad(st, Vector3(cell.x, 0, cell.y), Vector3(cell.x + 1, 0, cell.y + 1), plank)
+	st.generate_normals()
+	var floor_mi := MeshInstance3D.new()
+	floor_mi.mesh = st.commit()
+	var fmat := StandardMaterial3D.new()
+	fmat.vertex_color_use_as_albedo = true
+	fmat.vertex_color_is_srgb = true
+	fmat.roughness = 1.0
+	floor_mi.material_override = fmat
+	_static.add_child(floor_mi)
+	var size: Vector2i = map.get("_map_size")
+	var wall_mat := _flat_material(Color(0.52, 0.35, 0.22))
+	var beam_mat := _flat_material(Color(0.36, 0.23, 0.14))
+	for cell: Vector2i in chars:
+		if chars[cell] != "#":
+			continue
+		# Mur du bas très bas, pour voir l'intérieur depuis la caméra
+		var front := cell.y == size.y - 1
+		var h := 0.35 if front else 1.6
+		var wall := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(1, h, 1)
+		box.material = beam_mat if (cell.x == 0 or cell.x == size.x - 1 or front) and (cell.x % 3 == 0) else wall_mat
+		wall.mesh = box
+		_put(wall, _cell3d(cell) + Vector3(0, h / 2.0, 0))
+	# Fenêtres lumineuses sur le mur du fond
+	for x: int in [3, 6, 9]:
+		var win := MeshInstance3D.new()
+		var pane := QuadMesh.new()
+		pane.size = Vector2(0.7, 0.55)
+		var wmat := StandardMaterial3D.new()
+		wmat.albedo_color = Color(0.75, 0.88, 1.0)
+		wmat.emission_enabled = true
+		wmat.emission = Color(0.55, 0.7, 0.9)
+		wmat.emission_energy_multiplier = 0.6
+		pane.material = wmat
+		win.mesh = pane
+		_put(win, Vector3(x + 0.5, 1.0, 1.005))
+	for cell: Vector2i in chars:
+		var c := _cell3d(cell)
+		match chars[cell]:
+			"Z":
+				_put(_fitted("nature", "bed", 1.4), c + Vector3(0.0, 0, 0.2), PI / 2.0)
+			"k":
+				_put(_fitted("survival", "workbench", 0.9), c, PI)
+				_put(_fitted("nature", "pot_small", 0.3), c + Vector3(0.15, 0.55, 0))
+			"t":
+				_put(_fitted("dungeon", "table", 0.95), c)
+				_put(_fitted("food", "tomato", 0.15), c + Vector3(0.1, 0.62, 0))
+			"c":
+				_put(_fitted("dungeon", "chair", 0.7), c, PI if cell.y == 3 else 0.0)
+			"x":
+				_put(_fitted("survival", "chest", 0.65), c, PI)
+			"p":
+				_put(_fitted("nature", "campfire_stones", 0.9), c)
+				var flame := MeshInstance3D.new()
+				var cone := CylinderMesh.new()
+				cone.top_radius = 0.0
+				cone.bottom_radius = 0.16
+				cone.height = 0.4
+				var fmat2 := StandardMaterial3D.new()
+				fmat2.albedo_color = Color(1.0, 0.6, 0.2)
+				fmat2.emission_enabled = true
+				fmat2.emission = Color(1.0, 0.5, 0.15)
+				fmat2.emission_energy_multiplier = 2.5
+				cone.material = fmat2
+				flame.mesh = cone
+				_put(flame, c + Vector3(0, 0.22, 0))
+				var fire := OmniLight3D.new()
+				fire.light_color = Color(1.0, 0.6, 0.3)
+				fire.omni_range = 3.5
+				fire.light_energy = 1.0
+				_put(fire, c + Vector3(0.5, 0.7, 0))
+	var lamp := OmniLight3D.new()
+	lamp.light_color = Color(1.0, 0.93, 0.82)
+	lamp.omni_range = 9.0
+	lamp.light_energy = 0.6
+	_put(lamp, Vector3(size.x / 2.0, 2.5, size.y / 2.0))
 
 
 # ------------------------------------------------------------ mine
@@ -743,8 +1013,10 @@ func _sync_proxies() -> void:
 func _make_proxy(node: Node) -> Node3D:
 	if node is Npc:
 		var index := int(GameData.npc((node as Npc).id).get("sprite", 0)) % NPC_MODELS.size()
-		var npc := _model("blocky", NPC_MODELS[index], CHARACTER_SCALE)
+		# Théo est un enfant : plus petit
+		var npc := _model("blocky", NPC_MODELS[index], CHARACTER_SCALE * (0.75 if (node as Npc).id == "theo" else 1.0))
 		npc.add_child(_blob(1.6))
+		npc.set_meta("npc_id", (node as Npc).id)
 		return npc
 	if node is Monster:
 		var kind: String = (node as Monster).kind
@@ -762,11 +1034,11 @@ func _make_proxy(node: Node) -> Node3D:
 			holder.add_child(slime)
 			return holder
 		if kind == "bat":
-			var bat := _billboard(load("res://assets/sprites/monsters.png"), 0.04)
-			bat.hframes = 7
-			bat.frame = 1
+			var bat := _fitted("pets", "animal-parrot", 0.5)
+			Models.tint(bat, Color(0.35, 0.3, 0.45))
 			var holder := Node3D.new()
 			holder.add_child(bat)
+			holder.add_child(_blob(0.5))
 			return holder
 		var look: Array = MONSTER_LOOKS.get(kind, MONSTER_LOOKS["rat"])
 		var m := _model("dungeon", look[0], look[2])
@@ -774,12 +1046,10 @@ func _make_proxy(node: Node) -> Node3D:
 		m.add_child(_blob(0.9))
 		return m
 	if node is Critter:
-		var s := _billboard(load("res://assets/sprites/animals.png"), 0.045)
-		s.hframes = 3
-		s.frame = (node as Critter).frame
-		s.position.y = 0.36
+		var look: Array = PET_MODELS.get((node as Critter).kind, PET_MODELS["chicken"])
 		var holder := Node3D.new()
-		holder.add_child(s)
+		holder.add_child(_fitted("pets", look[0], look[1]))
+		holder.add_child(_blob(float(look[1]) * 1.4))
 		return holder
 	if node is Pickup or node is Sprite2D:
 		var item := str(node.get_meta("item_id", "")) if node.has_meta("item_id") else (node as Pickup).item_id if node is Pickup else ""
@@ -817,14 +1087,15 @@ func _update_proxy(node: Node2D, proxy: Node3D) -> void:
 	var moved := target - proxy.position
 	proxy.position = target
 	proxy.visible = node.visible
-	if node is Npc or node is Monster:
-		if Vector2(moved.x, moved.z).length() > 0.002:
+	if node is Npc or node is Monster or node is Critter:
+		var walking := Vector2(moved.x, moved.z).length() > 0.002
+		if walking:
 			proxy.rotation.y = lerp_angle(proxy.rotation.y, atan2(moved.x, moved.z), 0.25)
 		var anims := proxy.find_children("*", "AnimationPlayer", true, false)
 		if not anims.is_empty():
 			var ap := anims[0] as AnimationPlayer
-			var want := "walk" if Vector2(moved.x, moved.z).length() > 0.002 else "idle"
-			if ap.current_animation != want:
+			var want := "walk" if walking else ("static" if node is Critter else "idle")
+			if ap.current_animation != want and ap.has_animation(want):
 				ap.play(want, 0.2)
 
 
@@ -899,31 +1170,49 @@ func _update_light(_h: int, _m: int) -> void:
 		_env.ambient_light_color = Color(0.45, 0.42, 0.5).lerp(Color(0.12, 0.1, 0.16), depth)
 		_env.ambient_light_energy = 1.0
 		return
+	if _is_home:
+		_sun.light_energy = 0.55
+		_sun.light_color = Color(1.0, 0.95, 0.88)
+		_env.ambient_light_color = Color(0.72, 0.68, 0.64)
+		_env.ambient_light_energy = 0.6
+		return
 	var hours := TimeManager.minutes / 60.0
 	var night := clampf((hours - 18.0) / 4.0, 0.0, 1.0)
+	var lit := hours >= 18.5 or hours < 6.0
+	for l in _lanterns:
+		l.visible = lit
+	for g in _lantern_glows:
+		g.visible = lit
 	var rain := TimeManager.is_raining() or TimeManager.is_snowing()
 	_sun.light_energy = lerpf(0.85, 0.1, night) * (0.6 if rain else 1.0)
 	_sun.light_color = Color(1.0, 0.96, 0.88).lerp(Color(0.55, 0.6, 1.0), night)
 	_env.ambient_light_color = Color(0.62, 0.66, 0.78).lerp(Color(0.16, 0.2, 0.36), night)
 	_env.ambient_light_energy = 0.55
+	if map is Village:
+		# Identité du village : lumière dorée, chaleureuse
+		_sun.light_color = Color(1.0, 0.92, 0.78).lerp(Color(0.6, 0.55, 0.9), night)
+		_env.ambient_light_color = Color(0.7, 0.64, 0.66).lerp(Color(0.2, 0.18, 0.34), night)
 	var sky := Color(0.55, 0.75, 0.92).lerp(Color(0.05, 0.07, 0.15), night)
 	_env.background_color = sky.darkened(0.25) if rain else sky
 
 
 func _on_day_started(_d: int, _s: int, _y: int) -> void:
 	# Nouvelle saison : on reconstruit le décor (couleurs, arbres)
-	if not _is_mine:
+	if not _is_mine and not _is_home:
+		_lanterns.clear()
+		_lantern_glows.clear()
 		_static.queue_free()
 		_static = Node3D.new()
 		add_child(_static)
 		_build_ground()
 		_build_props()
+	_update_light(0, 0)
 	_update_weather()
 
 
 func _update_weather() -> void:
 	var kind := "rain" if TimeManager.is_raining() else ("snow" if TimeManager.is_snowing() else "")
-	if _is_mine:
+	if _is_mine or _is_home:
 		kind = ""
 	if kind == _weather_kind:
 		return
@@ -962,6 +1251,35 @@ func _update_weather() -> void:
 	_weather.initial_velocity_max = 8.0 if kind == "rain" else 0.9
 	_weather.local_coords = false
 	add_child(_weather)
+
+
+# ------------------------------------------------------------ bulles des habitants
+func _on_npc_bubble(npc_id: String, text: String) -> void:
+	for proxy: Node3D in _proxies.values():
+		if str(proxy.get_meta("npc_id", "")) != npc_id:
+			continue
+		var old := proxy.get_node_or_null("Bubble")
+		if old != null:
+			old.free()
+		var label := Label3D.new()
+		label.name = "Bubble"
+		label.text = text
+		label.font = UiTheme.font()
+		label.font_size = 40
+		label.pixel_size = 0.006
+		label.outline_size = 10
+		label.modulate = Color(1, 0.98, 0.9)
+		label.outline_modulate = Color(0.2, 0.12, 0.08)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.no_depth_test = true
+		label.position = Vector3(0, 1.3 / proxy.scale.y, 0)
+		label.scale = Vector3.ONE / proxy.scale.x
+		proxy.add_child(label)
+		var tw := label.create_tween()
+		tw.tween_interval(3.0)
+		tw.tween_property(label, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(label.queue_free)
+		return
 
 
 # ------------------------------------------------------------ effets 3D (appelés par Fx)

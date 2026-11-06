@@ -16,6 +16,10 @@ func _ready() -> void:
 	# Ferme sans débris aléatoires : tests reproductibles
 	FarmState.debris.clear()
 	farm.call("_refresh_all")
+	var forage: Dictionary = farm.get("_forage_sprites")
+	for c: Vector2i in forage:
+		forage[c].queue_free()
+	forage.clear()
 	var cell := Vector2i(12, 14)
 	Inventory.select(0)  # houe
 	farm.act_on(cell)

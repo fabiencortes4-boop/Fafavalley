@@ -179,7 +179,8 @@ def village():
     # Monstres, dans l'ordre des "sprite" de data/monsters.json
     compose(DUNGEON, [[108, 120, 122, 123, 124, 110, 121]]).save(os.path.join(OUT, "monsters.png"))
     # Habitants, dans l'ordre des "sprite" de data/npcs.json
-    compose(DUNGEON, [[99, 86, 100, 85, 111]]).save(os.path.join(OUT, "npcs.png"))
+    # + Mathis, Margot, Léon, Théo, Jules
+    compose(DUNGEON, [[99, 86, 100, 85, 111, 87, 88, 98, 112, 84]]).save(os.path.join(OUT, "npcs.png"))
 
 
 # Minerais visibles sur les rochers : (couleur claire, couleur sombre)
@@ -454,6 +455,14 @@ def extend_icons(sheet):
               tile(TOWN, 29), tile(FARM, 79),
               recolor(tile(FARM, 78), {(78, 151, 76): (30, 90, 60), (132, 198, 105): (50, 120, 80), (71, 159, 74): (40, 105, 70)}),
               recolor(tile(FARM, 125), {(234, 165, 108): (150, 90, 130), (254, 201, 156): (190, 130, 170), (207, 130, 84): (110, 60, 100)})]
+    # 65-73 : élevage (foin, brosse, seau à lait, œuf, gros œuf, lait, laine, truffe, omelette)
+    egg = tile(FARM, 125)
+    big_egg = new_img(16, 16)
+    big_egg.alpha_composite(egg.resize((20, 20), Image.NEAREST).crop((2, 1, 18, 17)))
+    extra += [tile(FARM, 96), draw_brush(), tile(FARM, 72), egg, big_egg, tile(FARM, 123),
+              draw_loot("ball", (255, 250, 245), (240, 232, 225), (205, 195, 190)),
+              draw_loot("blob", (110, 90, 80), (80, 62, 56), (52, 40, 38)),
+              draw_bowl((253, 214, 83), (78, 151, 76))]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):
@@ -545,6 +554,21 @@ AUTUMN = {(132, 198, 105): (205, 172, 92), (101, 165, 86): (178, 132, 70), (139,
 WINTER = {(132, 198, 105): (235, 239, 248), (101, 165, 86): (192, 203, 220), (139, 216, 125): (255, 255, 255),
           (71, 159, 74): (52, 110, 82), (78, 151, 76): (44, 96, 74),
           (92, 168, 214): (156, 204, 232), (64, 132, 196): (120, 172, 214), (176, 224, 246): (226, 242, 252)}
+
+
+def draw_brush():
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(4, 12):
+        for x in range(3, 9):
+            px[x, y] = (189, 108, 74, 255) if y < 9 else (150, 84, 58, 255)
+    for y in range(4, 12):
+        for x in range(9, 13):
+            if (x + y) % 2 == 0:
+                px[x, y] = (235, 214, 150, 255)
+            else:
+                px[x, y] = (205, 186, 120, 255)
+    return outlined(img)
 
 
 def draw_mailbox():

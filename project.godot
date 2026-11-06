@@ -35,6 +35,8 @@ Sfx="*res://scripts/autoload/sfx.gd"
 Skills="*res://scripts/autoload/skills.gd"
 Mail="*res://scripts/autoload/mail.gd"
 Forage="*res://scripts/autoload/forage.gd"
+Animals="*res://scripts/autoload/animals.gd"
+Shops="*res://scripts/autoload/shops.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 

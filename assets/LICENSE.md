@@ -26,6 +26,7 @@ Chaque dossier contient le fichier de licence original.
 | `kenney3d/food/` | Food Kit |
 | `kenney3d/blocky/` | Blocky Characters 2.0 |
 | `kenney3d/dungeon/` | Mini Dungeon 2.0 |
+| `kenney3d/pets/` | Cube Pets 1.0 (animaux de la ferme et du village) |
 
 Une sélection des modèles (format GLB) est incluse, avec la licence de chaque pack.
 Les toits des maisons et le sol sont générés par le jeu.

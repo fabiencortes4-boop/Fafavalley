@@ -23,15 +23,15 @@
 			{
 				"time": "08:00",
 				"cell": [
-					5,
-					8
+					24,
+					18
 				]
 			},
 			{
 				"time": "17:30",
 				"cell": [
-					18,
-					16
+					26,
+					30
 				]
 			},
 			{
@@ -79,7 +79,8 @@
 			"gift_neutral": "Oh, merci. Je vais bien trouver quoi en faire.",
 			"gift_disliked": "Oh... ce n'est vraiment pas mon truc, désolée.",
 			"gift_again": "Tu m'as déjà fait un cadeau aujourd'hui. Garde-le pour demain !"
-		}
+		},
+		"shop": "store"
 	},
 	"gaston": {
 		"name": "Gaston",
@@ -103,22 +104,22 @@
 			{
 				"time": "07:00",
 				"cell": [
-					15,
-					9
+					8,
+					17
 				]
 			},
 			{
 				"time": "12:00",
 				"cell": [
-					22,
-					16
+					34,
+					23
 				]
 			},
 			{
 				"time": "16:00",
 				"cell": [
-					25,
-					21
+					43,
+					33
 				]
 			},
 			{
@@ -166,7 +167,8 @@
 			"gift_neutral": "Hm. D'accord.",
 			"gift_disliked": "Non. Juste... non.",
 			"gift_again": "Un cadeau par jour, ça suffit. Hm."
-		}
+		},
+		"shop": "forge"
 	},
 	"odette": {
 		"name": "Odette",
@@ -190,22 +192,22 @@
 			{
 				"time": "08:00",
 				"cell": [
-					9,
-					18
+					8,
+					30
 				]
 			},
 			{
 				"time": "11:00",
 				"cell": [
-					17,
-					12
+					27,
+					24
 				]
 			},
 			{
 				"time": "15:00",
 				"cell": [
-					7,
-					19
+					5,
+					29
 				]
 			},
 			{
@@ -279,22 +281,22 @@
 			{
 				"time": "09:00",
 				"cell": [
-					26,
-					21
+					44,
+					30
 				]
 			},
 			{
 				"time": "13:00",
 				"cell": [
-					23,
-					14
+					34,
+					27
 				]
 			},
 			{
 				"time": "17:00",
 				"cell": [
-					30,
-					10
+					20,
+					25
 				]
 			},
 			{
@@ -366,22 +368,22 @@
 			{
 				"time": "08:00",
 				"cell": [
-					16,
-					14
+					29,
+					25
 				]
 			},
 			{
 				"time": "12:00",
 				"cell": [
-					35,
-					9
+					36,
+					18
 				]
 			},
 			{
 				"time": "17:00",
 				"cell": [
-					21,
-					17
+					24,
+					29
 				]
 			},
 			{
@@ -429,6 +431,427 @@
 			"gift_neutral": "Merci, c'est fort aimable.",
 			"gift_disliked": "Hum... merci, je suppose.",
 			"gift_again": "Doucement, doucement ! Un cadeau par jour suffit amplement."
+		}
+	},
+	"mathis": {
+		"name": "Mathis",
+		"title": "le charpentier",
+		"sprite": 5,
+		"home": "menuiserie",
+		"shop": "carpenter",
+		"loves": [
+			"wood",
+			"hazelnut"
+		],
+		"likes": [
+			"corn",
+			"mushroom"
+		],
+		"dislikes": [
+			"slime"
+		],
+		"schedule": [
+			{
+				"time": "07:30",
+				"cell": [
+					15,
+					17
+				]
+			},
+			{
+				"time": "12:00",
+				"cell": [
+					22,
+					21
+				]
+			},
+			{
+				"time": "13:00",
+				"cell": [
+					15,
+					17
+				]
+			},
+			{
+				"time": "18:30",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Salut ! Mathis, charpentier. Si tu veux un poulailler ou une étable sur ta ferme, c'est moi qu'il faut voir. Ma menuiserie est dans le quartier des artisans.",
+			"stranger": [
+				"Du bon bois, c'est la moitié du travail. L'autre moitié, c'est la patience.",
+				"Un bâtiment bien construit dure cent ans. Au moins.",
+				"Je construis en deux jours. Trois, s'il pleut."
+			],
+			"friend": [
+				"Ta ferme commence à avoir fière allure. Il lui manque juste... un autre bâtiment, non ?",
+				"J'ai appris le métier avec Gaston. Il était déjà bougon à l'époque.",
+				"Le soir, je sculpte des petits animaux en bois. Théo les adore."
+			],
+			"close": [
+				"Tu es de ceux qui construisent quelque chose. Ça se voit.",
+				"Un jour, je te ferai un banc rien que pour toi, devant ta maison."
+			],
+			"spring": [
+				"Le printemps, c'est la saison des chantiers !"
+			],
+			"summer": [
+				"Le bois sèche vite en été. Parfait pour travailler."
+			],
+			"autumn": [
+				"L'automne, je fais le plein de bûches pour l'hiver."
+			],
+			"winter": [
+				"L'hiver, je répare les meubles de tout le village."
+			],
+			"rain": [
+				"La pluie fait gonfler le bois. Je déteste ça."
+			],
+			"again": [
+				"Allez, au travail !",
+				"Repasse à la menuiserie si tu as un projet."
+			],
+			"gift_loved": "Du bon matériau ! Merci, ça va me servir.",
+			"gift_liked": "Merci, c'est sympa.",
+			"gift_neutral": "Ah, merci.",
+			"gift_disliked": "Euh... ça colle aux doigts, ce truc.",
+			"gift_again": "Un cadeau par jour, ça suffit largement !"
+		}
+	},
+	"margot": {
+		"name": "Margot",
+		"title": "la coopérative",
+		"sprite": 6,
+		"home": "cooperative",
+		"shop": "cooperative",
+		"loves": [
+			"milk",
+			"egg"
+		],
+		"likes": [
+			"cabbage",
+			"wheat"
+		],
+		"dislikes": [
+			"fang"
+		],
+		"schedule": [
+			{
+				"time": "08:00",
+				"cell": [
+					18,
+					9
+				]
+			},
+			{
+				"time": "16:30",
+				"cell": [
+					37,
+					21
+				]
+			},
+			{
+				"time": "19:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Bienvenue à la coopérative ! Je suis Margot. Foin, brosses, seaux à lait : tout ce qu'il faut pour bien soigner tes bêtes.",
+			"stranger": [
+				"Un animal bien nourri, c'est un animal heureux. Et un animal heureux produit mieux !",
+				"Le foin se garde dans la mangeoire de tes bâtiments. Pense à la remplir.",
+				"Tu peux aussi faire du foin avec de la fibre, si tu fauches beaucoup."
+			],
+			"friend": [
+				"Léon dit que tu t'occupes bien de tes animaux. Venant de lui, c'est un compliment.",
+				"J'ai grandi dans une ferme, tu sais. Ça me manque parfois."
+			],
+			"close": [
+				"Tu es un rayon de soleil pour ce village.",
+				"Si un jour tu as besoin d'aide à la ferme, appelle-moi."
+			],
+			"spring": [
+				"Au printemps, les poussins naissent partout. C'est adorable !"
+			],
+			"summer": [
+				"Pense à l'eau fraîche pour tes bêtes quand il fait chaud."
+			],
+			"autumn": [
+				"Fais tes réserves de foin avant l'hiver !"
+			],
+			"winter": [
+				"L'hiver, l'herbe ne pousse plus : sans foin, pas de lait."
+			],
+			"rain": [
+				"Les animaux restent au chaud quand il pleut."
+			],
+			"again": [
+				"À bientôt à la coopérative !",
+				"Prends soin de tes bêtes !"
+			],
+			"gift_loved": "Oh, c'est délicieux ! Merci beaucoup !",
+			"gift_liked": "Merci, c'est gentil.",
+			"gift_neutral": "Merci !",
+			"gift_disliked": "Hum... je ne sais pas trop quoi en faire.",
+			"gift_again": "Tu m'as déjà gâtée aujourd'hui !"
+		}
+	},
+	"leon": {
+		"name": "Léon",
+		"title": "l'éleveur",
+		"sprite": 7,
+		"home": "ranch",
+		"shop": "ranch",
+		"loves": [
+			"truffle",
+			"angora_wool"
+		],
+		"likes": [
+			"carrot",
+			"turnip"
+		],
+		"dislikes": [
+			"eel"
+		],
+		"schedule": [
+			{
+				"time": "06:30",
+				"cell": [
+					52,
+					11
+				]
+			},
+			{
+				"time": "11:00",
+				"cell": [
+					48,
+					12
+				]
+			},
+			{
+				"time": "15:00",
+				"cell": [
+					53,
+					13
+				]
+			},
+			{
+				"time": "19:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Léon, éleveur. Poules, lapins, vaches, cochons : je vends de bonnes bêtes, à condition que tu aies de quoi les loger.",
+			"stranger": [
+				"Pas de bâtiment, pas d'animal. C'est la règle.",
+				"Une bête, ça se caresse tous les jours. Elles sentent quand on les aime.",
+				"Mes vaches donnent le meilleur lait de la vallée."
+			],
+			"friend": [
+				"Tu as la main avec les animaux. Ça ne s'apprend pas.",
+				"Un cochon heureux trouve des truffes. Un cochon triste trouve la sieste."
+			],
+			"close": [
+				"Je te confierais mes bêtes les yeux fermés.",
+				"Mon grand-père disait : « Une ferme sans animaux, c'est un jardin. » Tu as une vraie ferme."
+			],
+			"spring": [
+				"Le printemps, l'herbe est tendre. Les bêtes sont contentes."
+			],
+			"summer": [
+				"L'été, je sors les vaches tôt, avant la chaleur."
+			],
+			"autumn": [
+				"L'automne, c'est la saison des truffes !"
+			],
+			"winter": [
+				"L'hiver, mes bêtes restent à l'étable. Moi aussi, si je pouvais."
+			],
+			"rain": [
+				"La pluie, ça rend les cochons heureux. Allez savoir pourquoi."
+			],
+			"again": [
+				"Va voir tes bêtes, elles t'attendent.",
+				"Bonne journée."
+			],
+			"gift_loved": "Ça, c'est un cadeau d'éleveur ! Merci.",
+			"gift_liked": "Merci, ça fera plaisir à mes bêtes.",
+			"gift_neutral": "Merci bien.",
+			"gift_disliked": "Une anguille ? Non merci, ça me donne des frissons.",
+			"gift_again": "Un seul cadeau par jour, voyons !"
+		}
+	},
+	"theo": {
+		"name": "Théo",
+		"title": "le petit-fils d'Odette",
+		"sprite": 8,
+		"home": "odette",
+		"loves": [
+			"berries",
+			"cherries",
+			"egg"
+		],
+		"likes": [
+			"carrot",
+			"daffodil"
+		],
+		"dislikes": [
+			"cabbage",
+			"eel"
+		],
+		"schedule": [
+			{
+				"time": "09:00",
+				"cell": [
+					31,
+					24
+				]
+			},
+			{
+				"time": "12:00",
+				"cell": [
+					6,
+					31
+				]
+			},
+			{
+				"time": "14:00",
+				"cell": [
+					43,
+					29
+				]
+			},
+			{
+				"time": "18:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Salut ! Je m'appelle Théo, j'habite chez ma mamie Odette. T'as des animaux ? J'adore les animaux !",
+			"stranger": [
+				"Tu savais que les poules dorment debout ? Enfin je crois.",
+				"Le chien de la place s'appelle Biscuit. C'est moi qui l'ai appelé comme ça.",
+				"Un jour, je serai pêcheur comme Jules !"
+			],
+			"friend": [
+				"Tu peux me montrer tes vaches un jour ? Promis, je serai sage.",
+				"Mamie dit que tu travailles trop. Moi je dis que t'es trop fort."
+			],
+			"close": [
+				"T'es mon meilleur ami de toute la vallée !",
+				"Quand je serai grand, j'aurai une ferme comme la tienne."
+			],
+			"spring": [
+				"Au printemps, je cherche des jonquilles pour mamie."
+			],
+			"summer": [
+				"L'été, c'est les vacances ! Je vais à l'étang tous les jours."
+			],
+			"autumn": [
+				"En automne, je ramasse des noisettes. J'en ai déjà cent !"
+			],
+			"winter": [
+				"Je vais faire un bonhomme de neige géant !"
+			],
+			"rain": [
+				"Les flaques, c'est fait pour sauter dedans !"
+			],
+			"again": [
+				"On joue plus tard ?",
+				"Faut que j'aille voir Biscuit !"
+			],
+			"gift_loved": "Ouaaah ! C'est trop bien ! Merci !",
+			"gift_liked": "Cool, merci !",
+			"gift_neutral": "Ah. Merci.",
+			"gift_disliked": "Beurk ! Tu veux m'empoisonner ?",
+			"gift_again": "Encore un cadeau ? Mamie va dire que tu me gâtes !"
+		}
+	},
+	"jules": {
+		"name": "Jules",
+		"title": "le pêcheur",
+		"sprite": 9,
+		"home": "jules",
+		"loves": [
+			"golden_carp",
+			"pike",
+			"grilled_fish"
+		],
+		"likes": [
+			"carp",
+			"trout",
+			"roach"
+		],
+		"dislikes": [
+			"poppy"
+		],
+		"schedule": [
+			{
+				"time": "06:00",
+				"cell": [
+					44,
+					33
+				]
+			},
+			{
+				"time": "12:00",
+				"cell": [
+					42,
+					30
+				]
+			},
+			{
+				"time": "14:00",
+				"cell": [
+					44,
+					34
+				]
+			},
+			{
+				"time": "19:30",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Chut... tu vas faire fuir les poissons. Jules. Je pêche dans cet étang depuis avant ta naissance.",
+			"stranger": [
+				"La carpe dorée existe. Je l'ai vue. Une fois.",
+				"Le brochet, c'est le matin, en automne. Note-le.",
+				"La patience, c'est le meilleur appât."
+			],
+			"friend": [
+				"Tu ferres de mieux en mieux. Ça me fait plaisir à voir.",
+				"Ma canne a cinquante ans. Elle a plus d'histoires que moi."
+			],
+			"close": [
+				"Je te lègue mon coin de pêche secret. Derrière le gros saule. Ne le dis à personne.",
+				"Avec toi, le silence n'est pas gênant. C'est rare."
+			],
+			"spring": [
+				"Au printemps, les truites remontent. Bonne saison."
+			],
+			"summer": [
+				"L'été, la carpe dorée sort à midi. Si tu as de la chance."
+			],
+			"autumn": [
+				"L'automne, c'est la saison du brochet. Mon préféré."
+			],
+			"winter": [
+				"L'hiver, je répare mes filets au coin du feu."
+			],
+			"rain": [
+				"La pluie fait sortir les anguilles. Le soir, à la ferme."
+			],
+			"again": [
+				"Chut. Ça mord.",
+				"À la prochaine."
+			],
+			"gift_loved": "Ça... c'est un vrai cadeau de pêcheur. Merci.",
+			"gift_liked": "Joli poisson. Merci.",
+			"gift_neutral": "Mm. Merci.",
+			"gift_disliked": "Des fleurs ? Je ne suis pas un jardin.",
+			"gift_again": "Un par jour. Comme les poissons."
 		}
 	}
 }

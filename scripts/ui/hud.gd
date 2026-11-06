@@ -23,6 +23,9 @@ var _top_panel: PanelContainer
 var _menu_button: Button
 var _bag_button: Button
 var _closing_silently: bool = false
+var _title_box: VBoxContainer
+var _zone_label: Label
+var _minimap: Minimap
 var _last_selected: int = -1
 var _picked: int = -1  # case choisie dans l'écran du sac
 var _scroll_memory: Dictionary = {}  # titre de fenêtre -> position de défilement
@@ -60,6 +63,14 @@ func _ready() -> void:
 	_build_joystick()
 	_build_action_button()
 	_build_toast()
+	_minimap = Minimap.new()
+	_root.add_child(_minimap)
+	_zone_label = Label.new()
+	_zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_zone_label.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0))
+	_zone_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_zone_label.modulate.a = 0.0
+	_root.add_child(_zone_label)
 	_fade = ColorRect.new()
 	_fade.color = Color(0.05, 0.03, 0.08, 0.0)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -83,7 +94,14 @@ func _ready() -> void:
 		open_mail())
 	EventBus.water_changed.connect(func(_v: int, _m: int) -> void: _refresh_hotbar())
 	EventBus.toast_requested.connect(show_toast)
-	EventBus.shop_requested.connect(open_shop)
+	EventBus.shop_requested.connect(open_shop.bind("store"))
+	EventBus.shop_opened.connect(open_shop)
+	EventBus.animals_requested.connect(open_animals)
+	EventBus.kitchen_requested.connect(open_crafting.bind("craft"))
+	EventBus.zone_entered.connect(_on_zone_entered)
+	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
+		if View3D.current == null:
+			show_toast("%s : %s" % [GameData.npc(npc_id).get("name", ""), text]))
 	EventBus.sleep_requested.connect(ask_sleep)
 	EventBus.day_summary.connect(show_summary)
 	EventBus.dialogue_requested.connect(show_dialogue)
@@ -250,9 +268,15 @@ func _layout() -> void:
 	_action_button.position = Vector2(vp.x - ACTION_SIZE - 10, _hotbar.position.y - ACTION_SIZE - 8)
 	_energy_bar.position = Vector2(vp.x - 18, _action_button.position.y - 74)
 	_health_bar.position = _energy_bar.position - Vector2(15, 0)
-	# Joystick flottant : toute la moitié basse gauche, au-dessus de la barre
-	_joystick.position = Vector2(0, 70)
-	_joystick.size = Vector2(minf(170, vp.x * 0.35), _hotbar.position.y - 70 - 4)
+	# Joystick flottant : moitié gauche, sous la mini-carte et au-dessus de la barre
+	var top := 70.0
+	if _minimap != null and not _minimap.big:
+		top = _minimap.position.y + _minimap.size.y + 6
+	_joystick.position = Vector2(0, top)
+	_joystick.size = Vector2(minf(170, vp.x * 0.35), _hotbar.position.y - top - 4)
+	if _zone_label != null:
+		_zone_label.position = Vector2(0, 26)
+		_zone_label.size = Vector2(vp.x, 14)
 	# Boutons Menu et Sac en haut à gauche, horloge et bourse en haut à droite
 	_menu_button.position = Vector2(4, 4)
 	_bag_button.position = Vector2(8 + _menu_button.get_combined_minimum_size().x, 4)
@@ -379,7 +403,7 @@ func is_over_ui(event: InputEvent) -> bool:
 	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
 	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
-	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _hotbar, _joystick, _energy_bar, _health_bar]:
+	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _hotbar, _joystick, _energy_bar, _health_bar, _minimap]:
 		if c.get_global_rect().has_point(point):
 			return true
 	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
@@ -518,52 +542,133 @@ func show_summary(report: Dictionary) -> void:
 	_add_button(box, "Continuer", close_modal)
 
 
-func open_shop() -> void:
-	var box := _open_modal("Épicerie de Rosalie")
-	var gold := _add_label(box, "")
-	# La liste défile : graines, outils, coffres, sacs...
+var _current_shop: String = "store"
+
+
+## Boutique d'un habitant : objets, animaux (Léon) ou constructions (Mathis).
+func open_shop(shop_id: String = "store") -> void:
+	_current_shop = shop_id
+	var shop := Shops.info(shop_id)
+	var box := _open_modal(str(shop.get("name", "Boutique")))
+	var owner := str(shop.get("owner", ""))
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 6)
+	box.add_child(header)
+	if owner != "":
+		var face := TextureRect.new()
+		face.texture = GameData.npc_texture(owner)
+		header.add_child(face)
+	var gold := Label.new()
+	gold.text = "Ton or : %d" % Inventory.gold
+	header.add_child(gold)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(330, 165)
+	scroll.custom_minimum_size = Vector2(340, 160)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
-	_remember_scroll(scroll, "shop")
+	_remember_scroll(scroll, "shop:" + shop_id)
 	var list := VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
-	var refresh := func() -> void:
-		gold.text = "Ton or : %d" % Inventory.gold
-		for child in list.get_children():
-			child.queue_free()
-		for id: String in GameData.items:
-			var item := GameData.item(id)
-			if item.get("type") != "seed" and not item.get("shop", false):
-				continue
-			var row := HBoxContainer.new()
-			list.add_child(row)
-			var icon := TextureRect.new()
-			icon.texture = GameData.item_icon(id)
-			icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-			icon.custom_minimum_size = Vector2(18, 18)
-			row.add_child(icon)
-			var is_seed: bool = item.get("type") == "seed"
-			var in_season := not is_seed or GameData.crop_in_season(str(item.crop), TimeManager.season)
-			var is_bag: bool = item.get("type") == "backpack"
-			var owned: bool = (item.get("type") == "tool" and Inventory.count_of(id) > 0) or (is_bag and Inventory.capacity >= int(item.capacity))
-			# Le sac de voyageur demande d'avoir déjà le grand sac.
-			var locked: bool = is_bag and Inventory.capacity < int(item.capacity) - Inventory.HOTBAR
-			var name_label := Label.new()
-			name_label.text = "%s - %d or%s" % [item.name, int(item.buy), "" if in_season else " (hors saison)"]
-			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			row.add_child(name_label)
-			var buy := Button.new()
-			buy.text = "Acheter"
-			buy.disabled = not in_season or owned or locked or Inventory.gold < int(item.buy)
-			if owned:
-				buy.text = "Acquis"
-			buy.pressed.connect(_buy.bind(id))
-			row.add_child(buy)
-	refresh.call()
+	if shop.get("animals", false):
+		for type: String in Animals.data.get("animals", {}):
+			list.add_child(_animal_row(type))
+	elif shop.get("buildings", false):
+		for id: String in Animals.data.get("buildings", {}):
+			list.add_child(_building_row(id))
+	else:
+		for id: String in Shops.items(shop_id):
+			list.add_child(_item_row(id))
 	_add_button(box, "Fermer", close_modal)
+
+
+func _shop_row(texture: Texture2D, text: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var icon := TextureRect.new()
+	icon.texture = texture
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	icon.custom_minimum_size = Vector2(18, 18)
+	row.add_child(icon)
+	var label := Label.new()
+	label.text = text
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	row.add_child(label)
+	return row
+
+
+func _item_row(id: String) -> HBoxContainer:
+	var item := GameData.item(id)
+	var is_seed: bool = item.get("type") == "seed"
+	var in_season := not is_seed or GameData.crop_in_season(str(item.crop), TimeManager.season)
+	var is_bag: bool = item.get("type") == "backpack"
+	var owned: bool = (item.get("type") == "tool" and Inventory.count_of(id) > 0) or (is_bag and Inventory.capacity >= int(item.capacity))
+	# Le sac de voyageur demande d'avoir déjà le grand sac.
+	var locked: bool = is_bag and Inventory.capacity < int(item.capacity) - Inventory.HOTBAR
+	var row := _shop_row(GameData.item_icon(id), "%s - %d or%s" % [item.name, int(item.get("buy", 0)), "" if in_season else " (hors saison)"])
+	var buy := Button.new()
+	buy.text = "Acquis" if owned else "Acheter"
+	buy.disabled = not in_season or owned or locked or Inventory.gold < int(item.get("buy", 0))
+	buy.pressed.connect(_buy.bind(id))
+	row.add_child(buy)
+	return row
+
+
+func _animal_texture(type: String) -> AtlasTexture:
+	var tex := AtlasTexture.new()
+	tex.atlas = load("res://assets/sprites/animals.png")
+	tex.region = Rect2(int(Animals.animal_info(type).get("frame", 0)) * 16, 0, 16, 16)
+	return tex
+
+
+func _animal_row(type: String) -> HBoxContainer:
+	var info := Animals.animal_info(type)
+	var building := str(info.building)
+	var bname := str(Animals.building_info(building).get("name", building)).to_lower()
+	var room := Animals.has_room(building)
+	var note := "" if room else (" (il te faut un %s)" % bname if not Animals.is_built(building) else " (%s plein)" % bname)
+	var row := _shop_row(_animal_texture(type), "%s - %d or%s" % [info.name, int(info.price), note])
+	var buy := Button.new()
+	buy.text = "Acheter"
+	buy.disabled = not room or Inventory.gold < int(info.price)
+	buy.pressed.connect(func() -> void:
+		if Animals.buy(type):
+			Sfx.play("coins")
+			var a: Dictionary = Animals.animals[-1]
+			show_toast("Bienvenue à %s, ta nouvelle %s !" % [a.name, str(info.name).to_lower()])
+		open_shop(_current_shop))
+	row.add_child(buy)
+	return row
+
+
+func _building_row(id: String) -> VBoxContainer:
+	var info := Animals.building_info(id)
+	var col := VBoxContainer.new()
+	var row := _shop_row(GameData.item_icon("chest"), "%s - %d or : %s" % [info.name, int(info.price), info.get("description", "")])
+	col.add_child(row)
+	var needs := HBoxContainer.new()
+	needs.add_theme_constant_override("separation", 6)
+	var mats: Dictionary = info.get("materials", {})
+	for item: String in mats:
+		needs.add_child(_ingredient(item, int(mats[item])))
+	col.add_child(needs)
+	var build := Button.new()
+	if Animals.is_built(id):
+		build.text = "Déjà construit"
+		build.disabled = true
+	elif Animals.under_construction(id):
+		build.text = "Chantier en cours"
+		build.disabled = true
+	else:
+		build.text = "Construire (%d jours)" % int(info.get("days", 2))
+		build.disabled = not Animals.construction_missing(id).is_empty()
+	build.pressed.connect(func() -> void:
+		if Animals.start_construction(id):
+			Sfx.play("craft")
+			show_toast("Mathis commence le chantier demain matin !")
+		open_shop(_current_shop))
+	needs.add_child(build)
+	return col
 
 
 func _buy(id: String) -> void:
@@ -578,7 +683,7 @@ func _buy(id: String) -> void:
 			Sfx.play("coins")
 			Inventory.set_capacity(int(item.capacity))
 			show_toast("Ton sac a maintenant %d places !" % Inventory.capacity)
-			open_shop()
+			open_shop(_current_shop)
 		return
 	if not Inventory.can_add(id):
 		show_toast("Inventaire plein !")
@@ -587,7 +692,158 @@ func _buy(id: String) -> void:
 		Sfx.play("coins")
 		Inventory.add_item(id, 1)
 		show_toast("+1 %s" % GameData.item_name(id))
-		open_shop()  # reconstruit la liste (or et boutons à jour)
+		open_shop(_current_shop)  # reconstruit la liste (or et boutons à jour)
+
+
+# ------------------------------------------------------------ élevage
+func open_animals(building: String) -> void:
+	var info := Animals.building_info(building)
+	var box := _open_modal(str(info.get("name", building)))
+	var b: Dictionary = Animals.buildings[building]
+	var feeder := HBoxContainer.new()
+	feeder.add_theme_constant_override("separation", 6)
+	box.add_child(feeder)
+	var hay := Label.new()
+	hay.text = "Mangeoire : %d / %d foin" % [int(b.hay), Animals.FEEDER_MAX]
+	hay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	feeder.add_child(hay)
+	var fill := Button.new()
+	fill.text = "Remplir (%d dans ton sac)" % Inventory.count_of("hay")
+	fill.disabled = Inventory.count_of("hay") == 0 or int(b.hay) >= Animals.FEEDER_MAX
+	fill.pressed.connect(func() -> void:
+		var n := Animals.fill_feeder(building)
+		Sfx.play("drop")
+		show_toast("+%d foin dans la mangeoire" % n)
+		open_animals(building))
+	feeder.add_child(fill)
+	var indices := Animals.in_building(building)
+	var ready := 0
+	for i: int in indices:
+		if Animals.animals[i].ready and str(Animals.animal_info(Animals.animals[i].type).get("tool", "")) == "":
+			ready += 1
+	if ready > 0:
+		_add_button(box, "Ramasser les produits (%d)" % ready, func() -> void:
+			var got := Animals.collect(building)
+			Sfx.play("harvest")
+			show_toast("Ramassé : %d produit(s)" % got.size())
+			open_animals(building))
+	if indices.is_empty():
+		_add_label(box, "Aucun animal pour l'instant. Léon en vend au ranch, à l'est du village.")
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(340, minf(130, 34 * indices.size()))
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	for i: int in indices:
+		list.add_child(_animal_care_row(i, building))
+	_add_label(box, "Chaque nuit, chaque animal mange 1 foin. Nourri, il produit au matin.")
+	_add_button(box, "Fermer", close_modal)
+
+
+func _animal_care_row(index: int, building: String) -> HBoxContainer:
+	var a: Dictionary = Animals.animals[index]
+	var info := Animals.animal_info(a.type)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	var icon := TextureRect.new()
+	icon.texture = _animal_texture(a.type)
+	row.add_child(icon)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(col)
+	var name := Label.new()
+	name.text = "%s (%s)%s" % [a.name, str(info.name).to_lower(), "" if a.fed else (" - tout juste arrivé·e" if int(a.age) == 0 else " - affamé·e !")]
+	col.add_child(name)
+	var hearts := HBoxContainer.new()
+	hearts.add_theme_constant_override("separation", 0)
+	for k in 5:
+		var h := TextureRect.new()
+		var tex := AtlasTexture.new()
+		tex.atlas = _hearts_texture
+		tex.region = Rect2(0 if k < Animals.hearts(index) else 8, 0, 8, 8)
+		h.texture = tex
+		hearts.add_child(h)
+	col.add_child(hearts)
+	var pet := Button.new()
+	pet.text = "Caresser"
+	pet.disabled = a.petted
+	pet.pressed.connect(func() -> void:
+		Animals.pet(index)
+		Sfx.play("harvest")
+		open_animals(building))
+	row.add_child(pet)
+	if Inventory.count_of("brush") > 0:
+		var brush := Button.new()
+		brush.text = "Brosser"
+		brush.disabled = a.brushed
+		brush.pressed.connect(func() -> void:
+			Animals.brush(index)
+			Sfx.play("swish")
+			open_animals(building))
+		row.add_child(brush)
+	if str(info.get("tool", "")) != "":
+		var milk := Button.new()
+		milk.text = "Traire"
+		milk.disabled = not a.ready or Inventory.count_of(str(info.tool)) == 0
+		milk.pressed.connect(func() -> void:
+			var got := Animals.milk(index)
+			if got != "":
+				Sfx.play("water")
+				show_toast("+1 %s" % GameData.item_name(got))
+			open_animals(building))
+		row.add_child(milk)
+	return row
+
+
+# ------------------------------------------------------------ lieux : transitions et quartiers
+## Grand titre du lieu, au centre de l'écran, qui s'efface tout seul.
+func title_card(title: String, subtitle: String, tint: Color = Color(1, 0.95, 0.8)) -> void:
+	if _title_box != null:
+		_title_box.queue_free()
+	_title_box = VBoxContainer.new()
+	_title_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_title_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	var vp := get_viewport().get_visible_rect().size
+	_title_box.position = Vector2(0, vp.y * 0.28)
+	_title_box.size = Vector2(vp.x, 50)
+	_root.add_child(_title_box)
+	var big := Label.new()
+	big.text = title
+	big.add_theme_font_size_override("font_size", 24)
+	big.add_theme_color_override("font_color", tint)
+	big.add_theme_constant_override("shadow_offset_x", 2)
+	big.add_theme_constant_override("shadow_offset_y", 2)
+	big.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_box.add_child(big)
+	var small := Label.new()
+	small.text = subtitle
+	small.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_box.add_child(small)
+	_title_box.modulate.a = 0.0
+	var tw := _title_box.create_tween()
+	tw.tween_property(_title_box, "modulate:a", 1.0, 0.35)
+	tw.tween_interval(1.4)
+	tw.tween_property(_title_box, "modulate:a", 0.0, 0.6)
+	tw.tween_callback(_title_box.queue_free)
+
+
+func _on_zone_entered(name: String) -> void:
+	if _zone_label == null:
+		return
+	_zone_label.text = name
+	var tw := _zone_label.create_tween()
+	_zone_label.modulate.a = 0.0
+	tw.tween_property(_zone_label, "modulate:a", 1.0, 0.3)
+	tw.tween_interval(2.2)
+	tw.tween_property(_zone_label, "modulate:a", 0.0, 0.6)
+
+
+func set_world(world: WorldMap) -> void:
+	_minimap.setup(world)
+	_layout()
 
 
 # ------------------------------------------------------------ dialogues

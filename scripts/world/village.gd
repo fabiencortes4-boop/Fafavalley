@@ -2,55 +2,84 @@ class_name Village
 extends WorldMap
 ## Valfleur, le village : maisons, épicerie, place, habitants.
 ##
-## Caractères propres au village : E épicerie (4x3), Y maison de Gaston,
-## H maison d'Odette (3x3), A maison de Lina, Z mairie (3x4), W puits,
-## P tableau d'affichage, Q panneau vers la ferme, M mine, N enclume (forge).
+## Quartiers : place, artisans, ranch, résidences, parc de l'étang, mine.
+## Bâtiments : E épicerie, Z mairie, Y forge de Gaston, K menuiserie,
+## U coopérative, L ranch, H maison d'Odette, A maison de Lina,
+## J cabane de Jules, M mine, O fontaine. Décor : N enclume, n lanterne,
+## s étal du marché. Animaux : C poule, V vache, I cochon, d chien, e chat.
 
 const MAP := [
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TT.T......TT...T..T.T.TT..TTTT.TT.TTTTTT",
-	"TT.................................M..TT",
-	"TT......................f.A.....Z.....TT",
-	"TT..E......Y....R...................==TT",
-	"TT.....................b............==TT",
-	"TT.h.....k....N.....................==TT",
-	"TTTQ..==....==..P..........==....==.==TT",
-	"======================================TT",
-	"======================================TT",
-	"TT............============............TT",
-	"TTT..,.....b..============.........o..TT",
-	"TTT.....R.....===,cW.c,===.b.....'....TT",
-	"TTT...........===c....c===...,.......TTT",
-	"TT............===.c.c,.===.....R.....TTT",
-	"TT...H...FFFF.============............TT",
-	"TTT.......fff.============...........mTT",
-	"TT.................==................TTT",
-	"TT.===============================...TTT",
-	"TT.===============================..b.TT",
-	"TT'...................................TT",
-	"TTT.......,.............o...~~~~~~...TTT",
-	"TTT...b...............'....~~~~~~~~...TT",
-	"TT..........R..,..........~~~~~~~~~...TT",
-	"TTT...............m.......~~~~~~~~~...TT",
-	"TTT........................~~~~~~~~...TT",
-	"TTT....T..TT.T.T.T.TT.TTT....T..T..TTTTT",
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+	"TTTTTTTTTTTTTTTTTTTTTTTTTTTT.....TTTTTTTTTTTTTTTTTTTTTTTTTTT",
+	"TTT.....T.....T...T.TTTTT....M...T..T.T..T.T.......T....TTTT",
+	"TT........................................................TT",
+	"TT........R.........R.........==........o...........R....TTT",
+	"TT............................==..........................TT",
+	"TTT...........U...............==.............L............TT",
+	"TT............................==..................FFFFFFFTTT",
+	"TT...........k.....k..........==..........................TT",
+	"TT..b...........==......R.....==......b.......==.h...C...TTT",
+	"TT..............==............==..............==....V..I..TT",
+	"TTT.....'.......==.........m..==....,.........==.........TTT",
+	"TTT.............==....,.......==..............==...C..V..TTT",
+	"TTT.............==............==..............==.h.......TTT",
+	"TT...Y......K...==............==..Z.......'...==.........TTT",
+	"TTT.............==......E.....==..............==..FFFFFFF.TT",
+	"TT.......N......==............==..............==..........TT",
+	"TTT...==.....==.==............==..............==.........TTT",
+	"TTTQn.==....n==.==..n.....==n.==.P.==.......n.==....n...b.TT",
+	"==========================================================TT",
+	"==========================================================TT",
+	"TT..n.....==n.......n.......n.==....n.......n.......n.....TT",
+	"TT........==.........ss.==============.ss................TTT",
+	"TT........==............==============....................TT",
+	"TTT..H....==..A.........===.....d..===...................TTT",
+	"TTT,......==.......b....===.c....c.===.J..................TT",
+	"TT........==............===...O....===................R..TTT",
+	"TTT...======............===........===.....f..............TT",
+	"TT....===========.......===.c....c.===..==.....~~~~~~~~..TTT",
+	"TTT.......=======.......===........===..==....~~~~~~~~~~..TT",
+	"TTT.e.....==.........'..==============..==...~~~~~~~~~~~.TTT",
+	"TT........==....b.......==============..==.,.~~~~~~~~~~~.TTT",
+	"TTT..b....==............................==...~~~~~~~~~~~.TTT",
+	"TT........============..................=====~~~~~~~~~~~.TTT",
+	"TT........============..................=====~~~~~~~~~~~..TT",
+	"TT........==...................b.............~~~~~~~~~~~.TTT",
+	"TTT...b...==..FFFFFFF.....R.........f........~~~~~~~~~~~..TT",
+	"TT........==............................b.....~~~~~~~~~~..TT",
+	"TTT.......................................................TT",
+	"TTTTT....T.TTTT.....T..T.T.....TT.'TTTT....T...TTT...T.TTTTT",
+	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 ]
 
 ## Bâtiments : caractère -> [identifiant, taille, image, colonne de la porte]
 const BUILDINGS := {
 	"E": ["store", Vector2i(4, 3), "res://assets/sprites/store.png", 2],
+	"Z": ["mairie", Vector2i(3, 4), "res://assets/sprites/house_gable_gray.png", 1],
 	"Y": ["gaston", Vector2i(3, 3), "res://assets/sprites/house_gray.png", 1],
+	"K": ["menuiserie", Vector2i(4, 3), "res://assets/sprites/store.png", 1],
+	"U": ["cooperative", Vector2i(4, 3), "res://assets/sprites/store.png", 2],
+	"L": ["ranch", Vector2i(3, 3), "res://assets/sprites/house.png", 1],
 	"H": ["odette", Vector2i(3, 3), "res://assets/sprites/house.png", 1],
 	"A": ["lina", Vector2i(3, 4), "res://assets/sprites/house_gable.png", 1],
-	"Z": ["mairie", Vector2i(3, 4), "res://assets/sprites/house_gable_gray.png", 1],
-	"W": ["well", Vector2i(1, 2), "res://assets/sprites/well.png", -1],
+	"J": ["jules", Vector2i(3, 3), "res://assets/sprites/house_gray.png", 1],
 	"M": ["mine", Vector2i(3, 2), "res://assets/sprites/mine_entrance.png", 1],
+	"O": ["fountain", Vector2i(2, 2), "res://assets/sprites/well.png", -1],
 }
-const STORE_OPEN := 9 * 60
-const STORE_CLOSE := 17 * 60
+## Bâtiment -> boutique
+const SHOP_DOORS := {"store": "store", "cooperative": "cooperative", "ranch": "ranch", "menuiserie": "carpenter"}
+const ZONES := [
+	["Chemin de la mine", Rect2i(26, 2, 10, 11)],
+	["Quartier des artisans", Rect2i(2, 2, 21, 17)],
+	["Ranch de Léon", Rect2i(41, 2, 17, 17)],
+	["Les résidences", Rect2i(2, 21, 21, 19)],
+	["Parc de l'étang", Rect2i(38, 21, 20, 19)],
+	["Place de Valfleur", Rect2i(22, 12, 18, 28)],
+]
+const CRITTERS := {"C": ["chicken", 0], "V": ["cow", 1], "I": ["pig", 1], "d": ["dog", 2], "e": ["cat", 2]}
+## Petites phrases entendues en passant près des habitants
+const BUBBLES := ["Belle journée !", "Bonjour !", "Ça pousse, à la ferme ?", "Tiens, salut !", "Quel temps !", "On se voit à la place ?", "Hm.", "Bonne récolte !"]
 
 var npcs: Array[Npc] = []
 var _doors: Dictionary = {}  # identifiant du bâtiment -> case de la porte
@@ -84,17 +113,27 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_add_sign(cell, "Panneau", "<- Vers la ferme")
 		"N":
 			_interactables[cell] = "forge"
+		"n", "s":
+			_blocked[cell] = true
+			_add_static_block(cell)
+		_:
+			if CRITTERS.has(ch):
+				var critter := Critter.new()
+				critter.kind = str(CRITTERS[ch][0])
+				critter.frame = int(CRITTERS[ch][1])
+				critter.position = cell_center(cell)
+				_entities.add_child(critter)
 
 
 func _after_build() -> void:
-	_spawn_cell = Vector2i(2, 9)
+	_spawn_cell = Vector2i(2, 19)
 	_build_navigation()
 	for id: String in GameData.npcs:
 		var npc := Npc.new()
 		npc.id = id
 		npc.village = self
 		var home := str(GameData.npc(id).get("home", ""))
-		npc.home_cell = _doors.get(home, Vector2i(2, 9)) + Vector2i.DOWN
+		npc.home_cell = _doors.get(home, Vector2i(2, 19)) + Vector2i.DOWN
 		_entities.add_child(npc)
 		npcs.append(npc)
 	TimeManager.time_changed.connect(_on_time_changed)
@@ -121,9 +160,51 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	return _astar.get_id_path(from, to, true)
 
 
+## Bloc de collision d'une case (lanterne, étal).
+func _add_static_block(cell: Vector2i) -> void:
+	var body := StaticBody2D.new()
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(TILE, TILE) * 0.7
+	shape.shape = rect
+	shape.position = cell_center(cell) - Vector2(0, 4)
+	body.add_child(shape)
+	add_child(body)
+
+
+var _zone: String = ""
+var _bubble_timer: float = 3.0
+
+
+## Quartier où se trouve une case ("" hors de toute zone).
+func zone_at(cell: Vector2i) -> String:
+	for z: Array in ZONES:
+		if (z[1] as Rect2i).has_point(cell):
+			return str(z[0])
+	return ""
+
+
+func _process(delta: float) -> void:
+	super(delta)
+	# Arrivée dans un nouveau quartier
+	var zone := zone_at(player_cell())
+	if zone != _zone:
+		_zone = zone
+		if zone != "":
+			EventBus.zone_entered.emit(zone)
+	# Les habitants proches lancent une petite phrase de temps en temps
+	_bubble_timer -= delta
+	if _bubble_timer <= 0.0:
+		_bubble_timer = randf_range(5.0, 9.0)
+		for npc in npcs:
+			if not npc.is_inside() and npc.position.distance_to(player.position) < TILE * 5:
+				EventBus.npc_bubble.emit(npc.id, BUBBLES[randi() % BUBBLES.size()])
+				break
+
+
 func _warp_for(cell: Vector2i) -> Dictionary:
 	if cell.x <= 0:
-		return {"map": "farm", "cell": Vector2i(37, clampi(cell.y, 9, 10))}
+		return {"map": "farm", "cell": Vector2i(37, clampi(cell.y, 19, 20) - 10)}
 	return {}
 
 
@@ -172,11 +253,13 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 		EventBus.forge_requested.emit()
 		return
 	var building := kind.trim_prefix("door:")
-	if building == "store":
-		if TimeManager.minutes >= STORE_OPEN and TimeManager.minutes < STORE_CLOSE:
-			EventBus.shop_requested.emit()
+	if SHOP_DOORS.has(building):
+		var shop: String = SHOP_DOORS[building]
+		if Shops.is_open(shop):
+			Sfx.play("door")
+			EventBus.shop_opened.emit(shop)
 		else:
-			EventBus.message_requested.emit("Épicerie de Rosalie", "C'est fermé. Horaires : de 9h à 17h.")
+			EventBus.message_requested.emit(str(Shops.info(shop).get("name", "")), "C'est fermé. " + Shops.hours_text(shop))
 		return
 	if building == "mine":
 		_enter_mine()

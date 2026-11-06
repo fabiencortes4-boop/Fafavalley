@@ -3,7 +3,7 @@ extends Node
 ##   godot --headless res://tools/inspect_models.tscn
 
 func _ready() -> void:
-	for pack in ["nature", "survival", "town", "food", "blocky", "dungeon"]:
+	for pack in ["nature", "survival", "town", "food", "blocky", "dungeon", "pets"]:
 		var dir := DirAccess.open("res://assets/kenney3d/" + pack)
 		for f in dir.get_files():
 			if not f.ends_with(".glb"):

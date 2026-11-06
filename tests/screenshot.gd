@@ -28,6 +28,40 @@ func _ready() -> void:
 				var v: Village = main.call("current_map")
 				Relations.add_points("odette", 800)
 				EventBus.dialogue_requested.emit("odette", str(GameData.npc("odette").dialogue.friend[0]))
+		if "--ranch" in args or "--care" in args:
+			for id in ["coop", "barn"]:
+				Animals.buildings[id].built = true
+			for t in ["chicken", "chicken", "bunny", "cow", "pig"]:
+				Inventory.add_gold(5000)
+				Animals.buy(t)
+			Animals.buildings.coop.hay = 12
+			Animals.animals[0].ready = true
+			TimeManager.minutes = 10 * 60
+			PlayerState.position = Vector2(31 * 16 + 8, 8 * 16 + 12)
+			PlayerState.has_position = true
+			main.call("_switch_to", "farm")
+			await get_tree().process_frame
+			if "--care" in args:
+				main.get("_hud").open_animals("coop")
+		if "--home" in args:
+			PlayerState.position = Vector2(5 * 16 + 8, 4 * 16 + 12)
+			PlayerState.has_position = true
+			main.call("_switch_to", "home")
+			await get_tree().process_frame
+		for a in args:
+			if a.begins_with("--hour="):
+				TimeManager.minutes = int(a.trim_prefix("--hour=")) * 60
+				TimeManager.time_changed.emit(TimeManager.minutes / 60, 0)
+			if a.begins_with("--at="):
+				var xy := a.trim_prefix("--at=").split(",")
+				var m: WorldMap = main.call("current_map")
+				m.player.position = m.cell_center(Vector2i(int(xy[0]), int(xy[1])))
+			if a.begins_with("--shopid="):
+				main.get("_hud").open_shop(a.trim_prefix("--shopid="))
+		if "--bigmap" in args:
+			var mm: Minimap = main.get("_hud").get("_minimap")
+			mm.big = true
+			mm.call("_layout")
 		if "--fishing" in args:
 			var farm: WorldMap = main.call("current_map")
 			Inventory.add_item("fishing_rod", 1)

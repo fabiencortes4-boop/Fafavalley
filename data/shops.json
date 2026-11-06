@@ -1,0 +1,59 @@
+{
+	"store": {
+		"name": "Épicerie de Rosalie",
+		"owner": "rosalie",
+		"open": [
+			9,
+			17
+		],
+		"closed_days": [
+			6
+		],
+		"items": [
+			"@seeds",
+			"fishing_rod",
+			"chest",
+			"backpack_24",
+			"backpack_36"
+		]
+	},
+	"cooperative": {
+		"name": "Coopérative de Margot",
+		"owner": "margot",
+		"open": [
+			8,
+			16
+		],
+		"closed_days": [],
+		"items": [
+			"hay",
+			"brush",
+			"milk_pail",
+			"fertilizer"
+		]
+	},
+	"ranch": {
+		"name": "Ranch de Léon",
+		"owner": "leon",
+		"open": [
+			9,
+			15
+		],
+		"closed_days": [
+			2
+		],
+		"animals": true
+	},
+	"carpenter": {
+		"name": "Menuiserie de Mathis",
+		"owner": "mathis",
+		"open": [
+			9,
+			17
+		],
+		"closed_days": [
+			6
+		],
+		"buildings": true
+	}
+}

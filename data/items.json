@@ -145,7 +145,6 @@
 		"stack": 1,
 		"energy": 4,
 		"buy": 250,
-		"shop": true,
 		"description": "Lance-la face à l'eau, attends la touche, puis ferre !"
 	},
 	"roach": {
@@ -409,7 +408,8 @@
 		"icon": 43,
 		"stack": 99,
 		"sell": 10,
-		"description": "Sur une terre labourée : les cultures poussent plus vite."
+		"description": "Sur une terre labourée : les cultures poussent plus vite.",
+		"buy": 30
 	},
 	"vegetable_soup": {
 		"name": "Soupe paysanne",
@@ -483,7 +483,6 @@
 		"icon": 50,
 		"stack": 99,
 		"buy": 150,
-		"shop": true,
 		"sell": 50,
 		"description": "Se pose à la ferme. Range 36 piles d'objets."
 	},
@@ -494,7 +493,6 @@
 		"icon": 51,
 		"stack": 1,
 		"buy": 1000,
-		"shop": true,
 		"description": "Passe le sac à 24 places."
 	},
 	"backpack_36": {
@@ -504,7 +502,6 @@
 		"icon": 52,
 		"stack": 1,
 		"buy": 5000,
-		"shop": true,
 		"description": "Passe le sac à 36 places."
 	},
 	"axe": {
@@ -637,6 +634,99 @@
 		"edible": [
 			35,
 			17
+		]
+	},
+	"hay": {
+		"name": "Foin",
+		"type": "material",
+		"icon": 65,
+		"sell": 25,
+		"buy": 50,
+		"stack": 99,
+		"description": "À mettre dans la mangeoire du poulailler ou de l'étable."
+	},
+	"brush": {
+		"name": "Brosse",
+		"type": "tool",
+		"icon": 66,
+		"sell": 0,
+		"tool": "brush",
+		"buy": 500,
+		"stack": 1,
+		"energy": 0,
+		"description": "Brosser un animal le rend plus heureux."
+	},
+	"milk_pail": {
+		"name": "Seau à lait",
+		"type": "tool",
+		"icon": 67,
+		"sell": 0,
+		"tool": "milk_pail",
+		"buy": 1000,
+		"stack": 1,
+		"energy": 0,
+		"description": "Pour traire les vaches."
+	},
+	"egg": {
+		"name": "Œuf",
+		"type": "animal",
+		"icon": 68,
+		"sell": 50,
+		"stack": 99,
+		"edible": [
+			25,
+			10
+		]
+	},
+	"big_egg": {
+		"name": "Gros œuf",
+		"type": "animal",
+		"icon": 69,
+		"sell": 95,
+		"stack": 99,
+		"edible": [
+			40,
+			20
+		]
+	},
+	"milk": {
+		"name": "Lait",
+		"type": "animal",
+		"icon": 70,
+		"sell": 125,
+		"stack": 99,
+		"edible": [
+			50,
+			20
+		]
+	},
+	"angora_wool": {
+		"name": "Laine angora",
+		"type": "animal",
+		"icon": 71,
+		"sell": 250,
+		"stack": 99
+	},
+	"truffle": {
+		"name": "Truffe",
+		"type": "animal",
+		"icon": 72,
+		"sell": 400,
+		"stack": 99,
+		"edible": [
+			30,
+			15
+		]
+	},
+	"omelette": {
+		"name": "Omelette",
+		"type": "food",
+		"icon": 73,
+		"sell": 240,
+		"stack": 99,
+		"edible": [
+			80,
+			45
 		]
 	}
 }

@@ -9,7 +9,7 @@ const WIDTH := 40  # 640 px : plus large que les écrans les plus allongés
 const HEIGHT := 24
 const MAX_LEVEL := 30
 const ELEVATOR_STEP := 5
-const VILLAGE_EXIT := Vector2i(36, 5)  # devant l'entrée de la mine, au village
+const VILLAGE_EXIT := Vector2i(30, 4)  # devant l'entrée de la mine, au village
 
 ## type -> [tuile, coups de pioche, [[objet, min, max, chance], ...]]
 const ROCKS := {

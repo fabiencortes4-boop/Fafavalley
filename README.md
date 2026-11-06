@@ -41,6 +41,22 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   personnages animés (marche, gestes d'outils), monstres, objets, lumière du jour et de la
   nuit, pluie et neige. La logique du jeu reste sur sa grille : la vue 3D la met en scène.
   Menu → Vue : 3D / 2D pour revenir à la version pixel art.
+- **Lieux à l'identité propre**, avec carte de titre et fondu à chaque passage :
+  la maison (intérieur boisé, lit pour dormir, cuisinière, cheminée qui crépite), la ferme,
+  Valfleur (lumière dorée, lanternes allumées le soir, fumée des cheminées) et la mine
+  (froide et sombre, lanterne du mineur).
+- **Village agrandi** (60x42) en 6 quartiers : place et fontaine, artisans, ranch de Léon,
+  résidences, parc de l'étang, chemin de la mine ; étals du marché, animaux du village.
+- **10 habitants** avec leur routine (heures de sortie, lieux visités, retour à la maison),
+  petites phrases en passant, dialogues et cadeaux : Rosalie, Gaston, Odette, Lina,
+  Bertrand, Mathis (charpentier), Margot (coopérative), Léon (ranch), Théo, Jules (pêcheur).
+- **Mini-carte** (en haut à gauche) : joueur, habitants, animaux ; un toucher l'agrandit
+  avec le nom des quartiers.
+- **Élevage** : Mathis construit le poulailler et l'étable sur les terrains de la ferme
+  (or + bois + pierre, 2 jours de chantier) ; Léon vend poules, lapins, vaches et cochons ;
+  Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
+  quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
+  Chaque boutique a ses horaires et ses jours de fermeture.
 - Vue rapprochée (zoom x2 par défaut, environ 15 cases de large ; réglable dans Menu → Zoom).
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
@@ -152,6 +168,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/animals_test.tscn    # maison, construction, achat d'animaux, foin, œufs, traite, boutiques
 godot --headless res://tests/crafting_test.tscn   # arroseurs, engrais, cuisine, forge
 godot --headless res://tests/inventory_test.tscn  # sac, agrandissements, coffres
 godot --headless res://tests/life_test.tscn       # zoom, débris, courrier, cueillette, compétences, saisons

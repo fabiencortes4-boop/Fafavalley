@@ -105,12 +105,15 @@ func _load_map(map_id: String) -> void:
 		_world = mine
 	elif map_id == "village":
 		_world = Village.new()
+	elif map_id == "home":
+		_world = HomeMap.new()
 	else:
 		_world = Farm.new()
 	_world.hud = _hud
 	add_child(_world)
 	move_child(_world, 0)
 	_hud.set_location(_world.display_name())
+	_hud.set_world(_world)
 	_apply_view()
 
 
@@ -141,8 +144,24 @@ func _switch_to(map_id: String) -> void:
 		PlayerState.position = _arrival
 		PlayerState.has_position = true
 		_arrival = Vector2.INF
+	var previous := PlayerState.map
 	_load_map(map_id)
 	_hud.fade_in()
+	_announce(map_id, previous)
+
+
+## Carte de titre + ambiance sonore à chaque changement de lieu : chaque
+## lieu a son identité (couleur, sous-titre, bruitage).
+func _announce(map_id: String, previous: String) -> void:
+	var seasons := ["Printemps", "Été", "Automne", "Hiver"]
+	if map_id == "home":
+		_hud.title_card("Chez toi", "La maison de Firmin", Color(1, 0.82, 0.6))
+	elif map_id == "farm":
+		_hud.title_card("La ferme", "%s, jour %d" % [seasons[TimeManager.season % 4], TimeManager.day], Color(0.75, 1, 0.65))
+	elif map_id == "village":
+		_hud.title_card("Valfleur", "Le village", Color(1, 0.92, 0.55))
+	elif map_id.begins_with("mine:") and not previous.begins_with("mine:"):
+		_hud.title_card("La mine", "Niveau %s" % map_id.trim_prefix("mine:"), Color(0.65, 0.8, 1))
 
 
 ## Au réveil, on est toujours à la ferme.

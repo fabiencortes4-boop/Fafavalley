@@ -6,6 +6,7 @@ const SPEED := 14.0
 const WANDER_RADIUS := 40.0
 
 var frame: int = 0
+var kind: String = "chicken"  # espèce (modèle 3D) : chicken, cow, pig, bunny, dog, cat
 var _sprite: Sprite2D
 var _home: Vector2
 var _target: Vector2

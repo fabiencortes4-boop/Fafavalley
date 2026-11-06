@@ -58,7 +58,7 @@ func refill_water() -> void:
 func restore(passed_out: bool) -> void:
 	energy = MAX_ENERGY / 2 if passed_out else MAX_ENERGY
 	has_position = false
-	map = "farm"  # on se réveille toujours à la ferme
+	map = "home"  # on se réveille toujours chez soi
 	health = max_health()
 	_emit()
 

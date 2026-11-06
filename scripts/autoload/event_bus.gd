@@ -24,6 +24,11 @@ signal forge_requested
 signal chest_requested(cell: Vector2i)
 signal mail_requested
 signal camera_shake(strength: float, duration: float)
+signal kitchen_requested
+signal shop_opened(shop_id: String)
+signal animals_requested(building: String)
+signal zone_entered(name: String)
+signal npc_bubble(npc_id: String, text: String)
 
 
 func toast(text: String) -> void:

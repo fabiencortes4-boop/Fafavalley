@@ -14,13 +14,13 @@ func _ready() -> void:
 	_main.call("_start", false)
 	await get_tree().process_frame
 	var hud: Hud = _main.get("_hud")
-	await _go("village", Vector2i(36, 5))
+	await _go("village", Vector2i(30, 4))
 	var village: Village = _main.call("current_map")
 	village.player.facing = Vector2i.UP
-	village.act_on(Vector2i(36, 4))
+	village.act_on(Vector2i(30, 3))
 	_check(Inventory.count_of("pickaxe") == 1 and Inventory.count_of("rusty_sword") == 1, "le coffre de Firmin donne pioche et épée")
 	hud.close_modal()
-	village.act_on(Vector2i(36, 4))
+	village.act_on(Vector2i(30, 3))
 	await _frames(3)
 	var mine: MineLevel = _main.call("current_map")
 	_check(mine is MineLevel and mine.level == 1, "la porte mène au niveau 1")
@@ -102,7 +102,7 @@ func _ready() -> void:
 	# Ascenseur
 	var levels := [[]]
 	EventBus.elevator_requested.connect(func(l: Array) -> void: levels[0] = l)
-	(_main.call("current_map") as Village).act_on(Vector2i(36, 4))
+	(_main.call("current_map") as Village).act_on(Vector2i(30, 3))
 	_check(levels[0] == [1, 5, 10], "l'ascenseur propose les paliers atteints (%s)" % [levels[0]])
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)

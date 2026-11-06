@@ -32,6 +32,13 @@
 			"coal": 1
 		}
 	},
+	"hay": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"fiber": 5
+		}
+	},
 	"vegetable_soup": {
 		"station": "craft",
 		"category": "Cuisine",
@@ -88,6 +95,14 @@
 		"gold": 300,
 		"ingredients": {
 			"iron_ore": 4
+		}
+	},
+	"omelette": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"egg": 2,
+			"milk": 1
 		}
 	}
 }
