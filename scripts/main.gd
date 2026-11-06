@@ -37,6 +37,34 @@ func _ready() -> void:
 	if SaveManager.has_save():
 		_add_button(box, "Continuer", _start.bind(true))
 	_add_button(box, "Nouvelle partie", _start.bind(false))
+	var hint := _install_hint()
+	if hint != "":
+		var label := Label.new()
+		label.text = hint
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_color_override("font_color", Color(0.25, 0.15, 0.19))
+		label.add_theme_constant_override("shadow_offset_x", 0)
+		label.add_theme_constant_override("shadow_offset_y", 0)
+		box.add_child(label)
+
+
+## Sur le web, explique comment installer le jeu sur l'écran d'accueil
+## (sauf s'il est déjà lancé depuis l'écran d'accueil).
+func _install_hint() -> String:
+	if not OS.has_feature("web"):
+		return ""
+	var standalone: Variant = JavaScriptBridge.eval(
+		"(window.navigator.standalone === true || window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches) ? 1 : 0")
+	if standalone != null and int(standalone) == 1:
+		return ""
+	var agent_value: Variant = JavaScriptBridge.eval("navigator.userAgent + (navigator.maxTouchPoints > 1 ? ' Touch' : '')")
+	var agent := "" if agent_value == null else str(agent_value)
+	# iPadOS se présente comme un Mac : on le reconnaît à l'écran tactile.
+	if agent.contains("iPhone") or agent.contains("iPad") or (agent.contains("Macintosh") and agent.contains("Touch")):
+		return "Astuce : Partager puis « Sur l'écran d'accueil »\npour jouer en plein écran."
+	if agent.contains("Android"):
+		return "Astuce : menu du navigateur puis « Ajouter à l'écran d'accueil »\npour jouer en plein écran."
+	return ""
 
 
 func _add_button(box: Container, text: String, callback: Callable) -> void:

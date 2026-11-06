@@ -4,6 +4,11 @@ extends Node
 
 const SAVE_PATH := "user://fafavalley_save_v2.json"  # v2 : objets Kenney
 const SAVE_VERSION := 2
+## Sur le web (iPhone), le navigateur peut fermer le jeu sans prévenir :
+## on sauvegarde aussi régulièrement.
+const WEB_AUTOSAVE_SECONDS := 45.0
+
+var _autosave_timer: float = 0.0
 
 
 func has_save() -> bool:
@@ -47,8 +52,17 @@ func load_game() -> bool:
 	return true
 
 
+func _process(delta: float) -> void:
+	if not OS.has_feature("web") or not GameFlow.in_game or get_tree().paused:
+		return
+	_autosave_timer += delta
+	if _autosave_timer >= WEB_AUTOSAVE_SECONDS:
+		_autosave_timer = 0.0
+		save_game()
+
+
 func _notification(what: int) -> void:
 	match what:
-		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_CLOSE_REQUEST:
+		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 			if GameFlow.in_game:
 				save_game()

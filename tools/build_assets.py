@@ -562,7 +562,18 @@ def app_icon():
     base.alpha_composite(tile(FARM, 6), (0, 14))
     base.alpha_composite(tile(FARM, 6), (17, 14))
     base.alpha_composite(tile(FARM, 109), (8, 4))
-    base.resize((128, 128), Image.NEAREST).save(os.path.join(ROOT, "icon.png"))
+    # Icône du projet en 180 px (= icône iOS « apple-touch-icon » du web)
+    icon = Image.new("RGBA", (180, 180), (132, 198, 105, 255))
+    icon.alpha_composite(base.resize((160, 160), Image.NEAREST), (10, 10))
+    icon.save(os.path.join(ROOT, "icon.png"))
+    # Icônes de l'application web (écran d'accueil iOS / Android)
+    web = os.path.join(ROOT, "assets", "web")
+    os.makedirs(web, exist_ok=True)
+    for size, scale in ((144, 4), (180, 5), (512, 16)):
+        canvas = Image.new("RGBA", (size, size), (132, 198, 105, 255))
+        art = base.resize((32 * scale, 32 * scale), Image.NEAREST)
+        canvas.alpha_composite(art, ((size - art.width) // 2, (size - art.height) // 2))
+        canvas.convert("RGB").save(os.path.join(web, "icon_%d.png" % size))
 
 
 if __name__ == "__main__":

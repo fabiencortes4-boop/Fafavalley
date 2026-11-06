@@ -393,9 +393,10 @@ func open_pause_menu() -> void:
 	_add_button(box, "Sauvegarder", func() -> void:
 		SaveManager.save_game()
 		show_toast("Partie sauvegardée"))
-	_add_button(box, "Sauvegarder et quitter", func() -> void:
-		SaveManager.save_game()
-		get_tree().quit())
+	if not OS.has_feature("web"):  # on ne « quitte » pas une page web
+		_add_button(box, "Sauvegarder et quitter", func() -> void:
+			SaveManager.save_game()
+			get_tree().quit())
 
 
 func ask_sleep() -> void:

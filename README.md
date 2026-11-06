@@ -4,6 +4,21 @@ Jeu de ferme cosy en pixel art, pensé d'abord pour **mobile** (Android / iOS),
 développé avec **Godot 4.3+** (GDScript, rendu *Compatibility* pour un maximum
 d'appareils).
 
+## Jouer dans le navigateur (iPhone, Android, PC)
+
+**https://fabiencortes4-boop.github.io/Fafavalley/**
+
+- iPhone / iPad (Safari) : bouton *Partager* puis **« Sur l'écran d'accueil »** : le jeu
+  s'ouvre ensuite en plein écran, comme une application.
+- Android (Chrome) : menu ⋮ puis **« Ajouter à l'écran d'accueil »** (ou « Installer »).
+- Jouer en mode paysage (un message s'affiche en portrait).
+- La partie est sauvegardée dans le navigateur (automatiquement toutes les 45 s, et
+  quand on quitte l'application).
+
+La version web est publiée automatiquement par GitHub Actions
+(`.github/workflows/web.yml`) à chaque mise à jour de la branche. Prérequis, une seule
+fois : *Settings → Pages → Source : GitHub Actions*.
+
 ## Lancer le projet
 
 1. Installer [Godot 4.3 ou plus récent](https://godotengine.org/download) (version standard, pas .NET).
