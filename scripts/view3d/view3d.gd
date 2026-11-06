@@ -7,6 +7,7 @@ extends Node3D
 const UNIT := 16.0  # pixels 2D par case
 const CAMERA_PITCH := deg_to_rad(55.0)
 const CHARACTER_SCALE := 0.42
+const TOOL_SIZE := 0.6  # longueur des outils tenus en main (en cases)
 
 static var current: View3D
 
@@ -670,10 +671,33 @@ func _show_tool(id: String) -> void:
 		_tool3d = null
 	if TOOL_MODELS.has(id):
 		var spec: Array = TOOL_MODELS[id]
-		_tool3d = _model(spec[0], spec[1], 2.6)
-		_tool3d.position = Vector3(0, -0.9, 0.15)
+		_tool3d = _model(spec[0], spec[1], 1.0)
+		# Taille à l'écran ~TOOL_SIZE case, quel que soit le modèle d'origine
+		var size := _model_size(_tool3d)
+		var s := TOOL_SIZE / maxf(size, 0.05) / CHARACTER_SCALE
+		_tool3d.scale = Vector3.ONE * s
+		# Manche dans la main, outil pointé vers l'avant
+		_tool3d.position = Vector3(0, -0.85, 0.1)
 		_tool3d.rotation_degrees = Vector3(90, 0, 0)
 		_hand.add_child(_tool3d)
+
+
+## Plus grande dimension d'un modèle (pour le mettre à la bonne taille).
+func _model_size(root: Node3D) -> float:
+	var box := AABB()
+	var first := true
+	for n in root.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var t := mi.transform
+		var p := mi.get_parent()
+		while p != null and p != root:
+			if p is Node3D:
+				t = (p as Node3D).transform * t
+			p = p.get_parent()
+		var b := t * mi.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return maxf(box.size.x, maxf(box.size.y, box.size.z))
 
 
 func _sync_player(delta: float) -> void:
