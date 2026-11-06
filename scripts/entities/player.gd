@@ -6,6 +6,7 @@ extends CharacterBody2D
 const SPEED := 72.0
 
 var facing: Vector2i = Vector2i.DOWN
+var locked: bool = false  # immobile (pêche...)
 var _sprite: Sprite2D
 var _bob: float = 0.0
 
@@ -27,6 +28,8 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if locked:
+		dir = Vector2.ZERO
 	velocity = dir * SPEED
 	move_and_slide()
 	if dir.length() > 0.1:

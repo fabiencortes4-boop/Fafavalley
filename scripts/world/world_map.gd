@@ -40,6 +40,7 @@ var _spawn_cell: Vector2i = Vector2i(2, 2)
 var _map_size: Vector2i
 var _target_cell: Vector2i
 var _warping: bool = false
+var fishing: Fishing
 
 
 # ------------------------------------------------------------ à surcharger
@@ -92,6 +93,9 @@ func _ready() -> void:
 	add_child(_cursor)
 	_tint = CanvasModulate.new()
 	add_child(_tint)
+	fishing = Fishing.new()
+	fishing.map = self
+	add_child(fishing)
 	TimeManager.time_changed.connect(_update_tint)
 	TimeManager.day_started.connect(_on_day_started)
 	_after_build()
@@ -226,6 +230,10 @@ func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell * TILE) + Vector2(TILE / 2.0, TILE * 0.75)
 
 
+func is_water(cell: Vector2i) -> bool:
+	return _ground_chars.get(cell, "") == "~"
+
+
 func is_walkable(cell: Vector2i) -> bool:
 	if not _ground_chars.has(cell) or _blocked.has(cell):
 		return false
@@ -237,6 +245,7 @@ func is_walkable(cell: Vector2i) -> bool:
 func _process(_delta: float) -> void:
 	_target_cell = player_cell() + player.facing
 	_cursor.position = Vector2(_target_cell * TILE)
+	_cursor.visible = not fishing.busy()
 
 
 func _physics_process(_delta: float) -> void:
@@ -261,6 +270,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and event.pressed:
 		if hud != null and hud.is_over_ui(event):
 			return
+		# Pendant la pêche, toucher l'écran n'importe où = ferrer.
+		if fishing.busy():
+			fishing.on_action()
+			get_viewport().set_input_as_handled()
+			return
 		var local := make_input_local(event) as InputEventScreenTouch
 		var cell := Vector2i((local.position / TILE).floor())
 		var offset := cell - player_cell()
@@ -271,14 +285,28 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func act_on(cell: Vector2i) -> void:
+	if fishing.busy():
+		fishing.on_action()
+		return
 	var kind: String = _interactables.get(cell, "")
 	if kind == "sign":
 		var s: Array = _signs[cell]
 		EventBus.message_requested.emit(s[0], s[1])
 	elif kind != "":
 		_interact(kind, cell)
+	elif _holding_tool() == "fishing_rod":
+		var energy := int(GameData.item("fishing_rod").get("energy", 4))
+		if not fishing.try_cast(energy):
+			EventBus.toast("Mets-toi face à l'eau pour pêcher.")
 	else:
 		_act_on_ground(cell)
+
+
+func _holding_tool() -> String:
+	var slot: Variant = Inventory.get_selected()
+	if slot == null:
+		return ""
+	return str(GameData.item(slot.id).get("tool", ""))
 
 
 func spend_energy(energy: int) -> bool:

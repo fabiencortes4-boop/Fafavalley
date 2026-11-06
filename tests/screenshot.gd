@@ -25,6 +25,17 @@ func _ready() -> void:
 				var v: Village = main.call("current_map")
 				Relations.add_points("odette", 800)
 				EventBus.dialogue_requested.emit("odette", str(GameData.npc("odette").dialogue.friend[0]))
+		if "--fishing" in args:
+			var farm: WorldMap = main.call("current_map")
+			Inventory.add_item("fishing_rod", 1)
+			Inventory.select(3)
+			farm.player.position = farm.cell_center(Vector2i(25, 18))
+			farm.player.facing = Vector2i.RIGHT
+			farm.act_on(Vector2i(26, 18))
+			farm.fishing.set("_timer", 100.0 if "--bite" in args else 0.0)
+			await get_tree().process_frame
+			if "--bite" not in args:
+				farm.fishing.on_action()
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)

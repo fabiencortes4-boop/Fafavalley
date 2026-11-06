@@ -349,6 +349,7 @@ func open_pause_menu() -> void:
 	var box := _open_modal("Pause")
 	_add_button(box, "Reprendre", close_modal)
 	_add_button(box, "Habitants", open_relations)
+	_add_button(box, "Carnet de pêche", open_fish_log)
 	_add_button(box, "Sauvegarder", func() -> void:
 		SaveManager.save_game()
 		show_toast("Partie sauvegardée"))
@@ -395,7 +396,7 @@ func open_shop() -> void:
 			child.queue_free()
 		for id: String in GameData.items:
 			var item := GameData.item(id)
-			if item.get("type") != "seed":
+			if item.get("type") != "seed" and not item.get("shop", false):
 				continue
 			var row := HBoxContainer.new()
 			list.add_child(row)
@@ -404,14 +405,18 @@ func open_shop() -> void:
 			icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 			icon.custom_minimum_size = Vector2(18, 18)
 			row.add_child(icon)
-			var in_season := GameData.crop_in_season(str(item.crop), TimeManager.season)
+			var is_seed: bool = item.get("type") == "seed"
+			var in_season := not is_seed or GameData.crop_in_season(str(item.crop), TimeManager.season)
+			var owned := not is_seed and Inventory.count_of(id) > 0
 			var name_label := Label.new()
 			name_label.text = "%s - %d or%s" % [item.name, int(item.buy), "" if in_season else " (hors saison)"]
 			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(name_label)
 			var buy := Button.new()
 			buy.text = "Acheter"
-			buy.disabled = not in_season or Inventory.gold < int(item.buy)
+			buy.disabled = not in_season or owned or Inventory.gold < int(item.buy)
+			if owned:
+				buy.text = "Acquis"
 			buy.pressed.connect(_buy.bind(id))
 			row.add_child(buy)
 	refresh.call()
@@ -568,3 +573,45 @@ func fade_in() -> void:
 	_fade.color.a = 1.0
 	var tween := create_tween()
 	tween.tween_property(_fade, "color:a", 0.0, 0.4)
+
+
+# ------------------------------------------------------------ pêche
+func start_fishing(fish_id: String, on_done: Callable) -> void:
+	var box := _open_modal("Ça mord !", false)
+	var hint := _add_label(box, "Garde le poisson dans le filet : appuie pour aller à droite, relâche pour revenir.")
+	hint.custom_minimum_size = Vector2(260, 0)
+	var data := GameData.fish(fish_id)
+	var game := FishingMinigame.new()
+	game.difficulty = float(data.get("difficulty", 30)) / 100.0
+	game.behavior = str(data.get("behavior", "calm"))
+	game.fish_texture = GameData.item_icon(fish_id)
+	game.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(game)
+	game.finished.connect(func(success: bool) -> void:
+		close_modal()
+		on_done.call(success))
+
+
+func open_fish_log() -> void:
+	var box := _open_modal("Carnet de pêche")
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 12)
+	box.add_child(grid)
+	for id: String in GameData.fishes:
+		var row := HBoxContainer.new()
+		grid.add_child(row)
+		var icon := TextureRect.new()
+		icon.texture = GameData.item_icon(id)
+		var entry: Variant = FishLog.caught.get(id)
+		if entry == null:
+			icon.modulate = Color(0, 0, 0, 0.6)  # silhouette : pas encore attrapé
+		row.add_child(icon)
+		var label := Label.new()
+		if entry == null:
+			label.text = "???"
+		else:
+			label.text = "%s\nx%d - record %d cm" % [GameData.fish(id).name, entry.count, entry.best]
+		row.add_child(label)
+	_add_label(box, "Espèces : %d / %d" % [FishLog.caught.size(), GameData.fishes.size()])
+	_add_button(box, "Retour", open_pause_menu)

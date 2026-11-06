@@ -20,4 +20,6 @@ Chaque dossier contient le fichier de licence original.
 
 `sprites/*.png` sont produits par `tools/build_assets.py` à partir des
 planches ci-dessus (découpage, assemblage, eau recolorée depuis les chemins).
-Ils restent sous CC0. `sprites/hearts.png` est dessiné par le script (CC0).
+Ils restent sous CC0. `sprites/hearts.png`, `sprites/bobber.png` ainsi que la canne à
+pêche et les poissons de `sprites/icons.png` sont dessinés par le script,
+avec la palette Kenney (CC0).

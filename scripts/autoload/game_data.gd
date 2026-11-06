@@ -8,6 +8,7 @@ const ICON_SIZE := 16
 var items: Dictionary = {}
 var crops: Dictionary = {}
 var npcs: Dictionary = {}
+var fishes: Dictionary = {}
 var _icon_cache: Dictionary = {}
 var _icons_texture: Texture2D
 
@@ -16,6 +17,7 @@ func _ready() -> void:
 	items = _load_json("res://data/items.json")
 	crops = _load_json("res://data/crops.json")
 	npcs = _load_json("res://data/npcs.json")
+	fishes = _load_json("res://data/fish.json")
 	_icons_texture = load(ICONS_PATH)
 
 
@@ -37,6 +39,41 @@ func item(id: String) -> Dictionary:
 
 func crop(id: String) -> Dictionary:
 	return crops.get(id, {})
+
+
+func fish(id: String) -> Dictionary:
+	return fishes.get(id, {})
+
+
+## Tire au sort un poisson disponible ici et maintenant (pondéré par "weight").
+func pick_fish(place: String) -> String:
+	var hour := TimeManager.minutes / 60.0
+	var pool: Array = []
+	var total := 0
+	for id: String in fishes:
+		var f: Dictionary = fishes[id]
+		var hours: Array = f.get("hours", [6, 26])
+		var weather := str(f.get("weather", "any"))
+		if not place in f.get("places", []):
+			continue
+		if not float(TimeManager.season) in f.get("seasons", []):
+			continue
+		if hour < float(hours[0]) or hour >= float(hours[1]):
+			continue
+		if weather == "rain" and not TimeManager.is_raining():
+			continue
+		if weather == "sunny" and TimeManager.is_raining():
+			continue
+		total += int(f.get("weight", 1))
+		pool.append(id)
+	if pool.is_empty():
+		return "roach"
+	var roll := randi() % total
+	for id: String in pool:
+		roll -= int(fishes[id].get("weight", 1))
+		if roll < 0:
+			return id
+	return pool[0]
 
 
 func npc(id: String) -> Dictionary:

@@ -4,13 +4,38 @@
 		"title": "l'épicière",
 		"sprite": 0,
 		"home": "store",
-		"loves": ["tomato", "cabbage"],
-		"likes": ["carrot", "turnip"],
-		"dislikes": ["wheat"],
+		"loves": [
+			"tomato",
+			"cabbage"
+		],
+		"likes": [
+			"carrot",
+			"turnip",
+			"trout"
+		],
+		"dislikes": [
+			"wheat",
+			"eel"
+		],
 		"schedule": [
-			{"time": "08:00", "cell": [5, 8]},
-			{"time": "17:30", "cell": [18, 16]},
-			{"time": "19:30", "home": true}
+			{
+				"time": "08:00",
+				"cell": [
+					5,
+					8
+				]
+			},
+			{
+				"time": "17:30",
+				"cell": [
+					18,
+					16
+				]
+			},
+			{
+				"time": "19:30",
+				"home": true
+			}
 		],
 		"dialogue": {
 			"intro": "Oh ! C'est toi qui as repris la vieille ferme ? Bienvenue à Valfleur ! Je tiens l'épicerie : graines, conseils, et commérages gratuits.",
@@ -28,16 +53,29 @@
 				"Avec toi, je me sens moins seule derrière mon comptoir.",
 				"Un jour, il faudra que je te montre les recettes de ma grand-mère. Elles sont secrètes... mais pour toi, je ferai une exception."
 			],
-			"spring": ["Le printemps ! Les carottes et les navets partent comme des petits pains."],
-			"summer": ["Il fait chaud... Pense à arroser tes tomates tous les jours, elles ont soif."],
-			"autumn": ["L'automne, c'est la saison des récoltes. Et des confitures !"],
-			"winter": ["En hiver, la terre se repose. Toi aussi, tu devrais."],
-			"rain": ["Quelle pluie ! Au moins, tes cultures s'arrosent toutes seules."],
-			"again": ["Reviens me voir demain, je te raconterai la suite !", "Bonne journée, et salue tes légumes de ma part."],
+			"spring": [
+				"Le printemps ! Les carottes et les navets partent comme des petits pains."
+			],
+			"summer": [
+				"Il fait chaud... Pense à arroser tes tomates tous les jours, elles ont soif."
+			],
+			"autumn": [
+				"L'automne, c'est la saison des récoltes. Et des confitures !"
+			],
+			"winter": [
+				"En hiver, la terre se repose. Toi aussi, tu devrais."
+			],
+			"rain": [
+				"Quelle pluie ! Au moins, tes cultures s'arrosent toutes seules."
+			],
+			"again": [
+				"Reviens me voir demain, je te raconterai la suite !",
+				"Bonne journée, et salue tes légumes de ma part."
+			],
 			"gift_loved": "Oh ! C'est exactement ce qu'il me fallait. Tu es un amour !",
 			"gift_liked": "Merci, c'est très gentil de ta part.",
 			"gift_neutral": "Oh, merci. Je vais bien trouver quoi en faire.",
-			"gift_disliked": "Euh... du blé ? Je suis allergique, tu sais...",
+			"gift_disliked": "Oh... ce n'est vraiment pas mon truc, désolée.",
 			"gift_again": "Tu m'as déjà fait un cadeau aujourd'hui. Garde-le pour demain !"
 		}
 	},
@@ -46,14 +84,44 @@
 		"title": "le forgeron",
 		"sprite": 1,
 		"home": "gaston",
-		"loves": ["corn"],
-		"likes": ["turnip", "wheat"],
-		"dislikes": ["cabbage"],
+		"loves": [
+			"corn",
+			"pike"
+		],
+		"likes": [
+			"turnip",
+			"wheat",
+			"catfish"
+		],
+		"dislikes": [
+			"cabbage"
+		],
 		"schedule": [
-			{"time": "07:00", "cell": [15, 9]},
-			{"time": "12:00", "cell": [22, 16]},
-			{"time": "16:00", "cell": [25, 21]},
-			{"time": "20:00", "home": true}
+			{
+				"time": "07:00",
+				"cell": [
+					15,
+					9
+				]
+			},
+			{
+				"time": "12:00",
+				"cell": [
+					22,
+					16
+				]
+			},
+			{
+				"time": "16:00",
+				"cell": [
+					25,
+					21
+				]
+			},
+			{
+				"time": "20:00",
+				"home": true
+			}
 		],
 		"dialogue": {
 			"intro": "Hm. Toi, c'est la ferme du vieux chemin. Moi, c'est Gaston. Je répare les outils. Ne les casse pas trop vite.",
@@ -71,16 +139,29 @@
 				"Tu es la seule personne à qui je parle autant. Ne le répète pas.",
 				"Je t'ai gardé un bout de métal. Je ne sais pas encore ce que j'en ferai. Pour toi."
 			],
-			"spring": ["Le printemps. Tout le monde veut des outils neufs. Hm."],
-			"summer": ["Il fait déjà assez chaud près de la forge, alors l'été..."],
-			"autumn": ["L'automne. J'aime bien les feuilles. Ne le dis à personne."],
-			"winter": ["L'hiver, je fais des fers à cheval. Pour personne. Pour le plaisir."],
-			"rain": ["La pluie fait rouiller le métal. Et le moral."],
-			"again": ["Hm. À demain.", "On s'est déjà parlé. C'est assez pour aujourd'hui."],
-			"gift_loved": "... Du maïs. Comment tu as su ? Merci. Vraiment.",
+			"spring": [
+				"Le printemps. Tout le monde veut des outils neufs. Hm."
+			],
+			"summer": [
+				"Il fait déjà assez chaud près de la forge, alors l'été..."
+			],
+			"autumn": [
+				"L'automne. J'aime bien les feuilles. Ne le dis à personne."
+			],
+			"winter": [
+				"L'hiver, je fais des fers à cheval. Pour personne. Pour le plaisir."
+			],
+			"rain": [
+				"La pluie fait rouiller le métal. Et le moral."
+			],
+			"again": [
+				"Hm. À demain.",
+				"On s'est déjà parlé. C'est assez pour aujourd'hui."
+			],
+			"gift_loved": "... Comment tu as su ? Merci. Vraiment.",
 			"gift_liked": "Hm. Pas mal. Merci.",
 			"gift_neutral": "Hm. D'accord.",
-			"gift_disliked": "Du chou. Non. Juste... non.",
+			"gift_disliked": "Non. Juste... non.",
 			"gift_again": "Un cadeau par jour, ça suffit. Hm."
 		}
 	},
@@ -89,14 +170,43 @@
 		"title": "la jardinière",
 		"sprite": 2,
 		"home": "odette",
-		"loves": ["turnip", "carrot"],
-		"likes": ["tomato", "cabbage"],
+		"loves": [
+			"turnip",
+			"carrot"
+		],
+		"likes": [
+			"tomato",
+			"cabbage",
+			"carp",
+			"roach"
+		],
 		"dislikes": [],
 		"schedule": [
-			{"time": "08:00", "cell": [9, 18]},
-			{"time": "11:00", "cell": [17, 12]},
-			{"time": "15:00", "cell": [7, 19]},
-			{"time": "18:00", "home": true}
+			{
+				"time": "08:00",
+				"cell": [
+					9,
+					18
+				]
+			},
+			{
+				"time": "11:00",
+				"cell": [
+					17,
+					12
+				]
+			},
+			{
+				"time": "15:00",
+				"cell": [
+					7,
+					19
+				]
+			},
+			{
+				"time": "18:00",
+				"home": true
+			}
 		],
 		"dialogue": {
 			"intro": "Bonjour, mon trésor ! J'ai connu ta ferme quand elle débordait de légumes. Je suis bien contente qu'elle reprenne vie.",
@@ -114,12 +224,25 @@
 				"Tu es comme un petit-enfant pour moi, tu sais.",
 				"Le jour où je ne pourrai plus jardiner, je te confierai mes graines. Elles sont précieuses."
 			],
-			"spring": ["Le printemps, c'est la saison des semis. Mon cœur rajeunit à chaque fois."],
-			"summer": ["En été, je me lève tôt pour profiter de la fraîcheur. Les tomates aussi aiment le matin."],
-			"autumn": ["L'automne a les plus belles couleurs. Et les meilleures soupes."],
-			"winter": ["L'hiver, je tricote au coin du feu. Il te faudrait une écharpe, non ?"],
-			"rain": ["Ah, la pluie ! Le jardin la boit avec gourmandise."],
-			"again": ["File travailler, mon trésor. On se reverra demain.", "Tu as une petite mine. Pense à te reposer."],
+			"spring": [
+				"Le printemps, c'est la saison des semis. Mon cœur rajeunit à chaque fois."
+			],
+			"summer": [
+				"En été, je me lève tôt pour profiter de la fraîcheur. Les tomates aussi aiment le matin."
+			],
+			"autumn": [
+				"L'automne a les plus belles couleurs. Et les meilleures soupes."
+			],
+			"winter": [
+				"L'hiver, je tricote au coin du feu. Il te faudrait une écharpe, non ?"
+			],
+			"rain": [
+				"Ah, la pluie ! Le jardin la boit avec gourmandise."
+			],
+			"again": [
+				"File travailler, mon trésor. On se reverra demain.",
+				"Tu as une petite mine. Pense à te reposer."
+			],
 			"gift_loved": "Oh, merveille ! Ça me rappelle mon jardin d'autrefois. Merci, mon trésor !",
 			"gift_liked": "Comme c'est gentil ! Ça fera une bonne soupe.",
 			"gift_neutral": "Merci, mon trésor. C'est l'intention qui compte.",
@@ -132,14 +255,44 @@
 		"title": "la peintre",
 		"sprite": 3,
 		"home": "lina",
-		"loves": ["wheat"],
-		"likes": ["corn", "carrot"],
-		"dislikes": ["turnip"],
+		"loves": [
+			"wheat",
+			"golden_carp"
+		],
+		"likes": [
+			"corn",
+			"carrot",
+			"trout"
+		],
+		"dislikes": [
+			"turnip"
+		],
 		"schedule": [
-			{"time": "09:00", "cell": [26, 21]},
-			{"time": "13:00", "cell": [23, 14]},
-			{"time": "17:00", "cell": [30, 10]},
-			{"time": "21:00", "home": true}
+			{
+				"time": "09:00",
+				"cell": [
+					26,
+					21
+				]
+			},
+			{
+				"time": "13:00",
+				"cell": [
+					23,
+					14
+				]
+			},
+			{
+				"time": "17:00",
+				"cell": [
+					30,
+					10
+				]
+			},
+			{
+				"time": "21:00",
+				"home": true
+			}
 		],
 		"dialogue": {
 			"intro": "Salut ! Ne bouge pas... voilà, je t'ai dessiné dans mon carnet. Je suis Lina. Je peins tout ce qui est beau à Valfleur.",
@@ -157,16 +310,29 @@
 				"Tu es la personne que je peins le plus souvent. Tu ne m'en veux pas ?",
 				"Quand je suis avec toi, je n'ai pas besoin de pinceau pour voir les couleurs."
 			],
-			"spring": ["Le printemps, c'est vert tendre partout. Mon tube de vert est presque vide !"],
-			"summer": ["L'été, les couleurs sont tellement vives qu'elles me font mal aux yeux. J'adore."],
-			"autumn": ["L'automne, c'est ma saison. Orange, rouge, ocre... tout est une toile."],
-			"winter": ["Peindre la neige, c'est peindre la lumière. C'est le plus difficile."],
-			"rain": ["La pluie fait couler mes aquarelles... alors je peins la pluie."],
-			"again": ["Je retourne à ma toile. À demain !", "Chut, la lumière est parfaite, là..."],
-			"gift_loved": "Du blé ! Je vais en faire un bouquet et le peindre. C'est parfait !",
+			"spring": [
+				"Le printemps, c'est vert tendre partout. Mon tube de vert est presque vide !"
+			],
+			"summer": [
+				"L'été, les couleurs sont tellement vives qu'elles me font mal aux yeux. J'adore."
+			],
+			"autumn": [
+				"L'automne, c'est ma saison. Orange, rouge, ocre... tout est une toile."
+			],
+			"winter": [
+				"Peindre la neige, c'est peindre la lumière. C'est le plus difficile."
+			],
+			"rain": [
+				"La pluie fait couler mes aquarelles... alors je peins la pluie."
+			],
+			"again": [
+				"Je retourne à ma toile. À demain !",
+				"Chut, la lumière est parfaite, là..."
+			],
+			"gift_loved": "Oh ! C'est parfait, je vais le peindre tout de suite !",
 			"gift_liked": "Oh, merci ! Les couleurs sont superbes.",
 			"gift_neutral": "Merci ! Je trouverai bien à le dessiner.",
-			"gift_disliked": "Un navet... Ce n'est pas très inspirant, désolée.",
+			"gift_disliked": "Hum... ça ne m'inspire pas du tout, désolée.",
 			"gift_again": "Encore ? Tu me gâtes ! Garde ça pour demain."
 		}
 	},
@@ -175,14 +341,43 @@
 		"title": "le maire",
 		"sprite": 4,
 		"home": "mairie",
-		"loves": ["cabbage"],
-		"likes": ["tomato", "corn", "wheat"],
+		"loves": [
+			"cabbage",
+			"pike"
+		],
+		"likes": [
+			"tomato",
+			"corn",
+			"wheat",
+			"perch"
+		],
 		"dislikes": [],
 		"schedule": [
-			{"time": "08:00", "cell": [16, 14]},
-			{"time": "12:00", "cell": [35, 9]},
-			{"time": "17:00", "cell": [21, 17]},
-			{"time": "20:00", "home": true}
+			{
+				"time": "08:00",
+				"cell": [
+					16,
+					14
+				]
+			},
+			{
+				"time": "12:00",
+				"cell": [
+					35,
+					9
+				]
+			},
+			{
+				"time": "17:00",
+				"cell": [
+					21,
+					17
+				]
+			},
+			{
+				"time": "20:00",
+				"home": true
+			}
 		],
 		"dialogue": {
 			"intro": "Ah ! C'est toi, la nouvelle personne à la ferme ! Bertrand, maire de Valfleur depuis... oh, bien trop longtemps. Je compte sur toi pour redonner vie à nos terres.",
@@ -200,13 +395,26 @@
 				"Tu es un pilier de Valfleur. Je suis fier de toi.",
 				"Quand je prendrai ma retraite, j'aimerais que quelqu'un comme toi veille sur le village."
 			],
-			"spring": ["Le printemps ! Le village se réveille. Moi aussi, mais plus lentement."],
-			"summer": ["L'été, je fais ma tournée du village. À l'ombre, de préférence."],
-			"autumn": ["La fête des moissons approche. Prépare tes plus beaux légumes !"],
-			"winter": ["L'hiver est calme. Parfait pour remplir les papiers de la mairie... ou pas."],
-			"rain": ["La pluie ! Bonne nouvelle pour les champs, mauvaise pour mes rhumatismes."],
-			"again": ["Allons, au travail ! Valfleur compte sur toi.", "On en reparle demain, d'accord ?"],
-			"gift_loved": "Un chou ! Magnifique ! C'est pour ma soupe du dimanche. Merci infiniment !",
+			"spring": [
+				"Le printemps ! Le village se réveille. Moi aussi, mais plus lentement."
+			],
+			"summer": [
+				"L'été, je fais ma tournée du village. À l'ombre, de préférence."
+			],
+			"autumn": [
+				"La fête des moissons approche. Prépare tes plus beaux légumes !"
+			],
+			"winter": [
+				"L'hiver est calme. Parfait pour remplir les papiers de la mairie... ou pas."
+			],
+			"rain": [
+				"La pluie ! Bonne nouvelle pour les champs, mauvaise pour mes rhumatismes."
+			],
+			"again": [
+				"Allons, au travail ! Valfleur compte sur toi.",
+				"On en reparle demain, d'accord ?"
+			],
+			"gift_loved": "Magnifique ! Ce sera pour mon repas du dimanche. Merci infiniment !",
 			"gift_liked": "Merci beaucoup ! Valfleur te remercie.",
 			"gift_neutral": "Merci, c'est fort aimable.",
 			"gift_disliked": "Hum... merci, je suppose.",

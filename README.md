@@ -30,6 +30,11 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - **5 habitants** avec emploi du temps (ils sortent, se promènent, rentrent le soir),
   dialogues selon l'amitié, la saison et la météo, **cœurs d'amitié** (10 max),
   **cadeaux** une fois par jour selon leurs goûts. Menu → Habitants pour suivre ses amitiés.
+- **Pêche** : canne vendue à l'épicerie (250 or). Face à l'eau, lancer avec Action,
+  attendre le « ! » (le téléphone vibre), ferrer, puis mini-jeu : appuyer pour pousser
+  le filet à droite, relâcher pour le laisser revenir, garder le poisson dedans.
+  8 espèces selon l'étang, la saison, l'heure et la météo ; tailles et records dans
+  Menu → Carnet de pêche. Les poissons se vendent et s'offrent.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
 - Contrôles tactiles : joystick flottant, bouton Action, toucher une tuile voisine, barre rapide (multitouch).
@@ -38,7 +43,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ```
 project.godot
-data/                 # contenu du jeu en JSON (objets, cultures, habitants) : pas de code à toucher
+data/                 # contenu du jeu en JSON (objets, cultures, habitants, poissons) : pas de code à toucher
 scenes/main.tscn      # point d'entrée
 scripts/
   autoload/           # singletons globaux
@@ -49,12 +54,15 @@ scripts/
     farm_state.gd     #   tuiles, cultures, expédition (logique pure)
     player_state.gd   #   énergie, eau, position
     relations.gd      #   amitié, discussions, cadeaux
+    fish_log.gd       #   carnet de pêche
     save_manager.gd   #   sauvegarde JSON dans user://
     game_flow.gd      #   nouvelle partie, fin de journée
   world/world_map.gd  # base des cartes : ASCII -> TileMapLayer, bâtiments, passages
   world/farm.gd       # ferme : labour, cultures, expédition, sommeil
   world/village.gd    # village : bâtiments, habitants, itinéraires (AStarGrid2D)
   entities/npc.gd     # habitant : emploi du temps, marche
+  systems/fishing.gd  # lancer, touche, choix du poisson
+  ui/fishing_minigame.gd
   entities/player.gd
   ui/                 # HUD, joystick, thème
 tools/build_assets.py     # assemble les sprites à partir des packs Kenney
@@ -76,6 +84,8 @@ Principes :
 ```
 godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nuit, récolte, vente, sauvegarde
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
+godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
+godot --headless -s res://tests/fishing_balance.gd # équilibrage du mini-jeu (simulation)
 godot --headless res://tests/movement_test.tscn   # joystick tactile
 xvfb-run godot --rendering-driver opengl3 res://tests/screenshot.tscn -- capture.png
 ```
@@ -99,7 +109,8 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 - [x] Village et habitants (emplois du temps, dialogues, cadeaux, amitié)
 - [ ] Intérieurs des maisons, scènes de cœur, anniversaires
 - [ ] Fabrication, cuisine, machines de transformation
-- [ ] Pêche (mini-jeu tactile), mine et combat
+- [x] Pêche (mini-jeu tactile, 8 espèces, carnet)
+- [ ] Mine et combat
 - [ ] Animaux, bâtiments, compétences
 - [ ] Fil rouge (collections à compléter), festivals
 - [ ] Musique, sons, réglages, bêta Play Store

@@ -1,16 +1,183 @@
 {
-	"hoe": {"name": "Houe", "type": "tool", "tool": "hoe", "icon": 0, "stack": 1, "energy": 2, "description": "Laboure l'herbe pour y semer."},
-	"watering_can": {"name": "Arrosoir", "type": "tool", "tool": "watering_can", "icon": 1, "stack": 1, "energy": 2, "description": "Arrose les cultures. Se remplit à l'étang."},
-	"seed_carrot": {"name": "Graines de carotte", "type": "seed", "crop": "carrot", "icon": 2, "stack": 99, "buy": 20, "sell": 10},
-	"seed_turnip": {"name": "Graines de navet", "type": "seed", "crop": "turnip", "icon": 3, "stack": 99, "buy": 30, "sell": 15},
-	"seed_corn": {"name": "Graines de maïs", "type": "seed", "crop": "corn", "icon": 4, "stack": 99, "buy": 80, "sell": 40},
-	"seed_tomato": {"name": "Graines de tomate", "type": "seed", "crop": "tomato", "icon": 5, "stack": 99, "buy": 50, "sell": 25},
-	"seed_cabbage": {"name": "Graines de chou", "type": "seed", "crop": "cabbage", "icon": 6, "stack": 99, "buy": 45, "sell": 22},
-	"seed_wheat": {"name": "Graines de blé", "type": "seed", "crop": "wheat", "icon": 7, "stack": 99, "buy": 10, "sell": 5},
-	"carrot": {"name": "Carotte", "type": "crop", "icon": 8, "stack": 99, "sell": 35},
-	"turnip": {"name": "Navet", "type": "crop", "icon": 9, "stack": 99, "sell": 60},
-	"corn": {"name": "Maïs", "type": "crop", "icon": 10, "stack": 99, "sell": 50},
-	"tomato": {"name": "Tomate", "type": "crop", "icon": 11, "stack": 99, "sell": 45},
-	"cabbage": {"name": "Chou", "type": "crop", "icon": 12, "stack": 99, "sell": 90},
-	"wheat": {"name": "Blé", "type": "crop", "icon": 13, "stack": 99, "sell": 25}
+	"hoe": {
+		"name": "Houe",
+		"type": "tool",
+		"tool": "hoe",
+		"icon": 0,
+		"stack": 1,
+		"energy": 2,
+		"description": "Laboure l'herbe pour y semer."
+	},
+	"watering_can": {
+		"name": "Arrosoir",
+		"type": "tool",
+		"tool": "watering_can",
+		"icon": 1,
+		"stack": 1,
+		"energy": 2,
+		"description": "Arrose les cultures. Se remplit à l'étang."
+	},
+	"seed_carrot": {
+		"name": "Graines de carotte",
+		"type": "seed",
+		"crop": "carrot",
+		"icon": 2,
+		"stack": 99,
+		"buy": 20,
+		"sell": 10
+	},
+	"seed_turnip": {
+		"name": "Graines de navet",
+		"type": "seed",
+		"crop": "turnip",
+		"icon": 3,
+		"stack": 99,
+		"buy": 30,
+		"sell": 15
+	},
+	"seed_corn": {
+		"name": "Graines de maïs",
+		"type": "seed",
+		"crop": "corn",
+		"icon": 4,
+		"stack": 99,
+		"buy": 80,
+		"sell": 40
+	},
+	"seed_tomato": {
+		"name": "Graines de tomate",
+		"type": "seed",
+		"crop": "tomato",
+		"icon": 5,
+		"stack": 99,
+		"buy": 50,
+		"sell": 25
+	},
+	"seed_cabbage": {
+		"name": "Graines de chou",
+		"type": "seed",
+		"crop": "cabbage",
+		"icon": 6,
+		"stack": 99,
+		"buy": 45,
+		"sell": 22
+	},
+	"seed_wheat": {
+		"name": "Graines de blé",
+		"type": "seed",
+		"crop": "wheat",
+		"icon": 7,
+		"stack": 99,
+		"buy": 10,
+		"sell": 5
+	},
+	"carrot": {
+		"name": "Carotte",
+		"type": "crop",
+		"icon": 8,
+		"stack": 99,
+		"sell": 35
+	},
+	"turnip": {
+		"name": "Navet",
+		"type": "crop",
+		"icon": 9,
+		"stack": 99,
+		"sell": 60
+	},
+	"corn": {
+		"name": "Maïs",
+		"type": "crop",
+		"icon": 10,
+		"stack": 99,
+		"sell": 50
+	},
+	"tomato": {
+		"name": "Tomate",
+		"type": "crop",
+		"icon": 11,
+		"stack": 99,
+		"sell": 45
+	},
+	"cabbage": {
+		"name": "Chou",
+		"type": "crop",
+		"icon": 12,
+		"stack": 99,
+		"sell": 90
+	},
+	"wheat": {
+		"name": "Blé",
+		"type": "crop",
+		"icon": 13,
+		"stack": 99,
+		"sell": 25
+	},
+	"fishing_rod": {
+		"name": "Canne à pêche",
+		"type": "tool",
+		"tool": "fishing_rod",
+		"icon": 14,
+		"stack": 1,
+		"energy": 4,
+		"buy": 250,
+		"shop": true,
+		"description": "Lance-la face à l'eau, attends la touche, puis ferre !"
+	},
+	"roach": {
+		"name": "Gardon",
+		"type": "fish",
+		"icon": 15,
+		"stack": 99,
+		"sell": 30
+	},
+	"carp": {
+		"name": "Carpe",
+		"type": "fish",
+		"icon": 16,
+		"stack": 99,
+		"sell": 60
+	},
+	"perch": {
+		"name": "Perche",
+		"type": "fish",
+		"icon": 17,
+		"stack": 99,
+		"sell": 75
+	},
+	"pike": {
+		"name": "Brochet",
+		"type": "fish",
+		"icon": 18,
+		"stack": 99,
+		"sell": 150
+	},
+	"eel": {
+		"name": "Anguille",
+		"type": "fish",
+		"icon": 19,
+		"stack": 99,
+		"sell": 120
+	},
+	"trout": {
+		"name": "Truite arc-en-ciel",
+		"type": "fish",
+		"icon": 20,
+		"stack": 99,
+		"sell": 90
+	},
+	"catfish": {
+		"name": "Poisson-chat",
+		"type": "fish",
+		"icon": 21,
+		"stack": 99,
+		"sell": 160
+	},
+	"golden_carp": {
+		"name": "Carpe dorée",
+		"type": "fish",
+		"icon": 22,
+		"stack": 99,
+		"sell": 500
+	}
 }

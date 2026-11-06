@@ -141,7 +141,7 @@ func npc_at(cell: Vector2i) -> Npc:
 
 
 func act_on(cell: Vector2i) -> void:
-	var npc := npc_at(cell)
+	var npc: Npc = null if fishing.busy() else npc_at(cell)
 	if npc != null:
 		_talk_to(npc)
 		return
@@ -151,7 +151,7 @@ func act_on(cell: Vector2i) -> void:
 func _talk_to(npc: Npc) -> void:
 	npc.face(player.position)
 	var slot: Variant = Inventory.get_selected()
-	if slot != null and GameData.item(slot.id).get("type") == "crop":
+	if slot != null and GameData.item(slot.id).get("type") in ["crop", "fish"]:
 		var result := Relations.give_gift(npc.id, slot.id)
 		if result.accepted:
 			Inventory.remove_from_slot(Inventory.selected, 1)

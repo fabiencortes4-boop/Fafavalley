@@ -177,6 +177,119 @@ def ui():
     compose(UI, [[86, 87], [109, 110]]).save(os.path.join(OUT, "ui_ring.png"))
 
 
+# --------------------------------------------------------------- pêche
+# Kenney n'a pas de poissons « Tiny » : on les dessine au pixel avec la
+# palette et le contour des packs Kenney (CC0).
+OUTLINE = (63, 38, 49, 255)
+
+# id : (longueur rx, hauteur ry, corps, ventre, nageoires, motif)
+FISH = [
+    ("roach", 5, 3, (192, 203, 220), (235, 239, 248), (195, 75, 53), None),
+    ("carp", 5, 4, (189, 140, 74), (253, 214, 160), (184, 101, 66), "scales"),
+    ("perch", 5, 3, (160, 190, 90), (230, 225, 150), (227, 134, 40), "stripes"),
+    ("pike", 6, 2, (110, 140, 80), (198, 229, 141), (78, 120, 66), "spots"),
+    ("eel", 7, 1, (118, 86, 64), (189, 150, 110), (90, 64, 50), None),
+    ("trout", 5, 3, (170, 186, 200), (235, 239, 248), (139, 155, 180), "rainbow"),
+    ("catfish", 5, 3, (100, 108, 120), (160, 168, 176), (82, 96, 124), "whiskers"),
+    ("golden_carp", 5, 4, (253, 190, 83), (255, 230, 150), (227, 134, 40), "shine"),
+]
+
+
+def draw_fish(rx, ry, body, belly, fin, pattern):
+    img = new_img(16, 16)
+    px = img.load()
+    cx, cy = 9, 8
+    mask = set()
+    for y in range(16):
+        for x in range(16):
+            if ((x - cx) / (rx + 0.5)) ** 2 + ((y - cy) / (ry + 0.5)) ** 2 <= 1.0:
+                mask.add((x, y))
+    # queue en triangle à gauche
+    tail_x = cx - rx - 1
+    fins = set()
+    for i in range(3):
+        for dy in range(-i - 1, i + 2):
+            fins.add((tail_x - i, cy + dy))
+    # nageoire dorsale
+    for x in range(cx - 1, cx + 2):
+        fins.add((x, cy - ry - 1))
+    for (x, y) in fins:
+        if 0 <= x < 16 and 0 <= y < 16 and (x, y) not in mask:
+            px[x, y] = fin + (255,)
+    for (x, y) in mask:
+        px[x, y] = (belly if y > cy else body) + (255,)
+        if pattern == "stripes" and x in (cx - 2, cx + 1) and y <= cy + 1:
+            px[x, y] = (78, 100, 50, 255)
+        if pattern == "spots" and (x + y) % 3 == 0 and y < cy:
+            px[x, y] = belly + (255,)
+        if pattern == "rainbow" and y == cy:
+            px[x, y] = (242, 132, 150, 255)
+        if pattern == "scales" and (x + y) % 2 == 0 and y < cy:
+            px[x, y] = (170, 120, 60, 255)
+    if pattern == "shine":
+        px[cx - 1, cy - 2] = (255, 255, 255, 255)
+        px[cx, cy - 2] = (255, 250, 220, 255)
+    if pattern == "whiskers":
+        for k in range(3):
+            px[min(15, cx + rx + 1 + k // 2), cy + 1 + k // 2] = OUTLINE
+    # contour
+    solid = {(x, y) for y in range(16) for x in range(16) if px[x, y][3] > 0 and px[x, y] != OUTLINE}
+    for (x, y) in list(solid):
+        for (nx, ny) in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < 16 and 0 <= ny < 16 and (nx, ny) not in solid and px[nx, ny][3] == 0:
+                px[nx, ny] = OUTLINE
+    # oeil
+    px[cx + rx - 1, cy - 1] = OUTLINE
+    return img
+
+
+def draw_rod():
+    img = new_img(16, 16)
+    px = img.load()
+    for i in range(11):
+        x, y = 2 + i, 14 - i
+        px[x, y] = (189, 108, 74, 255)
+        px[x + 1, y] = OUTLINE if i < 10 else (189, 108, 74, 255)
+        px[x - 1, y] = OUTLINE
+    for y in range(4, 11):
+        px[13, y] = (235, 239, 248, 255)
+    for (x, y) in ((12, 11), (13, 11), (14, 11), (12, 12), (14, 12), (13, 13)):
+        px[x, y] = OUTLINE
+    px[13, 12] = (195, 75, 53, 255)
+    px[3, 12], px[4, 12] = (63, 38, 49, 255), (118, 59, 54, 255)
+    return img
+
+
+def fishing():
+    sheet = Image.open(os.path.join(OUT, "icons.png"))
+    out = new_img(T * (15 + len(FISH)), T)
+    out.alpha_composite(sheet, (0, 0))
+    out.alpha_composite(draw_rod(), (14 * T, 0))  # 14 canne à pêche
+    for k, (_id, rx, ry, body, belly, fin, pattern) in enumerate(FISH):
+        out.alpha_composite(draw_fish(rx, ry, body, belly, fin, pattern), ((15 + k) * T, 0))
+    out.save(os.path.join(OUT, "icons.png"))
+    # bouchon (8x8)
+    bob = new_img(8, 8)
+    px = bob.load()
+    for y in range(1, 7):
+        for x in range(1, 7):
+            if (x - 3.5) ** 2 + (y - 3.5) ** 2 <= 7:
+                px[x, y] = ((195, 75, 53, 255) if y < 4 else (235, 239, 248, 255))
+    for y in range(8):
+        for x in range(8):
+            if px[x, y][3] == 0 and any(
+                0 <= x + dx < 8 and 0 <= y + dy < 8 and px[x + dx, y + dy][3] > 0 and px[x + dx, y + dy] != OUTLINE
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+            ):
+                px[x, y] = OUTLINE
+    bob.save(os.path.join(OUT, "bobber.png"))
+    tile(UI, 77).save(os.path.join(OUT, "ui_alert.png"))
+
+
+def new_img(w, h):
+    return Image.new("RGBA", (w, h), (0, 0, 0, 0))
+
+
 HEART = [
     "........",
     ".XX..XX.",
@@ -221,5 +334,6 @@ if __name__ == "__main__":
     village()
     ui()
     hearts()
+    fishing()
     app_icon()
     print("Sprites générés dans", OUT)
