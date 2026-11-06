@@ -91,8 +91,16 @@ func _ready() -> void:
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)
-	await get_tree().create_timer(1.0).timeout
+	var delay := 1.0
+	for a in args:
+		if a.begins_with("--act="):
+			delay = await _act(main, a.trim_prefix("--act="), args)
+	await get_tree().create_timer(delay).timeout
 	await RenderingServer.frame_post_draw
+	if "--debug" in args:
+		var pl: Node2D = main.call("current_map").player
+		for n in pl.find_children("*", "Node2D", true, false):
+			print("DBG ", n.name, " ", n.get_class(), " rot=%.2f grot=%.2f vis=%s" % [n.rotation, n.global_rotation, n.visible], " tex=", (n.texture.resource_path if n is Sprite2D and n.texture else ""))
 	get_viewport().get_texture().get_image().save_png(out)
 	print("Capture : ", out)
 	get_tree().quit()
@@ -111,3 +119,36 @@ func _setup_demo() -> void:
 			if y == 13:
 				FarmState.water(cell)
 	FarmState.till(Vector2i(18, 13))
+
+
+## Déclenche une action d'outil pour photographier le geste en cours.
+func _act(main: Node, tool: String, args: Array) -> float:
+	var farm: WorldMap = main.call("current_map")
+	await get_tree().create_timer(0.6).timeout
+	var cell := farm.player_cell() + Vector2i(1, 2)
+	farm.player.position = farm.cell_center(cell + Vector2i.LEFT)
+	farm.player.facing = Vector2i.RIGHT
+	await get_tree().create_timer(0.3).timeout
+	match tool:
+		"water":
+			FarmState.till(cell)
+		"axe":
+			FarmState.debris[cell] = {"type": "stump", "hp": 5}
+			farm.call("_refresh_cell", cell)
+		"harvest":
+			FarmState.till(cell)
+			FarmState.plant(cell, "carrot")
+			FarmState.tiles[cell].age = 10
+			farm.call("_refresh_cell", cell)
+	var item: String = {"hoe": "hoe", "water": "watering_can", "axe": "axe", "harvest": "hoe"}[tool]
+	if Inventory.count_of(item) == 0:
+		Inventory.add_item(item, 1)
+	for i in Inventory.HOTBAR:
+		if Inventory.slots[i] != null and Inventory.slots[i].id == item:
+			Inventory.select(i)
+	farm.act_on(cell)
+	var delay := 0.13
+	for a in args:
+		if a.begins_with("--delay="):
+			delay = float(a.trim_prefix("--delay="))
+	return delay

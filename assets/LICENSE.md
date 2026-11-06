@@ -16,6 +16,18 @@ attribution non obligatoire (mais appréciée : merci Kenney !).
 
 Chaque dossier contient le fichier de licence original.
 
+## Sons
+
+| Dossier | Pack |
+|---|---|
+| `kenney/audio/rpg/` | RPG Sound Pack (Kenney, CC0) |
+| `kenney/audio/ui/` | Interface Sounds (Kenney, CC0) |
+| `kenney/audio/jingles/` | Short Music Jingles (Kenney, CC0) |
+
+`audio/*.ogg` est produit par `tools/build_sfx.py` : copies (parfois filtrées) des sons
+Kenney, et sons synthétisés par le script (terre, eau, éclaboussures, pierre, herbe,
+coups, monstres...), créations originales en CC0.
+
 ## Sprites assemblés
 
 `sprites/*.png` sont produits par `tools/build_assets.py` à partir des

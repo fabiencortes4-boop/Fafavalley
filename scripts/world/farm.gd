@@ -48,6 +48,8 @@ const CROP_ROWS := 6
 var _soil: TileMapLayer
 var _objects: TileMapLayer
 var _mail_alert: Sprite2D
+var _deferring: bool = false  # un geste est en cours : l'affichage attend l'impact
+var _deferred: Dictionary = {}
 var _mailbox_cell: Vector2i
 var _crop_sprites: Dictionary = {}  # Vector2i -> Sprite2D
 var _grass_coords := [
@@ -141,6 +143,7 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 			else:
 				EventBus.toast("La boîte aux lettres est vide.")
 		"door":
+			Sfx.play("door")
 			EventBus.sleep_requested.emit()
 		"bin":
 			_ship_selected()
@@ -163,13 +166,20 @@ func _act_on_ground(cell: Vector2i) -> bool:
 			return true
 		"placeable":
 			if _can_place(cell):
+				_deferring = true
 				FarmState.place_object(cell, str(item.place))
 				Inventory.remove_from_slot(Inventory.selected, 1)
-				player.play_use()
+				_gesture("bend", cell, func() -> void:
+					Sfx.play("drop")
+					Fx.puff(_entities, cell_center(cell), Color(0.93, 0.88, 0.78, 0.8), 1.4))
 			return true
 		"fertilizer":
+			_deferring = FarmState.is_tilled(cell) and not FarmState.is_fertilized(cell)
 			if FarmState.is_tilled(cell) and FarmState.fertilize(cell):
 				Inventory.remove_from_slot(Inventory.selected, 1)
+				_gesture("bend", cell, func() -> void:
+					Sfx.play("plant")
+					Fx.burst(_entities, _cell_fx_point(cell), [Color(0.35, 0.25, 0.18), Color(0.5, 0.4, 0.25)], 10, 35.0))
 				EventBus.toast("Engrais épandu : ça va pousser plus vite !")
 			return true
 	return false
@@ -185,6 +195,28 @@ func act_on(cell: Vector2i) -> void:
 
 func is_walkable(cell: Vector2i) -> bool:
 	return super(cell) and not FarmState.objects.has(cell) and not FarmState.debris.has(cell)
+
+
+# ------------------------------------------------------------ gestes
+## Joue un geste d'outil vers une case. L'état du jeu change tout de suite,
+## mais l'affichage de la case (terre, plante, débris) attend l'impact,
+## moment où se déclenchent aussi effets et sons.
+func _gesture(gesture: String, cell: Vector2i, effect: Callable = Callable()) -> void:
+	var slot: Variant = Inventory.get_selected()
+	var icon: Texture2D = GameData.item_icon(slot.id) if slot != null else null
+	player.face_towards(cell - player_cell())
+	_deferring = true
+	player.play_tool(gesture, icon, func() -> void:
+		_deferring = false
+		for c: Vector2i in _deferred.keys():
+			_refresh_cell(c)
+		_deferred.clear()
+		if effect.is_valid():
+			effect.call())
+
+
+func _cell_fx_point(cell: Vector2i) -> Vector2:
+	return cell_center(cell) + Vector2(0, -4)
 
 
 # ------------------------------------------------------------ débris
@@ -224,20 +256,47 @@ func _hit_debris(cell: Vector2i, tool: String, energy: int) -> bool:
 		return true
 	if energy > 0 and not spend_energy(energy):
 		return true
-	player.play_use()
-	d.hp -= int(GameData.item(Inventory.get_selected().id).get("power", 1)) if Inventory.get_selected() != null else 1
-	if d.hp > 0:
-		return true
-	FarmState.debris.erase(cell)
-	Skills.add_xp("foraging", int(info.xp))
-	for drop: Array in info.drops:
-		if randf() < float(drop[3]):
-			var n := randi_range(int(drop[1]), int(drop[2]))
-			if drop[0] == "wood" and Skills.roll("foraging", 6.0):
-				n *= 2
-			for i in n:
-				_drop(str(drop[0]), cell_center(cell))
-	_refresh_object(cell)
+	d.hp -= int(GameData.item(Inventory.get_selected().id).get("power", 1)) if Inventory.get_selected() != null and tool != "weapon" else 1
+	var type: String = d.type
+	var broken: bool = d.hp <= 0
+	var drops: Array = []
+	if broken:
+		FarmState.debris.erase(cell)
+		Skills.add_xp("foraging", int(info.xp))
+		for drop: Array in info.drops:
+			if randf() < float(drop[3]):
+				var n := randi_range(int(drop[1]), int(drop[2]))
+				if drop[0] == "wood" and Skills.roll("foraging", 6.0):
+					n *= 2
+				for i in n:
+					drops.append(str(drop[0]))
+		_deferring = tool != "weapon"
+		_refresh_cell(cell)
+	var at := _cell_fx_point(cell)
+	var effect := func() -> void:
+		match type:
+			"weed":
+				Sfx.play("swish")
+				Fx.burst(_entities, at, Fx.GRASS, 12, 55.0)
+			"twig", "stump":
+				Sfx.play("chop")
+				Fx.burst(_entities, at, Fx.WOOD, 8 if not broken else 18, 60.0)
+				if broken and type == "stump":
+					Sfx.play("tree_fall")
+					shake(3.0, 0.25)
+					Fx.puff(_entities, cell_center(cell), Color(0.9, 0.85, 0.75, 0.9), 2.0)
+			"stone":
+				Sfx.play("clink")
+				Fx.burst(_entities, at, Fx.STONE, 10, 60.0)
+				if broken:
+					Sfx.play("rock_break")
+					shake(2.0, 0.15)
+		for id: String in drops:
+			_drop(id, cell_center(cell))
+	if tool == "weapon":
+		effect.call()
+	else:
+		_gesture("sweep" if tool == "scythe" else "strike", cell, effect)
 	return true
 
 
@@ -279,9 +338,12 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 	if not Inventory.can_add(id):
 		EventBus.toast("Inventaire plein !")
 		return
+	_deferring = true
 	FarmState.remove_object(cell)
 	Inventory.add_item(id, 1)
-	player.play_use()
+	_gesture("strike", cell, func() -> void:
+		Sfx.play("pickup")
+		Fx.item_pop(_entities, _cell_fx_point(cell), GameData.item_icon(id), player))
 
 
 func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
@@ -291,15 +353,26 @@ func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
 	match tool:
 		"hoe":
 			if not _can_till(cell):
+				_gesture("strike", cell, func() -> void: Sfx.play("whoosh"))
 				return
 			if not spend_energy(energy):
 				return
-			player.play_use()
+			_deferring = true
 			FarmState.till(cell)
+			_gesture("strike", cell, func() -> void:
+				Sfx.play("dig")
+				Fx.burst(_entities, _cell_fx_point(cell), Fx.DIRT, 14, 65.0)
+				Fx.puff(_entities, cell_center(cell), Color(0.7, 0.55, 0.4, 0.6), 1.2))
+		"axe":
+			_gesture("strike", cell, func() -> void: Sfx.play("whoosh"))
+		"scythe":
+			_gesture("sweep", cell, func() -> void: Sfx.play("swish"))
 		"watering_can":
 			if _ground_chars.get(cell, "") == "~":
 				PlayerState.refill_water()
-				player.play_use()
+				_gesture("bend", cell, func() -> void:
+					Sfx.play("splash")
+					Fx.burst(_entities, _cell_fx_point(cell), Fx.WATER, 14, 70.0))
 				EventBus.toast("Arrosoir rempli !")
 				return
 			# L'arrosoir en cuivre arrose plusieurs cases en ligne.
@@ -315,10 +388,20 @@ func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
 				return
 			if not spend_energy(energy):
 				return
-			player.play_use()
+			_deferring = true
 			for c in targets:
 				if PlayerState.use_water():
 					FarmState.water(c)
+			Sfx.play("water")
+			# Gouttes qui tombent sur les cases pendant que l'arrosoir verse
+			var drops_timer := get_tree().create_timer(0.14)
+			drops_timer.timeout.connect(func() -> void:
+				for c: Vector2i in targets:
+					Fx.burst(_entities, cell_center(c) + Vector2(0, -14), Fx.WATER, 10, 25.0, false, 380.0, 0.35))
+			_gesture("pour", cell, func() -> void:
+				for c: Vector2i in targets:
+					Fx.burst(_entities, cell_center(c), Fx.WATER, 6, 35.0)
+				Sfx.play("splash", -10.0))
 
 
 func _can_till(cell: Vector2i) -> bool:
@@ -340,8 +423,14 @@ func _plant(cell: Vector2i, crop_id: String) -> void:
 	if not GameData.crop_in_season(crop_id, TimeManager.season):
 		EventBus.toast("Ce n'est pas la saison pour planter ça.")
 		return
-	if FarmState.plant(cell, crop_id):
+	_deferring = true
+	if not FarmState.plant(cell, crop_id):
+		_deferring = false
+	else:
 		Inventory.remove_from_slot(Inventory.selected, 1)
+		_gesture("bend", cell, func() -> void:
+			Sfx.play("plant")
+			Fx.puff(_entities, cell_center(cell), Color(0.62, 0.45, 0.3, 0.7), 0.9))
 
 
 func _harvest(cell: Vector2i) -> void:
@@ -349,13 +438,21 @@ func _harvest(cell: Vector2i) -> void:
 	if not Inventory.can_add(harvest_id):
 		EventBus.toast("Inventaire plein !")
 		return
+	_deferring = true
 	var got := FarmState.harvest(cell)
+	if got == "":
+		_deferring = false
 	if got != "":
 		var count := 2 if Skills.roll("farming", 5.0) and Inventory.can_add(got, 2) else 1
 		Inventory.add_item(got, count)
 		Skills.add_xp("farming", maxi(3, int(GameData.item(got).get("sell", 30)) / 8))
-		player.play_use()
 		EventBus.toast("+%d %s" % [count, GameData.item_name(got)])
+		_gesture("bend", cell, func() -> void:
+			Sfx.play("harvest")
+			Fx.burst(_entities, _cell_fx_point(cell), Fx.GRASS, 10, 50.0)
+			for i in count:
+				Fx.item_pop(_entities, _cell_fx_point(cell), GameData.item_icon(got), player)
+			get_tree().create_timer(0.5).timeout.connect(func() -> void: Sfx.play("pickup")))
 
 
 func _ship_selected() -> void:
@@ -364,6 +461,8 @@ func _ship_selected() -> void:
 		EventBus.toast("Sélectionne un objet à vendre, puis touche le coffre.")
 		return
 	var qty: int = slot.qty
+	Sfx.play("coins_2")
+	player.play_use()
 	FarmState.ship(slot.id, qty)
 	EventBus.toast("Expédié : %d x %s (payé cette nuit)" % [qty, GameData.item_name(slot.id)])
 	Inventory.remove_from_slot(Inventory.selected, qty)
@@ -394,6 +493,9 @@ func _refresh_all() -> void:
 
 
 func _refresh_cell(cell: Vector2i) -> void:
+	if _deferring:
+		_deferred[cell] = true
+		return
 	# Une parcelle change l'apparence de ses voisines (rangées continues).
 	for offset: Vector2i in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 		_refresh_soil(cell + offset)

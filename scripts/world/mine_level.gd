@@ -244,6 +244,7 @@ func _after_build() -> void:
 
 
 func _place_player() -> void:
+	player.step_sound = "step_stone"
 	# Dans la mine, on arrive toujours au pied de l'échelle.
 	player.position = cell_center(_spawn_cell)
 	player.facing = Vector2i.DOWN
@@ -286,6 +287,7 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 		"ladder_up":
 			EventBus.map_change_requested.emit("village", VILLAGE_EXIT)
 		"ladder_down":
+			Sfx.play("step_stone")
 			EventBus.map_change_requested.emit("mine:%d" % (level + 1), Vector2i.ZERO)
 
 
@@ -294,16 +296,33 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 		return
 	if not spend_energy(energy):
 		return
-	player.play_use()
 	_rock_data[cell].hp -= int(GameData.item(Inventory.get_selected().id).get("power", 1))
-	if _rock_data[cell].hp <= 0:
-		_break_rock(cell)
+	var broken: bool = _rock_data[cell].hp <= 0
+	var tex := GameData.item_icon(Inventory.get_selected().id)
+	player.face_towards(cell - player_cell())
+	var at := cell_center(cell) + Vector2(0, -4)
+	# L'état change tout de suite ; le rocher éclate à l'impact de la pioche.
+	var drops: Array = _break_rock(cell) if broken else []
+	player.play_tool("strike", tex, func() -> void:
+		Sfx.play("clink")
+		Fx.burst(_entities, at, Fx.SPARK, 4, 50.0, true, 200.0, 0.25)
+		Fx.burst(_entities, at, Fx.STONE, 6 if not broken else 16, 60.0)
+		if broken:
+			_rocks.erase_cell(cell)
+			Sfx.play("rock_break")
+			shake(2.0, 0.15)
+			for id: String in drops:
+				_drop(id, cell_center(cell))
+			if cell == _ladder_cell:
+				_ground.set_cell(cell, 0, WorldTiles.coords(WorldTiles.LADDER_DOWN))
+				Sfx.play("levelup", -8.0))
 
 
-func _break_rock(cell: Vector2i) -> void:
+## Retire le rocher (état) et renvoie ce qu'il laisse tomber.
+func _break_rock(cell: Vector2i) -> Array:
 	var type: String = _rock_data[cell].type
 	_rock_data.erase(cell)
-	_rocks.erase_cell(cell)
+	var out: Array = []
 	var drops: Array = ROCKS[type][2]
 	if type == "gem":
 		drops = [[_gem_for_depth(), 1, 1, 1.0]]
@@ -314,22 +333,26 @@ func _break_rock(cell: Vector2i) -> void:
 			if type != "stone" and type != "pebbles" and Skills.roll("mining", 6.0):
 				n += 1
 			for i in n:
-				_drop(str(d[0]), cell_center(cell))
+				out.append(str(d[0]))
 	if cell == _ladder_cell:
-		_reveal_ladder(cell)
+		_reveal_ladder(cell, false)  # trouvée tout de suite, affichée à l'impact
+	return out
 
 
-func _reveal_ladder(cell: Vector2i) -> void:
+func _reveal_ladder(cell: Vector2i, show_now: bool = true) -> void:
 	if _ladder_found:
 		return
 	_ladder_found = true
 	_ladder_cell = cell
-	_ground.set_cell(cell, 0, WorldTiles.coords(WorldTiles.LADDER_DOWN))
+	if show_now:
+		_ground.set_cell(cell, 0, WorldTiles.coords(WorldTiles.LADDER_DOWN))
 	_interactables[cell] = "ladder_down"
 	EventBus.toast("Une échelle vers le niveau %d !" % (level + 1))
 
 
 func _on_monster_died(monster: Monster) -> void:
+	Sfx.play("monster_die")
+	Fx.puff(_entities, monster.position, Color(0.95, 0.95, 1.0, 0.85), 1.6)
 	var data: Dictionary = GameData.monsters.get(monster.kind, {})
 	Skills.add_xp("combat", 5 + level / 2)
 	if randf() < float(data.get("drop_chance", 0.5)):

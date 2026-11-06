@@ -49,6 +49,7 @@ func add_xp(skill: String, amount: int) -> void:
 	var after := level(skill)
 	if after > before:
 		EventBus.toast("Niveau supérieur ! %s %d" % [NAMES[skill], after])
+		Sfx.play("levelup")
 		if skill == "combat":
 			PlayerState.heal(0, 5)
 

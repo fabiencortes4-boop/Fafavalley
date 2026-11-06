@@ -122,6 +122,7 @@ func _ready() -> void:
 	TimeManager.time_changed.connect(_update_tint)
 	TimeManager.day_started.connect(_on_day_started)
 	Settings.changed.connect(_apply_zoom)
+	EventBus.camera_shake.connect(shake)
 	_after_build()
 	_update_tint(0, 0)
 	_update_weather()
@@ -262,6 +263,18 @@ func _place_player() -> void:
 	_camera.reset_smoothing()
 
 
+## Petit tremblement de caméra (gros coups, chute d'arbre, blessure).
+func shake(strength: float = 2.0, duration: float = 0.15) -> void:
+	if _camera == null:
+		return
+	var tw := create_tween()
+	var steps := maxi(2, int(duration / 0.03))
+	for i in steps:
+		var k := 1.0 - float(i) / steps
+		tw.tween_property(_camera, "offset", Vector2(randf_range(-1, 1), randf_range(-1, 1)) * strength * k, 0.03)
+	tw.tween_property(_camera, "offset", Vector2.ZERO, 0.03)
+
+
 func _apply_zoom() -> void:
 	if _camera != null:
 		_camera.zoom = Vector2.ONE * Settings.zoom
@@ -303,6 +316,11 @@ func player_cell() -> Vector2i:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Pendant un geste d'outil, on attend qu'il se termine.
+	if player.busy() and (event.is_action_pressed("use_tool") or (event is InputEventScreenTouch and event.pressed)):
+		if not fishing.busy():
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("use_tool"):
 		act_on(_target_cell)
 		get_viewport().set_input_as_handled()
@@ -383,6 +401,7 @@ func _holding_tool() -> String:
 func spend_energy(energy: int) -> bool:
 	if PlayerState.spend_energy(energy):
 		return true
+	Sfx.play("error")
 	EventBus.toast("Plus assez d'énergie... va dormir !")
 	return false
 
@@ -431,6 +450,9 @@ func _pick_forage(cell: Vector2i) -> void:
 	sprite.queue_free()
 	_forage_sprites.erase(cell)
 	player.play_use()
+	Sfx.play("harvest")
+	Fx.burst(_entities, cell_center(cell) + Vector2(0, -4), Fx.GRASS, 6, 40.0)
+	Fx.item_pop(_entities, cell_center(cell) + Vector2(0, -6), GameData.item_icon(id), player)
 	EventBus.toast("+%d %s" % [count, GameData.item_name(id)])
 
 

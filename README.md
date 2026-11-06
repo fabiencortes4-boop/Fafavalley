@@ -36,7 +36,13 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ## Ce que contient ce prototype
 
-- Vue rapprochée (zoom x1.5 par défaut, environ 20 cases de large ; réglable dans Menu → Zoom).
+- Vue rapprochée (zoom x2 par défaut, environ 15 cases de large ; réglable dans Menu → Zoom).
+- Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
+  canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
+  vers le sac et petits tremblements d'écran sur les gros coups.
+- Personnage vivant : ombre, démarche souple, respiration, poussière et bruits de pas.
+- Bruitages pour chaque action, l'interface, la pêche, la mine et les monstres
+  (Menu → Son pour couper).
 - Horloge : jour de la semaine, date, saison, météo, heure, lieu ; bourse en dessous.
 - Saisons visibles : herbe et arbres dorés en automne, neige en hiver ; pluie et neige qui tombent.
 - Ferme à défricher : herbes folles (faux), branches et arbres morts (hache), pierres (pioche),
@@ -115,7 +121,9 @@ scripts/
   ui/fishing_minigame.gd
   entities/player.gd
   ui/                 # HUD, joystick, thème
+  fx/fx.gd            # particules, poussière, objets qui sautent
 tools/build_assets.py     # assemble les sprites à partir des packs Kenney
+tools/build_sfx.py        # fabrique les bruitages (Kenney + sons synthétisés)
 assets/kenney/            # packs Kenney originaux (CC0)
 assets/sprites/           # planches utilisées par le jeu
 tests/                    # tests automatiques (gameplay, joystick, capture d'écran)

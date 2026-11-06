@@ -64,7 +64,8 @@ func try_cast(energy: int) -> bool:
 	state = State.WAITING
 	_timer = randf_range(WAIT_MIN, WAIT_MAX)
 	map.player.locked = true
-	map.player.play_use()
+	map.player.play_tool("cast", GameData.item_icon("fishing_rod"))
+	Sfx.play("cast")
 	_bobber_base = Vector2(target * WorldMap.TILE) + Vector2(WorldMap.TILE, WorldMap.TILE) / 2.0
 	_bobber.position = _bobber_base
 	_bobber.visible = true
@@ -101,9 +102,12 @@ func _process(delta: float) -> void:
 				_timer = BITE_WINDOW
 				_alert.visible = true
 				Input.vibrate_handheld(150)
+				Sfx.play("bite")
+				Fx.burst(map.get("_entities"), _bobber_base, Fx.WATER, 10, 55.0)
 		State.BITE:
 			_timer -= delta
 			if _timer <= 0.0:
+				Sfx.play("escape")
 				EventBus.toast("Le poisson s'est échappé... Sois plus rapide !")
 				_reset()
 
@@ -125,7 +129,10 @@ func _on_minigame_finished(success: bool) -> void:
 			elif result == "record":
 				text += " Nouveau record !"
 			EventBus.toast(text)
+			Sfx.play("catch")
+			Fx.item_pop(map.get("_entities"), _bobber_base, GameData.item_icon(_fish_id), map.player)
 	else:
+		Sfx.play("escape")
 		EventBus.toast("Le poisson s'est décroché...")
 	_reset()
 

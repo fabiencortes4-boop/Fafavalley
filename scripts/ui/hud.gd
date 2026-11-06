@@ -4,7 +4,7 @@ extends CanvasLayer
 ## barre rapide, joystick, bouton Action, menus (boutique, sommeil, pause).
 ## Les fenêtres mettent le jeu en pause (le temps s'arrête).
 
-const SLOT_SIZE := 22
+const SLOT_SIZE := 30  # cases de la barre rapide (icônes x1.5)
 const ACTION_SCALE := 3.0
 const ACTION_SIZE := 16.0 * ACTION_SCALE
 const ACTION_MARGIN := Vector2(12, 36)
@@ -22,6 +22,8 @@ var _gold_panel: PanelContainer
 var _top_panel: PanelContainer
 var _menu_button: Button
 var _bag_button: Button
+var _closing_silently: bool = false
+var _last_selected: int = -1
 var _picked: int = -1  # case choisie dans l'écran du sac
 var _scroll_memory: Dictionary = {}  # titre de fenêtre -> position de défilement
 var _hotbar: PanelContainer
@@ -73,8 +75,12 @@ func _ready() -> void:
 	EventBus.eat_requested.connect(ask_eat)
 	EventBus.elevator_requested.connect(open_elevator)
 	EventBus.forge_requested.connect(open_crafting.bind("forge"))
-	EventBus.chest_requested.connect(open_chest)
-	EventBus.mail_requested.connect(open_mail)
+	EventBus.chest_requested.connect(func(cell: Vector2i) -> void:
+		Sfx.play("chest")
+		open_chest(cell))
+	EventBus.mail_requested.connect(func() -> void:
+		Sfx.play("letter")
+		open_mail())
 	EventBus.water_changed.connect(func(_v: int, _m: int) -> void: _refresh_hotbar())
 	EventBus.toast_requested.connect(show_toast)
 	EventBus.shop_requested.connect(open_shop)
@@ -146,14 +152,14 @@ func _build_energy_bar() -> void:
 	_energy_bar = ProgressBar.new()
 	_energy_bar.fill_mode = ProgressBar.FILL_BOTTOM_TO_TOP
 	_energy_bar.show_percentage = false
-	_energy_bar.custom_minimum_size = Vector2(12, 72)
-	_energy_bar.size = Vector2(12, 72)
+	_energy_bar.custom_minimum_size = Vector2(12, 60)
+	_energy_bar.size = Vector2(12, 60)
 	_root.add_child(_energy_bar)
 	_health_bar = ProgressBar.new()
 	_health_bar.fill_mode = ProgressBar.FILL_BOTTOM_TO_TOP
 	_health_bar.show_percentage = false
-	_health_bar.custom_minimum_size = Vector2(12, 72)
-	_health_bar.size = Vector2(12, 72)
+	_health_bar.custom_minimum_size = Vector2(12, 60)
+	_health_bar.size = Vector2(12, 60)
 	var red := StyleBoxFlat.new()
 	red.bg_color = Color(0.86, 0.3, 0.3)
 	red.set_expand_margin_all(-3)
@@ -162,7 +168,7 @@ func _build_energy_bar() -> void:
 	for pair in [[_energy_bar, "E"], [_health_bar, "V"]]:
 		var tag := Label.new()
 		tag.text = pair[1]
-		tag.position = Vector2(2, 73)
+		tag.position = Vector2(2, 61)
 		pair[0].add_child(tag)
 
 
@@ -190,15 +196,18 @@ func _build_hotbar() -> void:
 		slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(slot)
+		slot.pivot_offset = Vector2(SLOT_SIZE, SLOT_SIZE) / 2.0
 		var icon := TextureRect.new()
-		icon.position = Vector2(3, 3)
-		icon.size = Vector2(16, 16)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.position = Vector2(3, 2)
+		icon.size = Vector2(24, 24)
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(icon)
 		var qty := Label.new()
 		qty.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		qty.position = Vector2(0, 12)
-		qty.size = Vector2(SLOT_SIZE - 2, 10)
+		qty.position = Vector2(0, 18)
+		qty.size = Vector2(SLOT_SIZE - 3, 10)
 		slot.add_child(qty)
 		_slots.append(slot)
 		_slot_icons.append(icon)
@@ -234,8 +243,16 @@ func _build_toast() -> void:
 
 func _layout() -> void:
 	var vp := get_viewport().get_visible_rect().size
-	_energy_bar.position = Vector2(vp.x - 18, vp.y - ACTION_SIZE - ACTION_MARGIN.y - 92)
+	var hb := _hotbar.get_combined_minimum_size()
+	_hotbar.size = hb
+	_hotbar.position = Vector2((vp.x - hb.x) / 2.0, vp.y - hb.y - 3)
+	# Bouton Action au-dessus de la barre, à droite ; jauges au-dessus
+	_action_button.position = Vector2(vp.x - ACTION_SIZE - 10, _hotbar.position.y - ACTION_SIZE - 8)
+	_energy_bar.position = Vector2(vp.x - 18, _action_button.position.y - 74)
 	_health_bar.position = _energy_bar.position - Vector2(15, 0)
+	# Joystick flottant : toute la moitié basse gauche, au-dessus de la barre
+	_joystick.position = Vector2(0, 70)
+	_joystick.size = Vector2(minf(170, vp.x * 0.35), _hotbar.position.y - 70 - 4)
 	# Boutons Menu et Sac en haut à gauche, horloge et bourse en haut à droite
 	_menu_button.position = Vector2(4, 4)
 	_bag_button.position = Vector2(8 + _menu_button.get_combined_minimum_size().x, 4)
@@ -245,12 +262,7 @@ func _layout() -> void:
 	var gold := _gold_panel.get_combined_minimum_size()
 	_gold_panel.size = Vector2(_top_panel.size.x, gold.y)
 	_gold_panel.position = Vector2(_top_panel.position.x, _top_panel.position.y + _top_panel.size.y + 2)
-	var hb := _hotbar.get_combined_minimum_size()
-	_hotbar.size = hb
-	_hotbar.position = Vector2((vp.x - hb.x) / 2.0, vp.y - hb.y - 4)
-	_joystick.position = Vector2(0, vp.y - 130)
-	_joystick.size = Vector2(92, 130)
-	_action_button.position = vp - Vector2(ACTION_SIZE, ACTION_SIZE) - ACTION_MARGIN
+
 	_toast.position = Vector2(0, 44)
 	_toast.size = Vector2(vp.x, 16)
 	if _modal != null:
@@ -287,6 +299,14 @@ func _refresh_hotbar() -> void:
 			# L'eau restante s'affiche sur l'arrosoir.
 			if GameData.item(slot.id).get("tool") == "watering_can":
 				_slot_labels[i].text = str(PlayerState.water)
+	# Case choisie : petit « pop » et un son
+	if Inventory.selected != _last_selected:
+		if _last_selected != -1:
+			Sfx.play("select")
+			var pop := create_tween()
+			_slots[Inventory.selected].scale = Vector2(1.18, 1.18)
+			pop.tween_property(_slots[Inventory.selected], "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BACK)
+		_last_selected = Inventory.selected
 	var selected: Variant = Inventory.get_selected()
 	_action_icon.texture = null if selected == null else GameData.item_icon(selected.id)
 
@@ -367,7 +387,11 @@ func is_over_ui(event: InputEvent) -> bool:
 
 # ------------------------------------------------------------ fenêtres
 func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
+	if _modal == null:
+		Sfx.play("open")
+	_closing_silently = true
 	close_modal()
+	_closing_silently = false
 	_modal_closable = closable
 	_joystick.release()
 	_joystick.visible = false
@@ -401,6 +425,8 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 func close_modal() -> void:
 	if _modal == null:
 		return
+	if not _closing_silently:
+		Sfx.play("close")
 	if _dialog_tween != null:
 		_dialog_tween.kill()
 		_dialog_tween = null
@@ -417,6 +443,7 @@ func _add_button(box: Container, text: String, callback: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(0, 22)
+	b.pressed.connect(func() -> void: Sfx.play("click"))
 	b.pressed.connect(callback)
 	box.add_child(b)
 	return b
@@ -431,10 +458,19 @@ func _add_label(box: Container, text: String) -> Label:
 
 
 func open_pause_menu() -> void:
-	var box := _open_modal("Pause")
+	var outer := _open_modal("Pause")
+	# Deux colonnes : tout tient sur l'écran d'un téléphone en paysage
+	var box := GridContainer.new()
+	box.columns = 2
+	box.add_theme_constant_override("h_separation", 6)
+	box.add_theme_constant_override("v_separation", 4)
+	outer.add_child(box)
 	_add_button(box, "Reprendre", close_modal)
 	_add_button(box, "Zoom : x%s" % str(Settings.zoom), func() -> void:
 		Settings.cycle_zoom()
+		open_pause_menu())
+	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
+		Settings.toggle_sound()
 		open_pause_menu())
 	_add_button(box, "Fabrication", open_crafting.bind("craft"))
 	_add_button(box, "Compétences", open_skills)
@@ -443,6 +479,8 @@ func open_pause_menu() -> void:
 	_add_button(box, "Sauvegarder", func() -> void:
 		SaveManager.save_game()
 		show_toast("Partie sauvegardée"))
+	for b in box.get_children():
+		b.custom_minimum_size = Vector2(120, 24)
 	if not OS.has_feature("web"):  # on ne « quitte » pas une page web
 		_add_button(box, "Sauvegarder et quitter", func() -> void:
 			SaveManager.save_game()
@@ -463,6 +501,7 @@ func ask_sleep() -> void:
 
 func show_summary(report: Dictionary) -> void:
 	var box := _open_modal("Fin de journée", false)
+	Sfx.play("sleep")
 	if report.get("passed_out", false):
 		_add_label(box, "Tu t'es effondré·e de fatigue... Tu récupères moins d'énergie.")
 	var sold: Array = report.get("sold", [])
@@ -533,6 +572,7 @@ func _buy(id: String) -> void:
 		if Inventory.capacity >= target or Inventory.capacity < target - Inventory.HOTBAR:
 			return
 		if Inventory.spend_gold(price):
+			Sfx.play("coins")
 			Inventory.set_capacity(int(item.capacity))
 			show_toast("Ton sac a maintenant %d places !" % Inventory.capacity)
 			open_shop()
@@ -541,6 +581,7 @@ func _buy(id: String) -> void:
 		show_toast("Inventaire plein !")
 		return
 	if Inventory.spend_gold(price):
+		Sfx.play("coins")
 		Inventory.add_item(id, 1)
 		show_toast("+1 %s" % GameData.item_name(id))
 		open_shop()  # reconstruit la liste (or et boutons à jour)
@@ -748,6 +789,7 @@ func ask_eat(item_id: String) -> void:
 		if slot != null and slot.id == item_id:
 			Inventory.remove_from_slot(Inventory.selected, 1)
 			PlayerState.heal(int(values[0]), int(values[1]))
+			Sfx.play("eat")
 		close_modal())
 	_add_button(row, "Non", close_modal)
 
@@ -834,6 +876,7 @@ func _recipe_row(id: String, recipe: Dictionary, station: String) -> HBoxContain
 	button.disabled = not Crafting.can_craft(id)
 	button.pressed.connect(func() -> void:
 		if Crafting.craft(id):
+			Sfx.play("craft")
 			show_toast("%s : c'est prêt !" % GameData.item_name(id))
 		open_crafting(station))
 	row.add_child(button)
@@ -935,11 +978,13 @@ func open_chest(cell: Vector2i) -> void:
 	var box := _open_modal("Coffre")
 	box.add_child(_section_label("Coffre (touche un objet pour le prendre)"))
 	box.add_child(_slot_grid(chest, 0, chest.size(), func(i: int) -> void:
+		Sfx.play("drop", -6.0)
 		Inventory.transfer(chest, i, Inventory.slots)
 		EventBus.inventory_changed.emit()
 		open_chest(cell)))
 	box.add_child(_section_label("Ton sac (touche un objet pour le ranger)"))
 	box.add_child(_slot_grid(Inventory.slots, 0, Inventory.capacity, func(i: int) -> void:
+		Sfx.play("drop", -6.0)
 		Inventory.transfer(Inventory.slots, i, chest)
 		EventBus.inventory_changed.emit()
 		open_chest(cell)))
@@ -1028,7 +1073,12 @@ func open_mail() -> void:
 			var qty := Label.new()
 			qty.text = ("%d or" % int(entry[1])) if entry[0] == "gold" else ("%s x%d" % [GameData.item_name(str(entry[0])), int(entry[1])])
 			row.add_child(qty)
-	_add_button(box, "Lettre suivante" if Mail.has_mail() else "Fermer", open_mail if Mail.has_mail() else close_modal)
+	if Mail.has_mail():
+		_add_button(box, "Lettre suivante", func() -> void:
+			Sfx.play("page")
+			open_mail())
+	else:
+		_add_button(box, "Fermer", close_modal)
 
 
 func open_skills() -> void:

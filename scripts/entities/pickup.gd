@@ -35,5 +35,6 @@ func _process(delta: float) -> void:
 		position = position.move_toward(target.position, (MAGNET_RANGE - distance + 20.0) * 4.0 * delta)
 		if distance < COLLECT_RANGE:
 			Inventory.add_item(item_id, 1)
+			Sfx.play("pickup", -2.0, 0.15)
 			EventBus.toast("+1 %s" % GameData.item_name(item_id))
 			queue_free()

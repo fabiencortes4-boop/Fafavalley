@@ -23,6 +23,7 @@ signal elevator_requested(levels: Array)
 signal forge_requested
 signal chest_requested(cell: Vector2i)
 signal mail_requested
+signal camera_shake(strength: float, duration: float)
 
 
 func toast(text: String) -> void:
