@@ -342,6 +342,7 @@ func _hit_debris(cell: Vector2i, tool: String, energy: int) -> bool:
 	if broken:
 		FarmState.debris.erase(cell)
 		Skills.add_xp("foraging", int(info.xp))
+		Story.bump("cleared")
 		for drop: Array in info.drops:
 			if randf() < float(drop[3]):
 				var n := randi_range(int(drop[1]), int(drop[2]))
@@ -525,6 +526,7 @@ func _harvest(cell: Vector2i) -> void:
 		var count := 2 if Skills.roll("farming", 5.0) and Inventory.can_add(got, 2) else 1
 		Inventory.add_item(got, count)
 		Skills.add_xp("farming", maxi(3, int(GameData.item(got).get("sell", 30)) / 8))
+		Story.bump("harvest", count)
 		EventBus.toast("+%d %s" % [count, GameData.item_name(got)])
 		_gesture("bend", cell, func() -> void:
 			Sfx.play("harvest")

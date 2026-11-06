@@ -327,6 +327,8 @@ func _break_rock(cell: Vector2i) -> Array:
 	if type == "gem":
 		drops = [[_gem_for_depth(), 1, 1, 1.0]]
 	Skills.add_xp("mining", 3 if type in ["stone", "pebbles"] else 6)
+	if not type in ["stone", "pebbles"]:
+		Story.bump("ores")
 	for d: Array in drops:
 		if randf() < float(d[3]):
 			var n := randi_range(int(d[1]), int(d[2]))
@@ -355,6 +357,7 @@ func _on_monster_died(monster: Monster) -> void:
 	Fx.puff(_entities, monster.position, Color(0.95, 0.95, 1.0, 0.85), 1.6)
 	var data: Dictionary = GameData.monsters.get(monster.kind, {})
 	Skills.add_xp("combat", 5 + level / 2)
+	Story.bump("monsters")
 	if randf() < float(data.get("drop_chance", 0.5)):
 		_drop(str(data.get("drop", "slime")), monster.position)
 

@@ -163,6 +163,7 @@ func collect(id: String) -> Array:
 				got.append(item)
 	if not got.is_empty():
 		Skills.add_xp("farming", 5 * got.size())
+		Story.bump("products", got.size())
 		changed.emit()
 	return got
 
@@ -178,6 +179,7 @@ func milk(index: int) -> String:
 		return ""
 	a.ready = false
 	Skills.add_xp("farming", 5)
+	Story.bump("products")
 	changed.emit()
 	return item
 

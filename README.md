@@ -57,6 +57,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Histoire en 5 chapitres** (bouton *Histoire*) : la source de Valfleur s'est tarie,
+  la Fête des fleurs a disparu, Firmin a quitté la ferme... À toi de faire refleurir la
+  vallée. Chaque chapitre propose **3 voies au choix** (cultiver, défricher, vendre,
+  se faire des amis, explorer la mine, combattre, pêcher, cuisiner, élever) et
+  débloque de **nouvelles recettes** (engrais, confiture, arroseurs, outils de la forge,
+  fromage...). Lettres des habitants, récompenses, et fête finale au village.
 - Vue rapprochée (zoom x2 par défaut, environ 15 cases de large ; réglable dans Menu → Zoom).
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
@@ -168,6 +174,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/story_test.tscn      # histoire : chapitres, voies, déblocages, lettres
 godot --headless res://tests/animals_test.tscn    # maison, construction, achat d'animaux, foin, œufs, traite, boutiques
 godot --headless res://tests/crafting_test.tscn   # arroseurs, engrais, cuisine, forge
 godot --headless res://tests/inventory_test.tscn  # sac, agrandissements, coffres

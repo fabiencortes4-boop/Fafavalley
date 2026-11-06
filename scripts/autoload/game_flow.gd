@@ -24,6 +24,7 @@ func new_game() -> void:
 	Mail.reset()
 	Forage.reset()
 	Animals.reset()
+	Story.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])
 	Inventory.add_gold(STARTING_GOLD)
@@ -46,6 +47,11 @@ func end_day(passed_out: bool = false) -> void:
 	var earned := FarmState.sell_shipping(report)
 	if earned > 0:
 		Inventory.add_gold(earned)
+		Story.bump("earned", earned)
+	var shipped := 0
+	for line: Dictionary in report.get("sold", []):
+		shipped += int(line.qty)
+	Story.bump("shipped", shipped)
 	TimeManager.advance_day()
 	FarmState.advance_day(TimeManager.season, TimeManager.is_raining())
 	PlayerState.restore(passed_out)

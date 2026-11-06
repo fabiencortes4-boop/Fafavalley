@@ -76,6 +76,7 @@ func give_gift(id: String, item_id: String) -> Dictionary:
 	gifted_today[id] = true
 	met[id] = true
 	add_points(id, GIFT_POINTS[t])
+	Story.bump("gifts")
 	return {"accepted": true, "taste": t, "text": str(lines.get("gift_" + t, "Merci."))}
 
 

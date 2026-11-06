@@ -463,6 +463,8 @@ def extend_icons(sheet):
               draw_loot("ball", (255, 250, 245), (240, 232, 225), (205, 195, 190)),
               draw_loot("blob", (110, 90, 80), (80, 62, 56), (52, 40, 38)),
               draw_bowl((253, 214, 83), (78, 151, 76))]
+    # 74-75 : confiture de baies, fromage (débloqués par l'histoire)
+    extra += [draw_jar((150, 40, 90), (195, 75, 120)), draw_cheese()]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):
@@ -533,6 +535,35 @@ def draw_bowl(soup, garnish):
         for x in range(4, 12):
             if px[x, y][3] > 0 and y > 11:
                 px[x, y] = (192, 203, 220, 255)
+    return outlined(img)
+
+
+def draw_jar(jam, light):
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(5, 15):
+        for x in range(4, 12):
+            px[x, y] = (jam if y > 6 else (235, 239, 248)) + (255,)
+    for y in range(7, 14):
+        px[5, y] = light + (255,)
+    for x in range(4, 12):  # couvercle à carreaux
+        px[x, 3] = ((232, 69, 55) if x % 2 else (255, 255, 255)) + (255,)
+        px[x, 4] = ((255, 255, 255) if x % 2 else (232, 69, 55)) + (255,)
+    for x in range(5, 11):  # étiquette
+        px[x, 10] = (245, 230, 190, 255)
+        px[x, 11] = (245, 230, 190, 255)
+    return outlined(img)
+
+
+def draw_cheese():
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(5, 13):
+        for x in range(2, 14):
+            if x - 2 >= (12 - y) * 1.4 - 2:
+                px[x, y] = ((253, 214, 83) if y > 6 else (255, 232, 140)) + (255,)
+    for (x, y) in ((8, 9), (11, 8), (10, 11), (6, 11)):
+        px[x, y] = (227, 160, 40, 255)
     return outlined(img)
 
 

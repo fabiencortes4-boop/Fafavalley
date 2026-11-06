@@ -29,6 +29,7 @@ func save_game() -> void:
 		"mail": Mail.to_dict(),
 		"forage": Forage.to_dict(),
 		"animals": Animals.to_dict(),
+		"story": Story.to_dict(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -57,6 +58,7 @@ func load_game() -> bool:
 	Mail.from_dict(data.get("mail", {}))
 	Forage.from_dict(data.get("forage", {}))
 	Animals.from_dict(data.get("animals", {}))
+	Story.from_dict(data.get("story", {}))
 	return true
 
 

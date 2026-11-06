@@ -41,8 +41,13 @@ func missing(id: String) -> Dictionary:
 	return out
 
 
+## Recette débloquée par l'histoire ?
+func is_unlocked(id: String) -> bool:
+	return Story.is_unlocked(str(recipes.get(id, {}).get("unlock", "")))
+
+
 func can_craft(id: String) -> bool:
-	if not missing(id).is_empty():
+	if not is_unlocked(id) or not missing(id).is_empty():
 		return false
 	var r: Dictionary = recipes.get(id, {})
 	# Une amélioration prend la place de l'outil : pas besoin de place libre.
@@ -62,4 +67,6 @@ func craft(id: String) -> bool:
 		Inventory.replace_item(str(r.upgrade), id)
 	else:
 		Inventory.add_item(id, int(r.get("count", 1)))
+	if r.get("category", "") == "Cuisine":
+		Story.bump("cooked")
 	return true

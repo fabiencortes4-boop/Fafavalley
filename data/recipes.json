@@ -12,7 +12,8 @@
 		"ingredients": {
 			"copper_ore": 4,
 			"iron_ore": 1
-		}
+		},
+		"unlock": "ch3"
 	},
 	"quality_sprinkler": {
 		"station": "craft",
@@ -21,7 +22,8 @@
 			"iron_ore": 4,
 			"gold_ore": 1,
 			"quartz": 1
-		}
+		},
+		"unlock": "ch4"
 	},
 	"fertilizer": {
 		"station": "craft",
@@ -30,7 +32,8 @@
 		"ingredients": {
 			"slime": 2,
 			"coal": 1
-		}
+		},
+		"unlock": "ch1"
 	},
 	"hay": {
 		"station": "craft",
@@ -38,6 +41,33 @@
 		"ingredients": {
 			"fiber": 5
 		}
+	},
+	"steel_pickaxe": {
+		"station": "forge",
+		"upgrade": "pickaxe",
+		"gold": 400,
+		"ingredients": {
+			"iron_ore": 5
+		},
+		"unlock": "ch4"
+	},
+	"copper_can": {
+		"station": "forge",
+		"upgrade": "watering_can",
+		"gold": 300,
+		"ingredients": {
+			"copper_ore": 5
+		},
+		"unlock": "ch3"
+	},
+	"iron_sword": {
+		"station": "forge",
+		"upgrade": "rusty_sword",
+		"gold": 300,
+		"ingredients": {
+			"iron_ore": 4
+		},
+		"unlock": "ch3"
 	},
 	"vegetable_soup": {
 		"station": "craft",
@@ -54,7 +84,8 @@
 		"ingredients": {
 			"carp": 1,
 			"coal": 1
-		}
+		},
+		"unlock": "ch1"
 	},
 	"salad": {
 		"station": "craft",
@@ -62,7 +93,8 @@
 		"ingredients": {
 			"tomato": 1,
 			"cabbage": 1
-		}
+		},
+		"unlock": "ch2"
 	},
 	"miner_stew": {
 		"station": "craft",
@@ -71,31 +103,8 @@
 			"corn": 1,
 			"roach": 1,
 			"coal": 1
-		}
-	},
-	"steel_pickaxe": {
-		"station": "forge",
-		"upgrade": "pickaxe",
-		"gold": 400,
-		"ingredients": {
-			"iron_ore": 5
-		}
-	},
-	"copper_can": {
-		"station": "forge",
-		"upgrade": "watering_can",
-		"gold": 300,
-		"ingredients": {
-			"copper_ore": 5
-		}
-	},
-	"iron_sword": {
-		"station": "forge",
-		"upgrade": "rusty_sword",
-		"gold": 300,
-		"ingredients": {
-			"iron_ore": 4
-		}
+		},
+		"unlock": "ch3"
 	},
 	"omelette": {
 		"station": "craft",
@@ -103,6 +112,23 @@
 		"ingredients": {
 			"egg": 2,
 			"milk": 1
-		}
+		},
+		"unlock": "ch2"
+	},
+	"berry_jam": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"berries": 3
+		},
+		"unlock": "ch1"
+	},
+	"cheese": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"milk": 2
+		},
+		"unlock": "ch4"
 	}
 }

@@ -16,6 +16,13 @@ func _ready() -> void:
 			FarmState.debris.clear()
 			main.call("current_map").call("_refresh_all")
 		_setup_demo()
+		for a in args:
+			if a.begins_with("--chapter="):
+				# Histoire avancée jusqu'au chapitre donné (5 = fin, fête au village)
+				for i in mini(int(a.trim_prefix("--chapter=")), Story.chapters.size()):
+					PlayerState.flags["story_" + str(Story.chapters[i].id)] = true
+					Story.chapter = i + 1
+				Story.bump("harvest", 9)
 		if "--shop" in args:
 			EventBus.shop_requested.emit()
 		if "--village" in args:
@@ -58,6 +65,10 @@ func _ready() -> void:
 				m.player.position = m.cell_center(Vector2i(int(xy[0]), int(xy[1])))
 			if a.begins_with("--shopid="):
 				main.get("_hud").open_shop(a.trim_prefix("--shopid="))
+		if "--journal" in args:
+			main.get("_hud").open_story()
+		if "--recipes" in args:
+			main.get("_hud").open_crafting("craft")
 		if "--bigmap" in args:
 			var mm: Minimap = main.get("_hud").get("_minimap")
 			mm.big = true

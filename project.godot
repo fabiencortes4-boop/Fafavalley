@@ -37,6 +37,7 @@ Mail="*res://scripts/autoload/mail.gd"
 Forage="*res://scripts/autoload/forage.gd"
 Animals="*res://scripts/autoload/animals.gd"
 Shops="*res://scripts/autoload/shops.gd"
+Story="*res://scripts/autoload/story.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 

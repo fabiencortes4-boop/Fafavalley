@@ -22,6 +22,7 @@ var _gold_panel: PanelContainer
 var _top_panel: PanelContainer
 var _menu_button: Button
 var _bag_button: Button
+var _story_button: Button
 var _closing_silently: bool = false
 var _title_box: VBoxContainer
 var _zone_label: Label
@@ -99,6 +100,7 @@ func _ready() -> void:
 	EventBus.animals_requested.connect(open_animals)
 	EventBus.kitchen_requested.connect(open_crafting.bind("craft"))
 	EventBus.zone_entered.connect(_on_zone_entered)
+	EventBus.story_advanced.connect(_on_story_advanced)
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
 			show_toast("%s : %s" % [GameData.npc(npc_id).get("name", ""), text]))
@@ -199,6 +201,10 @@ func _build_menu_button() -> void:
 	_bag_button.text = "Sac"
 	_bag_button.pressed.connect(open_bag)
 	_root.add_child(_bag_button)
+	_story_button = Button.new()
+	_story_button.text = "Histoire"
+	_story_button.pressed.connect(open_story)
+	_root.add_child(_story_button)
 
 
 func _build_hotbar() -> void:
@@ -280,6 +286,7 @@ func _layout() -> void:
 	# Boutons Menu et Sac en haut à gauche, horloge et bourse en haut à droite
 	_menu_button.position = Vector2(4, 4)
 	_bag_button.position = Vector2(8 + _menu_button.get_combined_minimum_size().x, 4)
+	_story_button.position = Vector2(_bag_button.position.x + _bag_button.get_combined_minimum_size().x + 4, 4)
 	var clock := _top_panel.get_combined_minimum_size()
 	_top_panel.size = Vector2(maxf(clock.x, 84), clock.y)
 	_top_panel.position = Vector2(vp.x - _top_panel.size.x - 4, 4)
@@ -403,7 +410,7 @@ func is_over_ui(event: InputEvent) -> bool:
 	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
 	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
-	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _hotbar, _joystick, _energy_bar, _health_bar, _minimap]:
+	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _story_button, _hotbar, _joystick, _energy_bar, _health_bar, _minimap]:
 		if c.get_global_rect().has_point(point):
 			return true
 	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
@@ -499,6 +506,7 @@ func open_pause_menu() -> void:
 	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
 		Settings.toggle_sound()
 		open_pause_menu())
+	_add_button(box, "Histoire", open_story)
 	_add_button(box, "Fabrication", open_crafting.bind("craft"))
 	_add_button(box, "Compétences", open_skills)
 	_add_button(box, "Habitants", open_relations)
@@ -588,6 +596,7 @@ func _shop_row(texture: Texture2D, text: String) -> HBoxContainer:
 	icon.texture = texture
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 	icon.custom_minimum_size = Vector2(18, 18)
+	_fit_icon(icon)
 	row.add_child(icon)
 	var label := Label.new()
 	label.text = text
@@ -614,7 +623,18 @@ func _item_row(id: String) -> HBoxContainer:
 	return row
 
 
-func _animal_texture(type: String) -> AtlasTexture:
+## Grandes icônes (rendus 3D des animaux) : réduites à la taille d'une ligne.
+func _fit_icon(icon: TextureRect) -> void:
+	if icon.texture != null and icon.texture.get_width() > 16:
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.custom_minimum_size = Vector2(24, 24)
+
+
+func _animal_texture(type: String) -> Texture2D:
+	var path := "res://assets/sprites/pets/%s.png" % type
+	if ResourceLoader.exists(path):
+		return load(path)
 	var tex := AtlasTexture.new()
 	tex.atlas = load("res://assets/sprites/animals.png")
 	tex.region = Rect2(int(Animals.animal_info(type).get("frame", 0)) * 16, 0, 16, 16)
@@ -749,6 +769,7 @@ func _animal_care_row(index: int, building: String) -> HBoxContainer:
 	row.add_theme_constant_override("separation", 4)
 	var icon := TextureRect.new()
 	icon.texture = _animal_texture(a.type)
+	_fit_icon(icon)
 	row.add_child(icon)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 0)
@@ -1133,6 +1154,17 @@ func _recipe_row(id: String, recipe: Dictionary, station: String) -> HBoxContain
 	var button := Button.new()
 	button.text = "Améliorer" if recipe.has("upgrade") else ("Cuisiner" if recipe.get("category") == "Cuisine" else "Fabriquer")
 	button.disabled = not Crafting.can_craft(id)
+	if not Crafting.is_unlocked(id):
+		# Recette encore secrète : on dit quel chapitre de l'histoire la débloque
+		icon.modulate = Color(0, 0, 0, 0.55)
+		name_label.text = "???"
+		for child in needs.get_children():
+			child.queue_free()
+		var hint := Label.new()
+		hint.text = "Débloquée par l'histoire : " + Story.chapter_title(str(recipe.unlock))
+		hint.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+		needs.add_child(hint)
+		button.text = "Verrouillée"
 	button.pressed.connect(func() -> void:
 		if Crafting.craft(id):
 			Sfx.play("craft")
@@ -1338,6 +1370,90 @@ func open_mail() -> void:
 			open_mail())
 	else:
 		_add_button(box, "Fermer", close_modal)
+
+
+# ------------------------------------------------------------ histoire
+func open_story() -> void:
+	var box := _open_modal("Histoire de Valfleur")
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(340, 165)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 3)
+	scroll.add_child(list)
+	var lead := _add_label(list, Story.prologue if Story.chapter == 0 else "")
+	lead.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+	lead.visible = Story.chapter == 0
+	# Échelle de progression : les 5 chapitres
+	var ladder := HBoxContainer.new()
+	ladder.alignment = BoxContainer.ALIGNMENT_CENTER
+	ladder.add_theme_constant_override("separation", 3)
+	list.add_child(ladder)
+	for i in Story.chapters.size():
+		var step := Label.new()
+		step.text = " %d " % (i + 1)
+		var done := i < Story.chapter
+		var now := i == Story.chapter
+		step.add_theme_color_override("font_color", UiTheme.ACCENT if done else (Color.WHITE if now else Color(0.5, 0.45, 0.4)))
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.3, 0.55, 0.3) if done else (Color(0.55, 0.38, 0.22) if now else Color(0.25, 0.18, 0.12))
+		style.set_corner_radius_all(3)
+		step.add_theme_stylebox_override("normal", style)
+		ladder.add_child(step)
+		if i < Story.chapters.size() - 1:
+			var link := Label.new()
+			link.text = "-"
+			ladder.add_child(link)
+	if Story.finished():
+		var end := _add_label(list, "Valfleur a retrouvé sa source et sa fête. Merci !")
+		end.add_theme_color_override("font_color", UiTheme.ACCENT)
+	else:
+		var c: Dictionary = Story.current()
+		var title := _add_label(list, "Chapitre %d : %s" % [Story.chapter + 1, c.title])
+		title.add_theme_color_override("font_color", UiTheme.ACCENT)
+		_add_label(list, str(c.intro))
+		var hint := _add_label(list, "Une seule de ces voies suffit :")
+		hint.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+		for path: Dictionary in c.paths:
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 6)
+			list.add_child(row)
+			var label := Label.new()
+			label.text = str(path.label)
+			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			row.add_child(label)
+			var value := mini(Story.value(str(path.stat)), int(path.goal))
+			var bar := ProgressBar.new()
+			bar.show_percentage = false
+			bar.custom_minimum_size = Vector2(60, 9)
+			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			bar.value = 100.0 * value / float(path.goal)
+			row.add_child(bar)
+			var count := Label.new()
+			count.text = "%d/%d" % [value, int(path.goal)]
+			count.custom_minimum_size = Vector2(44, 0)
+			row.add_child(count)
+		var reward := _add_label(list, "Récompense : " + str(c.get("unlock_text", "")))
+		reward.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+	for i in Story.chapter:
+		var past := _add_label(list, "Terminé : %d. %s" % [i + 1, Story.chapters[i].title])
+		past.add_theme_color_override("font_color", Color(0.6, 0.75, 0.6))
+	_add_button(box, "Fermer", close_modal)
+
+
+func _on_story_advanced(chapter_id: String, path_label: String) -> void:
+	var done: Dictionary = {}
+	for c: Dictionary in Story.chapters:
+		if str(c.id) == chapter_id:
+			done = c
+	title_card("Chapitre terminé !", str(done.get("title", "")), UiTheme.ACCENT)
+	show_toast("%s - nouvelle lettre dans ta boîte !" % path_label)
+	if done.has("unlock_text"):
+		await get_tree().create_timer(3.0).timeout
+		show_toast("Débloqué : " + str(done.unlock_text))
 
 
 func open_skills() -> void:

@@ -1,0 +1,80 @@
+{
+	"prologue": "Il y a dix ans, la source qui alimentait la fontaine de Valfleur s'est tarie. Sans elle, plus de Fête des fleurs, plus de marché : les gens sont partis, et Firmin, le vieux fermier, a fini par fermer sa ferme. Aujourd'hui, c'est toi qui la reprends. Et si Valfleur pouvait refleurir ?",
+	"chapters": [
+		{
+			"id": "ch1",
+			"title": "Le retour à la terre",
+			"giver": "bertrand",
+			"from": "Bertrand, maire de Valfleur",
+			"intro": "Bertrand doute qu'on puisse encore cultiver quoi que ce soit ici. Montre-lui que la ferme de Firmin peut revivre.",
+			"paths": [
+				{"label": "Récolter des cultures", "stat": "harvest", "goal": 15},
+				{"label": "Défricher la ferme (herbes, branches, pierres)", "stat": "cleared", "goal": 40},
+				{"label": "Gagner de l'or en expédiant", "stat": "earned", "goal": 500}
+			],
+			"letter": "Je dois l'admettre : ta ferme reprend vie ! Ça faisait des années que je n'avais pas vu de fumée sortir de la cheminée de Firmin. Firmin, justement... Il faisait de la confiture avec les baies sauvages et de l'engrais avec la gelée des grottes. Je t'ai recopié ses recettes. Prochaine étape : fais-toi connaître au village. Les gens ont perdu l'habitude de se parler.",
+			"items": [["gold", 250]],
+			"unlock_text": "Engrais, poisson grillé, confiture de baies"
+		},
+		{
+			"id": "ch2",
+			"title": "Les gens de Valfleur",
+			"giver": "rosalie",
+			"from": "Rosalie, l'épicière",
+			"intro": "Rosalie dit qu'un village, ce sont d'abord des voisins. Rencontre les habitants, rends-leur visite, gagne leur amitié.",
+			"paths": [
+				{"label": "Rencontrer des habitants", "stat": "met", "goal": 8},
+				{"label": "Offrir des cadeaux", "stat": "gifts", "goal": 6},
+				{"label": "Devenir proche de quelqu'un (cœurs)", "stat": "hearts_max", "goal": 3}
+			],
+			"letter": "Tout le monde parle de toi à l'épicerie ! Odette m'a raconté une chose que j'ignorais : la source ne s'est pas tarie toute seule. Le jour de l'éboulement, au fond de la mine, l'eau s'est arrêtée de couler. Firmin y est descendu des semaines entières... Gaston en sait plus, mais il faut lui prouver que tu tiens la pioche. En attendant, voici les recettes de salade et d'omelette de ma grand-mère.",
+			"items": [["seed_carrot", 10]],
+			"unlock_text": "Salade, omelette"
+		},
+		{
+			"id": "ch3",
+			"title": "Le cœur de la montagne",
+			"giver": "gaston",
+			"from": "Gaston, le forgeron",
+			"intro": "Gaston pense que l'éboulement qui a bouché la source est très profond. Descends dans la mine : creuse, combats, rapporte du minerai.",
+			"paths": [
+				{"label": "Atteindre un niveau de la mine", "stat": "mine_depth", "goal": 5},
+				{"label": "Vaincre des monstres", "stat": "monsters", "goal": 15},
+				{"label": "Extraire du minerai", "stat": "ores", "goal": 25}
+			],
+			"letter": "Hm. Bon travail là-dessous. Au niveau 5, j'ai retrouvé un vieux carnet de Firmin. Il avait compris : la source passe sous la mine, et l'éboulement a coupé son chemin. Il voulait creuser, mais il était seul. Toi, tu ne l'es pas. Mon enclume peut maintenant améliorer ton arrosoir et ton épée. Et voici les plans de son arroseur.",
+			"items": [["copper_ore", 5], ["iron_ore", 2]],
+			"unlock_text": "Arroseur, ragoût du mineur, arrosoir en cuivre, épée en fer"
+		},
+		{
+			"id": "ch4",
+			"title": "La ferme vivante",
+			"giver": "leon",
+			"from": "Léon, l'éleveur",
+			"intro": "Le carnet de Firmin le dit : « Une vraie ferme nourrit tout un village. » Léon et Mathis veulent voir ta ferme grandir, d'une façon ou d'une autre.",
+			"paths": [
+				{"label": "Faire construire un bâtiment d'élevage", "stat": "buildings", "goal": 1},
+				{"label": "Pêcher des poissons", "stat": "fish", "goal": 10},
+				{"label": "Cuisiner des plats", "stat": "cooked", "goal": 6}
+			],
+			"letter": "Ta ferme ressemble à celle de Firmin dans le temps : ça grouille de vie ! Il affinait son propre fromage, tu sais. Je t'envoie sa méthode, et Gaston dit que tu mérites sa pioche en acier. Il ne reste qu'une chose : Bertrand rêve de relancer la Fête des fleurs. Pour ça, il faut que tout Valfleur y croie.",
+			"items": [["hay", 10], ["gold", 500]],
+			"unlock_text": "Arroseur de qualité, fromage, pioche en acier"
+		},
+		{
+			"id": "ch5",
+			"title": "La Fête des fleurs",
+			"giver": "bertrand",
+			"from": "Bertrand, maire de Valfleur",
+			"intro": "Dernière étape : faire revenir la source et la fête. Remplis les étals du village, gagne le cœur de tout le monde, ou va déboucher la source au plus profond de la mine.",
+			"paths": [
+				{"label": "Expédier des produits", "stat": "shipped", "goal": 150},
+				{"label": "Cœurs d'amitié, tous habitants confondus", "stat": "hearts_sum", "goal": 20},
+				{"label": "Descendre au fond de la mine", "stat": "mine_depth", "goal": 15}
+			],
+			"letter": "L'eau coule de nouveau dans la fontaine ! Tout Valfleur est sur la place, il y a des fleurs partout, et Rosalie a ressorti les guirlandes. La Fête des fleurs est de retour, grâce à toi. Ce matin, une lettre est arrivée pour toi à la mairie. Elle est signée... Firmin. « Merci d'avoir rendu ses couleurs à la vallée. La ferme est entre de bonnes mains. »",
+			"items": [["gold", 3000]],
+			"unlock_text": "Valfleur en fête !"
+		}
+	]
+}

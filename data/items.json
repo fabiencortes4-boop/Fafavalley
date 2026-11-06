@@ -728,5 +728,29 @@
 			80,
 			45
 		]
+	},
+	"berry_jam": {
+		"name": "Confiture de baies",
+		"type": "food",
+		"icon": 74,
+		"sell": 160,
+		"stack": 99,
+		"edible": [
+			60,
+			20
+		],
+		"desc": "La recette d'Odette : des baies sauvages, un peu de patience."
+	},
+	"cheese": {
+		"name": "Fromage",
+		"type": "food",
+		"icon": 75,
+		"sell": 320,
+		"stack": 99,
+		"edible": [
+			80,
+			30
+		],
+		"desc": "Affiné à la ferme, comme le faisait Firmin."
 	}
 }

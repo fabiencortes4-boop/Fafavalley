@@ -17,6 +17,10 @@ func _ready() -> void:
 	# Ferme sans débris aléatoires : tests reproductibles
 	FarmState.debris.clear()
 	farm.call("_refresh_all")
+	# Recettes débloquées par l'histoire (testée à part dans story_test)
+	for c: Dictionary in Story.chapters:
+		PlayerState.flags["story_" + str(c.id)] = true
+	Story.chapter = Story.chapters.size()
 	# Arroseur
 	_check(not Crafting.can_craft("sprinkler"), "sans minerai, pas d'arroseur")
 	Inventory.add_item("copper_ore", 9)

@@ -214,6 +214,15 @@ func _model(pack: String, model: String, scale: float = 1.0) -> Node3D:
 	return n
 
 
+func _box(size: Vector3, color: Color) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	box.material = _flat_material(color)
+	mi.mesh = box
+	return mi
+
+
 ## Modèle mis à l'échelle pour que sa plus grande dimension fasse `size` cases.
 func _fitted(pack: String, model: String, size: float) -> Node3D:
 	var n := _model(pack, model, 1.0)
@@ -464,6 +473,8 @@ func _build_buildings(chars: Dictionary) -> void:
 				"fountain":
 					var f := _fitted("town", "fountain-round-detail", 2.2)
 					_put(f, Vector3(cell.x + 1.0, 0, cell.y + 1.0))
+					if PlayerState.flags.has("story_ch5"):
+						_festival(Vector3(cell.x + 1.0, 0, cell.y + 1.0))
 				"mine":
 					for dx in 3:
 						var rock := _model("nature", "cliff_block_rock" if dx != 1 else "cliff_cave_rock", 1.0)
@@ -542,6 +553,34 @@ func _smoke(at: Vector3) -> CPUParticles3D:
 	p.color_ramp = fade
 	p.position = at
 	return p
+
+
+## Fête des fleurs (fin de l'histoire) : fleurs et bannières autour de la fontaine.
+func _festival(center: Vector3) -> void:
+	var flowers := ["flower_redA", "flower_yellowA", "flower_purpleA", "flower_yellowB"]
+	for k in 16:
+		var a := k * TAU / 16.0
+		_put(_fitted("nature", flowers[k % flowers.size()], 0.6), center + Vector3(cos(a), 0, sin(a)) * 1.7, a)
+	for k in 4:
+		var a := PI / 4.0 + k * PI / 2.0
+		_put(_fitted("town", "banner-red" if k % 2 == 0 else "banner-green", 1.0), center + Vector3(cos(a), 0, sin(a)) * 2.6, -a)
+	# Eau qui jaillit de nouveau
+	var jet := CPUParticles3D.new()
+	var drop := SphereMesh.new()
+	drop.radius = 0.04
+	drop.height = 0.08
+	var mat := _flat_material(Color(0.6, 0.85, 1.0, 0.8))
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	drop.material = mat
+	jet.mesh = drop
+	jet.amount = 40
+	jet.lifetime = 1.0
+	jet.direction = Vector3.UP
+	jet.spread = 18.0
+	jet.initial_velocity_min = 2.0
+	jet.initial_velocity_max = 2.6
+	jet.gravity = Vector3(0, -6, 0)
+	_put(jet, center + Vector3(0, 1.0, 0))
 
 
 ## Lanterne du village (et sa lumière, allumée le soir).
@@ -677,9 +716,12 @@ func _build_home() -> void:
 		var ch: String = chars[cell]
 		if ch == "#":
 			continue
-		var plank := Color(0.66, 0.46, 0.3) if (cell.x + cell.y * 3) % 4 != 0 else Color(0.6, 0.41, 0.26)
+		# Lames de parquet claires, une teinte par rangée
+		var plank := Color(0.80, 0.62, 0.42).darkened(float((cell.y * 7 + (cell.x + cell.y) / 4) % 3) * 0.04)
 		if ch == "r":
-			plank = Color(0.7, 0.28, 0.25) if (cell.x + cell.y) % 2 == 0 else Color(0.78, 0.36, 0.28)
+			# Tapis bleu à bordure crème
+			var edge: bool = chars.get(cell + Vector2i.LEFT, "") != "r" or chars.get(cell + Vector2i.RIGHT, "") != "r"
+			plank = Color(0.93, 0.86, 0.7) if edge else Color(0.32, 0.45, 0.72)
 		elif ch == "D":
 			plank = Color(0.4, 0.27, 0.17)
 		_quad(st, Vector3(cell.x, 0, cell.y), Vector3(cell.x + 1, 0, cell.y + 1), plank)
@@ -725,16 +767,45 @@ func _build_home() -> void:
 		match chars[cell]:
 			"Z":
 				_put(_fitted("nature", "bed", 1.4), c + Vector3(0.0, 0, 0.2), PI / 2.0)
+				# Table de chevet et sa bougie
+				_put(_box(Vector3(0.35, 0.4, 0.35), Color(0.45, 0.3, 0.2)), c + Vector3(0.75, 0.2, -0.25))
+				_put(_fitted("dungeon", "potion", 0.25), c + Vector3(0.75, 0.4, -0.25))
 			"k":
+				# Cuisine : plan de travail clair, marmite, étagère colorée
 				_put(_fitted("survival", "workbench", 0.9), c, PI)
-				_put(_fitted("nature", "pot_small", 0.3), c + Vector3(0.15, 0.55, 0))
+				_put(_fitted("nature", "pot_large", 0.35), c + Vector3(0.15, 0.55, 0))
+				var shelf := _box(Vector3(1.6, 0.08, 0.3), Color(0.55, 0.36, 0.22))
+				_put(shelf, c + Vector3(1.0, 1.0, -0.35))
+				for k in 4:
+					var jar := _fitted("dungeon", "potion", 0.22)
+					Models.tint(jar, [Color(1, 0.5, 0.5), Color(0.6, 1, 0.6), Color(0.6, 0.8, 1.2), Color(1.2, 1, 0.5)][k])
+					_put(jar, c + Vector3(0.4 + k * 0.38, 1.04, -0.35))
 			"t":
 				_put(_fitted("dungeon", "table", 0.95), c)
-				_put(_fitted("food", "tomato", 0.15), c + Vector3(0.1, 0.62, 0))
+				# Nappe à carreaux rouges et blancs
+				var cloth := MeshInstance3D.new()
+				var cq := BoxMesh.new()
+				cq.size = Vector3(0.9, 0.02, 0.75)
+				var cimg := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+				for yy in 8:
+					for xx in 8:
+						cimg.set_pixel(xx, yy, Color(0.85, 0.2, 0.18) if (xx / 2 + yy / 2) % 2 == 0 else Color(0.97, 0.95, 0.9))
+				var cmat := StandardMaterial3D.new()
+				cmat.albedo_texture = ImageTexture.create_from_image(cimg)
+				cmat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+				cq.material = cmat
+				cloth.mesh = cq
+				_put(cloth, c + Vector3(0, 0.6, 0))
+				_put(_fitted("food", "tomato", 0.15), c + Vector3(0.15, 0.66, 0))
+				_put(_fitted("nature", "flower_yellowA", 0.3), c + Vector3(-0.2, 0.62, 0.05))
 			"c":
-				_put(_fitted("dungeon", "chair", 0.7), c, PI if cell.y == 3 else 0.0)
+				var chair := _fitted("dungeon", "chair", 0.7)
+				Models.tint(chair, Color(0.95, 1.35, 1.0))  # chaises peintes en vert
+				_put(chair, c, PI if cell.y == 3 else 0.0)
 			"x":
-				_put(_fitted("survival", "chest", 0.65), c, PI)
+				var chest := _fitted("survival", "chest", 0.65)
+				Models.tint(chest, Color(0.75, 0.85, 1.15))
+				_put(chest, c, PI)
 			"p":
 				_put(_fitted("nature", "campfire_stones", 0.9), c)
 				var flame := MeshInstance3D.new()
@@ -755,6 +826,13 @@ func _build_home() -> void:
 				fire.omni_range = 3.5
 				fire.light_energy = 1.0
 				_put(fire, c + Vector3(0.5, 0.7, 0))
+	# Plantes vertes sous les fenêtres et bannière au mur
+	for x: int in [2, 5, 10]:
+		if chars.get(Vector2i(x, 1), "#") == "_":
+			_put(_fitted("nature", "pot_small", 0.45), _cell3d(Vector2i(x, 1)) + Vector3(0, 0, -0.25))
+	var banner := _fitted("dungeon", "banner", 1.1)
+	Models.tint(banner, Color(0.7, 1.0, 0.75))
+	_put(banner, Vector3(4.5, 0, 1.15))
 	var lamp := OmniLight3D.new()
 	lamp.light_color = Color(1.0, 0.93, 0.82)
 	lamp.omni_range = 9.0
