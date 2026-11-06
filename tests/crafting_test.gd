@@ -14,6 +14,9 @@ func _ready() -> void:
 	_main.call("_start", false)
 	await get_tree().process_frame
 	var farm: Farm = _main.call("current_map")
+	# Ferme sans débris aléatoires : tests reproductibles
+	FarmState.debris.clear()
+	farm.call("_refresh_all")
 	# Arroseur
 	_check(not Crafting.can_craft("sprinkler"), "sans minerai, pas d'arroseur")
 	Inventory.add_item("copper_ore", 9)

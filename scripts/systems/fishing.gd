@@ -118,6 +118,7 @@ func _on_minigame_finished(success: bool) -> void:
 		else:
 			Inventory.add_item(_fish_id, 1)
 			var result := FishLog.record(_fish_id, size)
+			Skills.add_xp("fishing", 8 + int(fish.get("difficulty", 30)) / 6)
 			var text := "Tu as pêché : %s (%d cm) !" % [fish.name, size]
 			if result == "new":
 				text += " Nouvelle espèce !"

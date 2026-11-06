@@ -115,13 +115,17 @@ def world():
     tiles += [draw_sprinkler((226, 120, 64), (170, 80, 44)), draw_sprinkler((192, 203, 220), (253, 190, 83))]
     tiles.append(on_grass(tile(DUNGEON, 74)))
     tiles.append(tile(DUNGEON, 89))  # 81 coffre
+    # 82-87 : herbes folles (x2), branche, arbre mort, pierre, boîte aux lettres
+    tiles += [tile(FARM, 64), tile(FARM, 80), tile(FARM, 26), tile(FARM, 14), tile(FARM, 77), draw_mailbox()]
     cols = 16
     rows = (len(tiles) + cols - 1) // cols
     out = Image.new("RGBA", (cols * T, rows * T), (0, 0, 0, 0))
     for i, t in enumerate(tiles):
         out.alpha_composite(t, ((i % cols) * T, (i // cols) * T))
     out.save(os.path.join(OUT, "world.png"))
-    print("world.png :", len(tiles), "tuiles")
+    recolor(out, AUTUMN).save(os.path.join(OUT, "world_autumn.png"))
+    recolor(out, WINTER).save(os.path.join(OUT, "world_winter.png"))
+    print("world.png :", len(tiles), "tuiles (+ automne, hiver)")
 
 
 # --------------------------------------------------------------- cultures
@@ -153,6 +157,7 @@ def objects():
     compose(FARM, [[93, 94, 95], [105, 106, 107], [117, 118, 119], [129, 130, 131],
                    [90, 91, 92], [126, 127, 128]]).save(os.path.join(OUT, "barn.png"))
     tile(FARM, 76).save(os.path.join(OUT, "shipping_bin.png"))
+    draw_mailbox().save(os.path.join(OUT, "mailbox.png"))
     compose_mixed([(TOWN, 83), (FARM, 11), (FARM, 47)]).save(os.path.join(OUT, "shop_stand.png"))
     compose(FARM, [[122, 121, 120]]).save(os.path.join(OUT, "animals.png"))  # poule, vache, mouton
 
@@ -441,6 +446,14 @@ def extend_icons(sheet):
     extra.append(tile(DUNGEON, 89))
     extra.append(tile(TOWN, 107))
     extra.append(recolor(tile(TOWN, 107), {(189, 108, 74): (78, 151, 76), (234, 165, 108): (132, 198, 105), (207, 130, 84): (71, 159, 74), (184, 101, 66): (60, 120, 60)}))
+    # 53-64 : hache, faux, bois, fibre, cueillette (2 par saison)
+    extra += [tile(FARM, 87), tile(FARM, 88), draw_log(),
+              recolor(tile(FARM, 80), {(78, 151, 76): (205, 186, 120), (132, 198, 105): (235, 214, 150), (71, 159, 74): (190, 160, 100)})]
+    extra += [tile(TOWN, 17), draw_flower((253, 214, 83), (227, 160, 40)),
+              tile(FARM, 78), draw_flower((232, 69, 55), (176, 40, 30)),
+              tile(TOWN, 29), tile(FARM, 79),
+              recolor(tile(FARM, 78), {(78, 151, 76): (30, 90, 60), (132, 198, 105): (50, 120, 80), (71, 159, 74): (40, 105, 70)}),
+              recolor(tile(FARM, 125), {(234, 165, 108): (150, 90, 130), (254, 201, 156): (190, 130, 170), (207, 130, 84): (110, 60, 100)})]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):
@@ -526,6 +539,95 @@ def draw_plate():
     return img
 
 
+# Saisons : remplacement des verts (herbe, feuillages, eau en hiver)
+AUTUMN = {(132, 198, 105): (205, 172, 92), (101, 165, 86): (178, 132, 70), (139, 216, 125): (232, 200, 120),
+          (71, 159, 74): (227, 134, 40), (78, 151, 76): (195, 75, 53)}
+WINTER = {(132, 198, 105): (235, 239, 248), (101, 165, 86): (192, 203, 220), (139, 216, 125): (255, 255, 255),
+          (71, 159, 74): (52, 110, 82), (78, 151, 76): (44, 96, 74),
+          (92, 168, 214): (156, 204, 232), (64, 132, 196): (120, 172, 214), (176, 224, 246): (226, 242, 252)}
+
+
+def draw_mailbox():
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(8, 16):
+        px[7, y] = (150, 84, 58, 255)
+        px[8, y] = (118, 59, 54, 255)
+    for y in range(2, 9):
+        for x in range(3, 13):
+            px[x, y] = ((232, 69, 55) if y > 3 else (242, 120, 100)) + (255,)
+    for x in range(4, 12):
+        px[x, 8] = (176, 40, 30, 255)
+    for y in range(1, 5):
+        px[13, y] = (253, 214, 83, 255)
+    px[14, 1] = (253, 214, 83, 255)
+    return outlined(img)
+
+
+def draw_log():
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(6, 12):
+        for x in range(2, 13):
+            px[x, y] = ((189, 108, 74) if y < 9 else (150, 84, 58)) + (255,)
+    for y in range(6, 12):
+        for x in range(12, 15):
+            if ((x - 12.5) / 2) ** 2 + ((y - 8.5) / 3) ** 2 <= 1:
+                px[x, y] = (234, 190, 140, 255)
+    px[13, 8] = (189, 108, 74, 255)
+    return outlined(img)
+
+
+def draw_flower(petal, dark):
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(8, 15):
+        px[8, y] = (78, 151, 76, 255)
+    px[7, 11] = px[6, 10] = (78, 151, 76, 255)
+    for (x, y) in ((8, 3), (6, 5), (10, 5), (7, 7), (9, 7), (8, 4), (7, 5), (9, 5), (8, 6), (7, 4), (9, 4), (7, 6), (9, 6)):
+        px[x, y] = petal + (255,)
+    px[8, 5] = dark + (255,)
+    return outlined(img)
+
+
+def hud_icons():
+    """Petites icônes du HUD (12x12) : soleil, pluie, neige, pièce."""
+    out = new_img(48, 12)
+    px = out.load()
+    sun, cloud, rain, coin = (253, 214, 83, 255), (235, 239, 248, 255), (92, 168, 214, 255), (253, 190, 83, 255)
+    for y in range(12):
+        for x in range(12):
+            d = ((x - 5.5) ** 2 + (y - 5.5) ** 2) ** 0.5
+            if d <= 3.2:
+                px[x, y] = sun
+            elif 4.2 <= d <= 5.2 and (x in (5, 6) or y in (5, 6) or abs(x - y) <= 0 or abs(x + y - 11) <= 0):
+                px[x, y] = sun
+            # pluie : nuage + gouttes
+            if ((x - 5.5) / 5) ** 2 + ((y - 4) / 3) ** 2 <= 1:
+                px[12 + x, y] = cloud
+            if y >= 8 and x in (3, 6, 9) and (y + x) % 2 == 0:
+                px[12 + x, y] = rain
+            # neige : flocon
+            if x == 5 or y == 5 or x == y or x + y == 10:
+                if 1 <= x <= 9 and 1 <= y <= 9:
+                    px[24 + x, y] = cloud
+            # pièce
+            if ((x - 5.5) / 4.5) ** 2 + ((y - 5.5) / 5) ** 2 <= 1:
+                px[36 + x, y] = coin if not (4 <= x <= 7 and 3 <= y <= 8 and x in (5, 6)) else (227, 134, 40, 255)
+    for k in range(4):
+        part = out.crop((k * 12, 0, k * 12 + 12, 12))
+        big = new_img(14, 14)
+        big.alpha_composite(part, (1, 1))
+        px2 = big.load()
+        solid = {(x, y) for y in range(14) for x in range(14) if px2[x, y][3] > 0}
+        for y in range(14):
+            for x in range(14):
+                if (x, y) not in solid and any((x + dx, y + dy) in solid for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                    px2[x, y] = OUTLINE
+        out.paste(big.crop((1, 1, 13, 13)), (k * 12, 0))
+    out.save(os.path.join(OUT, "hud_icons.png"))
+
+
 def new_img(w, h):
     return Image.new("RGBA", (w, h), (0, 0, 0, 0))
 
@@ -585,6 +687,7 @@ if __name__ == "__main__":
     village()
     ui()
     hearts()
+    hud_icons()
     fishing()
     app_icon()
     print("Sprites générés dans", OUT)

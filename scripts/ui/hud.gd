@@ -17,6 +17,8 @@ var _water_label: Label
 var _energy_bar: ProgressBar
 var _health_bar: ProgressBar
 var _location_label: Label
+var _weather_icon: TextureRect
+var _gold_panel: PanelContainer
 var _top_panel: PanelContainer
 var _menu_button: Button
 var _bag_button: Button
@@ -72,7 +74,8 @@ func _ready() -> void:
 	EventBus.elevator_requested.connect(open_elevator)
 	EventBus.forge_requested.connect(open_crafting.bind("forge"))
 	EventBus.chest_requested.connect(open_chest)
-	EventBus.water_changed.connect(func(_v: int, _m: int) -> void: _refresh_status())
+	EventBus.mail_requested.connect(open_mail)
+	EventBus.water_changed.connect(func(_v: int, _m: int) -> void: _refresh_hotbar())
 	EventBus.toast_requested.connect(show_toast)
 	EventBus.shop_requested.connect(open_shop)
 	EventBus.sleep_requested.connect(ask_sleep)
@@ -91,24 +94,52 @@ func _ready() -> void:
 
 
 # ------------------------------------------------------------ construction
+## Horloge en haut à droite : jour de la semaine, date, météo, heure, lieu ;
+## la bourse est juste en dessous.
 func _build_top_panel() -> void:
 	_top_panel = PanelContainer.new()
-	_top_panel.position = Vector2(4, 4)
 	_root.add_child(_top_panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 0)
+	box.add_theme_constant_override("separation", 1)
 	_top_panel.add_child(box)
+	_date_label = Label.new()
+	_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(_date_label)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 4)
+	box.add_child(row)
+	_weather_icon = TextureRect.new()
+	_weather_icon.custom_minimum_size = Vector2(12, 12)
+	_weather_icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	row.add_child(_weather_icon)
+	_time_label = Label.new()
+	_time_label.add_theme_font_size_override("font_size", 16)
+	row.add_child(_time_label)
 	_location_label = Label.new()
+	_location_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_location_label.add_theme_color_override("font_color", Color(0.8, 0.92, 1.0))
 	box.add_child(_location_label)
-	_date_label = Label.new()
-	_time_label = Label.new()
+	_gold_panel = PanelContainer.new()
+	_root.add_child(_gold_panel)
+	var gold_row := HBoxContainer.new()
+	gold_row.add_theme_constant_override("separation", 4)
+	_gold_panel.add_child(gold_row)
+	var coin := TextureRect.new()
+	coin.texture = _hud_icon(3)
+	coin.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	gold_row.add_child(coin)
 	_gold_label = Label.new()
 	_gold_label.add_theme_color_override("font_color", UiTheme.ACCENT)
-	_water_label = Label.new()
-	_water_label.add_theme_font_size_override("font_size", 8)
-	for l in [_date_label, _time_label, _gold_label, _water_label]:
-		box.add_child(l)
+	gold_row.add_child(_gold_label)
+	_water_label = Label.new()  # gardé pour compatibilité (l'eau s'affiche sur l'arrosoir)
+
+
+func _hud_icon(index: int) -> AtlasTexture:
+	var tex := AtlasTexture.new()
+	tex.atlas = load("res://assets/sprites/hud_icons.png")
+	tex.region = Rect2(index * 12, 0, 12, 12)
+	return tex
 
 
 func _build_energy_bar() -> void:
@@ -128,6 +159,11 @@ func _build_energy_bar() -> void:
 	red.set_expand_margin_all(-3)
 	_health_bar.add_theme_stylebox_override("fill", red)
 	_root.add_child(_health_bar)
+	for pair in [[_energy_bar, "E"], [_health_bar, "V"]]:
+		var tag := Label.new()
+		tag.text = pair[1]
+		tag.position = Vector2(2, 73)
+		pair[0].add_child(tag)
 
 
 func _build_menu_button() -> void:
@@ -198,12 +234,17 @@ func _build_toast() -> void:
 
 func _layout() -> void:
 	var vp := get_viewport().get_visible_rect().size
-	_energy_bar.position = Vector2(vp.x - 18, vp.y - ACTION_SIZE - ACTION_MARGIN.y - 80)
+	_energy_bar.position = Vector2(vp.x - 18, vp.y - ACTION_SIZE - ACTION_MARGIN.y - 92)
 	_health_bar.position = _energy_bar.position - Vector2(15, 0)
-	_menu_button.position = Vector2(vp.x - _menu_button.get_combined_minimum_size().x - 4, 4)
-	var menu_size := _menu_button.get_combined_minimum_size()
-	_bag_button.size = Vector2(menu_size.x, 0)
-	_bag_button.position = Vector2(vp.x - menu_size.x - 4, 8 + menu_size.y)
+	# Boutons Menu et Sac en haut à gauche, horloge et bourse en haut à droite
+	_menu_button.position = Vector2(4, 4)
+	_bag_button.position = Vector2(8 + _menu_button.get_combined_minimum_size().x, 4)
+	var clock := _top_panel.get_combined_minimum_size()
+	_top_panel.size = Vector2(maxf(clock.x, 84), clock.y)
+	_top_panel.position = Vector2(vp.x - _top_panel.size.x - 4, 4)
+	var gold := _gold_panel.get_combined_minimum_size()
+	_gold_panel.size = Vector2(_top_panel.size.x, gold.y)
+	_gold_panel.position = Vector2(_top_panel.position.x, _top_panel.position.y + _top_panel.size.y + 2)
 	var hb := _hotbar.get_combined_minimum_size()
 	_hotbar.size = hb
 	_hotbar.position = Vector2((vp.x - hb.x) / 2.0, vp.y - hb.y - 4)
@@ -218,10 +259,12 @@ func _layout() -> void:
 
 # ------------------------------------------------------------ rafraîchissement
 func _refresh_status() -> void:
-	_date_label.text = TimeManager.date_string()
-	_time_label.text = "%s  %s" % [TimeManager.time_string(), TimeManager.weather_string()]
-	_gold_label.text = "%d or" % Inventory.gold
-	_water_label.text = "Arrosoir %d/%d" % [PlayerState.water, PlayerState.max_water()]
+	_date_label.text = "%s %d - %s" % [TimeManager.weekday(), TimeManager.day, TimeManager.SEASONS[TimeManager.season]]
+	_time_label.text = TimeManager.time_string()
+	_weather_icon.texture = _hud_icon({"rain": 1, "snow": 2}.get(TimeManager.weather, 0))
+	_gold_label.text = "%d" % Inventory.gold
+	if _gold_panel != null:
+		_layout()
 
 
 func _on_energy_changed(value: int, max_value: int) -> void:
@@ -241,6 +284,9 @@ func _refresh_hotbar() -> void:
 		else:
 			_slot_icons[i].texture = GameData.item_icon(slot.id)
 			_slot_labels[i].text = str(slot.qty) if int(slot.qty) > 1 else ""
+			# L'eau restante s'affiche sur l'arrosoir.
+			if GameData.item(slot.id).get("tool") == "watering_can":
+				_slot_labels[i].text = str(PlayerState.water)
 	var selected: Variant = Inventory.get_selected()
 	_action_icon.texture = null if selected == null else GameData.item_icon(selected.id)
 
@@ -313,7 +359,7 @@ func is_over_ui(event: InputEvent) -> bool:
 	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
 	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
-	for c: Control in [_top_panel, _menu_button, _bag_button, _hotbar, _joystick, _energy_bar, _health_bar]:
+	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _hotbar, _joystick, _energy_bar, _health_bar]:
 		if c.get_global_rect().has_point(point):
 			return true
 	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
@@ -387,7 +433,11 @@ func _add_label(box: Container, text: String) -> Label:
 func open_pause_menu() -> void:
 	var box := _open_modal("Pause")
 	_add_button(box, "Reprendre", close_modal)
+	_add_button(box, "Zoom : x%s" % str(Settings.zoom), func() -> void:
+		Settings.cycle_zoom()
+		open_pause_menu())
 	_add_button(box, "Fabrication", open_crafting.bind("craft"))
+	_add_button(box, "Compétences", open_skills)
 	_add_button(box, "Habitants", open_relations)
 	_add_button(box, "Carnet de pêche", open_fish_log)
 	_add_button(box, "Sauvegarder", func() -> void:
@@ -927,3 +977,78 @@ func _section_label(text: String) -> Label:
 func _remember_scroll(scroll: ScrollContainer, key: String) -> void:
 	scroll.set_deferred("scroll_vertical", int(_scroll_memory.get(key, 0)))
 	scroll.get_v_scroll_bar().value_changed.connect(func(v: float) -> void: _scroll_memory[key] = int(v))
+
+
+# ------------------------------------------------------------ courrier et compétences
+func open_mail() -> void:
+	var letter := Mail.open_next()
+	if letter.is_empty():
+		close_modal()
+		return
+	var box := _open_modal("Une lettre !")
+	var paper := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.99, 0.95, 0.84)
+	style.border_color = Color(0.72, 0.55, 0.36)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(2)
+	style.set_content_margin_all(8)
+	paper.add_theme_stylebox_override("panel", style)
+	box.add_child(paper)
+	var col := VBoxContainer.new()
+	paper.add_child(col)
+	var text := Label.new()
+	text.text = str(letter.get("text", ""))
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.custom_minimum_size = Vector2(260, 0)
+	text.add_theme_color_override("font_color", Color(0.25, 0.15, 0.19))
+	text.add_theme_constant_override("shadow_offset_x", 0)
+	text.add_theme_constant_override("shadow_offset_y", 0)
+	col.add_child(text)
+	var sign := Label.new()
+	sign.text = "- " + str(letter.get("from", ""))
+	sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	sign.add_theme_color_override("font_color", Color(0.55, 0.3, 0.2))
+	sign.add_theme_constant_override("shadow_offset_x", 0)
+	sign.add_theme_constant_override("shadow_offset_y", 0)
+	col.add_child(sign)
+	var items: Array = letter.get("items", [])
+	if not items.is_empty():
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		box.add_child(row)
+		var label := Label.new()
+		label.text = "Joint : "
+		row.add_child(label)
+		for entry: Array in items:
+			var icon := TextureRect.new()
+			icon.texture = _hud_icon(3) if entry[0] == "gold" else GameData.item_icon(str(entry[0]))
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+			row.add_child(icon)
+			var qty := Label.new()
+			qty.text = ("%d or" % int(entry[1])) if entry[0] == "gold" else ("%s x%d" % [GameData.item_name(str(entry[0])), int(entry[1])])
+			row.add_child(qty)
+	_add_button(box, "Lettre suivante" if Mail.has_mail() else "Fermer", open_mail if Mail.has_mail() else close_modal)
+
+
+func open_skills() -> void:
+	var box := _open_modal("Compétences")
+	for skill: String in Skills.NAMES:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		box.add_child(row)
+		var name_label := Label.new()
+		name_label.text = "%s  niv. %d" % [Skills.NAMES[skill], Skills.level(skill)]
+		name_label.custom_minimum_size = Vector2(110, 0)
+		row.add_child(name_label)
+		var bar := ProgressBar.new()
+		bar.show_percentage = false
+		bar.custom_minimum_size = Vector2(70, 10)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.value = Skills.progress(skill) * 100.0
+		row.add_child(bar)
+		var perk := Label.new()
+		perk.text = Skills.PERKS[skill]
+		perk.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+		row.add_child(perk)
+	_add_button(box, "Retour", open_pause_menu)

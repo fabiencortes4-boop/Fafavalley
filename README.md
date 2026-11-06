@@ -36,6 +36,17 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ## Ce que contient ce prototype
 
+- Vue rapprochée (zoom x1.5 par défaut, environ 20 cases de large ; réglable dans Menu → Zoom).
+- Horloge : jour de la semaine, date, saison, météo, heure, lieu ; bourse en dessous.
+- Saisons visibles : herbe et arbres dorés en automne, neige en hiver ; pluie et neige qui tombent.
+- Ferme à défricher : herbes folles (faux), branches et arbres morts (hache), pierres (pioche),
+  qui donnent fibre, bois et pierre ; quelques herbes repoussent chaque nuit.
+- Boîte aux lettres : lettres des habitants (bienvenue avec hache et faux, conseils de saison,
+  cadeaux, récompenses).
+- Cueillette : 8 plantes sauvages (2 par saison) à ramasser à la ferme et au village.
+- Compétences (Menu → Compétences) : agriculture, minage, pêche, combat, cueillette ;
+  10 niveaux chacune, avec un bonus (récolte double, minerai en plus, filet plus large,
+  vie max, cueillette double).
 - Cycle jour/nuit (6h → 2h), 4 saisons de 28 jours, météo (la pluie arrose).
 - Labourer (houe), arroser (arrosoir, à remplir à l'étang), semer, faire pousser, récolter.
 - 6 cultures saisonnières (carotte, navet, chou, tomate et maïs qui repoussent, blé).
@@ -78,7 +89,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ```
 project.godot
-data/                 # contenu du jeu en JSON (objets, cultures, habitants, poissons, monstres, recettes)
+data/                 # contenu du jeu en JSON (objets, cultures, habitants, poissons, monstres, recettes, lettres)
 scenes/main.tscn      # point d'entrée
 scripts/
   autoload/           # singletons globaux
@@ -127,6 +138,7 @@ godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
 godot --headless res://tests/crafting_test.tscn   # arroseurs, engrais, cuisine, forge
 godot --headless res://tests/inventory_test.tscn  # sac, agrandissements, coffres
+godot --headless res://tests/life_test.tscn       # zoom, débris, courrier, cueillette, compétences, saisons
 godot --headless --fixed-fps 60 res://tests/combat_balance.tscn  # équilibrage du combat (simulation)
 godot --headless -s res://tests/fishing_balance.gd # équilibrage du mini-jeu (simulation)
 godot --headless res://tests/movement_test.tscn   # joystick tactile
@@ -148,6 +160,7 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 ## Feuille de route
 
 - [x] Prototype : ferme, outils, cultures, temps, vente, sauvegarde, contrôles tactiles
+- [x] Défrichage, courrier, cueillette, compétences, saisons visibles
 - [ ] Qualité des récoltes
 - [x] Village et habitants (emplois du temps, dialogues, cadeaux, amitié)
 - [ ] Intérieurs des maisons, scènes de cœur, anniversaires

@@ -59,7 +59,7 @@ func restore(passed_out: bool) -> void:
 	energy = MAX_ENERGY / 2 if passed_out else MAX_ENERGY
 	has_position = false
 	map = "farm"  # on se réveille toujours à la ferme
-	health = MAX_HEALTH
+	health = max_health()
 	_emit()
 
 
@@ -70,14 +70,19 @@ func hurt(amount: int) -> bool:
 	return health == 0
 
 
+## Vie maximale : 100 + 5 par niveau de combat.
+func max_health() -> int:
+	return MAX_HEALTH + Skills.level("combat") * 5
+
+
 func heal(energy_amount: int, health_amount: int) -> void:
 	energy = mini(energy + energy_amount, MAX_ENERGY)
-	health = mini(health + health_amount, MAX_HEALTH)
+	health = mini(health + health_amount, max_health())
 	_emit()
 
 
 func _emit() -> void:
-	EventBus.health_changed.emit(health, MAX_HEALTH)
+	EventBus.health_changed.emit(health, max_health())
 	EventBus.energy_changed.emit(energy, MAX_ENERGY)
 	EventBus.water_changed.emit(water, max_water())
 

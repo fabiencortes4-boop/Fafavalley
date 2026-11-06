@@ -13,6 +13,9 @@ func _ready() -> void:
 	main.call("_start", false)
 	await get_tree().process_frame
 	var farm: Farm = main.call("current_map")
+	# Ferme sans débris aléatoires : tests reproductibles
+	FarmState.debris.clear()
+	farm.call("_refresh_all")
 	var cell := Vector2i(12, 14)
 	Inventory.select(0)  # houe
 	farm.act_on(cell)

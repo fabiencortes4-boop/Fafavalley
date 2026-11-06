@@ -3,6 +3,7 @@ extends Node
 
 const STARTING_GOLD := 500
 const STARTING_ITEMS := [["hoe", 1], ["watering_can", 1], ["seed_carrot", 15]]
+# La hache et la faux arrivent par la lettre de bienvenue du maire.
 
 var in_game: bool = false
 
@@ -19,6 +20,9 @@ func new_game() -> void:
 	PlayerState.reset()
 	Relations.reset()
 	FishLog.reset()
+	Skills.reset()
+	Mail.reset()
+	Forage.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])
 	Inventory.add_gold(STARTING_GOLD)
@@ -30,6 +34,7 @@ func continue_game() -> bool:
 
 func begin() -> void:
 	in_game = true
+	Mail.check()  # la lettre de bienvenue (y compris pour les anciennes parties)
 	TimeManager.start_day()
 
 
@@ -44,6 +49,8 @@ func end_day(passed_out: bool = false) -> void:
 	FarmState.advance_day(TimeManager.season, TimeManager.is_raining())
 	PlayerState.restore(passed_out)
 	Relations.new_day()
+	Forage.new_day()
+	Mail.check()
 	TimeManager.start_day()
 	SaveManager.save_game()
 	EventBus.day_summary.emit(report)
@@ -58,8 +65,8 @@ func _on_passed_out() -> void:
 func _on_player_fainted() -> void:
 	var lost := mini(Inventory.gold / 10, 300)
 	Inventory.spend_gold(lost)
-	PlayerState.health = PlayerState.MAX_HEALTH / 4
+	PlayerState.health = PlayerState.max_health() / 4
 	PlayerState.energy = maxi(PlayerState.energy, 20)
-	EventBus.health_changed.emit(PlayerState.health, PlayerState.MAX_HEALTH)
+	EventBus.health_changed.emit(PlayerState.health, PlayerState.max_health())
 	EventBus.map_change_requested.emit("village", MineLevel.VILLAGE_EXIT)
 	EventBus.message_requested.emit("Évanouissement", "Tu t'es évanoui·e dans la mine... Gaston t'a ramené·e à la surface. Les soins t'ont coûté %d or." % lost)

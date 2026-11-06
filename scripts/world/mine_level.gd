@@ -307,9 +307,13 @@ func _break_rock(cell: Vector2i) -> void:
 	var drops: Array = ROCKS[type][2]
 	if type == "gem":
 		drops = [[_gem_for_depth(), 1, 1, 1.0]]
+	Skills.add_xp("mining", 3 if type in ["stone", "pebbles"] else 6)
 	for d: Array in drops:
 		if randf() < float(d[3]):
-			for i in randi_range(int(d[1]), int(d[2])):
+			var n := randi_range(int(d[1]), int(d[2]))
+			if type != "stone" and type != "pebbles" and Skills.roll("mining", 6.0):
+				n += 1
+			for i in n:
 				_drop(str(d[0]), cell_center(cell))
 	if cell == _ladder_cell:
 		_reveal_ladder(cell)
@@ -327,6 +331,7 @@ func _reveal_ladder(cell: Vector2i) -> void:
 
 func _on_monster_died(monster: Monster) -> void:
 	var data: Dictionary = GameData.monsters.get(monster.kind, {})
+	Skills.add_xp("combat", 5 + level / 2)
 	if randf() < float(data.get("drop_chance", 0.5)):
 		_drop(str(data.get("drop", "slime")), monster.position)
 

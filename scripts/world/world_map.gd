@@ -23,6 +23,11 @@ const DECOR := {
 const TREES := [WorldTiles.PINE, WorldTiles.PINE_2, WorldTiles.BIG_PINE, WorldTiles.PINE]
 
 static var _tileset: TileSet
+const SEASON_TEXTURES := [
+	"res://assets/sprites/world.png", "res://assets/sprites/world.png",
+	"res://assets/sprites/world_autumn.png", "res://assets/sprites/world_winter.png",
+]
+const FORAGE_GROUND := [".", ",", "'"]
 
 var map_id: String = ""
 var hud: Hud
@@ -42,6 +47,8 @@ var _map_size: Vector2i
 var _target_cell: Vector2i
 var _warping: bool = false
 var fishing: Fishing
+var _weather: CPUParticles2D
+var _forage_sprites: Dictionary = {}  # Vector2i -> Sprite2D
 
 
 # ------------------------------------------------------------ à surcharger
@@ -79,6 +86,11 @@ func _use_pickaxe(_cell: Vector2i, _energy: int) -> void:
 	pass
 
 
+## Un coup d'arme sur une case (la ferme fauche les herbes folles).
+func _swing_hit_cell(_cell: Vector2i) -> void:
+	pass
+
+
 ## Nom du lieu affiché dans le HUD.
 func display_name() -> String:
 	return ""
@@ -109,8 +121,11 @@ func _ready() -> void:
 	add_child(fishing)
 	TimeManager.time_changed.connect(_update_tint)
 	TimeManager.day_started.connect(_on_day_started)
+	Settings.changed.connect(_apply_zoom)
 	_after_build()
 	_update_tint(0, 0)
+	_update_weather()
+	_spawn_forage()
 
 
 static func _get_tileset() -> TileSet:
@@ -136,7 +151,16 @@ static func _get_tileset() -> TileSet:
 	return ts
 
 
+## Planche de tuiles de la saison (la mine garde ses couleurs).
+func _apply_season() -> void:
+	var path: String = SEASON_TEXTURES[0] if map_id.begins_with("mine") else SEASON_TEXTURES[TimeManager.season]
+	var src := _ground.tile_set.get_source(0) as TileSetAtlasSource
+	if src.texture.resource_path != path:
+		src.texture = load(path)
+
+
 func _build_map() -> void:
+	_apply_season()
 	var rows := _map_rows()
 	_map_size = Vector2i(String(rows[0]).length(), rows.size())
 	for y in rows.size():
@@ -225,6 +249,7 @@ func _spawn_player() -> void:
 	_camera.position_smoothing_enabled = true
 	_camera.position_smoothing_speed = 8.0
 	player.add_child(_camera)
+	_apply_zoom()
 	_place_player()
 
 
@@ -235,6 +260,11 @@ func _place_player() -> void:
 		player.position = cell_center(_spawn_cell)
 		player.facing = Vector2i.DOWN
 	_camera.reset_smoothing()
+
+
+func _apply_zoom() -> void:
+	if _camera != null:
+		_camera.zoom = Vector2.ONE * Settings.zoom
 
 
 func cell_center(cell: Vector2i) -> Vector2:
@@ -299,6 +329,9 @@ func act_on(cell: Vector2i) -> void:
 	if fishing.busy():
 		fishing.on_action()
 		return
+	if _forage_sprites.has(cell):
+		_pick_forage(cell)
+		return
 	var kind: String = _interactables.get(cell, "")
 	if kind == "sign":
 		var s: Array = _signs[cell]
@@ -333,6 +366,7 @@ func _swing(weapon_id: String) -> void:
 		return
 	var damage: Array = data.get("damage", [5, 8])
 	var center := player.hit_point()
+	_swing_hit_cell(player_cell() + player.facing)
 	for node in get_tree().get_nodes_in_group("monsters"):
 		var monster := node as Monster
 		if monster != null and (monster.position + Vector2(0, -4)).distance_to(center) < 16.0:
@@ -355,7 +389,78 @@ func spend_energy(energy: int) -> bool:
 
 # ------------------------------------------------------------ affichage
 func _on_day_started(_day: int, _season: int, _year: int) -> void:
+	_apply_season()
 	_place_player()
+	_update_weather()
+
+
+# ------------------------------------------------------------ cueillette
+## Cases libres pour une plante sauvage (herbe, rien dessus).
+func _forage_cells() -> Array:
+	var out: Array = []
+	for cell: Vector2i in _ground_chars:
+		if str(_ground_chars[cell]) in FORAGE_GROUND and is_walkable(cell) and not _interactables.has(cell):
+			out.append(cell)
+	return out
+
+
+func _spawn_forage() -> void:
+	var placed := Forage.ensure_spawned(map_id, _forage_cells())
+	for key: String in placed:
+		var parts := key.split(",")
+		var cell := Vector2i(int(parts[0]), int(parts[1]))
+		var sprite := Sprite2D.new()
+		sprite.texture = GameData.item_icon(placed[key])
+		sprite.position = cell_center(cell)
+		sprite.offset = Vector2(0, -6)
+		_entities.add_child(sprite)
+		_forage_sprites[cell] = sprite
+
+
+func _pick_forage(cell: Vector2i) -> void:
+	var sprite: Sprite2D = _forage_sprites[cell]
+	var id := Forage.take(map_id, cell)
+	if id == "" or not Inventory.can_add(id):
+		if id != "":
+			Forage.spots.get(map_id, {})["%d,%d" % [cell.x, cell.y]] = id
+			EventBus.toast("Inventaire plein !")
+		return
+	var count := 2 if Skills.roll("foraging", 6.0) else 1
+	Inventory.add_item(id, count)
+	Skills.add_xp("foraging", 7)
+	sprite.queue_free()
+	_forage_sprites.erase(cell)
+	player.play_use()
+	EventBus.toast("+%d %s" % [count, GameData.item_name(id)])
+
+
+# ------------------------------------------------------------ météo
+## Pluie ou neige qui tombent autour du joueur (pas dans la mine).
+func _update_weather() -> void:
+	if _weather != null:
+		_weather.queue_free()
+		_weather = null
+	if map_id.begins_with("mine") or not (TimeManager.is_raining() or TimeManager.is_snowing()):
+		return
+	var snow := TimeManager.is_snowing()
+	_weather = CPUParticles2D.new()
+	var img := Image.create(1 if not snow else 2, 4 if not snow else 2, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.75, 0.85, 1.0, 0.7) if not snow else Color(1, 1, 1, 0.9))
+	_weather.texture = ImageTexture.create_from_image(img)
+	_weather.amount = 160 if not snow else 90
+	_weather.lifetime = 0.9 if not snow else 4.0
+	_weather.preprocess = 2.0
+	_weather.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_weather.emission_rect_extents = Vector2(360, 10)
+	_weather.position = Vector2(0, -200)
+	_weather.direction = Vector2(0.25, 1) if not snow else Vector2(0.1, 1)
+	_weather.spread = 2.0 if not snow else 25.0
+	_weather.gravity = Vector2.ZERO
+	_weather.initial_velocity_min = 380.0 if not snow else 30.0
+	_weather.initial_velocity_max = 440.0 if not snow else 55.0
+	_weather.local_coords = false
+	_weather.z_index = 10
+	player.add_child(_weather)
 
 
 func _update_tint(_hour: int, _minute: int) -> void:

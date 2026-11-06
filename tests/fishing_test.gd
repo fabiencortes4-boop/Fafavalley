@@ -14,6 +14,9 @@ func _ready() -> void:
 	_main.call("_start", false)
 	await get_tree().process_frame
 	var farm: WorldMap = _main.call("current_map")
+	# Ferme sans débris aléatoires : tests reproductibles
+	FarmState.debris.clear()
+	farm.call("_refresh_all")
 	var hud: Hud = _main.get("_hud")
 	# Acheter la canne à l'épicerie
 	var gold := Inventory.gold

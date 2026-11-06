@@ -11,7 +11,9 @@
 		"likes": [
 			"carrot",
 			"turnip",
-			"trout"
+			"trout",
+			"berries",
+			"hazelnut"
 		],
 		"dislikes": [
 			"wheat",
@@ -91,7 +93,8 @@
 		"likes": [
 			"turnip",
 			"wheat",
-			"catfish"
+			"catfish",
+			"mushroom"
 		],
 		"dislikes": [
 			"cabbage"
@@ -172,7 +175,9 @@
 		"home": "odette",
 		"loves": [
 			"turnip",
-			"carrot"
+			"carrot",
+			"daffodil",
+			"leek"
 		],
 		"likes": [
 			"tomato",
@@ -257,12 +262,15 @@
 		"home": "lina",
 		"loves": [
 			"wheat",
-			"golden_carp"
+			"golden_carp",
+			"poppy"
 		],
 		"likes": [
 			"corn",
 			"carrot",
-			"trout"
+			"trout",
+			"daffodil",
+			"holly"
 		],
 		"dislikes": [
 			"turnip"
@@ -349,7 +357,9 @@
 			"tomato",
 			"corn",
 			"wheat",
-			"perch"
+			"perch",
+			"winter_root",
+			"holly"
 		],
 		"dislikes": [],
 		"schedule": [

@@ -34,7 +34,10 @@ var _done: bool = false
 func _ready() -> void:
 	custom_minimum_size = TRACK_SIZE + Vector2(0, BAR_HEIGHT + 6)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_net_width = lerpf(0.36, 0.19, difficulty)
+	# Bonus de la compétence Pêche (absente lors des simulations d'équilibrage)
+	var skills: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null("Skills")
+	var fishing_level: int = skills.call("level", "fishing") if skills != null else 0
+	_net_width = lerpf(0.36, 0.19, difficulty) * (1.0 + fishing_level * 0.03)
 	_net_pos = 0.5 - _net_width / 2.0
 
 

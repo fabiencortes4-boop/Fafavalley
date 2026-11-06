@@ -10,6 +10,9 @@ func _ready() -> void:
 	main.call("_start", false)
 	await get_tree().create_timer(0.3).timeout
 	var farm: Farm = main.call("current_map")
+	# Ferme sans débris aléatoires : tests reproductibles
+	FarmState.debris.clear()
+	farm.call("_refresh_all")
 	var start: Vector2 = farm.player.position
 	print("Départ joueur : ", start, " viewport : ", get_viewport().get_visible_rect().size)
 	var hud: Hud = farm.hud

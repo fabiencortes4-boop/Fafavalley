@@ -5,6 +5,8 @@ signal time_changed(hour: int, minute: int)
 signal day_started(day: int, season: int, year: int)
 
 const SEASONS := ["Printemps", "Été", "Automne", "Hiver"]
+const WEEKDAYS := ["Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam.", "Dim."]
+const SNOW_CHANCE := 0.3
 const DAYS_PER_SEASON := 28
 const START_MINUTES := 6 * 60
 const PASS_OUT_MINUTES := 26 * 60  # 2h du matin
@@ -62,7 +64,15 @@ func date_string() -> String:
 
 
 func weather_string() -> String:
-	return "Pluie" if weather == "rain" else "Soleil"
+	return {"rain": "Pluie", "snow": "Neige"}.get(weather, "Soleil")
+
+
+func weekday() -> String:
+	return WEEKDAYS[(day - 1) % 7]
+
+
+func is_snowing() -> bool:
+	return weather == "snow"
 
 
 func is_raining() -> bool:
@@ -80,8 +90,11 @@ func advance_day() -> void:
 			year += 1
 	minutes = START_MINUTES
 	_accumulator = 0.0
-	# Hiver : pas de pluie (la neige viendra plus tard).
-	weather = "rain" if season != 3 and randf() < RAIN_CHANCE else "sunny"
+	# Hiver : de la neige au lieu de la pluie (elle n'arrose rien).
+	if season == 3:
+		weather = "snow" if randf() < SNOW_CHANCE else "sunny"
+	else:
+		weather = "rain" if randf() < RAIN_CHANCE else "sunny"
 
 
 func start_day() -> void:

@@ -3,8 +3,7 @@
 		"station": "craft",
 		"category": "Objets",
 		"ingredients": {
-			"stone": 20,
-			"copper_ore": 2
+			"wood": 40
 		}
 	},
 	"sprinkler": {

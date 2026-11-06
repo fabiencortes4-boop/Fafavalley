@@ -1,0 +1,104 @@
+{
+	"welcome": {
+		"from": "Bertrand, maire de Valfleur",
+		"when": {
+			"day_min": 1
+		},
+		"text": "Bienvenue à la ferme ! Elle est restée à l'abandon depuis le départ de Firmin : herbes folles, branches et pierres partout. Voici sa vieille hache et sa faux pour faire place nette. Passe nous voir au village, à l'est !",
+		"items": [
+			[
+				"axe",
+				1
+			],
+			[
+				"scythe",
+				1
+			]
+		]
+	},
+	"rosalie_seeds": {
+		"from": "Rosalie, l'épicière",
+		"when": {
+			"day_min": 2
+		},
+		"text": "Un petit cadeau de bienvenue : des graines de navet. Elles poussent au printemps comme en automne. Mon épicerie est ouverte de 9h à 17h !",
+		"items": [
+			[
+				"seed_turnip",
+				8
+			]
+		]
+	},
+	"gaston_forge": {
+		"from": "Gaston",
+		"when": {
+			"flag": "mine_kit"
+		},
+		"text": "Hm. Tu es descendu·e à la mine. Si tu rapportes du minerai, mon enclume peut améliorer tes outils. Elle est devant chez moi.",
+		"items": []
+	},
+	"lina_fishing": {
+		"from": "Lina",
+		"when": {
+			"day_min": 4,
+			"season": 0
+		},
+		"text": "Coucou ! As-tu essayé la pêche ? L'étang du village est magnifique au lever du soleil. Rosalie vend des cannes à pêche.",
+		"items": []
+	},
+	"odette_summer": {
+		"from": "Odette",
+		"when": {
+			"season": 1
+		},
+		"text": "L'été est là, mon trésor ! Les tomates et le maïs adorent la chaleur. Tiens, quelques graines de mon jardin.",
+		"items": [
+			[
+				"seed_tomato",
+				5
+			]
+		]
+	},
+	"odette_autumn": {
+		"from": "Odette",
+		"when": {
+			"season": 2
+		},
+		"text": "L'automne colore la vallée. C'est la saison des champignons et des noisettes : ouvre l'œil en te promenant !",
+		"items": [
+			[
+				"seed_cabbage",
+				5
+			]
+		]
+	},
+	"odette_winter": {
+		"from": "Odette",
+		"when": {
+			"season": 3
+		},
+		"text": "L'hiver, la terre se repose. Profites-en pour descendre à la mine ou pêcher. Je t'ai préparé de la soupe pour te tenir chaud.",
+		"items": [
+			[
+				"vegetable_soup",
+				2
+			]
+		]
+	},
+	"mayor_mine10": {
+		"from": "Bertrand, maire de Valfleur",
+		"when": {
+			"flag_min": [
+				"mine_deepest",
+				10
+			]
+		},
+		"text": "On raconte que tu as atteint le niveau 10 de la mine ! Valfleur est fier de toi. Voici une petite récompense de la mairie.",
+		"items": [
+			[
+				"gold",
+				500
+			]
+		]
+	}
+}

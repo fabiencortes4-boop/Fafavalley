@@ -12,6 +12,9 @@ func _ready() -> void:
 	await get_tree().process_frame
 	if "--title" not in args:
 		main.call("_start", false)
+		if "--debris" not in args:
+			FarmState.debris.clear()
+			main.call("current_map").call("_refresh_all")
 		_setup_demo()
 		if "--shop" in args:
 			EventBus.shop_requested.emit()
@@ -73,6 +76,18 @@ func _ready() -> void:
 				hud.open_chest(Vector2i(12, 13))
 			else:
 				hud.open_shop()
+		for a in args:
+			if a.begins_with("--season="):
+				TimeManager.season = int(a.trim_prefix("--season="))
+				TimeManager.weather = "snow" if TimeManager.season == 3 else ("rain" if "--rain" in args else "sunny")
+				TimeManager.day_started.emit(1, TimeManager.season, 1)
+		if "--mail" in args:
+			EventBus.mail_requested.emit()
+		if "--skills" in args:
+			Skills.add_xp("farming", 420)
+			Skills.add_xp("mining", 120)
+			Skills.add_xp("fishing", 40)
+			main.get("_hud").open_skills()
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)

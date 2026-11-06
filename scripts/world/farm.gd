@@ -4,7 +4,7 @@ extends WorldMap
 ## Affiche l'état de FarmState (la logique de croissance y vit).
 ##
 ## Caractères propres à la ferme : H maison (3x3), G grange (3x6),
-## B coffre d'expédition, C poule, V vache.
+## B coffre d'expédition, C poule, V vache, X boîte aux lettres.
 
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
@@ -13,7 +13,7 @@ const MAP := [
 	"TTT........f.........R................TT",
 	"TT....H.........o...............C.....TT",
 	"TTT........................Q..........TT",
-	"TT........B.........'......==..V......TT",
+	"TT..X.....B.........'......==..V......TT",
 	"TTT....==...b..............==....h...kTT",
 	"TTT..f.==..................==...........",
 	"TT.....=================================",
@@ -40,11 +40,15 @@ const MAP := [
 ]
 
 const TILLABLE := [".", ",", "'", "C", "V"]
+const DEBRIS_COUNT := 140  # débris à défricher au début de la partie
+const DEBRIS_WEIGHTS := {"weed": 50, "twig": 20, "stone": 20, "stump": 10}
 const CROP_STAGES := 4
 const CROP_ROWS := 6
 
 var _soil: TileMapLayer
 var _objects: TileMapLayer
+var _mail_alert: Sprite2D
+var _mailbox_cell: Vector2i
 var _crop_sprites: Dictionary = {}  # Vector2i -> Sprite2D
 var _grass_coords := [
 	WorldTiles.coords(WorldTiles.GRASS), WorldTiles.coords(WorldTiles.GRASS_TUFT),
@@ -77,6 +81,10 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_interactables[cell] = "bin"
 		"Q":
 			_add_sign(cell, "Panneau", "Valfleur, le village : suis le chemin vers l'est. L'épicerie de Rosalie vend des graines de 9h à 17h.")
+		"X":
+			_add_building(cell, Vector2i(1, 1), "res://assets/sprites/mailbox.png")
+			_interactables[cell] = "mailbox"
+			_mailbox_cell = cell
 		"C", "V":
 			var critter := Critter.new()
 			critter.frame = 0 if ch == "C" else 1
@@ -94,7 +102,18 @@ func _after_build() -> void:
 	_objects.z_index = -1
 	add_child(_objects)
 	EventBus.farm_tile_changed.connect(_refresh_cell)
+	if not PlayerState.flags.has("farm_debris"):
+		PlayerState.flags["farm_debris"] = true
+		_scatter_debris(DEBRIS_COUNT)
 	_refresh_all()
+	# « ! » au-dessus de la boîte aux lettres quand du courrier attend
+	_mail_alert = Sprite2D.new()
+	_mail_alert.texture = load("res://assets/sprites/ui_alert.png")
+	_mail_alert.position = Vector2(_mailbox_cell * TILE) + Vector2(TILE / 2.0, -10)
+	_mail_alert.z_index = 5
+	add_child(_mail_alert)
+	Mail.mail_changed.connect(_update_mail_alert)
+	_update_mail_alert()
 
 
 func _warp_for(cell: Vector2i) -> Dictionary:
@@ -104,8 +123,23 @@ func _warp_for(cell: Vector2i) -> Dictionary:
 
 
 # ------------------------------------------------------------ actions
+func _process(delta: float) -> void:
+	super(delta)
+	if _mail_alert.visible:
+		_mail_alert.offset.y = sin(Time.get_ticks_msec() / 200.0) * 1.5
+
+
+func _update_mail_alert() -> void:
+	_mail_alert.visible = Mail.has_mail()
+
+
 func _interact(kind: String, _cell: Vector2i) -> void:
 	match kind:
+		"mailbox":
+			if Mail.has_mail():
+				EventBus.mail_requested.emit()
+			else:
+				EventBus.toast("La boîte aux lettres est vide.")
 		"door":
 			EventBus.sleep_requested.emit()
 		"bin":
@@ -150,7 +184,74 @@ func act_on(cell: Vector2i) -> void:
 
 
 func is_walkable(cell: Vector2i) -> bool:
-	return super(cell) and not FarmState.objects.has(cell)
+	return super(cell) and not FarmState.objects.has(cell) and not FarmState.debris.has(cell)
+
+
+# ------------------------------------------------------------ débris
+func _scatter_debris(count: int, only_weeds: bool = false) -> void:
+	var cells: Array = []
+	for cell: Vector2i in _ground_chars:
+		if not str(_ground_chars[cell]) in TILLABLE or not is_walkable(cell) or _interactables.has(cell):
+			continue
+		if FarmState.is_tilled(cell) or (cell - _spawn_cell).length() < 4:
+			continue
+		cells.append(cell)
+	cells.shuffle()
+	var total := 0
+	for w: int in DEBRIS_WEIGHTS.values():
+		total += w
+	for cell: Vector2i in cells.slice(0, count):
+		var type := "weed"
+		if not only_weeds:
+			var roll := randi() % total
+			for t: String in DEBRIS_WEIGHTS:
+				roll -= int(DEBRIS_WEIGHTS[t])
+				if roll < 0:
+					type = t
+					break
+		FarmState.debris[cell] = {"type": type, "hp": int(FarmState.DEBRIS[type].hp)}
+
+
+## Coup d'outil sur un débris. Renvoie true si la case en contenait un.
+func _hit_debris(cell: Vector2i, tool: String, energy: int) -> bool:
+	if not FarmState.debris.has(cell):
+		return false
+	var d: Dictionary = FarmState.debris[cell]
+	var info: Dictionary = FarmState.DEBRIS[d.type]
+	if not tool in info.tools:
+		var hint: String = {"twig": "la hache", "stump": "la hache", "stone": "la pioche"}.get(d.type, "un outil")
+		EventBus.toast("Il faut %s pour ça." % hint)
+		return true
+	if energy > 0 and not spend_energy(energy):
+		return true
+	player.play_use()
+	d.hp -= int(GameData.item(Inventory.get_selected().id).get("power", 1)) if Inventory.get_selected() != null else 1
+	if d.hp > 0:
+		return true
+	FarmState.debris.erase(cell)
+	Skills.add_xp("foraging", int(info.xp))
+	for drop: Array in info.drops:
+		if randf() < float(drop[3]):
+			var n := randi_range(int(drop[1]), int(drop[2]))
+			if drop[0] == "wood" and Skills.roll("foraging", 6.0):
+				n *= 2
+			for i in n:
+				_drop(str(drop[0]), cell_center(cell))
+	_refresh_object(cell)
+	return true
+
+
+func _drop(item_id: String, at: Vector2) -> void:
+	var pickup := Pickup.new()
+	pickup.item_id = item_id
+	pickup.target = player
+	pickup.position = at
+	_entities.add_child(pickup)
+
+
+func _swing_hit_cell(cell: Vector2i) -> void:
+	if FarmState.debris.get(cell, {}).get("type") == "weed":
+		_hit_debris(cell, "weapon", 0)
 
 
 func _can_place(cell: Vector2i) -> bool:
@@ -159,13 +260,16 @@ func _can_place(cell: Vector2i) -> bool:
 		and not _blocked.has(cell)
 		and not _interactables.has(cell)
 		and not FarmState.objects.has(cell)
+		and not FarmState.debris.has(cell)
 		and not FarmState.is_tilled(cell)
 		and cell != player_cell()
 	)
 
 
 ## La pioche ramasse les objets posés (arroseurs).
-func _use_pickaxe(cell: Vector2i, _energy: int) -> void:
+func _use_pickaxe(cell: Vector2i, energy: int) -> void:
+	if _hit_debris(cell, "pickaxe", energy):
+		return
 	if not FarmState.objects.has(cell):
 		return
 	var id := FarmState.objects[cell] as String
@@ -182,6 +286,8 @@ func _use_pickaxe(cell: Vector2i, _energy: int) -> void:
 
 func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
 	var energy := int(item.get("energy", 2))
+	if _hit_debris(cell, tool, energy):
+		return
 	match tool:
 		"hoe":
 			if not _can_till(cell):
@@ -222,6 +328,7 @@ func _can_till(cell: Vector2i) -> bool:
 		and not _blocked.has(cell)
 		and not _interactables.has(cell)
 		and not FarmState.objects.has(cell)
+		and not FarmState.debris.has(cell)
 		and not FarmState.is_tilled(cell)
 		and cell != player_cell()
 	)
@@ -244,9 +351,11 @@ func _harvest(cell: Vector2i) -> void:
 		return
 	var got := FarmState.harvest(cell)
 	if got != "":
-		Inventory.add_item(got, 1)
+		var count := 2 if Skills.roll("farming", 5.0) and Inventory.can_add(got, 2) else 1
+		Inventory.add_item(got, count)
+		Skills.add_xp("farming", maxi(3, int(GameData.item(got).get("sell", 30)) / 8))
 		player.play_use()
-		EventBus.toast("+1 %s" % GameData.item_name(got))
+		EventBus.toast("+%d %s" % [count, GameData.item_name(got)])
 
 
 func _ship_selected() -> void:
@@ -263,6 +372,8 @@ func _ship_selected() -> void:
 # ------------------------------------------------------------ affichage
 func _on_day_started(day: int, season: int, year: int) -> void:
 	super(day, season, year)
+	if FarmState.debris.size() < DEBRIS_COUNT:
+		_scatter_debris(randi_range(1, 3), true)
 	_refresh_all()
 
 
@@ -270,6 +381,8 @@ func _refresh_all() -> void:
 	_soil.clear()
 	_objects.clear()
 	for cell: Vector2i in FarmState.objects:
+		_refresh_object(cell)
+	for cell: Vector2i in FarmState.debris:
 		_refresh_object(cell)
 	for cell: Vector2i in _crop_sprites.keys():
 		if FarmState.get_crop(cell) == "":
@@ -298,6 +411,12 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.CHEST))
 		_:
 			_objects.erase_cell(cell)
+	if FarmState.debris.has(cell):
+		var tile: int = {
+			"weed": WorldTiles.WEED if _hash(cell) % 2 == 0 else WorldTiles.WEED_2,
+			"twig": WorldTiles.TWIG, "stone": WorldTiles.DEBRIS_STONE, "stump": WorldTiles.DEAD_TREE,
+		}[FarmState.debris[cell].type]
+		_objects.set_cell(cell, 0, WorldTiles.coords(tile))
 
 
 func _refresh_soil(cell: Vector2i) -> void:

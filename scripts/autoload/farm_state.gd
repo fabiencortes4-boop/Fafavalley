@@ -6,6 +6,14 @@ var tiles: Dictionary = {}  # Vector2i -> {"watered": bool, "crop": String, "age
 var shipping: Array = []  # [{"id": String, "qty": int}]
 var objects: Dictionary = {}  # Vector2i -> "sprinkler" | "quality_sprinkler" | "chest"
 var chests: Dictionary = {}  # Vector2i -> Array de cases (comme Inventory.slots)
+## Débris à défricher : Vector2i -> {"type": weed|twig|stone|stump, "hp": int}
+var debris: Dictionary = {}
+const DEBRIS := {
+	"weed": {"hp": 1, "tools": ["scythe", "hoe", "axe", "pickaxe", "watering_can", "weapon"], "drops": [["fiber", 1, 1, 0.6]], "xp": 1},
+	"twig": {"hp": 1, "tools": ["axe"], "drops": [["wood", 1, 2, 1.0]], "xp": 2},
+	"stone": {"hp": 1, "tools": ["pickaxe"], "drops": [["stone", 1, 1, 1.0]], "xp": 2},
+	"stump": {"hp": 5, "tools": ["axe"], "drops": [["wood", 8, 12, 1.0]], "xp": 12},
+}
 const CHEST_SIZE := 36
 
 const SPRINKLER_RANGE := {
@@ -23,6 +31,7 @@ func reset() -> void:
 	shipping.clear()
 	objects.clear()
 	chests.clear()
+	debris.clear()
 
 
 func is_tilled(cell: Vector2i) -> bool:
@@ -184,10 +193,13 @@ func to_dict() -> Dictionary:
 	var objs := {}
 	for cell: Vector2i in objects:
 		objs["%d,%d" % [cell.x, cell.y]] = objects[cell]
+	var junk := {}
+	for cell: Vector2i in debris:
+		junk["%d,%d" % [cell.x, cell.y]] = debris[cell].duplicate()
 	var boxes := {}
 	for cell: Vector2i in chests:
 		boxes["%d,%d" % [cell.x, cell.y]] = chests[cell].duplicate(true)
-	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs, "chests": boxes}
+	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs, "chests": boxes, "debris": junk}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -208,6 +220,10 @@ func from_dict(data: Dictionary) -> void:
 	for key: String in objs:
 		var parts := key.split(",")
 		objects[Vector2i(int(parts[0]), int(parts[1]))] = str(objs[key])
+	var junk: Dictionary = data.get("debris", {})
+	for key: String in junk:
+		var parts := key.split(",")
+		debris[Vector2i(int(parts[0]), int(parts[1]))] = {"type": str(junk[key].type), "hp": int(junk[key].hp)}
 	var boxes: Dictionary = data.get("chests", {})
 	for key: String in boxes:
 		var parts := key.split(",")

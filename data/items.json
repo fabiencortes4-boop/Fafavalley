@@ -506,5 +506,137 @@
 		"buy": 5000,
 		"shop": true,
 		"description": "Passe le sac à 36 places."
+	},
+	"axe": {
+		"name": "Hache",
+		"type": "tool",
+		"tool": "axe",
+		"icon": 53,
+		"stack": 1,
+		"energy": 2,
+		"description": "Coupe les branches et abat les arbres morts."
+	},
+	"scythe": {
+		"name": "Faux",
+		"type": "tool",
+		"tool": "scythe",
+		"icon": 54,
+		"stack": 1,
+		"energy": 0,
+		"description": "Fauche les herbes folles, sans se fatiguer."
+	},
+	"wood": {
+		"name": "Bois",
+		"type": "material",
+		"icon": 55,
+		"stack": 99,
+		"sell": 2
+	},
+	"fiber": {
+		"name": "Fibre",
+		"type": "material",
+		"icon": 56,
+		"stack": 99,
+		"sell": 1
+	},
+	"leek": {
+		"name": "Poireau sauvage",
+		"type": "forage",
+		"icon": 57,
+		"stack": 99,
+		"sell": 60,
+		"seasons": [
+			0
+		],
+		"edible": [
+			30,
+			15
+		]
+	},
+	"daffodil": {
+		"name": "Jonquille",
+		"type": "forage",
+		"icon": 58,
+		"stack": 99,
+		"sell": 30,
+		"seasons": [
+			0
+		]
+	},
+	"berries": {
+		"name": "Baies sauvages",
+		"type": "forage",
+		"icon": 59,
+		"stack": 99,
+		"sell": 40,
+		"seasons": [
+			1
+		],
+		"edible": [
+			20,
+			10
+		]
+	},
+	"poppy": {
+		"name": "Coquelicot",
+		"type": "forage",
+		"icon": 60,
+		"stack": 99,
+		"sell": 50,
+		"seasons": [
+			1
+		]
+	},
+	"mushroom": {
+		"name": "Champignon des bois",
+		"type": "forage",
+		"icon": 61,
+		"stack": 99,
+		"sell": 70,
+		"seasons": [
+			2
+		],
+		"edible": [
+			35,
+			17
+		]
+	},
+	"hazelnut": {
+		"name": "Noisette",
+		"type": "forage",
+		"icon": 62,
+		"stack": 99,
+		"sell": 45,
+		"seasons": [
+			2
+		],
+		"edible": [
+			22,
+			11
+		]
+	},
+	"holly": {
+		"name": "Houx",
+		"type": "forage",
+		"icon": 63,
+		"stack": 99,
+		"sell": 80,
+		"seasons": [
+			3
+		]
+	},
+	"winter_root": {
+		"name": "Racine d'hiver",
+		"type": "forage",
+		"icon": 64,
+		"stack": 99,
+		"sell": 70,
+		"seasons": [
+			3
+		],
+		"edible": [
+			35,
+			17
+		]
 	}
 }
