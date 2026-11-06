@@ -16,6 +16,20 @@ attribution non obligatoire (mais appréciée : merci Kenney !).
 
 Chaque dossier contient le fichier de licence original.
 
+## Modèles 3D (CC0 1.0, Kenney)
+
+| Dossier | Pack |
+|---|---|
+| `kenney3d/nature/` | Nature Kit 2.1 |
+| `kenney3d/survival/` | Survival Kit |
+| `kenney3d/town/` | Fantasy Town Kit 2.0 |
+| `kenney3d/food/` | Food Kit |
+| `kenney3d/blocky/` | Blocky Characters 2.0 |
+| `kenney3d/dungeon/` | Mini Dungeon 2.0 |
+
+Une sélection des modèles (format GLB) est incluse, avec la licence de chaque pack.
+Les toits des maisons et le sol sont générés par le jeu.
+
 ## Sons
 
 | Dossier | Pack |

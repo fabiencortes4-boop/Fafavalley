@@ -469,6 +469,9 @@ func open_pause_menu() -> void:
 	_add_button(box, "Zoom : x%s" % str(Settings.zoom), func() -> void:
 		Settings.cycle_zoom()
 		open_pause_menu())
+	_add_button(box, "Vue : %s" % ("3D" if Settings.view_3d else "2D"), func() -> void:
+		Settings.toggle_view()
+		open_pause_menu())
 	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
 		Settings.toggle_sound()
 		open_pause_menu())

@@ -45,6 +45,9 @@ const DEBRIS_WEIGHTS := {"weed": 50, "twig": 20, "stone": 20, "stump": 10}
 const CROP_STAGES := 4
 const CROP_ROWS := 6
 
+signal visual_changed(cell: Vector2i)  # pour la vue 3D
+signal visual_reset
+
 var _soil: TileMapLayer
 var _objects: TileMapLayer
 var _mail_alert: Sprite2D
@@ -490,6 +493,7 @@ func _refresh_all() -> void:
 	for cell: Vector2i in FarmState.tiles:
 		_refresh_soil(cell)
 		_refresh_crop(cell)
+	visual_reset.emit()
 
 
 func _refresh_cell(cell: Vector2i) -> void:
@@ -500,6 +504,7 @@ func _refresh_cell(cell: Vector2i) -> void:
 	for offset: Vector2i in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 		_refresh_soil(cell + offset)
 	_refresh_crop(cell)
+	visual_changed.emit(cell)
 	_refresh_object(cell)
 
 
@@ -554,6 +559,7 @@ func _refresh_crop(cell: Vector2i) -> void:
 		sprite.vframes = CROP_ROWS
 		sprite.centered = false
 		sprite.offset = Vector2(0, -13)
+		sprite.set_meta("no3d", true)
 		sprite.position = Vector2(cell.x * TILE, cell.y * TILE + 12)
 		_entities.add_child(sprite)
 		_crop_sprites[cell] = sprite

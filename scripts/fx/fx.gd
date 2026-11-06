@@ -37,6 +37,9 @@ static func _round_texture() -> ImageTexture:
 ## Gerbe de particules qui retombent (une seule fois, puis disparaît).
 static func burst(parent: Node, at: Vector2, colors: Array, amount: int = 10, speed: float = 60.0,
 		up: bool = true, gravity: float = 260.0, lifetime: float = 0.5) -> void:
+	if View3D.current != null:
+		View3D.current.fx_burst(at, colors, amount, speed)
+		return
 	var p := CPUParticles2D.new()
 	p.texture = _pixel_texture()
 	p.one_shot = true
@@ -70,6 +73,9 @@ static func burst(parent: Node, at: Vector2, colors: Array, amount: int = 10, sp
 
 ## Petit nuage de poussière (pas, chute d'objet).
 static func puff(parent: Node, at: Vector2, color: Color = Color(0.93, 0.88, 0.78, 0.8), size: float = 1.0) -> void:
+	if View3D.current != null:
+		View3D.current.fx_puff(at, color, size)
+		return
 	var s := Sprite2D.new()
 	s.texture = _round_texture()
 	s.position = at
@@ -86,6 +92,9 @@ static func puff(parent: Node, at: Vector2, color: Color = Color(0.93, 0.88, 0.7
 
 ## Un objet saute hors de la case puis file vers le joueur (récolte).
 static func item_pop(parent: Node, from: Vector2, texture: Texture2D, target: Node2D) -> void:
+	if View3D.current != null:
+		View3D.current.fx_item_pop(from, texture)
+		return
 	var s := Sprite2D.new()
 	s.texture = texture
 	s.position = from

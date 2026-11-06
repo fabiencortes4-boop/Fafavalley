@@ -5,6 +5,7 @@ extends CharacterBody2D
 ## respiration, ombre et poussière), gestes d'outils avec impact, combat.
 
 signal stepped  # un pas (pour les bruitages)
+signal gesture_started(gesture: String)  # pour la vue 3D
 
 const SPEED := 72.0
 const INVULNERABLE_TIME := 1.0
@@ -158,6 +159,7 @@ func busy() -> bool:
 ## (effets, sons) ; l'outil disparaît ensuite.
 func play_tool(gesture: String, texture: Texture2D, on_impact: Callable = Callable()) -> void:
 	var timing: Array = GESTURES.get(gesture, GESTURES["bend"])
+	gesture_started.emit(gesture)
 	_gesture_time = float(timing[0]) + float(timing[1]) + float(timing[2])
 	var side := -1.0 if facing == Vector2i.LEFT else 1.0
 	var target := Vector2(facing).angle() + PI / 2.0  # outil pointé vers la case visée
@@ -232,6 +234,7 @@ func swing(weapon_texture: Texture2D, cooldown: float) -> bool:
 	if _swing_cooldown > 0.0 or locked:
 		return false
 	_swing_cooldown = cooldown
+	gesture_started.emit("strike")
 	_weapon.texture = weapon_texture
 	_weapon.visible = true
 	_weapon.position = Vector2(0, -6)

@@ -216,6 +216,7 @@ func _add_building(cell: Vector2i, size_cells: Vector2i, texture_path: String, d
 	# Origine en bas du bâtiment pour un tri en Y correct avec le joueur.
 	sprite.offset = Vector2(0, -size_cells.y * TILE)
 	sprite.position = Vector2(cell.x * TILE, (cell.y + size_cells.y) * TILE)
+	sprite.set_meta("no3d", true)  # reconstruit en 3D par View3D
 	_entities.add_child(sprite)
 
 	var body := StaticBody2D.new()
@@ -334,8 +335,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			fishing.on_action()
 			get_viewport().set_input_as_handled()
 			return
-		var local := make_input_local(event) as InputEventScreenTouch
-		var cell := Vector2i((local.position / TILE).floor())
+		var cell: Vector2i
+		if View3D.current != null:
+			cell = View3D.current.screen_to_cell(event.position)
+		else:
+			var local := make_input_local(event) as InputEventScreenTouch
+			cell = Vector2i((local.position / TILE).floor())
 		var offset := cell - player_cell()
 		if maxi(absi(offset.x), absi(offset.y)) <= REACH:
 			player.face_towards(offset)
@@ -430,6 +435,7 @@ func _spawn_forage() -> void:
 		var cell := Vector2i(int(parts[0]), int(parts[1]))
 		var sprite := Sprite2D.new()
 		sprite.texture = GameData.item_icon(placed[key])
+		sprite.set_meta("item_id", placed[key])
 		sprite.position = cell_center(cell)
 		sprite.offset = Vector2(0, -6)
 		_entities.add_child(sprite)

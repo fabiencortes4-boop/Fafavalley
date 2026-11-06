@@ -5,6 +5,7 @@ var _title_layer: CanvasLayer
 var _hud: Hud
 var _world: WorldMap
 var _arrival: Vector2 = Vector2.INF
+var _view: View3D
 
 
 func _ready() -> void:
@@ -83,6 +84,7 @@ func _start(load_save: bool) -> void:
 	add_child(_hud)
 	_load_map(PlayerState.map)
 	EventBus.map_change_requested.connect(_on_map_change_requested)
+	Settings.view_changed.connect(_apply_view)
 	TimeManager.day_started.connect(_on_day_started)
 	GameFlow.begin()
 
@@ -109,6 +111,22 @@ func _load_map(map_id: String) -> void:
 	add_child(_world)
 	move_child(_world, 0)
 	_hud.set_location(_world.display_name())
+	_apply_view()
+
+
+## Vue 3D (modèles Kenney) par-dessus la logique de la carte, ou vue 2D.
+func _apply_view() -> void:
+	if _view != null:
+		_view.queue_free()
+		_view = null
+		View3D.current = null
+	if _world == null:
+		return
+	_world.visible = not Settings.view_3d
+	if Settings.view_3d:
+		_view = View3D.new()
+		add_child(_view)
+		_view.setup(_world)
 
 
 func _on_map_change_requested(map_id: String, cell: Vector2i) -> void:

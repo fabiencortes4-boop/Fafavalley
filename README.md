@@ -36,6 +36,11 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ## Ce que contient ce prototype
 
+- **Vue 3D** (par défaut) avec les modèles Kenney : sol et étangs, arbres selon la saison,
+  maisons assemblées (murs, portes, fenêtres, toits), cultures en 3D à chaque stade,
+  personnages animés (marche, gestes d'outils), monstres, objets, lumière du jour et de la
+  nuit, pluie et neige. La logique du jeu reste sur sa grille : la vue 3D la met en scène.
+  Menu → Vue : 3D / 2D pour revenir à la version pixel art.
 - Vue rapprochée (zoom x2 par défaut, environ 15 cases de large ; réglable dans Menu → Zoom).
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
@@ -121,10 +126,13 @@ scripts/
   ui/fishing_minigame.gd
   entities/player.gd
   ui/                 # HUD, joystick, thème
-  fx/fx.gd            # particules, poussière, objets qui sautent
+  fx/fx.gd            # particules, poussière, objets qui sautent (2D ou 3D)
+  view3d/view3d.gd    # vue 3D : décor, acteurs, caméra, lumière, météo, effets
+  view3d/models.gd    # chargement et regroupement (MultiMesh) des modèles Kenney
 tools/build_assets.py     # assemble les sprites à partir des packs Kenney
 tools/build_sfx.py        # fabrique les bruitages (Kenney + sons synthétisés)
-assets/kenney/            # packs Kenney originaux (CC0)
+assets/kenney/            # packs Kenney 2D et sons (CC0)
+assets/kenney3d/          # sélection de modèles 3D Kenney (CC0)
 assets/sprites/           # planches utilisées par le jeu
 tests/                    # tests automatiques (gameplay, joystick, capture d'écran)
 ```
