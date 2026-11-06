@@ -57,6 +57,22 @@ func _ready() -> void:
 			else:
 				EventBus.emit_signal("relations_changed")
 				main.get("_hud").open_crafting("craft")
+		if "--bag" in args or "--chest" in args or "--shop2" in args:
+			Inventory.gold = 3000
+			Inventory.set_capacity(24)
+			for id in ["stone", "coal", "copper_ore", "iron_ore", "quartz", "slime", "carrot", "roach", "carp", "fishing_rod", "pickaxe", "rusty_sword", "amethyst"]:
+				Inventory.add_item(id, 3)
+			var hud: Hud = main.get("_hud")
+			if "--bag" in args:
+				hud.set("_picked", 13)
+				hud.open_bag()
+			elif "--chest" in args:
+				FarmState.place_object(Vector2i(12, 13), "chest")
+				FarmState.chests[Vector2i(12, 13)][0] = {"id": "gold_ore", "qty": 7}
+				FarmState.chests[Vector2i(12, 13)][1] = {"id": "emerald", "qty": 1}
+				hud.open_chest(Vector2i(12, 13))
+			else:
+				hud.open_shop()
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)

@@ -1,4 +1,12 @@
 {
+	"chest": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"stone": 20,
+			"copper_ore": 2
+		}
+	},
 	"sprinkler": {
 		"station": "craft",
 		"category": "Objets",

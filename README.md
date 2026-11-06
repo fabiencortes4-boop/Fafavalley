@@ -49,6 +49,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   cuisinés qui soignent bien plus que les aliments crus.
 - **Forge de Gaston** (enclume devant sa maison) : pioche renforcée (2x plus efficace),
   arrosoir en cuivre (60 doses, arrose 3 cases), épée en fer.
+- **Sac** (bouton « Sac ») : 12 places au départ (= barre rapide), 24 puis 36 avec le grand
+  sac et le sac de voyageur (épicerie). Toucher un objet puis la case où le poser ;
+  description et prix de vente affichés.
+- **Coffres** (fabriqués ou achetés, posés à la ferme) : 36 places. Toucher un objet le fait
+  passer du coffre au sac et inversement ; « Ranger les piles » complète les piles déjà
+  présentes. Un coffre vide se ramasse à la pioche.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
 - Contrôles tactiles : joystick flottant, bouton Action, toucher une tuile voisine, barre rapide (multitouch).
@@ -105,6 +111,7 @@ godot --headless res://tests/village_test.tscn    # passage au village, habitant
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
 godot --headless res://tests/crafting_test.tscn   # arroseurs, engrais, cuisine, forge
+godot --headless res://tests/inventory_test.tscn  # sac, agrandissements, coffres
 godot --headless --fixed-fps 60 res://tests/combat_balance.tscn  # équilibrage du combat (simulation)
 godot --headless -s res://tests/fishing_balance.gd # équilibrage du mini-jeu (simulation)
 godot --headless res://tests/movement_test.tscn   # joystick tactile
@@ -126,11 +133,12 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 ## Feuille de route
 
 - [x] Prototype : ferme, outils, cultures, temps, vente, sauvegarde, contrôles tactiles
-- [ ] Inventaire complet + coffres, qualité des récoltes
+- [ ] Qualité des récoltes
 - [x] Village et habitants (emplois du temps, dialogues, cadeaux, amitié)
 - [ ] Intérieurs des maisons, scènes de cœur, anniversaires
 - [x] Fabrication, cuisine, améliorations d'outils
-- [ ] Coffres, machines de transformation
+- [x] Coffres et sac agrandissable
+- [ ] Machines de transformation
 - [x] Pêche (mini-jeu tactile, 8 espèces, carnet)
 - [x] Mine et combat (30 niveaux, 7 monstres, minerais, armes)
 - [ ] Animaux, bâtiments, compétences

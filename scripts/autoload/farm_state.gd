@@ -4,7 +4,9 @@ extends Node
 
 var tiles: Dictionary = {}  # Vector2i -> {"watered": bool, "crop": String, "age": int}
 var shipping: Array = []  # [{"id": String, "qty": int}]
-var objects: Dictionary = {}  # Vector2i -> "sprinkler" | "quality_sprinkler"
+var objects: Dictionary = {}  # Vector2i -> "sprinkler" | "quality_sprinkler" | "chest"
+var chests: Dictionary = {}  # Vector2i -> Array de cases (comme Inventory.slots)
+const CHEST_SIZE := 36
 
 const SPRINKLER_RANGE := {
 	"sprinkler": [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN],
@@ -20,6 +22,7 @@ func reset() -> void:
 	tiles.clear()
 	shipping.clear()
 	objects.clear()
+	chests.clear()
 
 
 func is_tilled(cell: Vector2i) -> bool:
@@ -44,14 +47,26 @@ func water(cell: Vector2i) -> void:
 
 func place_object(cell: Vector2i, id: String) -> void:
 	objects[cell] = id
+	if id == "chest":
+		var slots: Array = []
+		slots.resize(CHEST_SIZE)
+		chests[cell] = slots
 	EventBus.farm_tile_changed.emit(cell)
 
 
 func remove_object(cell: Vector2i) -> String:
 	var id: String = objects.get(cell, "")
 	objects.erase(cell)
+	chests.erase(cell)
 	EventBus.farm_tile_changed.emit(cell)
 	return id
+
+
+func chest_is_empty(cell: Vector2i) -> bool:
+	for slot: Variant in chests.get(cell, []):
+		if slot != null:
+			return false
+	return true
 
 
 func is_fertilized(cell: Vector2i) -> bool:
@@ -169,7 +184,10 @@ func to_dict() -> Dictionary:
 	var objs := {}
 	for cell: Vector2i in objects:
 		objs["%d,%d" % [cell.x, cell.y]] = objects[cell]
-	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs}
+	var boxes := {}
+	for cell: Vector2i in chests:
+		boxes["%d,%d" % [cell.x, cell.y]] = chests[cell].duplicate(true)
+	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs, "chests": boxes}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -190,5 +208,15 @@ func from_dict(data: Dictionary) -> void:
 	for key: String in objs:
 		var parts := key.split(",")
 		objects[Vector2i(int(parts[0]), int(parts[1]))] = str(objs[key])
+	var boxes: Dictionary = data.get("chests", {})
+	for key: String in boxes:
+		var parts := key.split(",")
+		var slots: Array = []
+		slots.resize(CHEST_SIZE)
+		var content: Array = boxes[key]
+		for i in mini(content.size(), CHEST_SIZE):
+			if content[i] is Dictionary:
+				slots[i] = {"id": str(content[i].id), "qty": int(content[i].qty)}
+		chests[Vector2i(int(parts[0]), int(parts[1]))] = slots
 	for entry: Variant in data.get("shipping", []):
 		shipping.append({"id": str(entry.id), "qty": int(entry.qty)})

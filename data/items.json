@@ -475,5 +475,36 @@
 		"stack": 1,
 		"energy": 3,
 		"description": "Contient 60 doses et arrose 3 cases d'un coup."
+	},
+	"chest": {
+		"name": "Coffre",
+		"type": "placeable",
+		"place": "chest",
+		"icon": 50,
+		"stack": 99,
+		"buy": 150,
+		"shop": true,
+		"sell": 50,
+		"description": "Se pose à la ferme. Range 36 piles d'objets."
+	},
+	"backpack_24": {
+		"name": "Grand sac",
+		"type": "backpack",
+		"capacity": 24,
+		"icon": 51,
+		"stack": 1,
+		"buy": 1000,
+		"shop": true,
+		"description": "Passe le sac à 24 places."
+	},
+	"backpack_36": {
+		"name": "Sac de voyageur",
+		"type": "backpack",
+		"capacity": 36,
+		"icon": 52,
+		"stack": 1,
+		"buy": 5000,
+		"shop": true,
+		"description": "Passe le sac à 36 places."
 	}
 }

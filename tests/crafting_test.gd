@@ -29,10 +29,8 @@ func _ready() -> void:
 	for offset: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN, Vector2i(1, 1)]:
 		FarmState.till(center + offset)
 	FarmState.plant(center + Vector2i.LEFT, "carrot")
-	GameFlow.end_day(false)
-	_main.get("_hud").close_modal()
-	await get_tree().process_frame
-	farm = _main.call("current_map")
+	# Nuit sans pluie (la pluie arroserait tout, y compris les diagonales)
+	FarmState.advance_day(0, false)
 	_check(FarmState.is_watered(center + Vector2i.LEFT) and FarmState.is_watered(center + Vector2i.DOWN), "l'arroseur arrose les 4 cases voisines le matin")
 	_check(not FarmState.is_watered(center + Vector2i(1, 1)), "mais pas les diagonales")
 	# Ramasser l'arroseur avec la pioche

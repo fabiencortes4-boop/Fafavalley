@@ -1,9 +1,15 @@
 extends Node
-## Inventaire du joueur (barre rapide) et argent.
+## Inventaire du joueur et argent. Les 12 premières cases forment la barre
+## rapide (objets utilisables) ; le reste du sac (jusqu'à 36 cases avec les
+## agrandissements) sert au rangement. Les fonctions *_slots() travaillent
+## sur n'importe quel tableau de cases (sac ou coffre).
 
-const SIZE := 12
+const HOTBAR := 12
+const SIZE := HOTBAR  # compatibilité : taille de la barre rapide
+const MAX_CAPACITY := 36
 
 var slots: Array = []  # null ou {"id": String, "qty": int}
+var capacity: int = HOTBAR
 var selected: int = 0
 var gold: int = 0
 
@@ -13,48 +19,90 @@ func _ready() -> void:
 
 
 func reset() -> void:
+	capacity = HOTBAR
 	slots.clear()
-	slots.resize(SIZE)
+	slots.resize(capacity)
 	slots.fill(null)
 	selected = 0
 	gold = 0
 
 
-func _stack_max(id: String) -> int:
+func set_capacity(value: int) -> void:
+	capacity = clampi(value, HOTBAR, MAX_CAPACITY)
+	slots.resize(capacity)  # les nouvelles cases valent null
+	EventBus.inventory_changed.emit()
+
+
+static func stack_max(id: String) -> int:
 	return int(GameData.item(id).get("stack", 99))
 
 
-## Ajoute des objets ; renvoie la quantité qui n'a pas pu être rangée.
-func add_item(id: String, qty: int = 1) -> int:
+# ------------------------------------------------------------ tableaux de cases
+## Ajoute dans un tableau de cases ; renvoie la quantité non rangée.
+static func add_to_slots(arr: Array, id: String, qty: int) -> int:
 	var remaining := qty
-	var max_stack := _stack_max(id)
-	for slot: Variant in slots:
+	var max_stack := stack_max(id)
+	for slot: Variant in arr:
 		if remaining <= 0:
 			break
 		if slot != null and slot.id == id and slot.qty < max_stack:
 			var moved: int = mini(remaining, max_stack - slot.qty)
 			slot.qty += moved
 			remaining -= moved
-	for i in SIZE:
+	for i in arr.size():
 		if remaining <= 0:
 			break
-		if slots[i] == null:
+		if arr[i] == null:
 			var moved := mini(remaining, max_stack)
-			slots[i] = {"id": id, "qty": moved}
+			arr[i] = {"id": id, "qty": moved}
 			remaining -= moved
-	EventBus.inventory_changed.emit()
 	return remaining
 
 
-func can_add(id: String, qty: int = 1) -> bool:
+static func space_in_slots(arr: Array, id: String) -> int:
 	var space := 0
-	var max_stack := _stack_max(id)
-	for slot: Variant in slots:
+	var max_stack := stack_max(id)
+	for slot: Variant in arr:
 		if slot == null:
 			space += max_stack
 		elif slot.id == id:
 			space += max_stack - int(slot.qty)
-	return space >= qty
+	return space
+
+
+## Échange deux cases (ou fusionne deux piles du même objet).
+static func swap_slots(a_arr: Array, a: int, b_arr: Array, b: int) -> void:
+	var first: Variant = a_arr[a]
+	var second: Variant = b_arr[b]
+	if first != null and second != null and first.id == second.id:
+		var moved: int = mini(int(first.qty), stack_max(first.id) - int(second.qty))
+		second.qty += moved
+		first.qty -= moved
+		a_arr[a] = null if first.qty <= 0 else first
+		return
+	a_arr[a] = second
+	b_arr[b] = first
+
+
+## Déplace toute la pile d'une case vers un autre tableau (coffre <-> sac).
+static func transfer(from_arr: Array, index: int, to_arr: Array) -> void:
+	var slot: Variant = from_arr[index]
+	if slot == null:
+		return
+	var left := add_to_slots(to_arr, slot.id, int(slot.qty))
+	from_arr[index] = null if left <= 0 else {"id": slot.id, "qty": left}
+
+
+# ------------------------------------------------------------ sac du joueur
+## Ajoute des objets ; renvoie la quantité qui n'a pas pu être rangée.
+func add_item(id: String, qty: int = 1) -> int:
+	var left := add_to_slots(slots, id, qty)
+	EventBus.inventory_changed.emit()
+	return left
+
+
+func can_add(id: String, qty: int = 1) -> bool:
+	return space_in_slots(slots, id) >= qty
 
 
 func count_of(id: String) -> int:
@@ -67,7 +115,7 @@ func count_of(id: String) -> int:
 
 ## Retire une quantité d'un objet, quelles que soient les cases.
 func remove_item(id: String, qty: int) -> void:
-	for i in SIZE:
+	for i in slots.size():
 		if qty <= 0:
 			break
 		var slot: Variant = slots[i]
@@ -79,7 +127,7 @@ func remove_item(id: String, qty: int) -> void:
 
 ## Remplace un objet par un autre dans la même case (amélioration d'outil).
 func replace_item(old_id: String, new_id: String) -> void:
-	for i in SIZE:
+	for i in slots.size():
 		if slots[i] != null and slots[i].id == old_id:
 			slots[i] = {"id": new_id, "qty": 1}
 			EventBus.inventory_changed.emit()
@@ -96,12 +144,17 @@ func remove_from_slot(index: int, qty: int = 1) -> void:
 	EventBus.inventory_changed.emit()
 
 
+func swap(a: int, b: int) -> void:
+	swap_slots(slots, a, slots, b)
+	EventBus.inventory_changed.emit()
+
+
 func get_selected() -> Variant:
 	return slots[selected]
 
 
 func select(index: int) -> void:
-	selected = clampi(index, 0, SIZE - 1)
+	selected = clampi(index, 0, HOTBAR - 1)
 	EventBus.inventory_changed.emit()
 
 
@@ -119,13 +172,14 @@ func spend_gold(amount: int) -> bool:
 
 
 func to_dict() -> Dictionary:
-	return {"slots": slots.duplicate(true), "selected": selected, "gold": gold}
+	return {"slots": slots.duplicate(true), "selected": selected, "gold": gold, "capacity": capacity}
 
 
 func from_dict(data: Dictionary) -> void:
 	reset()
+	set_capacity(int(data.get("capacity", HOTBAR)))
 	var saved: Array = data.get("slots", [])
-	for i in mini(saved.size(), SIZE):
+	for i in mini(saved.size(), capacity):
 		var s: Variant = saved[i]
 		if s is Dictionary:
 			slots[i] = {"id": str(s.id), "qty": int(s.qty)}

@@ -114,6 +114,7 @@ def world():
     # 78-80 : arroseur, arroseur de qualité, enclume de Gaston
     tiles += [draw_sprinkler((226, 120, 64), (170, 80, 44)), draw_sprinkler((192, 203, 220), (253, 190, 83))]
     tiles.append(on_grass(tile(DUNGEON, 74)))
+    tiles.append(tile(DUNGEON, 89))  # 81 coffre
     cols = 16
     rows = (len(tiles) + cols - 1) // cols
     out = Image.new("RGBA", (cols * T, rows * T), (0, 0, 0, 0))
@@ -436,6 +437,10 @@ def extend_icons(sheet):
     extra += [draw_bowl((242, 132, 74), (78, 151, 76)), draw_plate(), draw_bowl((132, 198, 105), (195, 75, 53)), draw_bowl((150, 96, 60), (253, 190, 83))]
     extra.append(recolor(tile(TOWN, 115), STEEL))
     extra.append(recolor(tile(FARM, 84), COPPER))
+    # 50 coffre, 51-52 sacs (grand, de voyageur)
+    extra.append(tile(DUNGEON, 89))
+    extra.append(tile(TOWN, 107))
+    extra.append(recolor(tile(TOWN, 107), {(189, 108, 74): (78, 151, 76), (234, 165, 108): (132, 198, 105), (207, 130, 84): (71, 159, 74), (184, 101, 66): (60, 120, 60)}))
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

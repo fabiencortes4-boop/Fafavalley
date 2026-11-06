@@ -141,6 +141,14 @@ func _act_on_ground(cell: Vector2i) -> bool:
 	return false
 
 
+## Toucher un coffre l'ouvre (sauf pioche en main : elle le ramasse).
+func act_on(cell: Vector2i) -> void:
+	if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe" and not fishing.busy():
+		EventBus.chest_requested.emit(cell)
+		return
+	super(cell)
+
+
 func is_walkable(cell: Vector2i) -> bool:
 	return super(cell) and not FarmState.objects.has(cell)
 
@@ -161,6 +169,9 @@ func _use_pickaxe(cell: Vector2i, _energy: int) -> void:
 	if not FarmState.objects.has(cell):
 		return
 	var id := FarmState.objects[cell] as String
+	if id == "chest" and not FarmState.chest_is_empty(cell):
+		EventBus.toast("Vide le coffre avant de le déplacer.")
+		return
 	if not Inventory.can_add(id):
 		EventBus.toast("Inventaire plein !")
 		return
@@ -283,6 +294,8 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.SPRINKLER))
 		"quality_sprinkler":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.QUALITY_SPRINKLER))
+		"chest":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.CHEST))
 		_:
 			_objects.erase_cell(cell)
 

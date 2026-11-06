@@ -24,5 +24,5 @@ Ils restent sous CC0. `sprites/hearts.png`, `sprites/bobber.png` ainsi que la ca
 pêche et les poissons de `sprites/icons.png` sont dessinés par le script,
 avec la palette Kenney (CC0), tout comme les minerais, gemmes et butins
 de monstres, les filons sur les rochers de la mine, les arroseurs et les plats
-cuisinés. L'enclume vient de Tiny Dungeon ; la pioche renforcée, l'arrosoir en
+cuisinés. L'enclume et le coffre viennent de Tiny Dungeon, le sac de Tiny Town ; la pioche renforcée, l'arrosoir en
 cuivre et l'engrais sont des recolorations de tuiles Kenney.

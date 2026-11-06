@@ -19,6 +19,9 @@ var _health_bar: ProgressBar
 var _location_label: Label
 var _top_panel: PanelContainer
 var _menu_button: Button
+var _bag_button: Button
+var _picked: int = -1  # case choisie dans l'écran du sac
+var _scroll_memory: Dictionary = {}  # titre de fenêtre -> position de défilement
 var _hotbar: PanelContainer
 var _slots: Array[Panel] = []
 var _slot_icons: Array[TextureRect] = []
@@ -68,6 +71,7 @@ func _ready() -> void:
 	EventBus.eat_requested.connect(ask_eat)
 	EventBus.elevator_requested.connect(open_elevator)
 	EventBus.forge_requested.connect(open_crafting.bind("forge"))
+	EventBus.chest_requested.connect(open_chest)
 	EventBus.water_changed.connect(func(_v: int, _m: int) -> void: _refresh_status())
 	EventBus.toast_requested.connect(show_toast)
 	EventBus.shop_requested.connect(open_shop)
@@ -131,6 +135,10 @@ func _build_menu_button() -> void:
 	_menu_button.text = "Menu"
 	_menu_button.pressed.connect(open_pause_menu)
 	_root.add_child(_menu_button)
+	_bag_button = Button.new()
+	_bag_button.text = "Sac"
+	_bag_button.pressed.connect(open_bag)
+	_root.add_child(_bag_button)
 
 
 func _build_hotbar() -> void:
@@ -193,6 +201,9 @@ func _layout() -> void:
 	_energy_bar.position = Vector2(vp.x - 18, vp.y - ACTION_SIZE - ACTION_MARGIN.y - 80)
 	_health_bar.position = _energy_bar.position - Vector2(15, 0)
 	_menu_button.position = Vector2(vp.x - _menu_button.get_combined_minimum_size().x - 4, 4)
+	var menu_size := _menu_button.get_combined_minimum_size()
+	_bag_button.size = Vector2(menu_size.x, 0)
+	_bag_button.position = Vector2(vp.x - menu_size.x - 4, 8 + menu_size.y)
 	var hb := _hotbar.get_combined_minimum_size()
 	_hotbar.size = hb
 	_hotbar.position = Vector2((vp.x - hb.x) / 2.0, vp.y - hb.y - 4)
@@ -302,7 +313,7 @@ func is_over_ui(event: InputEvent) -> bool:
 	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
 	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
-	for c: Control in [_top_panel, _menu_button, _hotbar, _joystick, _energy_bar, _health_bar]:
+	for c: Control in [_top_panel, _menu_button, _bag_button, _hotbar, _joystick, _energy_bar, _health_bar]:
 		if c.get_global_rect().has_point(point):
 			return true
 	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
@@ -417,8 +428,15 @@ func show_summary(report: Dictionary) -> void:
 func open_shop() -> void:
 	var box := _open_modal("Épicerie de Rosalie")
 	var gold := _add_label(box, "")
+	# La liste défile : graines, outils, coffres, sacs...
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(330, 165)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	_remember_scroll(scroll, "shop")
 	var list := VBoxContainer.new()
-	box.add_child(list)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
 	var refresh := func() -> void:
 		gold.text = "Ton or : %d" % Inventory.gold
 		for child in list.get_children():
@@ -436,14 +454,17 @@ func open_shop() -> void:
 			row.add_child(icon)
 			var is_seed: bool = item.get("type") == "seed"
 			var in_season := not is_seed or GameData.crop_in_season(str(item.crop), TimeManager.season)
-			var owned := not is_seed and Inventory.count_of(id) > 0
+			var is_bag: bool = item.get("type") == "backpack"
+			var owned: bool = (item.get("type") == "tool" and Inventory.count_of(id) > 0) or (is_bag and Inventory.capacity >= int(item.capacity))
+			# Le sac de voyageur demande d'avoir déjà le grand sac.
+			var locked: bool = is_bag and Inventory.capacity < int(item.capacity) - Inventory.HOTBAR
 			var name_label := Label.new()
 			name_label.text = "%s - %d or%s" % [item.name, int(item.buy), "" if in_season else " (hors saison)"]
 			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(name_label)
 			var buy := Button.new()
 			buy.text = "Acheter"
-			buy.disabled = not in_season or owned or Inventory.gold < int(item.buy)
+			buy.disabled = not in_season or owned or locked or Inventory.gold < int(item.buy)
 			if owned:
 				buy.text = "Acquis"
 			buy.pressed.connect(_buy.bind(id))
@@ -453,7 +474,18 @@ func open_shop() -> void:
 
 
 func _buy(id: String) -> void:
-	var price := int(GameData.item(id).get("buy", 0))
+	var item := GameData.item(id)
+	var price := int(item.get("buy", 0))
+	if item.get("type") == "backpack":
+		var target := int(item.capacity)
+		# Jamais de sac plus petit, et on agrandit un palier à la fois.
+		if Inventory.capacity >= target or Inventory.capacity < target - Inventory.HOTBAR:
+			return
+		if Inventory.spend_gold(price):
+			Inventory.set_capacity(int(item.capacity))
+			show_toast("Ton sac a maintenant %d places !" % Inventory.capacity)
+			open_shop()
+		return
 	if not Inventory.can_add(id):
 		show_toast("Inventaire plein !")
 		return
@@ -697,6 +729,7 @@ func open_crafting(station: String) -> void:
 	scroll.custom_minimum_size = Vector2(330, 150)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
+	_remember_scroll(scroll, station)
 	var list := VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override("separation", 3)
@@ -769,3 +802,127 @@ func _ingredient(item: String, qty: int) -> HBoxContainer:
 	label.add_theme_color_override("font_color", INGREDIENT_OK if Inventory.count_of(item) >= qty else INGREDIENT_MISSING)
 	box.add_child(label)
 	return box
+
+
+# ------------------------------------------------------------ sac et coffres
+const GRID_SLOT := 19
+
+
+## Grille de cases cliquables pour un tableau de cases (sac ou coffre).
+func _slot_grid(arr: Array, from: int, to: int, on_tap: Callable, picked: int = -1) -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = Inventory.HOTBAR
+	grid.add_theme_constant_override("h_separation", 1)
+	grid.add_theme_constant_override("v_separation", 1)
+	for i in range(from, to):
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(GRID_SLOT, GRID_SLOT)
+		var style := _slot_selected_style if i == picked else _slot_style
+		for state in ["normal", "hover", "pressed", "focus"]:
+			button.add_theme_stylebox_override(state, style)
+		var slot: Variant = arr[i]
+		if slot != null:
+			var icon := TextureRect.new()
+			icon.texture = GameData.item_icon(slot.id)
+			icon.position = Vector2(2, 1)
+			icon.size = Vector2(16, 16)
+			icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			button.add_child(icon)
+			if int(slot.qty) > 1:
+				var qty := Label.new()
+				qty.text = str(slot.qty)
+				qty.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				qty.position = Vector2(0, 9)
+				qty.size = Vector2(GRID_SLOT - 1, 10)
+				qty.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				button.add_child(qty)
+		button.pressed.connect(on_tap.bind(i))
+		grid.add_child(button)
+	return grid
+
+
+func open_bag() -> void:
+	var box := _open_modal("Sac - %d places" % Inventory.capacity)
+	box.add_child(_section_label("Barre rapide"))
+	box.add_child(_slot_grid(Inventory.slots, 0, Inventory.HOTBAR, _on_bag_slot, _picked))
+	if Inventory.capacity > Inventory.HOTBAR:
+		box.add_child(_section_label("Sac"))
+		box.add_child(_slot_grid(Inventory.slots, Inventory.HOTBAR, Inventory.capacity, _on_bag_slot, _picked))
+	else:
+		_add_label(box, "Un sac plus grand s'achète à l'épicerie de Rosalie.")
+	var info := _add_label(box, "Touche un objet, puis la case où le ranger.")
+	info.custom_minimum_size = Vector2(240, 0)
+	if _picked >= 0 and Inventory.slots[_picked] != null:
+		var item := GameData.item(Inventory.slots[_picked].id)
+		var text := str(item.get("name", ""))
+		if item.has("description"):
+			text += " : " + str(item.description)
+		if int(item.get("sell", 0)) > 0:
+			text += " (vente : %d or)" % int(item.sell)
+		info.text = text
+	_add_button(box, "Fermer", func() -> void:
+		_picked = -1
+		close_modal())
+
+
+func _on_bag_slot(index: int) -> void:
+	if _picked < 0:
+		if Inventory.slots[index] != null:
+			_picked = index
+	elif _picked == index:
+		_picked = -1
+	else:
+		Inventory.swap(_picked, index)
+		_picked = -1
+	open_bag()
+
+
+func open_chest(cell: Vector2i) -> void:
+	var chest: Array = FarmState.chests.get(cell, [])
+	if chest.is_empty():
+		return
+	var box := _open_modal("Coffre")
+	box.add_child(_section_label("Coffre (touche un objet pour le prendre)"))
+	box.add_child(_slot_grid(chest, 0, chest.size(), func(i: int) -> void:
+		Inventory.transfer(chest, i, Inventory.slots)
+		EventBus.inventory_changed.emit()
+		open_chest(cell)))
+	box.add_child(_section_label("Ton sac (touche un objet pour le ranger)"))
+	box.add_child(_slot_grid(Inventory.slots, 0, Inventory.capacity, func(i: int) -> void:
+		Inventory.transfer(Inventory.slots, i, chest)
+		EventBus.inventory_changed.emit()
+		open_chest(cell)))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(row)
+	_add_button(row, "Ranger les piles", func() -> void:
+		_stack_into(chest)
+		open_chest(cell))
+	_add_button(row, "Fermer", close_modal)
+
+
+## Range dans le coffre tout ce qui y a déjà une pile (hors barre rapide).
+func _stack_into(chest: Array) -> void:
+	var present := {}
+	for slot: Variant in chest:
+		if slot != null:
+			present[slot.id] = true
+	for i in range(Inventory.HOTBAR, Inventory.capacity):
+		var slot: Variant = Inventory.slots[i]
+		if slot != null and present.has(slot.id):
+			Inventory.transfer(Inventory.slots, i, chest)
+	EventBus.inventory_changed.emit()
+
+
+func _section_label(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_color_override("font_color", UiTheme.ACCENT)
+	return label
+
+
+## Garde la position de défilement d'une liste entre deux reconstructions
+## (après un achat ou une fabrication, la liste ne remonte pas en haut).
+func _remember_scroll(scroll: ScrollContainer, key: String) -> void:
+	scroll.set_deferred("scroll_vertical", int(_scroll_memory.get(key, 0)))
+	scroll.get_v_scroll_bar().value_changed.connect(func(v: float) -> void: _scroll_memory[key] = int(v))

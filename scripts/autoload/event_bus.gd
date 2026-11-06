@@ -21,6 +21,7 @@ signal player_fainted
 signal eat_requested(item_id: String)
 signal elevator_requested(levels: Array)
 signal forge_requested
+signal chest_requested(cell: Vector2i)
 
 
 func toast(text: String) -> void:
