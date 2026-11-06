@@ -9,7 +9,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	main.call("_start", false)
 	await get_tree().create_timer(0.3).timeout
-	var farm: Farm = main.get_children().filter(func(c: Node) -> bool: return c is Farm)[0]
+	var farm: Farm = main.call("current_map")
 	var start: Vector2 = farm.player.position
 	print("Départ joueur : ", start, " viewport : ", get_viewport().get_visible_rect().size)
 	var hud: Hud = farm.hud

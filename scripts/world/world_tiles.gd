@@ -32,11 +32,17 @@ const HAY := 51
 const BARREL := 52
 const BUCKET := 53
 const STUMP := 54
-const COUNT := 55
+const FENCE_LEFT := 55
+const FENCE_MID := 56
+const FENCE_RIGHT := 57
+const SIGN := 58
+const COBBLES := 59
+const COUNT := 60
 
 const SOLID := [
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
 	PINE, PINE_2, ROUND_TREE, BUSH, ROCK, SUNFLOWER, BIG_PINE, HAY, BARREL, STUMP,
+	FENCE_LEFT, FENCE_MID, FENCE_RIGHT, SIGN,
 ]
 
 

@@ -12,6 +12,10 @@ signal day_summary(report: Dictionary)
 signal shop_requested
 signal sleep_requested
 signal before_save
+signal map_change_requested(map_id: String, cell: Vector2i)
+signal message_requested(title: String, text: String)
+signal dialogue_requested(npc_id: String, text: String)
+signal relations_changed
 
 
 func toast(text: String) -> void:

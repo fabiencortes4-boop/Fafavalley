@@ -15,6 +15,16 @@ func _ready() -> void:
 		_setup_demo()
 		if "--shop" in args:
 			EventBus.shop_requested.emit()
+		if "--village" in args:
+			TimeManager.minutes = 13 * 60 + 30
+			PlayerState.position = Vector2(19 * 16 + 8, 17 * 16 + 12)
+			PlayerState.has_position = true
+			main.call("_switch_to", "village")
+			await get_tree().process_frame
+			if "--dialogue" in args:
+				var v: Village = main.call("current_map")
+				Relations.add_points("odette", 800)
+				EventBus.dialogue_requested.emit("odette", str(GameData.npc("odette").dialogue.friend[0]))
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)

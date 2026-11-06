@@ -24,7 +24,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Cycle jour/nuit (6h → 2h), 4 saisons de 28 jours, météo (la pluie arrose).
 - Labourer (houe), arroser (arrosoir, à remplir à l'étang), semer, faire pousser, récolter.
 - 6 cultures saisonnières (carotte, navet, chou, tomate et maïs qui repoussent, blé).
-- Énergie, coffre d'expédition vendu la nuit, étal de graines.
+- Énergie, coffre d'expédition vendu la nuit.
+- **Village de Valfleur** (par le chemin à l'est de la ferme) : épicerie de graines
+  (9h-17h), place avec puits, mairie, tableau d'affichage.
+- **5 habitants** avec emploi du temps (ils sortent, se promènent, rentrent le soir),
+  dialogues selon l'amitié, la saison et la météo, **cœurs d'amitié** (10 max),
+  **cadeaux** une fois par jour selon leurs goûts. Menu → Habitants pour suivre ses amitiés.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
 - Contrôles tactiles : joystick flottant, bouton Action, toucher une tuile voisine, barre rapide (multitouch).
@@ -33,7 +38,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ```
 project.godot
-data/                 # contenu du jeu en JSON (objets, cultures) : pas de code à toucher
+data/                 # contenu du jeu en JSON (objets, cultures, habitants) : pas de code à toucher
 scenes/main.tscn      # point d'entrée
 scripts/
   autoload/           # singletons globaux
@@ -43,9 +48,13 @@ scripts/
     inventory.gd      #   barre rapide + or
     farm_state.gd     #   tuiles, cultures, expédition (logique pure)
     player_state.gd   #   énergie, eau, position
+    relations.gd      #   amitié, discussions, cadeaux
     save_manager.gd   #   sauvegarde JSON dans user://
     game_flow.gd      #   nouvelle partie, fin de journée
-  world/farm.gd       # carte ASCII -> TileMapLayer, actions du joueur
+  world/world_map.gd  # base des cartes : ASCII -> TileMapLayer, bâtiments, passages
+  world/farm.gd       # ferme : labour, cultures, expédition, sommeil
+  world/village.gd    # village : bâtiments, habitants, itinéraires (AStarGrid2D)
+  entities/npc.gd     # habitant : emploi du temps, marche
   entities/player.gd
   ui/                 # HUD, joystick, thème
 tools/build_assets.py     # assemble les sprites à partir des packs Kenney
@@ -66,6 +75,7 @@ Principes :
 
 ```
 godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nuit, récolte, vente, sauvegarde
+godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/movement_test.tscn   # joystick tactile
 xvfb-run godot --rendering-driver opengl3 res://tests/screenshot.tscn -- capture.png
 ```
@@ -86,7 +96,8 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 
 - [x] Prototype : ferme, outils, cultures, temps, vente, sauvegarde, contrôles tactiles
 - [ ] Inventaire complet + coffres, qualité des récoltes
-- [ ] Village et PNJ (emplois du temps, dialogues, cadeaux, amitié)
+- [x] Village et habitants (emplois du temps, dialogues, cadeaux, amitié)
+- [ ] Intérieurs des maisons, scènes de cœur, anniversaires
 - [ ] Fabrication, cuisine, machines de transformation
 - [ ] Pêche (mini-jeu tactile), mine et combat
 - [ ] Animaux, bâtiments, compétences

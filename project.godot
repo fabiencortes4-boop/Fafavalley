@@ -27,6 +27,7 @@ TimeManager="*res://scripts/autoload/time_manager.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
 FarmState="*res://scripts/autoload/farm_state.gd"
 PlayerState="*res://scripts/autoload/player_state.gd"
+Relations="*res://scripts/autoload/relations.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 

@@ -28,6 +28,10 @@ var _toast: Label
 var _toast_tween: Tween
 var _modal: Control
 var _modal_closable: bool = true
+var _modal_closed_at: int = -1000
+var _dialog_label: Label
+var _fade: ColorRect
+var _hearts_texture: Texture2D = load("res://assets/sprites/hearts.png")
 var _slot_style: StyleBoxTexture
 var _slot_selected_style: StyleBoxTexture
 
@@ -46,6 +50,11 @@ func _ready() -> void:
 	_build_joystick()
 	_build_action_button()
 	_build_toast()
+	_fade = ColorRect.new()
+	_fade.color = Color(0.05, 0.03, 0.08, 0.0)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.add_child(_fade)
 
 	EventBus.inventory_changed.connect(_refresh_hotbar)
 	EventBus.gold_changed.connect(func(_g: int) -> void: _refresh_status())
@@ -55,6 +64,8 @@ func _ready() -> void:
 	EventBus.shop_requested.connect(open_shop)
 	EventBus.sleep_requested.connect(ask_sleep)
 	EventBus.day_summary.connect(show_summary)
+	EventBus.dialogue_requested.connect(show_dialogue)
+	EventBus.message_requested.connect(show_message)
 	TimeManager.time_changed.connect(func(_h: int, _m: int) -> void: _refresh_status())
 	TimeManager.day_started.connect(func(_d: int, _s: int, _y: int) -> void: _refresh_status())
 	get_viewport().size_changed.connect(_layout)
@@ -233,6 +244,10 @@ func _input(event: InputEvent) -> void:
 				Inventory.select((Inventory.selected + 1) % Inventory.SIZE)
 			elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
 				Inventory.select((Inventory.selected + Inventory.SIZE - 1) % Inventory.SIZE)
+	if _dialog_label != null and _modal != null and event.is_action_pressed("use_tool"):
+		_advance_dialog()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("menu"):
 		_toggle_menu()
 		get_viewport().set_input_as_handled()
@@ -259,7 +274,8 @@ func ui_position(event: InputEvent) -> Vector2:
 ## Le toucher est-il sur un élément d'interface ?
 func is_over_ui(event: InputEvent) -> bool:
 	var point := ui_position(event)
-	if _modal != null:
+	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
+	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
 	for c: Control in [_top_panel, _menu_button, _hotbar, _joystick, _energy_bar]:
 		if c.get_global_rect().has_point(point):
@@ -305,6 +321,8 @@ func close_modal() -> void:
 		return
 	_modal.queue_free()
 	_modal = null
+	_dialog_label = null
+	_modal_closed_at = Time.get_ticks_msec()
 	_joystick.visible = true
 	_action_button.visible = true
 	get_tree().paused = false
@@ -330,6 +348,7 @@ func _add_label(box: Container, text: String) -> Label:
 func open_pause_menu() -> void:
 	var box := _open_modal("Pause")
 	_add_button(box, "Reprendre", close_modal)
+	_add_button(box, "Habitants", open_relations)
 	_add_button(box, "Sauvegarder", func() -> void:
 		SaveManager.save_game()
 		show_toast("Partie sauvegardée"))
@@ -366,7 +385,7 @@ func show_summary(report: Dictionary) -> void:
 
 
 func open_shop() -> void:
-	var box := _open_modal("Étal de graines")
+	var box := _open_modal("Épicerie de Rosalie")
 	var gold := _add_label(box, "")
 	var list := VBoxContainer.new()
 	box.add_child(list)
@@ -408,3 +427,144 @@ func _buy(id: String) -> void:
 		Inventory.add_item(id, 1)
 		show_toast("+1 %s" % GameData.item_name(id))
 		open_shop()  # reconstruit la liste (or et boutons à jour)
+
+
+# ------------------------------------------------------------ dialogues
+func show_dialogue(npc_id: String, text: String) -> void:
+	var data := GameData.npc(npc_id)
+	_open_dialog(str(data.get("name", npc_id)), GameData.npc_texture(npc_id), text, Relations.hearts(npc_id))
+
+
+func show_message(title: String, text: String) -> void:
+	_open_dialog(title, null, text, -1)
+
+
+func _open_dialog(title: String, portrait: Texture2D, text: String, hearts: int) -> void:
+	close_modal()
+	_modal_closable = true
+	_joystick.release()
+	_joystick.visible = false
+	_action_button.visible = false
+	get_tree().paused = true
+	_modal = Control.new()
+	_modal.size = get_viewport().get_visible_rect().size
+	_modal.gui_input.connect(_on_dialog_input)
+	_root.add_child(_modal)
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.0
+	panel.anchor_right = 1.0
+	panel.anchor_top = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = 10
+	panel.offset_right = -10
+	panel.offset_top = -86
+	panel.offset_bottom = -6
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_modal.add_child(panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(row)
+	if portrait != null:
+		var frame := PanelContainer.new()
+		frame.add_theme_stylebox_override("panel", UiTheme.box("ui_slot_selected", 4, 4))
+		frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(frame)
+		var face := TextureRect.new()
+		face.texture = portrait
+		face.custom_minimum_size = Vector2(48, 48)
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		frame.add_child(face)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(col)
+	var header := HBoxContainer.new()
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(header)
+	var name_label := Label.new()
+	name_label.text = title
+	name_label.add_theme_color_override("font_color", UiTheme.ACCENT)
+	header.add_child(name_label)
+	if hearts >= 0:
+		var spacer := Control.new()
+		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		header.add_child(spacer)
+		header.add_child(_hearts_row(hearts))
+	_dialog_label = Label.new()
+	_dialog_label.text = text
+	_dialog_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_dialog_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_dialog_label.visible_ratio = 0.0
+	col.add_child(_dialog_label)
+	var tween := create_tween()
+	tween.tween_property(_dialog_label, "visible_ratio", 1.0, clampf(text.length() * 0.02, 0.3, 2.5))
+
+
+func _on_dialog_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _modal != null:
+			_modal.accept_event()
+		_advance_dialog()
+
+
+## Premier toucher : affiche tout le texte. Second : ferme.
+func _advance_dialog() -> void:
+	if _dialog_label == null:
+		return
+	if _dialog_label.visible_ratio < 1.0:
+		_dialog_label.visible_ratio = 1.0
+	else:
+		close_modal()
+
+
+func _hearts_row(count: int) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 0)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for i in Relations.MAX_HEARTS:
+		var heart := TextureRect.new()
+		var tex := AtlasTexture.new()
+		tex.atlas = _hearts_texture
+		tex.region = Rect2(0 if i < count else 8, 0, 8, 8)
+		heart.texture = tex
+		heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(heart)
+	return row
+
+
+func open_relations() -> void:
+	var box := _open_modal("Habitants de Valfleur")
+	for id: String in GameData.npcs:
+		var data := GameData.npc(id)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		box.add_child(row)
+		var face := TextureRect.new()
+		face.texture = GameData.npc_texture(id)
+		face.custom_minimum_size = Vector2(16, 16)
+		row.add_child(face)
+		var label := Label.new()
+		var known := Relations.met.has(id)
+		label.text = "%s, %s" % [data.name, data.get("title", "")] if known else "???"
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.custom_minimum_size = Vector2(110, 0)
+		row.add_child(label)
+		var info := VBoxContainer.new()
+		info.add_theme_constant_override("separation", 0)
+		row.add_child(info)
+		info.add_child(_hearts_row(Relations.hearts(id)))
+		var status := Label.new()
+		status.text = "Cadeau offert" if Relations.gifted_today.has(id) else ("Déjà vu aujourd'hui" if Relations.talked_today.has(id) else "")
+		status.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+		info.add_child(status)
+	_add_button(box, "Retour", open_pause_menu)
+
+
+## Fondu au noir qui s'efface (changement de carte).
+func fade_in() -> void:
+	_fade.color.a = 1.0
+	var tween := create_tween()
+	tween.tween_property(_fade, "color:a", 0.0, 0.4)

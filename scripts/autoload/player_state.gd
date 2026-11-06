@@ -8,12 +8,14 @@ var energy: int = MAX_ENERGY
 var water: int = MAX_WATER
 var position: Vector2 = Vector2.ZERO
 var has_position: bool = false
+var map: String = "farm"
 
 
 func reset() -> void:
 	energy = MAX_ENERGY
 	water = MAX_WATER
 	has_position = false
+	map = "farm"
 	_emit()
 
 
@@ -42,6 +44,7 @@ func refill_water() -> void:
 func restore(passed_out: bool) -> void:
 	energy = MAX_ENERGY / 2 if passed_out else MAX_ENERGY
 	has_position = false
+	map = "farm"  # on se réveille toujours à la ferme
 	_emit()
 
 
@@ -56,6 +59,7 @@ func to_dict() -> Dictionary:
 		"water": water,
 		"position": [position.x, position.y],
 		"has_position": has_position,
+		"map": map,
 	}
 
 
@@ -65,4 +69,5 @@ func from_dict(data: Dictionary) -> void:
 	var p: Array = data.get("position", [0, 0])
 	position = Vector2(float(p[0]), float(p[1]))
 	has_position = bool(data.get("has_position", false))
+	map = str(data.get("map", "farm"))
 	_emit()

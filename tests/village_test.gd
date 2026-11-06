@@ -1,0 +1,87 @@
+extends Node
+## Test automatique du village : passage ferme -> village, emplois du temps
+## des habitants, discussion, cadeaux, boutique, retour à la ferme.
+##   godot --headless res://tests/village_test.tscn
+
+var _failures := 0
+var _main: Node
+
+
+func _ready() -> void:
+	_main = load("res://scenes/main.tscn").instantiate()
+	add_child(_main)
+	await get_tree().process_frame
+	_main.call("_start", false)
+	await get_tree().process_frame
+	var farm: WorldMap = _main.call("current_map")
+	# Marcher jusqu'au bord est de la ferme
+	farm.player.position = farm.cell_center(Vector2i(39, 9))
+	await get_tree().physics_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var village: WorldMap = _main.call("current_map")
+	_check(village is Village, "le bord est de la ferme mène au village")
+	_check(village.player_cell() == Vector2i(2, 9), "on arrive à l'entrée du village")
+	var v := village as Village
+	_check(v.npcs.size() == 5, "5 habitants au village")
+	# 6h : tout le monde dort encore
+	_check(v.npcs.all(func(n: Npc) -> bool: return n.is_inside()), "à 6h, les habitants sont chez eux")
+	# Avancer à 8h30 : Rosalie sort et marche vers sa place
+	TimeManager.minutes = 8 * 60 + 30
+	TimeManager.time_changed.emit(8, 30)
+	var rosalie: Npc = v.npcs.filter(func(n: Npc) -> bool: return n.id == "rosalie")[0]
+	_check(not rosalie.is_inside(), "à 8h30, Rosalie est sortie")
+	await get_tree().create_timer(2.0).timeout
+	_check(rosalie.cell() == Vector2i(5, 8), "Rosalie a marché jusqu'à sa place (%s)" % rosalie.cell())
+	# Parler : première rencontre
+	v.player.position = v.cell_center(Vector2i(5, 9))
+	v.act_on(Vector2i(5, 8))
+	_check(Relations.met.has("rosalie"), "on fait connaissance avec Rosalie")
+	_check(Relations.points.get("rosalie", 0) == Relations.TALK_POINTS, "parler donne des points d'amitié")
+	_main._hud.close_modal()
+	v.act_on(Vector2i(5, 8))
+	_check(Relations.points.get("rosalie", 0) == Relations.TALK_POINTS, "une seule discussion comptée par jour")
+	_main._hud.close_modal()
+	# Cadeau aimé
+	Inventory.add_item("tomato", 2)
+	for i in Inventory.SIZE:
+		if Inventory.slots[i] != null and Inventory.slots[i].id == "tomato":
+			Inventory.select(i)
+	v.act_on(Vector2i(5, 8))
+	_check(Relations.points.get("rosalie", 0) == Relations.TALK_POINTS + 80, "Rosalie adore les tomates (+80)")
+	_check(Inventory.count_of("tomato") == 1, "le cadeau quitte l'inventaire")
+	_main._hud.close_modal()
+	v.act_on(Vector2i(5, 8))
+	_check(Inventory.count_of("tomato") == 1, "un seul cadeau par jour")
+	_main._hud.close_modal()
+	# Épicerie : ouverte à 9h30, fermée à 18h
+	TimeManager.minutes = 9 * 60 + 30
+	var opened := [false]
+	EventBus.shop_requested.connect(func() -> void: opened[0] = true)
+	v.act_on(Vector2i(6, 7))
+	_check(opened[0], "l'épicerie ouvre à 9h30")
+	_main._hud.close_modal()
+	opened[0] = false
+	TimeManager.minutes = 18 * 60
+	v.act_on(Vector2i(6, 7))
+	_check(not opened[0], "l'épicerie est fermée à 18h")
+	_main._hud.close_modal()
+	# Le soir, tout le monde rentre
+	TimeManager.minutes = 22 * 60
+	TimeManager.time_changed.emit(22, 0)
+	await get_tree().create_timer(6.0).timeout
+	_check(v.npcs.all(func(n: Npc) -> bool: return n.is_inside()), "à 22h, les habitants sont rentrés")
+	# S'évanouir au village -> réveil à la ferme
+	GameFlow.end_day(true)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(_main.call("current_map") is Farm, "on se réveille à la ferme")
+	_check(not Relations.talked_today.has("rosalie"), "les discussions sont remises à zéro chaque jour")
+	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
+	get_tree().quit(_failures)
+
+
+func _check(condition: bool, label: String) -> void:
+	print(("  ok   " if condition else "  ÉCHEC ") + label)
+	if not condition:
+		_failures += 1

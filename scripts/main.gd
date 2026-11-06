@@ -2,6 +2,9 @@ extends Node
 ## Point d'entrée : écran titre, puis lancement de la ferme et du HUD.
 
 var _title_layer: CanvasLayer
+var _hud: Hud
+var _world: WorldMap
+var _arrival: Vector2 = Vector2.INF
 
 
 func _ready() -> void:
@@ -48,9 +51,47 @@ func _start(load_save: bool) -> void:
 	if not (load_save and GameFlow.continue_game()):
 		GameFlow.new_game()
 	_title_layer.queue_free()
-	var hud := Hud.new()
-	var farm := Farm.new()
-	farm.hud = hud
-	add_child(farm)
-	add_child(hud)
+	_hud = Hud.new()
+	add_child(_hud)
+	_load_map(PlayerState.map)
+	EventBus.map_change_requested.connect(_on_map_change_requested)
+	TimeManager.day_started.connect(_on_day_started)
 	GameFlow.begin()
+
+
+func current_map() -> WorldMap:
+	return _world
+
+
+## Remplace la carte affichée (la précédente est libérée).
+func _load_map(map_id: String) -> void:
+	if _world != null:
+		remove_child(_world)
+		_world.queue_free()
+	PlayerState.map = map_id
+	_world = Village.new() if map_id == "village" else Farm.new()
+	_world.hud = _hud
+	add_child(_world)
+	move_child(_world, 0)
+
+
+func _on_map_change_requested(map_id: String, cell: Vector2i) -> void:
+	_arrival = Vector2(cell * WorldMap.TILE) + Vector2(WorldMap.TILE / 2.0, WorldMap.TILE * 0.75)
+	# Différé : on ne libère pas une carte pendant son propre traitement physique.
+	_switch_to.call_deferred(map_id)
+
+
+func _switch_to(map_id: String) -> void:
+	if _arrival != Vector2.INF:
+		# Appliqué ici : le joueur de l'ancienne carte a pu réécrire sa position.
+		PlayerState.position = _arrival
+		PlayerState.has_position = true
+		_arrival = Vector2.INF
+	_load_map(map_id)
+	_hud.fade_in()
+
+
+## Au réveil, on est toujours à la ferme.
+func _on_day_started(_day: int, _season: int, _year: int) -> void:
+	if _world != null and _world.map_id != PlayerState.map:
+		_switch_to.call_deferred(PlayerState.map)

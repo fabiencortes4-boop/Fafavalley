@@ -16,6 +16,7 @@ func new_game() -> void:
 	Inventory.reset()
 	FarmState.reset()
 	PlayerState.reset()
+	Relations.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])
 	Inventory.add_gold(STARTING_GOLD)
@@ -40,6 +41,7 @@ func end_day(passed_out: bool = false) -> void:
 	TimeManager.advance_day()
 	FarmState.advance_day(TimeManager.season, TimeManager.is_raining())
 	PlayerState.restore(passed_out)
+	Relations.new_day()
 	TimeManager.start_day()
 	SaveManager.save_game()
 	EventBus.day_summary.emit(report)

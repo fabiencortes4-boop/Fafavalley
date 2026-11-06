@@ -30,6 +30,7 @@ def load(pack, cols):
 FARM = load("tiny-farm", 12)
 TOWN = load("tiny-town", 12)
 UI = load("ui-pixel-adventure", 23)
+DUNGEON = load("tiny-dungeon", 12)
 
 
 def tile(sheet, i):
@@ -96,6 +97,8 @@ def world():
         tiles += [tile(FARM, dry), tile(FARM, wet)]
     # 51-54 décor : botte de foin, tonneau, seau, souche
     tiles += [on_grass(tile(FARM, i)) for i in (96, 85, 72, 38)]
+    # 55-59 village : clôture (gauche, milieu, droite), panneau, pavés
+    tiles += [on_grass(tile(TOWN, i)) for i in (80, 81, 82, 83, 43)]
     cols = 16
     rows = (len(tiles) + cols - 1) // cols
     out = Image.new("RGBA", (cols * T, rows * T), (0, 0, 0, 0))
@@ -138,6 +141,23 @@ def objects():
     compose(FARM, [[122, 121, 120]]).save(os.path.join(OUT, "animals.png"))  # poule, vache, mouton
 
 
+def village():
+    """Bâtiments du village (Tiny Town) et habitants (Tiny Dungeon)."""
+    builds = {
+        # porte : colonne 2 de la rangée du bas
+        "store.png": [[48, 49, 49, 50], [60, 61, 61, 62], [88, 77, 89, 79]],
+        # portes : colonne 1 de la rangée du bas
+        "house_gray.png": [[48, 49, 50], [60, 61, 62], [88, 89, 79]],
+        "house_gable.png": [[None, 63, None], [52, 53, 54], [64, 65, 66], [72, 85, 84]],
+        "house_gable_gray.png": [[None, 55, None], [48, 49, 50], [60, 61, 62], [76, 90, 88]],
+        "well.png": [[92], [104]],
+    }
+    for name, rows in builds.items():
+        compose(TOWN, rows).save(os.path.join(OUT, name))
+    # Habitants, dans l'ordre des "sprite" de data/npcs.json
+    compose(DUNGEON, [[99, 86, 100, 85, 111]]).save(os.path.join(OUT, "npcs.png"))
+
+
 def compose_mixed(items):
     out = Image.new("RGBA", (T * len(items), T), (0, 0, 0, 0))
     for x, (sheet, i) in enumerate(items):
@@ -157,6 +177,32 @@ def ui():
     compose(UI, [[86, 87], [109, 110]]).save(os.path.join(OUT, "ui_ring.png"))
 
 
+HEART = [
+    "........",
+    ".XX..XX.",
+    "XooXXooX",
+    "XoooooOX",
+    ".XoooOX.",
+    "..XoOX..",
+    "...XX...",
+    "........",
+]
+
+
+def hearts():
+    """Petits cœurs d'amitié (plein, vide), dessinés au pixel (CC0)."""
+    out = Image.new("RGBA", (16, 8), (0, 0, 0, 0))
+    px = out.load()
+    full = {"X": (62, 39, 49, 255), "o": (228, 72, 84, 255), "O": (178, 40, 60, 255)}
+    empty = {"X": (62, 39, 49, 255), "o": (120, 96, 92, 255), "O": (96, 74, 72, 255)}
+    for k, colors in enumerate((full, empty)):
+        for y, row in enumerate(HEART):
+            for x, ch in enumerate(row):
+                if ch in colors:
+                    px[k * 8 + x, y] = colors[ch]
+    out.save(os.path.join(OUT, "hearts.png"))
+
+
 def app_icon():
     """Icône de l'application : le fermier devant ses carottes."""
     base = compose(TOWN, [[0, 0], [0, 0]])
@@ -172,6 +218,8 @@ if __name__ == "__main__":
     crops()
     icons()
     objects()
+    village()
     ui()
+    hearts()
     app_icon()
     print("Sprites générés dans", OUT)

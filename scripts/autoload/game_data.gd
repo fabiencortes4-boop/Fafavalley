@@ -7,6 +7,7 @@ const ICON_SIZE := 16
 
 var items: Dictionary = {}
 var crops: Dictionary = {}
+var npcs: Dictionary = {}
 var _icon_cache: Dictionary = {}
 var _icons_texture: Texture2D
 
@@ -14,6 +15,7 @@ var _icons_texture: Texture2D
 func _ready() -> void:
 	items = _load_json("res://data/items.json")
 	crops = _load_json("res://data/crops.json")
+	npcs = _load_json("res://data/npcs.json")
 	_icons_texture = load(ICONS_PATH)
 
 
@@ -35,6 +37,22 @@ func item(id: String) -> Dictionary:
 
 func crop(id: String) -> Dictionary:
 	return crops.get(id, {})
+
+
+func npc(id: String) -> Dictionary:
+	return npcs.get(id, {})
+
+
+## Portrait d'un habitant (sprite 16x16 de assets/sprites/npcs.png).
+func npc_texture(id: String) -> Texture2D:
+	var key := "npc:" + id
+	if _icon_cache.has(key):
+		return _icon_cache[key]
+	var tex := AtlasTexture.new()
+	tex.atlas = load("res://assets/sprites/npcs.png")
+	tex.region = Rect2(int(npc(id).get("sprite", 0)) * ICON_SIZE, 0, ICON_SIZE, ICON_SIZE)
+	_icon_cache[key] = tex
+	return tex
 
 
 func item_name(id: String) -> String:
