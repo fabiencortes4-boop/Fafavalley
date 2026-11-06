@@ -67,6 +67,7 @@ func _ready() -> void:
 		_health_bar.value = v)
 	EventBus.eat_requested.connect(ask_eat)
 	EventBus.elevator_requested.connect(open_elevator)
+	EventBus.forge_requested.connect(open_crafting.bind("forge"))
 	EventBus.water_changed.connect(func(_v: int, _m: int) -> void: _refresh_status())
 	EventBus.toast_requested.connect(show_toast)
 	EventBus.shop_requested.connect(open_shop)
@@ -209,7 +210,7 @@ func _refresh_status() -> void:
 	_date_label.text = TimeManager.date_string()
 	_time_label.text = "%s  %s" % [TimeManager.time_string(), TimeManager.weather_string()]
 	_gold_label.text = "%d or" % Inventory.gold
-	_water_label.text = "Arrosoir %d/%d" % [PlayerState.water, PlayerState.MAX_WATER]
+	_water_label.text = "Arrosoir %d/%d" % [PlayerState.water, PlayerState.max_water()]
 
 
 func _on_energy_changed(value: int, max_value: int) -> void:
@@ -375,6 +376,7 @@ func _add_label(box: Container, text: String) -> Label:
 func open_pause_menu() -> void:
 	var box := _open_modal("Pause")
 	_add_button(box, "Reprendre", close_modal)
+	_add_button(box, "Fabrication", open_crafting.bind("craft"))
 	_add_button(box, "Habitants", open_relations)
 	_add_button(box, "Carnet de pêche", open_fish_log)
 	_add_button(box, "Sauvegarder", func() -> void:
@@ -678,3 +680,92 @@ func open_elevator(levels: Array) -> void:
 			close_modal()
 			EventBus.map_change_requested.emit("mine:%d" % level, Vector2i.ZERO))
 	_add_button(box, "Annuler", close_modal)
+
+
+# ------------------------------------------------------------ fabrication
+const INGREDIENT_OK := Color(0.6, 0.95, 0.45)
+const INGREDIENT_MISSING := Color(1.0, 0.32, 0.28)
+
+
+## station : "craft" (Menu → Fabrication) ou "forge" (enclume de Gaston).
+func open_crafting(station: String) -> void:
+	var title := "Forge de Gaston" if station == "forge" else "Fabrication"
+	var box := _open_modal(title)
+	if station == "forge":
+		_add_label(box, "Gaston améliore tes outils contre du minerai et un peu d'or.")
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(330, 150)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 3)
+	scroll.add_child(list)
+	var category := ""
+	for id: String in Crafting.for_station(station):
+		var recipe: Dictionary = Crafting.recipes[id]
+		var cat := str(recipe.get("category", ""))
+		if cat != "" and cat != category:
+			category = cat
+			var header := Label.new()
+			header.text = cat
+			header.add_theme_color_override("font_color", UiTheme.ACCENT)
+			list.add_child(header)
+		list.add_child(_recipe_row(id, recipe, station))
+	_add_label(box, "Ton or : %d" % Inventory.gold)
+	_add_button(box, "Retour" if station == "craft" else "Fermer", open_pause_menu if station == "craft" else close_modal)
+
+
+func _recipe_row(id: String, recipe: Dictionary, station: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var icon := TextureRect.new()
+	icon.texture = GameData.item_icon(id)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	icon.custom_minimum_size = Vector2(18, 18)
+	row.add_child(icon)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(col)
+	var name_label := Label.new()
+	var count := int(recipe.get("count", 1))
+	name_label.text = GameData.item_name(id) + (" x%d" % count if count > 1 else "")
+	col.add_child(name_label)
+	var needs := HBoxContainer.new()
+	needs.add_theme_constant_override("separation", 6)
+	col.add_child(needs)
+	var ingredients: Dictionary = recipe.get("ingredients", {})
+	if recipe.has("upgrade"):
+		needs.add_child(_ingredient(str(recipe.upgrade), 1))
+	for item: String in ingredients:
+		needs.add_child(_ingredient(item, int(ingredients[item])))
+	if int(recipe.get("gold", 0)) > 0:
+		var gold := Label.new()
+		gold.text = "%d or" % int(recipe.gold)
+		gold.add_theme_color_override("font_color", INGREDIENT_OK if Inventory.gold >= int(recipe.gold) else INGREDIENT_MISSING)
+		needs.add_child(gold)
+	var button := Button.new()
+	button.text = "Améliorer" if recipe.has("upgrade") else ("Cuisiner" if recipe.get("category") == "Cuisine" else "Fabriquer")
+	button.disabled = not Crafting.can_craft(id)
+	button.pressed.connect(func() -> void:
+		if Crafting.craft(id):
+			show_toast("%s : c'est prêt !" % GameData.item_name(id))
+		open_crafting(station))
+	row.add_child(button)
+	return row
+
+
+func _ingredient(item: String, qty: int) -> HBoxContainer:
+	var box := HBoxContainer.new()
+	box.add_theme_constant_override("separation", 1)
+	var icon := TextureRect.new()
+	icon.texture = GameData.item_icon(item)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.custom_minimum_size = Vector2(10, 10)
+	box.add_child(icon)
+	var label := Label.new()
+	label.text = "%d/%d" % [mini(Inventory.count_of(item), 99), qty]
+	label.add_theme_color_override("font_color", INGREDIENT_OK if Inventory.count_of(item) >= qty else INGREDIENT_MISSING)
+	box.add_child(label)
+	return box

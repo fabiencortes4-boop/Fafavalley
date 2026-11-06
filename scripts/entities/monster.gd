@@ -9,6 +9,7 @@ signal died(monster: Monster)
 
 const AGGRO_RANGE := 90.0
 const CONTACT_RANGE := 10.0
+const STUN_TIME := 0.35  # après un coup, le monstre recule sans attaquer
 
 var kind: String = "slime"
 var level: int = 1
@@ -22,12 +23,13 @@ var _timer: float = 0.0
 var _time: float = 0.0
 var _wander: Vector2 = Vector2.ZERO
 var _hop_velocity: Vector2 = Vector2.ZERO
+var _stun: float = 0.0
 
 
 func _ready() -> void:
 	_data = GameData.monsters.get(kind, {})
 	# Les monstres se renforcent avec la profondeur.
-	var scale_factor := 1.0 + level * 0.03
+	var scale_factor := 1.0 + level * 0.025
 	hp = int(float(_data.get("hp", 10)) * scale_factor)
 	collision_layer = 4
 	collision_mask = 0 if _data.get("behavior") == "fly" else 1
@@ -49,7 +51,8 @@ func _ready() -> void:
 
 
 func damage() -> int:
-	return int(float(_data.get("damage", 5)) * (1.0 + level * 0.03))
+	# Les dégâts grimpent moins vite que la vie : on doit pouvoir survivre.
+	return int(float(_data.get("damage", 5)) * (1.0 + level * 0.015))
 
 
 func _physics_process(delta: float) -> void:
@@ -61,6 +64,12 @@ func _physics_process(delta: float) -> void:
 	var near := to_player.length() < AGGRO_RANGE
 	var speed := float(_data.get("speed", 40))
 	var move := Vector2.ZERO
+	if _stun > 0.0:
+		_stun -= delta
+		velocity = _knockback
+		_knockback = _knockback.move_toward(Vector2.ZERO, 500.0 * delta)
+		move_and_slide()
+		return
 	match str(_data.get("behavior", "chase")):
 		"hop":
 			if _timer <= 0.0:
@@ -94,6 +103,8 @@ func _wander_dir() -> Vector2:
 ## Coup reçu : recul, flash blanc, mort éventuelle.
 func hit(amount: int, from: Vector2, knockback: float) -> void:
 	hp -= amount
+	_stun = STUN_TIME
+	_hop_velocity = Vector2.ZERO
 	_knockback = (position - from).normalized() * knockback
 	_sprite.modulate = Color(3, 3, 3)
 	var tween := create_tween()

@@ -33,6 +33,14 @@ func spend_energy(amount: int) -> bool:
 	return true
 
 
+## Contenance de l'arrosoir possédé (l'arrosoir en cuivre en contient plus).
+func max_water() -> int:
+	for slot: Variant in Inventory.slots:
+		if slot != null and GameData.item(slot.id).get("tool") == "watering_can":
+			return int(GameData.item(slot.id).get("capacity", MAX_WATER))
+	return MAX_WATER
+
+
 func use_water() -> bool:
 	if water <= 0:
 		return false
@@ -42,7 +50,7 @@ func use_water() -> bool:
 
 
 func refill_water() -> void:
-	water = MAX_WATER
+	water = max_water()
 	_emit()
 
 
@@ -71,7 +79,7 @@ func heal(energy_amount: int, health_amount: int) -> void:
 func _emit() -> void:
 	EventBus.health_changed.emit(health, MAX_HEALTH)
 	EventBus.energy_changed.emit(energy, MAX_ENERGY)
-	EventBus.water_changed.emit(water, MAX_WATER)
+	EventBus.water_changed.emit(water, max_water())
 
 
 func to_dict() -> Dictionary:

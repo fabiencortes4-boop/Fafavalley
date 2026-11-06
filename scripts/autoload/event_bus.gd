@@ -20,6 +20,7 @@ signal health_changed(value: int, max_value: int)
 signal player_fainted
 signal eat_requested(item_id: String)
 signal elevator_requested(levels: Array)
+signal forge_requested
 
 
 func toast(text: String) -> void:

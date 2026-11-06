@@ -18,6 +18,7 @@ const DECOR := {
 	"f": WorldTiles.SUNFLOWER, "m": WorldTiles.MUSHROOMS, "h": WorldTiles.HAY,
 	"k": WorldTiles.BARREL, ",": WorldTiles.GRASS_FLOWERS, "'": WorldTiles.GRASS_TUFT,
 	"c": WorldTiles.COBBLES, "P": WorldTiles.SIGN, "Q": WorldTiles.SIGN,
+	"N": WorldTiles.ANVIL,
 }
 const TREES := [WorldTiles.PINE, WorldTiles.PINE_2, WorldTiles.BIG_PINE, WorldTiles.PINE]
 
@@ -309,7 +310,8 @@ func act_on(cell: Vector2i) -> void:
 		if not fishing.try_cast(energy):
 			EventBus.toast("Mets-toi face à l'eau pour pêcher.")
 	elif _holding_tool() == "pickaxe":
-		_use_pickaxe(cell, int(GameData.item("pickaxe").get("energy", 2)))
+		var pick := GameData.item(Inventory.get_selected().id)
+		_use_pickaxe(cell, int(pick.get("energy", 2)))
 	elif _holding_type() == "weapon":
 		_swing(Inventory.get_selected().id)
 	elif not _act_on_ground(cell):

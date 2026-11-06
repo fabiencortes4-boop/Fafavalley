@@ -65,6 +65,27 @@ func count_of(id: String) -> int:
 	return total
 
 
+## Retire une quantité d'un objet, quelles que soient les cases.
+func remove_item(id: String, qty: int) -> void:
+	for i in SIZE:
+		if qty <= 0:
+			break
+		var slot: Variant = slots[i]
+		if slot != null and slot.id == id:
+			var taken := mini(qty, int(slot.qty))
+			remove_from_slot(i, taken)
+			qty -= taken
+
+
+## Remplace un objet par un autre dans la même case (amélioration d'outil).
+func replace_item(old_id: String, new_id: String) -> void:
+	for i in SIZE:
+		if slots[i] != null and slots[i].id == old_id:
+			slots[i] = {"id": new_id, "qty": 1}
+			EventBus.inventory_changed.emit()
+			return
+
+
 func remove_from_slot(index: int, qty: int = 1) -> void:
 	var slot: Variant = slots[index]
 	if slot == null:

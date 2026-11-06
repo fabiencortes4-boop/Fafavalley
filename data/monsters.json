@@ -48,7 +48,7 @@
 		"name": "Araignée",
 		"sprite": 2,
 		"hp": 30,
-		"damage": 12,
+		"damage": 10,
 		"speed": 44,
 		"behavior": "chase",
 		"levels": [
@@ -63,7 +63,7 @@
 		"name": "Rat des cavernes",
 		"sprite": 4,
 		"hp": 40,
-		"damage": 14,
+		"damage": 11,
 		"speed": 58,
 		"behavior": "chase",
 		"levels": [
@@ -78,7 +78,7 @@
 		"name": "Crabe de roche",
 		"sprite": 5,
 		"hp": 70,
-		"damage": 18,
+		"damage": 13,
 		"speed": 32,
 		"behavior": "chase",
 		"levels": [
@@ -93,7 +93,7 @@
 		"name": "Fantôme",
 		"sprite": 6,
 		"hp": 45,
-		"damage": 20,
+		"damage": 14,
 		"speed": 36,
 		"behavior": "fly",
 		"levels": [

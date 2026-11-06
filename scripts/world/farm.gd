@@ -44,6 +44,7 @@ const CROP_STAGES := 4
 const CROP_ROWS := 6
 
 var _soil: TileMapLayer
+var _objects: TileMapLayer
 var _crop_sprites: Dictionary = {}  # Vector2i -> Sprite2D
 var _grass_coords := [
 	WorldTiles.coords(WorldTiles.GRASS), WorldTiles.coords(WorldTiles.GRASS_TUFT),
@@ -88,6 +89,10 @@ func _after_build() -> void:
 	_soil.tile_set = _ground.tile_set
 	_soil.z_index = -1
 	add_child(_soil)
+	_objects = TileMapLayer.new()
+	_objects.tile_set = _ground.tile_set
+	_objects.z_index = -1
+	add_child(_objects)
 	EventBus.farm_tile_changed.connect(_refresh_cell)
 	_refresh_all()
 
@@ -117,15 +122,55 @@ func _act_on_ground(cell: Vector2i) -> bool:
 	var item := GameData.item(slot.id)
 	match str(item.get("type", "")):
 		"tool":
-			_use_tool(str(item.get("tool", "")), int(item.get("energy", 2)), cell)
+			_use_tool(str(item.get("tool", "")), item, cell)
 			return true
 		"seed":
 			_plant(cell, str(item.get("crop", "")))
 			return true
+		"placeable":
+			if _can_place(cell):
+				FarmState.place_object(cell, str(item.place))
+				Inventory.remove_from_slot(Inventory.selected, 1)
+				player.play_use()
+			return true
+		"fertilizer":
+			if FarmState.is_tilled(cell) and FarmState.fertilize(cell):
+				Inventory.remove_from_slot(Inventory.selected, 1)
+				EventBus.toast("Engrais épandu : ça va pousser plus vite !")
+			return true
 	return false
 
 
-func _use_tool(tool: String, energy: int, cell: Vector2i) -> void:
+func is_walkable(cell: Vector2i) -> bool:
+	return super(cell) and not FarmState.objects.has(cell)
+
+
+func _can_place(cell: Vector2i) -> bool:
+	return (
+		str(_ground_chars.get(cell, "")) in TILLABLE
+		and not _blocked.has(cell)
+		and not _interactables.has(cell)
+		and not FarmState.objects.has(cell)
+		and not FarmState.is_tilled(cell)
+		and cell != player_cell()
+	)
+
+
+## La pioche ramasse les objets posés (arroseurs).
+func _use_pickaxe(cell: Vector2i, _energy: int) -> void:
+	if not FarmState.objects.has(cell):
+		return
+	var id := FarmState.objects[cell] as String
+	if not Inventory.can_add(id):
+		EventBus.toast("Inventaire plein !")
+		return
+	FarmState.remove_object(cell)
+	Inventory.add_item(id, 1)
+	player.play_use()
+
+
+func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
+	var energy := int(item.get("energy", 2))
 	match tool:
 		"hoe":
 			if not _can_till(cell):
@@ -140,16 +185,23 @@ func _use_tool(tool: String, energy: int, cell: Vector2i) -> void:
 				player.play_use()
 				EventBus.toast("Arrosoir rempli !")
 				return
-			if not FarmState.is_tilled(cell) or FarmState.is_watered(cell):
+			# L'arrosoir en cuivre arrose plusieurs cases en ligne.
+			var targets: Array[Vector2i] = []
+			for k in int(item.get("area", 1)):
+				var c := cell + player.facing * k
+				if FarmState.is_tilled(c) and not FarmState.is_watered(c):
+					targets.append(c)
+			if targets.is_empty():
 				return
 			if PlayerState.water <= 0:
 				EventBus.toast("Arrosoir vide : remplis-le à l'étang.")
 				return
 			if not spend_energy(energy):
 				return
-			PlayerState.use_water()
 			player.play_use()
-			FarmState.water(cell)
+			for c in targets:
+				if PlayerState.use_water():
+					FarmState.water(c)
 
 
 func _can_till(cell: Vector2i) -> bool:
@@ -158,6 +210,7 @@ func _can_till(cell: Vector2i) -> bool:
 		and _ground.get_cell_atlas_coords(cell) in _grass_coords
 		and not _blocked.has(cell)
 		and not _interactables.has(cell)
+		and not FarmState.objects.has(cell)
 		and not FarmState.is_tilled(cell)
 		and cell != player_cell()
 	)
@@ -204,6 +257,9 @@ func _on_day_started(day: int, season: int, year: int) -> void:
 
 func _refresh_all() -> void:
 	_soil.clear()
+	_objects.clear()
+	for cell: Vector2i in FarmState.objects:
+		_refresh_object(cell)
 	for cell: Vector2i in _crop_sprites.keys():
 		if FarmState.get_crop(cell) == "":
 			_crop_sprites[cell].queue_free()
@@ -218,6 +274,17 @@ func _refresh_cell(cell: Vector2i) -> void:
 	for offset: Vector2i in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 		_refresh_soil(cell + offset)
 	_refresh_crop(cell)
+	_refresh_object(cell)
+
+
+func _refresh_object(cell: Vector2i) -> void:
+	match str(FarmState.objects.get(cell, "")):
+		"sprinkler":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.SPRINKLER))
+		"quality_sprinkler":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.QUALITY_SPRINKLER))
+		_:
+			_objects.erase_cell(cell)
 
 
 func _refresh_soil(cell: Vector2i) -> void:

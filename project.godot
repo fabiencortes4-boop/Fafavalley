@@ -29,6 +29,7 @@ FarmState="*res://scripts/autoload/farm_state.gd"
 PlayerState="*res://scripts/autoload/player_state.gd"
 Relations="*res://scripts/autoload/relations.gd"
 FishLog="*res://scripts/autoload/fish_log.gd"
+Crafting="*res://scripts/autoload/crafting.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 

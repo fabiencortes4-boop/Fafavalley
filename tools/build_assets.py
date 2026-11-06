@@ -111,6 +111,9 @@ def world():
     tiles += [rock, tile(FARM, 77)]
     for colors in ORE_SPECKS:
         tiles.append(ore_rock(rock, colors))
+    # 78-80 : arroseur, arroseur de qualité, enclume de Gaston
+    tiles += [draw_sprinkler((226, 120, 64), (170, 80, 44)), draw_sprinkler((192, 203, 220), (253, 190, 83))]
+    tiles.append(on_grass(tile(DUNGEON, 74)))
     cols = 16
     rows = (len(tiles) + cols - 1) // cols
     out = Image.new("RGBA", (cols * T, rows * T), (0, 0, 0, 0))
@@ -175,23 +178,38 @@ def village():
 
 # Minerais visibles sur les rochers : (couleur claire, couleur sombre)
 ORE_SPECKS = [
-    ((60, 52, 60), (30, 26, 32)),      # charbon
+    ((60, 52, 60), (24, 20, 26)),      # charbon
     ((242, 132, 74), (189, 88, 46)),   # cuivre
-    ((235, 239, 248), (170, 160, 190)),  # fer
+    ((235, 239, 248), (80, 100, 140)),  # fer (acier)
     ((253, 214, 83), (227, 160, 40)),  # or
-    ((200, 120, 240), (120, 200, 240)),  # gemmes
+    ((150, 240, 250), (150, 90, 200)),  # gemmes
 ]
 
 
 def ore_rock(rock, colors):
+    """Rocher avec de gros éclats de minerai bien visibles (2x2 ou 3x2)."""
     out = rock.copy()
     px = out.load()
     light, dark = colors
-    for (x, y) in ((5, 6), (9, 5), (7, 9), (11, 9), (4, 10)):
-        if px[x, y][3] > 0 and px[x, y][:3] != (63, 38, 49):
-            px[x, y] = light + (255,)
-            if px[x + 1, y + 1][3] > 0 and px[x + 1, y + 1][:3] != (63, 38, 49):
-                px[x + 1, y + 1] = dark + (255,)
+    outline = (63, 38, 49)
+
+    def inside(x, y):
+        return 0 <= x < 16 and 0 <= y < 16 and px[x, y][3] > 0 and px[x, y][:3] != outline
+
+    # Teinte générale du rocher vers la couleur du minerai
+    for yy in range(16):
+        for xx in range(16):
+            if inside(xx, yy):
+                r, g, b, al = px[xx, yy]
+                k = 0.38
+                px[xx, yy] = (int(r * (1 - k) + dark[0] * k), int(g * (1 - k) + dark[1] * k), int(b * (1 - k) + dark[2] * k), al)
+    for (x, y, w) in ((4, 5, 3), (9, 4, 2), (6, 9, 2), (10, 9, 3), (3, 9, 2), (8, 7, 2)):
+        cells = [(x + dx, y + dy) for dx in range(w) for dy in range(2)]
+        if not all(inside(cx, cy) for cx, cy in cells):
+            continue
+        for cx, cy in cells:
+            px[cx, cy] = (light if cy == y else dark) + (255,)
+        px[x, y] = (255, 255, 255, 255) if light != (60, 52, 60) else (110, 104, 114, 255)
     return out
 
 
@@ -412,11 +430,95 @@ def extend_icons(sheet):
     """Ajoute outils de mine, armes, minerais et butins (index 23+)."""
     extra = [tile(TOWN, 115), tile(DUNGEON, 104), tile(DUNGEON, 106), tile(DUNGEON, 118)]
     extra += [draw_loot(*l) for l in LOOT]
+    # 41-49 : arroseurs, engrais, plats, outils améliorés
+    extra += [draw_sprinkler((226, 120, 64), (170, 80, 44)), draw_sprinkler((192, 203, 220), (253, 190, 83))]
+    extra.append(recolor(tile(FARM, 74), {(254, 201, 156): (150, 120, 90), (234, 165, 108): (110, 84, 60), (207, 130, 84): (80, 60, 44)}))
+    extra += [draw_bowl((242, 132, 74), (78, 151, 76)), draw_plate(), draw_bowl((132, 198, 105), (195, 75, 53)), draw_bowl((150, 96, 60), (253, 190, 83))]
+    extra.append(recolor(tile(TOWN, 115), STEEL))
+    extra.append(recolor(tile(FARM, 84), COPPER))
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):
         out.alpha_composite(img, (sheet.width + k * T, 0))
     return out
+
+
+# Recolorations (outils améliorés)
+STEEL = {(140, 156, 181): (110, 190, 240), (82, 96, 124): (40, 90, 170), (189, 108, 74): (120, 70, 50)}
+COPPER = {(139, 155, 180): (189, 88, 46), (192, 203, 220): (242, 152, 94), (82, 96, 124): (130, 60, 36),
+          (235, 239, 248): (255, 200, 150)}
+
+
+def recolor(img, mapping):
+    out = img.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if (r, g, b) in mapping:
+                px[x, y] = mapping[(r, g, b)] + (a,)
+    return out
+
+
+def outlined(img):
+    px = img.load()
+    solid = {(x, y) for y in range(16) for x in range(16) if px[x, y][3] > 0}
+    for y in range(16):
+        for x in range(16):
+            if (x, y) not in solid and any((x + dx, y + dy) in solid for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                px[x, y] = OUTLINE
+    return img
+
+
+def draw_sprinkler(body, top):
+    """Arroseur : pied métallique, tête colorée, jets d'eau."""
+    img = new_img(16, 16)
+    px = img.load()
+    dark = tuple(max(0, c - 50) for c in body)
+    for y in range(8, 14):
+        for x in range(6, 10):
+            px[x, y] = (body if x < 8 else dark) + (255,)
+    for y in range(5, 8):
+        for x in range(4, 12):
+            px[x, y] = (top if y == 5 else body) + (255,)
+    for x in range(3, 13):
+        px[x, 14] = dark + (255,)
+    img = outlined(img)
+    px = img.load()
+    for (x, y) in ((1, 3), (2, 2), (14, 3), (13, 2), (7, 1), (8, 1)):
+        px[x, y] = (153, 216, 248, 255)
+    return img
+
+
+def draw_bowl(soup, garnish):
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(7, 14):
+        for x in range(2, 14):
+            if ((x - 7.5) / 6) ** 2 + ((y - 7) / 6.5) ** 2 <= 1 and y >= 7:
+                px[x, y] = (235, 239, 248, 255) if y > 8 else soup + (255,)
+    for x in range(3, 13):
+        px[x, 7] = soup + (255,)
+        px[x, 8] = soup + (255,)
+    for (x, y) in ((5, 6), (9, 6), (7, 7), (10, 7)):
+        px[x, y] = garnish + (255,)
+    for y in range(10, 14):
+        for x in range(4, 12):
+            if px[x, y][3] > 0 and y > 11:
+                px[x, y] = (192, 203, 220, 255)
+    return outlined(img)
+
+
+def draw_plate():
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(9, 14):
+        for x in range(1, 15):
+            if ((x - 7.5) / 7) ** 2 + ((y - 11.5) / 2.5) ** 2 <= 1:
+                px[x, y] = (235, 239, 248, 255)
+    fish = draw_fish(5, 2, (189, 108, 74), (227, 160, 100), (150, 84, 58), "stripes")
+    img.alpha_composite(fish.crop((0, 4, 16, 14)), (0, 3))
+    return img
 
 
 def new_img(w, h):

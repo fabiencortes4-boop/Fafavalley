@@ -44,6 +44,11 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   crabe, fantôme) qui sautent, volent ou poursuivent, butins à vendre. Barre de vie ;
   à 0, on se réveille au village (soins payants). Légumes et poissons se mangent
   (Action avec l'aliment en main) pour regagner énergie et vie.
+- **Fabrication** (Menu → Fabrication) : arroseurs à poser sur la ferme (arrosent 4 ou 8 cases
+  chaque matin, se ramassent à la pioche), engrais (croissance plus rapide), 4 plats
+  cuisinés qui soignent bien plus que les aliments crus.
+- **Forge de Gaston** (enclume devant sa maison) : pioche renforcée (2x plus efficace),
+  arrosoir en cuivre (60 doses, arrose 3 cases), épée en fer.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
 - Contrôles tactiles : joystick flottant, bouton Action, toucher une tuile voisine, barre rapide (multitouch).
@@ -52,7 +57,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ```
 project.godot
-data/                 # contenu du jeu en JSON (objets, cultures, habitants, poissons, monstres)
+data/                 # contenu du jeu en JSON (objets, cultures, habitants, poissons, monstres, recettes)
 scenes/main.tscn      # point d'entrée
 scripts/
   autoload/           # singletons globaux
@@ -64,6 +69,7 @@ scripts/
     player_state.gd   #   énergie, eau, position
     relations.gd      #   amitié, discussions, cadeaux
     fish_log.gd       #   carnet de pêche
+    crafting.gd       #   recettes, fabrication, améliorations
     save_manager.gd   #   sauvegarde JSON dans user://
     game_flow.gd      #   nouvelle partie, fin de journée
   world/world_map.gd  # base des cartes : ASCII -> TileMapLayer, bâtiments, passages
@@ -98,6 +104,8 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/crafting_test.tscn   # arroseurs, engrais, cuisine, forge
+godot --headless --fixed-fps 60 res://tests/combat_balance.tscn  # équilibrage du combat (simulation)
 godot --headless -s res://tests/fishing_balance.gd # équilibrage du mini-jeu (simulation)
 godot --headless res://tests/movement_test.tscn   # joystick tactile
 xvfb-run godot --rendering-driver opengl3 res://tests/screenshot.tscn -- capture.png
@@ -108,8 +116,8 @@ xvfb-run godot --rendering-driver opengl3 res://tests/screenshot.tscn -- capture
 1. Godot → *Éditeur → Gérer les modèles d'exportation* → télécharger.
 2. Installer OpenJDK 17 et le SDK Android, puis les renseigner dans
    *Éditeur → Paramètres de l'éditeur → Export → Android*.
-3. *Projet → Exporter… → Ajouter… → Android*, nom de paquet `com.fafavalley.game`,
-   orientation paysage (déjà réglée dans le projet).
+3. *Projet → Exporter…* : le préréglage **Android** est déjà fourni (`export_presets.cfg` :
+   paquet `com.fafavalley.game`, plein écran, autorisation de vibrer pour la pêche).
 4. Brancher le téléphone (débogage USB) et cliquer sur l'icône Android en haut à droite
    pour un déploiement en un clic.
 
@@ -121,7 +129,8 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 - [ ] Inventaire complet + coffres, qualité des récoltes
 - [x] Village et habitants (emplois du temps, dialogues, cadeaux, amitié)
 - [ ] Intérieurs des maisons, scènes de cœur, anniversaires
-- [ ] Fabrication, cuisine, machines de transformation
+- [x] Fabrication, cuisine, améliorations d'outils
+- [ ] Coffres, machines de transformation
 - [x] Pêche (mini-jeu tactile, 8 espèces, carnet)
 - [x] Mine et combat (30 niveaux, 7 monstres, minerais, armes)
 - [ ] Animaux, bâtiments, compétences

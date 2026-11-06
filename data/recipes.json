@@ -1,0 +1,86 @@
+{
+	"sprinkler": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"copper_ore": 4,
+			"iron_ore": 1
+		}
+	},
+	"quality_sprinkler": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"iron_ore": 4,
+			"gold_ore": 1,
+			"quartz": 1
+		}
+	},
+	"fertilizer": {
+		"station": "craft",
+		"category": "Objets",
+		"count": 5,
+		"ingredients": {
+			"slime": 2,
+			"coal": 1
+		}
+	},
+	"vegetable_soup": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"carrot": 1,
+			"turnip": 1,
+			"cabbage": 1
+		}
+	},
+	"grilled_fish": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"carp": 1,
+			"coal": 1
+		}
+	},
+	"salad": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"tomato": 1,
+			"cabbage": 1
+		}
+	},
+	"miner_stew": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"corn": 1,
+			"roach": 1,
+			"coal": 1
+		}
+	},
+	"steel_pickaxe": {
+		"station": "forge",
+		"upgrade": "pickaxe",
+		"gold": 400,
+		"ingredients": {
+			"iron_ore": 5
+		}
+	},
+	"copper_can": {
+		"station": "forge",
+		"upgrade": "watering_can",
+		"gold": 300,
+		"ingredients": {
+			"copper_ore": 5
+		}
+	},
+	"iron_sword": {
+		"station": "forge",
+		"upgrade": "rusty_sword",
+		"gold": 300,
+		"ingredients": {
+			"iron_ore": 4
+		}
+	}
+}

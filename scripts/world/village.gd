@@ -4,7 +4,7 @@ extends WorldMap
 ##
 ## Caractères propres au village : E épicerie (4x3), Y maison de Gaston,
 ## H maison d'Odette (3x3), A maison de Lina, Z mairie (3x4), W puits,
-## P tableau d'affichage, Q panneau vers la ferme.
+## P tableau d'affichage, Q panneau vers la ferme, M mine, N enclume (forge).
 
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
@@ -14,7 +14,7 @@ const MAP := [
 	"TT......................f.A.....Z.....TT",
 	"TT..E......Y....R...................==TT",
 	"TT.....................b............==TT",
-	"TT.h.....k....f.....................==TT",
+	"TT.h.....k....N.....................==TT",
 	"TTTQ..==....==..P..........==....==.==TT",
 	"======================================TT",
 	"======================================TT",
@@ -82,6 +82,8 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_add_sign(cell, "Tableau d'affichage", "Bienvenue à Valfleur ! Épicerie de Rosalie : 9h - 17h. La mairie cherche des légumes pour relancer le marché. Fête des moissons : bientôt !")
 		"Q":
 			_add_sign(cell, "Panneau", "<- Vers la ferme")
+		"N":
+			_interactables[cell] = "forge"
 
 
 func _after_build() -> void:
@@ -166,6 +168,9 @@ func _talk_to(npc: Npc) -> void:
 
 
 func _interact(kind: String, _cell: Vector2i) -> void:
+	if kind == "forge":
+		EventBus.forge_requested.emit()
+		return
 	var building := kind.trim_prefix("door:")
 	if building == "store":
 		if TimeManager.minutes >= STORE_OPEN and TimeManager.minutes < STORE_CLOSE:

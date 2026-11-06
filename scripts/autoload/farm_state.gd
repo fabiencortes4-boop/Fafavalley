@@ -4,11 +4,22 @@ extends Node
 
 var tiles: Dictionary = {}  # Vector2i -> {"watered": bool, "crop": String, "age": int}
 var shipping: Array = []  # [{"id": String, "qty": int}]
+var objects: Dictionary = {}  # Vector2i -> "sprinkler" | "quality_sprinkler"
+
+const SPRINKLER_RANGE := {
+	"sprinkler": [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN],
+	"quality_sprinkler": [
+		Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0),
+		Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1),
+	],
+}
+const FERTILIZER_EVERY := 3  # une nuit de croissance bonus toutes les 3 nuits arrosées
 
 
 func reset() -> void:
 	tiles.clear()
 	shipping.clear()
+	objects.clear()
 
 
 func is_tilled(cell: Vector2i) -> bool:
@@ -29,6 +40,31 @@ func water(cell: Vector2i) -> void:
 	if tiles.has(cell):
 		tiles[cell].watered = true
 		EventBus.farm_tile_changed.emit(cell)
+
+
+func place_object(cell: Vector2i, id: String) -> void:
+	objects[cell] = id
+	EventBus.farm_tile_changed.emit(cell)
+
+
+func remove_object(cell: Vector2i) -> String:
+	var id: String = objects.get(cell, "")
+	objects.erase(cell)
+	EventBus.farm_tile_changed.emit(cell)
+	return id
+
+
+func is_fertilized(cell: Vector2i) -> bool:
+	return tiles.has(cell) and tiles[cell].get("fert", false)
+
+
+func fertilize(cell: Vector2i) -> bool:
+	if not tiles.has(cell) or is_fertilized(cell):
+		return false
+	tiles[cell]["fert"] = true
+	tiles[cell]["fert_progress"] = 0
+	EventBus.farm_tile_changed.emit(cell)
+	return true
 
 
 func get_crop(cell: Vector2i) -> String:
@@ -113,14 +149,27 @@ func advance_day(new_season: int, raining: bool) -> void:
 				t.age = 0
 			elif t.watered:
 				t.age += 1
+				if t.get("fert", false):
+					t.fert_progress = int(t.get("fert_progress", 0)) + 1
+					if t.fert_progress >= FERTILIZER_EVERY:
+						t.fert_progress = 0
+						t.age += 1
 		t.watered = raining
+	# Les arroseurs arrosent au lever du jour.
+	for cell: Vector2i in objects:
+		for offset: Vector2i in SPRINKLER_RANGE.get(objects[cell], []):
+			if tiles.has(cell + offset):
+				tiles[cell + offset].watered = true
 
 
 func to_dict() -> Dictionary:
 	var out := {}
 	for cell: Vector2i in tiles:
 		out["%d,%d" % [cell.x, cell.y]] = tiles[cell].duplicate()
-	return {"tiles": out, "shipping": shipping.duplicate(true)}
+	var objs := {}
+	for cell: Vector2i in objects:
+		objs["%d,%d" % [cell.x, cell.y]] = objects[cell]
+	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -134,6 +183,12 @@ func from_dict(data: Dictionary) -> void:
 			"watered": bool(t.get("watered", false)),
 			"crop": str(t.get("crop", "")),
 			"age": int(t.get("age", 0)),
+			"fert": bool(t.get("fert", false)),
+			"fert_progress": int(t.get("fert_progress", 0)),
 		}
+	var objs: Dictionary = data.get("objects", {})
+	for key: String in objs:
+		var parts := key.split(",")
+		objects[Vector2i(int(parts[0]), int(parts[1]))] = str(objs[key])
 	for entry: Variant in data.get("shipping", []):
 		shipping.append({"id": str(entry.id), "qty": int(entry.qty)})

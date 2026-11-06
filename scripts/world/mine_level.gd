@@ -295,7 +295,7 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 	if not spend_energy(energy):
 		return
 	player.play_use()
-	_rock_data[cell].hp -= 1
+	_rock_data[cell].hp -= int(GameData.item(Inventory.get_selected().id).get("power", 1))
 	if _rock_data[cell].hp <= 0:
 		_break_rock(cell)
 

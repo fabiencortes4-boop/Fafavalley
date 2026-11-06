@@ -47,6 +47,16 @@ func _ready() -> void:
 				m.player.facing = Vector2i.RIGHT
 				m.player.swing(GameData.item_icon("rusty_sword"), 2.0)
 				main.get("_hud").close_modal()
+		if "--craft" in args or "--forge" in args:
+			for pair in [["copper_ore", 6], ["iron_ore", 3], ["slime", 2], ["coal", 3], ["carrot", 2], ["turnip", 1], ["cabbage", 1], ["pickaxe", 1]]:
+				Inventory.add_item(pair[0], pair[1])
+			FarmState.place_object(Vector2i(12, 13), "sprinkler")
+			FarmState.place_object(Vector2i(18, 13), "quality_sprinkler")
+			if "--forge" in args:
+				EventBus.forge_requested.emit()
+			else:
+				EventBus.emit_signal("relations_changed")
+				main.get("_hud").open_crafting("craft")
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)

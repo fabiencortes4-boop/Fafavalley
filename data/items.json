@@ -384,5 +384,96 @@
 		"icon": 40,
 		"stack": 99,
 		"sell": 90
+	},
+	"sprinkler": {
+		"name": "Arroseur",
+		"type": "placeable",
+		"place": "sprinkler",
+		"icon": 41,
+		"stack": 99,
+		"sell": 80,
+		"description": "Arrose chaque matin les 4 cases autour de lui."
+	},
+	"quality_sprinkler": {
+		"name": "Arroseur de qualité",
+		"type": "placeable",
+		"place": "quality_sprinkler",
+		"icon": 42,
+		"stack": 99,
+		"sell": 200,
+		"description": "Arrose chaque matin les 8 cases autour de lui."
+	},
+	"fertilizer": {
+		"name": "Engrais",
+		"type": "fertilizer",
+		"icon": 43,
+		"stack": 99,
+		"sell": 10,
+		"description": "Sur une terre labourée : les cultures poussent plus vite."
+	},
+	"vegetable_soup": {
+		"name": "Soupe paysanne",
+		"type": "food",
+		"icon": 44,
+		"stack": 99,
+		"sell": 220,
+		"edible": [
+			90,
+			60
+		]
+	},
+	"grilled_fish": {
+		"name": "Poisson grillé",
+		"type": "food",
+		"icon": 45,
+		"stack": 99,
+		"sell": 120,
+		"edible": [
+			60,
+			60
+		]
+	},
+	"salad": {
+		"name": "Salade du jardin",
+		"type": "food",
+		"icon": 46,
+		"stack": 99,
+		"sell": 150,
+		"edible": [
+			60,
+			35
+		]
+	},
+	"miner_stew": {
+		"name": "Ragoût du mineur",
+		"type": "food",
+		"icon": 47,
+		"stack": 99,
+		"sell": 260,
+		"edible": [
+			100,
+			100
+		]
+	},
+	"steel_pickaxe": {
+		"name": "Pioche renforcée",
+		"type": "tool",
+		"tool": "pickaxe",
+		"power": 2,
+		"icon": 48,
+		"stack": 1,
+		"energy": 2,
+		"description": "Casse les rochers deux fois plus vite."
+	},
+	"copper_can": {
+		"name": "Arrosoir en cuivre",
+		"type": "tool",
+		"tool": "watering_can",
+		"capacity": 60,
+		"area": 3,
+		"icon": 49,
+		"stack": 1,
+		"energy": 3,
+		"description": "Contient 60 doses et arrose 3 cases d'un coup."
 	}
 }
