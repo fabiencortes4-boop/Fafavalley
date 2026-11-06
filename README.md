@@ -23,7 +23,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 - Cycle jour/nuit (6h → 2h), 4 saisons de 28 jours, météo (la pluie arrose).
 - Labourer (houe), arroser (arrosoir, à remplir à l'étang), semer, faire pousser, récolter.
-- 4 cultures saisonnières (radis, chou, tomate qui repousse, potiron).
+- 6 cultures saisonnières (carotte, navet, chou, tomate et maïs qui repoussent, blé).
 - Énergie, coffre d'expédition vendu la nuit, étal de graines.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
@@ -48,8 +48,10 @@ scripts/
   world/farm.gd       # carte ASCII -> TileMapLayer, actions du joueur
   entities/player.gd
   ui/                 # HUD, joystick, thème
-tools/generate_assets.py  # régénère les sprites (CC0)
-assets/sprites/
+tools/build_assets.py     # assemble les sprites à partir des packs Kenney
+assets/kenney/            # packs Kenney originaux (CC0)
+assets/sprites/           # planches utilisées par le jeu
+tests/                    # tests automatiques (gameplay, joystick, capture d'écran)
 ```
 
 Principes :
@@ -58,6 +60,15 @@ Principes :
 - **État séparé de l'affichage** : `FarmState` ne connaît pas la scène, `Farm` ne fait
   que refléter l'état → la sauvegarde et la simulation nocturne sont simples.
 - **Carte en ASCII** dans `farm.gd` : facile à éditer avant de passer à l'éditeur de TileMap.
+  Les bords des chemins, de l'étang et des rangées labourées se raccordent automatiquement.
+
+## Tests
+
+```
+godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nuit, récolte, vente, sauvegarde
+godot --headless res://tests/movement_test.tscn   # joystick tactile
+xvfb-run godot --rendering-driver opengl3 res://tests/screenshot.tscn -- capture.png
+```
 
 ## Exporter sur Android
 
@@ -84,4 +95,5 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 
 ## Licence des assets
 
-Voir [`assets/LICENSE.md`](assets/LICENSE.md) : tous les sprites sont originaux et en CC0.
+Graphismes et police : **Kenney** (www.kenney.nl), licence CC0. Détails dans
+[`assets/LICENSE.md`](assets/LICENSE.md).

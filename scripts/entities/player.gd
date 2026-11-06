@@ -1,24 +1,20 @@
 class_name Player
 extends CharacterBody2D
-## Personnage joueur : déplacement 8 directions, orientation, animation.
+## Personnage joueur : déplacement 8 directions, orientation, petite animation
+## de marche (le sprite Kenney n'a qu'une image : on le fait sautiller).
 
 const SPEED := 72.0
-const FRAME_TIME := 0.15
-const DIR_ROWS := {Vector2i.DOWN: 0, Vector2i.LEFT: 1, Vector2i.RIGHT: 2, Vector2i.UP: 3}
 
 var facing: Vector2i = Vector2i.DOWN
 var _sprite: Sprite2D
-var _anim_time: float = 0.0
-var _frame: int = 0
+var _bob: float = 0.0
 
 
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	_sprite = Sprite2D.new()
 	_sprite.texture = load("res://assets/sprites/player.png")
-	_sprite.hframes = 4
-	_sprite.vframes = 4
-	_sprite.offset = Vector2(0, -12)  # les pieds sur l'origine
+	_sprite.offset = Vector2(0, -8)  # les pieds sur l'origine
 	add_child(_sprite)
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
@@ -38,14 +34,13 @@ func _physics_process(delta: float) -> void:
 			facing = Vector2i.RIGHT if dir.x > 0 else Vector2i.LEFT
 		else:
 			facing = Vector2i.DOWN if dir.y > 0 else Vector2i.UP
-		_anim_time += delta
-		if _anim_time >= FRAME_TIME:
-			_anim_time = 0.0
-			_frame = (_frame + 1) % 4
+		if facing.x != 0:
+			_sprite.flip_h = facing.x < 0
+		_bob += delta * 14.0
+		_sprite.position.y = -absf(sin(_bob)) * 1.5
 	else:
-		_frame = 0
-		_anim_time = 0.0
-	_sprite.frame = DIR_ROWS[facing] * 4 + _frame
+		_bob = 0.0
+		_sprite.position.y = 0.0
 	_store_position()
 
 
@@ -61,7 +56,8 @@ func face_towards(offset: Vector2i) -> void:
 		facing = Vector2i.RIGHT if offset.x > 0 else Vector2i.LEFT
 	else:
 		facing = Vector2i.DOWN if offset.y > 0 else Vector2i.UP
-	_sprite.frame = DIR_ROWS[facing] * 4
+	if facing.x != 0:
+		_sprite.flip_h = facing.x < 0
 
 
 ## Petit « coup d'outil » visuel.
@@ -70,3 +66,6 @@ func play_use() -> void:
 	var push := Vector2(facing) * 2.0
 	tween.tween_property(_sprite, "position", push, 0.06)
 	tween.tween_property(_sprite, "position", Vector2.ZERO, 0.08)
+	var squash := create_tween()
+	squash.tween_property(_sprite, "scale", Vector2(1.15, 0.85), 0.06)
+	squash.tween_property(_sprite, "scale", Vector2.ONE, 0.1)

@@ -12,7 +12,7 @@ func _ready() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_title_layer.add_child(root)
 	var bg := ColorRect.new()
-	bg.color = Color(0.30, 0.52, 0.28)
+	bg.color = Color(0.52, 0.78, 0.41)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(bg)
 	var center := CenterContainer.new()

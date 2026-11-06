@@ -1,12 +1,16 @@
 {
-	"hoe": {"name": "Houe", "type": "tool", "tool": "hoe", "icon": 0, "stack": 1, "energy": 2, "description": "Laboure la terre pour y semer."},
-	"watering_can": {"name": "Arrosoir", "type": "tool", "tool": "watering_can", "icon": 1, "stack": 1, "energy": 2, "description": "Arrose les cultures. Se remplit dans l'eau."},
-	"seed_radish": {"name": "Graines de radis", "type": "seed", "crop": "radish", "icon": 2, "stack": 99, "buy": 20, "sell": 10},
-	"seed_cabbage": {"name": "Graines de chou", "type": "seed", "crop": "cabbage", "icon": 3, "stack": 99, "buy": 40, "sell": 20},
-	"seed_tomato": {"name": "Graines de tomate", "type": "seed", "crop": "tomato", "icon": 4, "stack": 99, "buy": 50, "sell": 25},
-	"seed_pumpkin": {"name": "Graines de potiron", "type": "seed", "crop": "pumpkin", "icon": 5, "stack": 99, "buy": 100, "sell": 50},
-	"radish": {"name": "Radis", "type": "crop", "icon": 6, "stack": 99, "sell": 35},
-	"cabbage": {"name": "Chou", "type": "crop", "icon": 7, "stack": 99, "sell": 90},
-	"tomato": {"name": "Tomate", "type": "crop", "icon": 8, "stack": 99, "sell": 45},
-	"pumpkin": {"name": "Potiron", "type": "crop", "icon": 9, "stack": 99, "sell": 300}
+	"hoe": {"name": "Houe", "type": "tool", "tool": "hoe", "icon": 0, "stack": 1, "energy": 2, "description": "Laboure l'herbe pour y semer."},
+	"watering_can": {"name": "Arrosoir", "type": "tool", "tool": "watering_can", "icon": 1, "stack": 1, "energy": 2, "description": "Arrose les cultures. Se remplit à l'étang."},
+	"seed_carrot": {"name": "Graines de carotte", "type": "seed", "crop": "carrot", "icon": 2, "stack": 99, "buy": 20, "sell": 10},
+	"seed_turnip": {"name": "Graines de navet", "type": "seed", "crop": "turnip", "icon": 3, "stack": 99, "buy": 30, "sell": 15},
+	"seed_corn": {"name": "Graines de maïs", "type": "seed", "crop": "corn", "icon": 4, "stack": 99, "buy": 80, "sell": 40},
+	"seed_tomato": {"name": "Graines de tomate", "type": "seed", "crop": "tomato", "icon": 5, "stack": 99, "buy": 50, "sell": 25},
+	"seed_cabbage": {"name": "Graines de chou", "type": "seed", "crop": "cabbage", "icon": 6, "stack": 99, "buy": 45, "sell": 22},
+	"seed_wheat": {"name": "Graines de blé", "type": "seed", "crop": "wheat", "icon": 7, "stack": 99, "buy": 10, "sell": 5},
+	"carrot": {"name": "Carotte", "type": "crop", "icon": 8, "stack": 99, "sell": 35},
+	"turnip": {"name": "Navet", "type": "crop", "icon": 9, "stack": 99, "sell": 60},
+	"corn": {"name": "Maïs", "type": "crop", "icon": 10, "stack": 99, "sell": 50},
+	"tomato": {"name": "Tomate", "type": "crop", "icon": 11, "stack": 99, "sell": 45},
+	"cabbage": {"name": "Chou", "type": "crop", "icon": 12, "stack": 99, "sell": 90},
+	"wheat": {"name": "Blé", "type": "crop", "icon": 13, "stack": 99, "sell": 25}
 }

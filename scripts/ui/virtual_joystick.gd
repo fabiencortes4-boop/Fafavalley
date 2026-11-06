@@ -4,8 +4,11 @@ extends Control
 ## sa zone. Il pilote les actions move_* (le clavier marche donc aussi).
 ## Gère le multitouch : on peut marcher et appuyer sur Action en même temps.
 
-const RADIUS := 28.0
-const KNOB_RADIUS := 12.0
+const RADIUS := 32.0
+const KNOB_SIZE := 32.0
+
+var _ring: Texture2D = load("res://assets/sprites/ui_ring.png")
+var _knob_texture: Texture2D = load("res://assets/sprites/ui_round_dark.png")
 
 var _touch_index: int = -1
 var _rest_center: Vector2
@@ -21,7 +24,7 @@ func _ready() -> void:
 
 
 func _reset_center() -> void:
-	_rest_center = Vector2(RADIUS + 14, size.y - RADIUS - 14)
+	_rest_center = Vector2(RADIUS + 12, size.y - RADIUS - 12)
 	if _touch_index == -1:
 		_center = _rest_center
 		_knob = _rest_center
@@ -31,8 +34,10 @@ func _reset_center() -> void:
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree():
 		return
+	# make_input_local convertit les pixels de l'écran en coordonnées locales
+	# (indispensable : l'écran du téléphone est bien plus grand que 480x270).
 	if event is InputEventScreenTouch:
-		var local: Vector2 = event.position - global_position
+		var local: Vector2 = make_input_local(event).position
 		if event.pressed and _touch_index == -1 and Rect2(Vector2.ZERO, size).has_point(local):
 			_touch_index = event.index
 			_center = local
@@ -42,7 +47,7 @@ func _input(event: InputEvent) -> void:
 			release()
 			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag and event.index == _touch_index:
-		_update_knob(event.position - global_position)
+		_update_knob(make_input_local(event).position)
 		get_viewport().set_input_as_handled()
 
 
@@ -75,7 +80,8 @@ func release() -> void:
 
 
 func _draw() -> void:
-	var alpha := 0.55 if _touch_index != -1 else 0.25
-	draw_circle(_center, RADIUS, Color(0.1, 0.06, 0.03, alpha))
-	draw_arc(_center, RADIUS, 0, TAU, 32, Color(0.95, 0.85, 0.6, alpha), 1.5)
-	draw_circle(_knob, KNOB_RADIUS, Color(0.95, 0.85, 0.6, alpha + 0.2))
+	var alpha := 0.9 if _touch_index != -1 else 0.45
+	var ring_size := Vector2(RADIUS, RADIUS) * 2.0
+	draw_texture_rect(_ring, Rect2(_center - ring_size / 2.0, ring_size), false, Color(1, 1, 1, alpha))
+	var knob := Vector2(KNOB_SIZE, KNOB_SIZE)
+	draw_texture_rect(_knob_texture, Rect2(_knob - knob / 2.0, knob), false, Color(1, 1, 1, alpha))

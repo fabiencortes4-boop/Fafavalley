@@ -2,8 +2,8 @@ extends Node
 ## Sauvegarde JSON dans user://. Sauvegarde aussi automatiquement quand
 ## l'application passe en arrière-plan (indispensable sur mobile).
 
-const SAVE_PATH := "user://fafavalley_save.json"
-const SAVE_VERSION := 1
+const SAVE_PATH := "user://fafavalley_save_v2.json"  # v2 : objets Kenney
+const SAVE_VERSION := 2
 
 
 func has_save() -> bool:

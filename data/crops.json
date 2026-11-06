@@ -1,6 +1,8 @@
 {
-	"radish": {"name": "Radis", "seasons": [0], "stage_days": [1, 1, 1, 1], "harvest": "radish", "regrow": 0, "sprite_row": 0},
-	"cabbage": {"name": "Chou", "seasons": [0, 2], "stage_days": [1, 2, 2, 1], "harvest": "cabbage", "regrow": 0, "sprite_row": 1},
-	"tomato": {"name": "Tomate", "seasons": [1], "stage_days": [2, 2, 2, 2], "harvest": "tomato", "regrow": 3, "sprite_row": 2},
-	"pumpkin": {"name": "Potiron", "seasons": [2], "stage_days": [2, 3, 3, 3], "harvest": "pumpkin", "regrow": 0, "sprite_row": 3}
+	"carrot": {"name": "Carotte", "seasons": [0], "stage_days": [1, 1, 2], "harvest": "carrot", "regrow": 0, "sprite_row": 0},
+	"turnip": {"name": "Navet", "seasons": [0, 2], "stage_days": [1, 2, 2], "harvest": "turnip", "regrow": 0, "sprite_row": 1},
+	"corn": {"name": "Maïs", "seasons": [1, 2], "stage_days": [2, 4, 4], "harvest": "corn", "regrow": 4, "sprite_row": 2},
+	"tomato": {"name": "Tomate", "seasons": [1], "stage_days": [2, 3, 3], "harvest": "tomato", "regrow": 3, "sprite_row": 3},
+	"cabbage": {"name": "Chou", "seasons": [0, 2], "stage_days": [2, 2, 2], "harvest": "cabbage", "regrow": 0, "sprite_row": 4},
+	"wheat": {"name": "Blé", "seasons": [1, 2], "stage_days": [1, 1, 2], "harvest": "wheat", "regrow": 0, "sprite_row": 5}
 }

@@ -2,7 +2,7 @@ extends Node
 ## Orchestration : nouvelle partie, chargement, fin de journée.
 
 const STARTING_GOLD := 500
-const STARTING_ITEMS := [["hoe", 1], ["watering_can", 1], ["seed_radish", 15]]
+const STARTING_ITEMS := [["hoe", 1], ["watering_can", 1], ["seed_carrot", 15]]
 
 var in_game: bool = false
 

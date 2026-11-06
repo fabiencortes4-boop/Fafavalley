@@ -57,6 +57,14 @@ func can_add(id: String, qty: int = 1) -> bool:
 	return space >= qty
 
 
+func count_of(id: String) -> int:
+	var total := 0
+	for slot: Variant in slots:
+		if slot != null and slot.id == id:
+			total += int(slot.qty)
+	return total
+
+
 func remove_from_slot(index: int, qty: int = 1) -> void:
 	var slot: Variant = slots[index]
 	if slot == null:

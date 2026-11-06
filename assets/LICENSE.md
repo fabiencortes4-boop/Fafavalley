@@ -1,12 +1,22 @@
 # Licence des assets
 
-Tous les graphismes de `assets/sprites/` et `icon.png` sont des créations
-originales générées par `tools/generate_assets.py`.
+## Packs Kenney (CC0 1.0)
 
-Ils sont placés dans le domaine public : **CC0 1.0 Universel**
-(https://creativecommons.org/publicdomain/zero/1.0/deed.fr).
-Utilisation, modification et redistribution libres, y compris commerciales,
-sans attribution obligatoire.
+Graphismes et police par **Kenney** — https://www.kenney.nl
+Licence : Creative Commons Zero (domaine public), usage commercial autorisé,
+attribution non obligatoire (mais appréciée : merci Kenney !).
 
-Si tu ajoutes des assets tiers (ex. packs Kenney, également CC0), range-les
-dans un sous-dossier dédié et note ici leur source et leur licence.
+| Dossier | Pack |
+|---|---|
+| `kenney/tiny-farm/` | Tiny Farm 1.0 |
+| `kenney/tiny-town/` | Tiny Town 1.1 |
+| `kenney/ui-pixel-adventure/` | UI Pack – Pixel Adventure 2.0 (petites tuiles, contour épais) |
+| `kenney/fonts/` | KenPixel Mini Square (Kenney Fonts) |
+
+Chaque dossier contient le fichier de licence original.
+
+## Sprites assemblés
+
+`sprites/*.png` sont produits par `tools/build_assets.py` à partir des
+planches ci-dessus (découpage, assemblage, eau recolorée depuis les chemins).
+Ils restent sous CC0.

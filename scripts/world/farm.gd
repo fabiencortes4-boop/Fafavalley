@@ -6,50 +6,57 @@ extends Node2D
 const TILE := 16
 const REACH := 1  # portée d'action en tuiles autour du joueur
 
-## Légende : T arbre, ~ eau, . herbe, , fleurs, ' touffe, = chemin,
-## d terre cultivable, # clôture, o rocher, b buisson,
-## H maison (4x3, ancre en haut à gauche), B coffre d'expédition, S étal (2x2).
+## Légende : T arbre, R arbre rond, ~ eau, . herbe, , fleurs, ' touffe,
+## = chemin, b buisson, o rocher, f tournesol, m champignons, h foin, k tonneau,
+## H maison (3x3), G grange (3x6), B coffre d'expédition, S étal (3x1),
+## C poule, V vache (placées sur de l'herbe).
+## Les chemins et l'eau doivent faire au moins 2 cases de large (raccords).
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TTT..T...T....T.,.....T....T.....T...TTT",
-	"TT...H.............,..................TT",
-	"TT..........,.................S.....'.TT",
-	"TT........B.............o.............TT",
-	"TTT...=........'.....'.........=......TT",
-	"TT....=........................=......TT",
-	"TT....=........................=.....TTT",
-	"TT....============================....TT",
-	"TT..##dd################..............TT",
-	"TTT.#dddddddddddddddddd#..b........b..TT",
-	"TT..#dddddddddddddddddd#..............TT",
-	"TT.,#dddddddddddddddddd#....~~~~~~....TT",
-	"TT..#dddddddddddddddddd#...~~~~~~~~..TTT",
-	"TT..#dddddddddddddddddd#...~~~~~~~~...TT",
-	"TT..#dddddddddddddddddd#...~~~~~~~~...TT",
-	"TTT.#dddddddddddddddddd#.'.~~~~~~~~...TT",
-	"TT..#dddddddddddddddddd#...~~~~~~~~...TT",
-	"TT..#dddddddddddddddddd#...~~~~~~~~...TT",
-	"TT..#dddddddddddddddddd#...~~~~~~~~..TTT",
-	"TT..####################....~~~~~~....TT",
-	"TT.................................o..TT",
-	"TTT...........,..........o............TT",
-	"TT......'.........b..............,....TT",
-	"TT....................................TT",
+	"TTTTT..T.T..T...TTT......T..TTT...G...TT",
+	"TTT........f.........R................TT",
+	"TT....H.........o...............C.....TT",
+	"TTT........................S..........TT",
+	"TT........B.........'......==..V......TT",
+	"TTT....==...b..............==....h...kTT",
+	"TTT..f.==..................==.......C.TT",
+	"TT.....==========================....TTT",
+	"TTT....==========================....TTT",
+	"TTT...............................'...TT",
+	"TTT................k....m.............TT",
+	"TTT.....m.....,...............,.....bTTT",
+	"TTT.R................................TTT",
+	"TT....................'.....~~~~~~...TTT",
+	"TTT........................~~~~~~~~..TTT",
+	"TTT.......................~~~~~~~~~...TT",
+	"TT........'...............~~~~~~~~~~..TT",
+	"TT........................~~~~~~~~~~..TT",
+	"TT.....................o..~~~~~~~~~~..TT",
+	"TTT.............,.........~~~~~~~~~~..TT",
+	"TT....,....................~~~~~~~~...TT",
+	"TTT.........................~~~~~~...TTT",
+	"TT...................................oTT",
+	"TTT.........b......................m..TT",
+	"TTT...............'......R............TT",
+	"TTT..TTTT.T...TT....T......T..T.T.T...TT",
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 ]
 
-const ATLAS := {
-	".": 0, ",": 1, "'": 2, "=": 3, "~": 4, "d": 7,
-	"T": 8, "#": 9, "o": 10, "b": 11, "H": 0, "B": 0, "S": 0,
+const DECOR := {
+	"R": WorldTiles.ROUND_TREE, "b": WorldTiles.BUSH, "o": WorldTiles.ROCK,
+	"f": WorldTiles.SUNFLOWER, "m": WorldTiles.MUSHROOMS, "h": WorldTiles.HAY,
+	"k": WorldTiles.BARREL, ",": WorldTiles.GRASS_FLOWERS, "'": WorldTiles.GRASS_TUFT,
 }
-const TILESET_COLUMNS := 12
-const SOLID_TILES := [4, 8, 9, 10, 11]
-const TILLABLE := [".", ",", "'", "d"]
-const TILE_TILLED := Vector2i(5, 0)
-const TILE_WATERED := Vector2i(6, 0)
-const CROP_STAGES := 5
+const TREES := [WorldTiles.PINE, WorldTiles.PINE_2, WorldTiles.BIG_PINE, WorldTiles.PINE]
+const TILLABLE := [".", ",", "'", "C", "V"]
+const CROP_STAGES := 4
+const CROP_ROWS := 6
+var _grass_coords := [
+	WorldTiles.coords(WorldTiles.GRASS), WorldTiles.coords(WorldTiles.GRASS_TUFT),
+	WorldTiles.coords(WorldTiles.GRASS_FLOWERS),
+]
 
 var hud: Hud
 var player: Player
@@ -106,15 +113,15 @@ func _build_tileset() -> TileSet:
 	ts.tile_size = Vector2i(TILE, TILE)
 	ts.add_physics_layer()
 	var src := TileSetAtlasSource.new()
-	src.texture = load("res://assets/sprites/tileset.png")
+	src.texture = load("res://assets/sprites/world.png")
 	src.texture_region_size = Vector2i(TILE, TILE)
 	ts.add_source(src, 0)
 	var h := TILE / 2.0
 	var square := PackedVector2Array([Vector2(-h, -h), Vector2(h, -h), Vector2(h, h), Vector2(-h, h)])
-	for i in TILESET_COLUMNS:
-		var coords := Vector2i(i, 0)
+	for i in WorldTiles.COUNT:
+		var coords := WorldTiles.coords(i)
 		src.create_tile(coords)
-		if i in SOLID_TILES:
+		if i in WorldTiles.SOLID:
 			var data := src.get_tile_data(coords, 0)
 			data.add_collision_polygon(0)
 			data.set_collision_polygon_points(0, 0, square)
@@ -128,24 +135,55 @@ func _build_map() -> void:
 		if row.length() != _map_size.x:
 			push_error("Ligne %d de la carte : largeur incorrecte" % y)
 		for x in row.length():
-			var ch := row[x]
-			var cell := Vector2i(x, y)
-			_ground_chars[cell] = ch
-			_ground.set_cell(cell, 0, Vector2i(int(ATLAS.get(ch, 0)), 0))
-			match ch:
-				"H":
-					_add_building(cell, Vector2i(4, 3), "res://assets/sprites/house.png")
-					var door := cell + Vector2i(1, 2)
-					_interactables[door] = "door"
-					_spawn_cell = door + Vector2i.DOWN
-				"B":
-					_add_building(cell, Vector2i(1, 1), "res://assets/sprites/shipping_bin.png")
-					_interactables[cell] = "bin"
-				"S":
-					_add_building(cell, Vector2i(2, 2), "res://assets/sprites/shop_stand.png")
-					for dy in 2:
-						for dx in 2:
-							_interactables[cell + Vector2i(dx, dy)] = "shop"
+			_ground_chars[Vector2i(x, y)] = row[x]
+	for cell: Vector2i in _ground_chars:
+		var ch: String = _ground_chars[cell]
+		_ground.set_cell(cell, 0, WorldTiles.coords(_ground_tile(cell, ch)))
+		match ch:
+			"H":
+				_add_building(cell, Vector2i(3, 3), "res://assets/sprites/house.png")
+				var door := cell + Vector2i(1, 2)
+				_interactables[door] = "door"
+				_spawn_cell = door + Vector2i.DOWN
+			"G":
+				_add_building(cell, Vector2i(3, 6), "res://assets/sprites/barn.png")
+			"B":
+				_add_building(cell, Vector2i(1, 1), "res://assets/sprites/shipping_bin.png")
+				_interactables[cell] = "bin"
+			"S":
+				_add_building(cell, Vector2i(3, 1), "res://assets/sprites/shop_stand.png")
+				for dx in 3:
+					_interactables[cell + Vector2i(dx, 0)] = "shop"
+			"C", "V":
+				var critter := Critter.new()
+				critter.frame = 0 if ch == "C" else 1
+				critter.position = Vector2(cell * TILE) + Vector2(TILE / 2.0, TILE)
+				_entities.add_child(critter)
+
+
+func _ground_tile(cell: Vector2i, ch: String) -> int:
+	match ch:
+		"=":
+			return WorldTiles.autotile(WorldTiles.PATH_START, WorldTiles.PATH_INNER, _same_as.bind(cell, "="))
+		"~":
+			return WorldTiles.autotile(WorldTiles.WATER_START, WorldTiles.WATER_INNER, _same_as.bind(cell, "~"))
+		"T":
+			return TREES[_hash(cell) % TREES.size()]
+		".":
+			# Un peu de variété dans l'herbe.
+			var r := _hash(cell) % 23
+			return WorldTiles.GRASS_TUFT if r == 0 else (WorldTiles.GRASS_FLOWERS if r == 1 else WorldTiles.GRASS)
+	return int(DECOR.get(ch, WorldTiles.GRASS))
+
+
+func _same_as(dx: int, dy: int, cell: Vector2i, ch: String) -> bool:
+	var other := cell + Vector2i(dx, dy)
+	# Hors carte = même groupe (pas de bord sur l'extérieur).
+	return _ground_chars.get(other, ch) == ch
+
+
+func _hash(cell: Vector2i) -> int:
+	return absi(cell.x * 73856093 ^ cell.y * 19349663)
 
 
 func _add_building(cell: Vector2i, size_cells: Vector2i, texture_path: String) -> void:
@@ -210,7 +248,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	# Toucher une tuile voisine du joueur = agir dessus.
 	if event is InputEventScreenTouch and event.pressed:
-		if hud != null and hud.is_over_ui(event.position):
+		if hud != null and hud.is_over_ui(event):
 			return
 		var local := make_input_local(event) as InputEventScreenTouch
 		var cell := Vector2i((local.position / TILE).floor())
@@ -288,6 +326,7 @@ func _spend(energy: int) -> bool:
 func _can_till(cell: Vector2i) -> bool:
 	return (
 		str(_ground_chars.get(cell, "")) in TILLABLE
+		and _ground.get_cell_atlas_coords(cell) in _grass_coords
 		and not _blocked.has(cell)
 		and not _interactables.has(cell)
 		and not FarmState.is_tilled(cell)
@@ -336,14 +375,36 @@ func _refresh_all() -> void:
 			_crop_sprites[cell].queue_free()
 			_crop_sprites.erase(cell)
 	for cell: Vector2i in FarmState.tiles:
-		_refresh_cell(cell)
+		_refresh_soil(cell)
+		_refresh_crop(cell)
 
 
 func _refresh_cell(cell: Vector2i) -> void:
-	if FarmState.is_tilled(cell):
-		_soil.set_cell(cell, 0, TILE_WATERED if FarmState.is_watered(cell) else TILE_TILLED)
-	else:
+	# Une parcelle change l'apparence de ses voisines (rangées continues).
+	for offset: Vector2i in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		_refresh_soil(cell + offset)
+	_refresh_crop(cell)
+
+
+func _refresh_soil(cell: Vector2i) -> void:
+	if not FarmState.is_tilled(cell):
 		_soil.erase_cell(cell)
+		return
+	var left := FarmState.is_tilled(cell + Vector2i.LEFT)
+	var right := FarmState.is_tilled(cell + Vector2i.RIGHT)
+	var up := FarmState.is_tilled(cell + Vector2i.UP)
+	var down := FarmState.is_tilled(cell + Vector2i.DOWN)
+	var index := WorldTiles.SOIL_SINGLE
+	if left or right:
+		index = WorldTiles.SOIL_H_LEFT if not left else (WorldTiles.SOIL_H_RIGHT if not right else WorldTiles.SOIL_H_MID)
+	elif up or down:
+		index = WorldTiles.SOIL_V_TOP if not up else (WorldTiles.SOIL_V_BOTTOM if not down else WorldTiles.SOIL_V_MID)
+	if FarmState.is_watered(cell):
+		index += 1
+	_soil.set_cell(cell, 0, WorldTiles.coords(index))
+
+
+func _refresh_crop(cell: Vector2i) -> void:
 	var stage := FarmState.crop_stage(cell)
 	if stage < 0:
 		if _crop_sprites.has(cell):
@@ -355,9 +416,9 @@ func _refresh_cell(cell: Vector2i) -> void:
 		sprite = Sprite2D.new()
 		sprite.texture = load("res://assets/sprites/crops.png")
 		sprite.hframes = CROP_STAGES
-		sprite.vframes = 4
+		sprite.vframes = CROP_ROWS
 		sprite.centered = false
-		sprite.offset = Vector2(0, -12)
+		sprite.offset = Vector2(0, -13)
 		sprite.position = Vector2(cell.x * TILE, cell.y * TILE + 12)
 		_entities.add_child(sprite)
 		_crop_sprites[cell] = sprite

@@ -4,8 +4,10 @@ extends CanvasLayer
 ## barre rapide, joystick, bouton Action, menus (boutique, sommeil, pause).
 ## Les fenêtres mettent le jeu en pause (le temps s'arrête).
 
-const SLOT_SIZE := 20
-const ACTION_MARGIN := Vector2(12, 34)
+const SLOT_SIZE := 22
+const ACTION_SCALE := 3.0
+const ACTION_SIZE := 16.0 * ACTION_SCALE
+const ACTION_MARGIN := Vector2(12, 36)
 
 var _root: Control
 var _date_label: Label
@@ -21,12 +23,13 @@ var _slot_icons: Array[TextureRect] = []
 var _slot_labels: Array[Label] = []
 var _joystick: VirtualJoystick
 var _action_button: TouchScreenButton
+var _action_icon: Sprite2D
 var _toast: Label
 var _toast_tween: Tween
 var _modal: Control
 var _modal_closable: bool = true
-var _slot_style: StyleBoxFlat
-var _slot_selected_style: StyleBoxFlat
+var _slot_style: StyleBoxTexture
+var _slot_selected_style: StyleBoxTexture
 
 
 func _ready() -> void:
@@ -83,8 +86,8 @@ func _build_energy_bar() -> void:
 	_energy_bar = ProgressBar.new()
 	_energy_bar.fill_mode = ProgressBar.FILL_BOTTOM_TO_TOP
 	_energy_bar.show_percentage = false
-	_energy_bar.custom_minimum_size = Vector2(8, 70)
-	_energy_bar.size = Vector2(8, 70)
+	_energy_bar.custom_minimum_size = Vector2(12, 72)
+	_energy_bar.size = Vector2(12, 72)
 	_root.add_child(_energy_bar)
 
 
@@ -96,8 +99,8 @@ func _build_menu_button() -> void:
 
 
 func _build_hotbar() -> void:
-	_slot_style = UiTheme.box(Color(0.35, 0.24, 0.14, 0.9), UiTheme.BORDER, 1)
-	_slot_selected_style = UiTheme.box(Color(0.5, 0.36, 0.2, 0.95), UiTheme.ACCENT, 2)
+	_slot_style = UiTheme.box("ui_slot", 4, 2)
+	_slot_selected_style = UiTheme.box("ui_slot_selected", 4, 2)
 	_hotbar = PanelContainer.new()
 	_root.add_child(_hotbar)
 	var row := HBoxContainer.new()
@@ -109,15 +112,14 @@ func _build_hotbar() -> void:
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(slot)
 		var icon := TextureRect.new()
-		icon.position = Vector2(2, 2)
+		icon.position = Vector2(3, 3)
 		icon.size = Vector2(16, 16)
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(icon)
 		var qty := Label.new()
-		qty.add_theme_font_size_override("font_size", 7)
 		qty.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		qty.position = Vector2(0, 9)
-		qty.size = Vector2(SLOT_SIZE - 1, 10)
+		qty.position = Vector2(0, 12)
+		qty.size = Vector2(SLOT_SIZE - 2, 10)
 		slot.add_child(qty)
 		_slots.append(slot)
 		_slot_icons.append(icon)
@@ -131,9 +133,16 @@ func _build_joystick() -> void:
 
 func _build_action_button() -> void:
 	_action_button = TouchScreenButton.new()
-	_action_button.texture_normal = load("res://assets/sprites/action_button.png")
+	_action_button.texture_normal = load("res://assets/sprites/ui_round.png")
+	_action_button.texture_pressed = load("res://assets/sprites/ui_round_dark.png")
+	_action_button.scale = Vector2(ACTION_SCALE, ACTION_SCALE)
 	_action_button.action = "use_tool"
 	add_child(_action_button)
+	# L'icône de l'objet en main s'affiche sur le bouton.
+	_action_icon = Sprite2D.new()
+	_action_icon.position = Vector2(8, 8)
+	_action_icon.scale = Vector2.ONE * (2.0 / ACTION_SCALE)
+	_action_button.add_child(_action_icon)
 
 
 func _build_toast() -> void:
@@ -146,14 +155,14 @@ func _build_toast() -> void:
 
 func _layout() -> void:
 	var vp := get_viewport().get_visible_rect().size
-	_energy_bar.position = Vector2(vp.x - 14, vp.y - 140)
+	_energy_bar.position = Vector2(vp.x - 18, vp.y - ACTION_SIZE - ACTION_MARGIN.y - 80)
 	_menu_button.position = Vector2(vp.x - _menu_button.get_combined_minimum_size().x - 4, 4)
 	var hb := _hotbar.get_combined_minimum_size()
 	_hotbar.size = hb
 	_hotbar.position = Vector2((vp.x - hb.x) / 2.0, vp.y - hb.y - 4)
-	_joystick.position = Vector2(0, vp.y - 120)
-	_joystick.size = Vector2(100, 120)
-	_action_button.position = vp - Vector2(44, 44) - ACTION_MARGIN
+	_joystick.position = Vector2(0, vp.y - 130)
+	_joystick.size = Vector2(92, 130)
+	_action_button.position = vp - Vector2(ACTION_SIZE, ACTION_SIZE) - ACTION_MARGIN
 	_toast.position = Vector2(0, 44)
 	_toast.size = Vector2(vp.x, 16)
 	if _modal != null:
@@ -185,6 +194,8 @@ func _refresh_hotbar() -> void:
 		else:
 			_slot_icons[i].texture = GameData.item_icon(slot.id)
 			_slot_labels[i].text = str(slot.qty) if int(slot.qty) > 1 else ""
+	var selected: Variant = Inventory.get_selected()
+	_action_icon.texture = null if selected == null else GameData.item_icon(selected.id)
 
 
 func show_toast(text: String) -> void:
@@ -201,8 +212,9 @@ func show_toast(text: String) -> void:
 func _input(event: InputEvent) -> void:
 	if _modal == null:
 		if event is InputEventScreenTouch and event.pressed:
+			var point := ui_position(event)
 			for i in _slots.size():
-				if _slots[i].get_global_rect().has_point(event.position):
+				if _slots[i].get_global_rect().has_point(point):
 					Inventory.select(i)
 					get_viewport().set_input_as_handled()
 					return
@@ -239,14 +251,20 @@ func _toggle_menu() -> void:
 		open_pause_menu()
 
 
-## Le point (coordonnées écran) est-il sur un élément d'interface ?
-func is_over_ui(point: Vector2) -> bool:
+## Position d'un événement tactile dans les coordonnées de l'interface.
+func ui_position(event: InputEvent) -> Vector2:
+	return (_root.make_input_local(event) as InputEventScreenTouch).position
+
+
+## Le toucher est-il sur un élément d'interface ?
+func is_over_ui(event: InputEvent) -> bool:
+	var point := ui_position(event)
 	if _modal != null:
 		return true
 	for c: Control in [_top_panel, _menu_button, _hotbar, _joystick, _energy_bar]:
 		if c.get_global_rect().has_point(point):
 			return true
-	return Rect2(_action_button.position, Vector2(44, 44)).has_point(point)
+	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
 
 
 # ------------------------------------------------------------ fenêtres
@@ -275,7 +293,7 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 	panel.add_child(box)
 	var heading := Label.new()
 	heading.text = title
-	heading.add_theme_font_size_override("font_size", 12)
+	heading.add_theme_font_size_override("font_size", 16)
 	heading.add_theme_color_override("font_color", UiTheme.ACCENT)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(heading)
@@ -371,7 +389,6 @@ func open_shop() -> void:
 			var name_label := Label.new()
 			name_label.text = "%s - %d or%s" % [item.name, int(item.buy), "" if in_season else " (hors saison)"]
 			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			name_label.add_theme_font_size_override("font_size", 9)
 			row.add_child(name_label)
 			var buy := Button.new()
 			buy.text = "Acheter"
