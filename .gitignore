@@ -1,0 +1,13 @@
+# Godot 4
+.godot/
+/android/
+*.translation
+export.cfg
+export_credentials.cfg
+*.apk
+*.aab
+*.keystore
+# OS / éditeurs
+.DS_Store
+.vscode/
+__pycache__/
