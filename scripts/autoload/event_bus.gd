@@ -16,6 +16,10 @@ signal map_change_requested(map_id: String, cell: Vector2i)
 signal message_requested(title: String, text: String)
 signal dialogue_requested(npc_id: String, text: String)
 signal relations_changed
+signal health_changed(value: int, max_value: int)
+signal player_fainted
+signal eat_requested(item_id: String)
+signal elevator_requested(levels: Array)
 
 
 func toast(text: String) -> void:

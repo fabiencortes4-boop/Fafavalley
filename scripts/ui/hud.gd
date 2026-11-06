@@ -15,6 +15,8 @@ var _time_label: Label
 var _gold_label: Label
 var _water_label: Label
 var _energy_bar: ProgressBar
+var _health_bar: ProgressBar
+var _location_label: Label
 var _top_panel: PanelContainer
 var _menu_button: Button
 var _hotbar: PanelContainer
@@ -30,6 +32,7 @@ var _modal: Control
 var _modal_closable: bool = true
 var _modal_closed_at: int = -1000
 var _dialog_label: Label
+var _dialog_tween: Tween
 var _fade: ColorRect
 var _hearts_texture: Texture2D = load("res://assets/sprites/hearts.png")
 var _slot_style: StyleBoxTexture
@@ -59,6 +62,11 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_refresh_hotbar)
 	EventBus.gold_changed.connect(func(_g: int) -> void: _refresh_status())
 	EventBus.energy_changed.connect(_on_energy_changed)
+	EventBus.health_changed.connect(func(v: int, m: int) -> void:
+		_health_bar.max_value = m
+		_health_bar.value = v)
+	EventBus.eat_requested.connect(ask_eat)
+	EventBus.elevator_requested.connect(open_elevator)
 	EventBus.water_changed.connect(func(_v: int, _m: int) -> void: _refresh_status())
 	EventBus.toast_requested.connect(show_toast)
 	EventBus.shop_requested.connect(open_shop)
@@ -73,6 +81,8 @@ func _ready() -> void:
 	_refresh_hotbar()
 	_refresh_status()
 	_on_energy_changed(PlayerState.energy, PlayerState.MAX_ENERGY)
+	_health_bar.max_value = PlayerState.MAX_HEALTH
+	_health_bar.value = PlayerState.health
 
 
 # ------------------------------------------------------------ construction
@@ -83,6 +93,9 @@ func _build_top_panel() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 0)
 	_top_panel.add_child(box)
+	_location_label = Label.new()
+	_location_label.add_theme_color_override("font_color", Color(0.8, 0.92, 1.0))
+	box.add_child(_location_label)
 	_date_label = Label.new()
 	_time_label = Label.new()
 	_gold_label = Label.new()
@@ -100,6 +113,16 @@ func _build_energy_bar() -> void:
 	_energy_bar.custom_minimum_size = Vector2(12, 72)
 	_energy_bar.size = Vector2(12, 72)
 	_root.add_child(_energy_bar)
+	_health_bar = ProgressBar.new()
+	_health_bar.fill_mode = ProgressBar.FILL_BOTTOM_TO_TOP
+	_health_bar.show_percentage = false
+	_health_bar.custom_minimum_size = Vector2(12, 72)
+	_health_bar.size = Vector2(12, 72)
+	var red := StyleBoxFlat.new()
+	red.bg_color = Color(0.86, 0.3, 0.3)
+	red.set_expand_margin_all(-3)
+	_health_bar.add_theme_stylebox_override("fill", red)
+	_root.add_child(_health_bar)
 
 
 func _build_menu_button() -> void:
@@ -167,6 +190,7 @@ func _build_toast() -> void:
 func _layout() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	_energy_bar.position = Vector2(vp.x - 18, vp.y - ACTION_SIZE - ACTION_MARGIN.y - 80)
+	_health_bar.position = _energy_bar.position - Vector2(15, 0)
 	_menu_button.position = Vector2(vp.x - _menu_button.get_combined_minimum_size().x - 4, 4)
 	var hb := _hotbar.get_combined_minimum_size()
 	_hotbar.size = hb
@@ -277,7 +301,7 @@ func is_over_ui(event: InputEvent) -> bool:
 	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
 	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
-	for c: Control in [_top_panel, _menu_button, _hotbar, _joystick, _energy_bar]:
+	for c: Control in [_top_panel, _menu_button, _hotbar, _joystick, _energy_bar, _health_bar]:
 		if c.get_global_rect().has_point(point):
 			return true
 	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
@@ -319,6 +343,9 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 func close_modal() -> void:
 	if _modal == null:
 		return
+	if _dialog_tween != null:
+		_dialog_tween.kill()
+		_dialog_tween = null
 	_modal.queue_free()
 	_modal = null
 	_dialog_label = null
@@ -504,8 +531,8 @@ func _open_dialog(title: String, portrait: Texture2D, text: String, hearts: int)
 	_dialog_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_dialog_label.visible_ratio = 0.0
 	col.add_child(_dialog_label)
-	var tween := create_tween()
-	tween.tween_property(_dialog_label, "visible_ratio", 1.0, clampf(text.length() * 0.02, 0.3, 2.5))
+	_dialog_tween = create_tween()
+	_dialog_tween.tween_property(_dialog_label, "visible_ratio", 1.0, clampf(text.length() * 0.02, 0.3, 2.5))
 
 
 func _on_dialog_input(event: InputEvent) -> void:
@@ -615,3 +642,39 @@ func open_fish_log() -> void:
 		row.add_child(label)
 	_add_label(box, "Espèces : %d / %d" % [FishLog.caught.size(), GameData.fishes.size()])
 	_add_button(box, "Retour", open_pause_menu)
+
+
+# ------------------------------------------------------------ mine
+func set_location(text: String) -> void:
+	_location_label.text = text
+	_location_label.visible = text != ""
+
+
+func ask_eat(item_id: String) -> void:
+	var item := GameData.item(item_id)
+	var values: Array = item.get("edible", [0, 0])
+	var box := _open_modal("Manger ?")
+	_add_label(box, "%s : +%d énergie, +%d vie." % [item.name, int(values[0]), int(values[1])])
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(row)
+	_add_button(row, "Manger", func() -> void:
+		var slot: Variant = Inventory.get_selected()
+		if slot != null and slot.id == item_id:
+			Inventory.remove_from_slot(Inventory.selected, 1)
+			PlayerState.heal(int(values[0]), int(values[1]))
+		close_modal())
+	_add_button(row, "Non", close_modal)
+
+
+func open_elevator(levels: Array) -> void:
+	var box := _open_modal("Ascenseur de la mine")
+	_add_label(box, "Descendre jusqu'au niveau :")
+	var grid := GridContainer.new()
+	grid.columns = 4
+	box.add_child(grid)
+	for level: int in levels:
+		_add_button(grid, str(level), func() -> void:
+			close_modal()
+			EventBus.map_change_requested.emit("mine:%d" % level, Vector2i.ZERO))
+	_add_button(box, "Annuler", close_modal)

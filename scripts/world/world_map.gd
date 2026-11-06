@@ -73,6 +73,16 @@ func _after_build() -> void:
 	pass
 
 
+## Coup de pioche sur une case (la mine casse ses rochers).
+func _use_pickaxe(_cell: Vector2i, _energy: int) -> void:
+	pass
+
+
+## Nom du lieu affiché dans le HUD.
+func display_name() -> String:
+	return ""
+
+
 # ------------------------------------------------------------ construction
 func _ready() -> void:
 	_ground = TileMapLayer.new()
@@ -298,8 +308,33 @@ func act_on(cell: Vector2i) -> void:
 		var energy := int(GameData.item("fishing_rod").get("energy", 4))
 		if not fishing.try_cast(energy):
 			EventBus.toast("Mets-toi face à l'eau pour pêcher.")
-	else:
-		_act_on_ground(cell)
+	elif _holding_tool() == "pickaxe":
+		_use_pickaxe(cell, int(GameData.item("pickaxe").get("energy", 2)))
+	elif _holding_type() == "weapon":
+		_swing(Inventory.get_selected().id)
+	elif not _act_on_ground(cell):
+		# Rien à faire ici avec un aliment en main : on propose de le manger.
+		var slot: Variant = Inventory.get_selected()
+		if slot != null and GameData.item(slot.id).has("edible"):
+			EventBus.eat_requested.emit(slot.id)
+
+
+func _holding_type() -> String:
+	var slot: Variant = Inventory.get_selected()
+	return "" if slot == null else str(GameData.item(slot.id).get("type", ""))
+
+
+## Coup d'arme : touche les monstres devant le joueur.
+func _swing(weapon_id: String) -> void:
+	var data := GameData.item(weapon_id)
+	if not player.swing(GameData.item_icon(weapon_id), float(data.get("cooldown", 0.4))):
+		return
+	var damage: Array = data.get("damage", [5, 8])
+	var center := player.hit_point()
+	for node in get_tree().get_nodes_in_group("monsters"):
+		var monster := node as Monster
+		if monster != null and (monster.position + Vector2(0, -4)).distance_to(center) < 16.0:
+			monster.hit(randi_range(int(damage[0]), int(damage[1])), player.position, float(data.get("knockback", 120)))
 
 
 func _holding_tool() -> String:

@@ -35,6 +35,15 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   le filet à droite, relâcher pour le laisser revenir, garder le poisson dedans.
   8 espèces selon l'étang, la saison, l'heure et la météo ; tailles et records dans
   Menu → Carnet de pêche. Les poissons se vendent et s'offrent.
+- **Mine** (entrée au nord-est du village) : au premier passage, le coffre de Firmin donne
+  une pioche et une épée rouillée. Niveaux générés au hasard (30 au total) : rochers à
+  casser (pierre, charbon, cuivre, fer, or, gemmes selon la profondeur), échelle cachée
+  sous un rocher, lanterne et obscurité croissante, ascenseur tous les 5 niveaux, armes
+  à trouver aux niveaux 10 et 20.
+- **Combat** : coups d'épée devant soi, 7 monstres (gelée, chauve-souris, rats, araignée,
+  crabe, fantôme) qui sautent, volent ou poursuivent, butins à vendre. Barre de vie ;
+  à 0, on se réveille au village (soins payants). Légumes et poissons se mangent
+  (Action avec l'aliment en main) pour regagner énergie et vie.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
 - Contrôles tactiles : joystick flottant, bouton Action, toucher une tuile voisine, barre rapide (multitouch).
@@ -43,7 +52,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 
 ```
 project.godot
-data/                 # contenu du jeu en JSON (objets, cultures, habitants, poissons) : pas de code à toucher
+data/                 # contenu du jeu en JSON (objets, cultures, habitants, poissons, monstres)
 scenes/main.tscn      # point d'entrée
 scripts/
   autoload/           # singletons globaux
@@ -60,6 +69,9 @@ scripts/
   world/world_map.gd  # base des cartes : ASCII -> TileMapLayer, bâtiments, passages
   world/farm.gd       # ferme : labour, cultures, expédition, sommeil
   world/village.gd    # village : bâtiments, habitants, itinéraires (AStarGrid2D)
+  world/mine_level.gd # niveau de mine généré (automate cellulaire), rochers, échelle
+  entities/monster.gd # monstres : sauter, voler, poursuivre
+  entities/pickup.gd  # objets au sol attirés par le joueur
   entities/npc.gd     # habitant : emploi du temps, marche
   systems/fishing.gd  # lancer, touche, choix du poisson
   ui/fishing_minigame.gd
@@ -85,6 +97,7 @@ Principes :
 godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nuit, récolte, vente, sauvegarde
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
+godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
 godot --headless -s res://tests/fishing_balance.gd # équilibrage du mini-jeu (simulation)
 godot --headless res://tests/movement_test.tscn   # joystick tactile
 xvfb-run godot --rendering-driver opengl3 res://tests/screenshot.tscn -- capture.png
@@ -110,7 +123,7 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 - [ ] Intérieurs des maisons, scènes de cœur, anniversaires
 - [ ] Fabrication, cuisine, machines de transformation
 - [x] Pêche (mini-jeu tactile, 8 espèces, carnet)
-- [ ] Mine et combat
+- [x] Mine et combat (30 niveaux, 7 monstres, minerais, armes)
 - [ ] Animaux, bâtiments, compétences
 - [ ] Fil rouge (collections à compléter), festivals
 - [ ] Musique, sons, réglages, bêta Play Store

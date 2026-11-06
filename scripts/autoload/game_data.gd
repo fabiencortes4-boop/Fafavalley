@@ -9,6 +9,7 @@ var items: Dictionary = {}
 var crops: Dictionary = {}
 var npcs: Dictionary = {}
 var fishes: Dictionary = {}
+var monsters: Dictionary = {}
 var _icon_cache: Dictionary = {}
 var _icons_texture: Texture2D
 
@@ -18,6 +19,7 @@ func _ready() -> void:
 	crops = _load_json("res://data/crops.json")
 	npcs = _load_json("res://data/npcs.json")
 	fishes = _load_json("res://data/fish.json")
+	monsters = _load_json("res://data/monsters.json")
 	_icons_texture = load(ICONS_PATH)
 
 

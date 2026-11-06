@@ -9,15 +9,15 @@ extends WorldMap
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TT.T......TT...T..T.T.TT..TTTT.TT.TT.TTT",
-	"TT....................................TT",
+	"TT.T......TT...T..T.T.TT..TTTT.TT.TTTTTT",
+	"TT.................................M..TT",
 	"TT......................f.A.....Z.....TT",
-	"TT..E......Y....R.....................TT",
-	"TT.....................b..............TT",
-	"TT.h.....k....f.......................TT",
-	"TTTQ..==....==..P..........==....==...TT",
-	"====================================..TT",
-	"====================================..TT",
+	"TT..E......Y....R...................==TT",
+	"TT.....................b............==TT",
+	"TT.h.....k....f.....................==TT",
+	"TTTQ..==....==..P..........==....==.==TT",
+	"======================================TT",
+	"======================================TT",
 	"TT............============............TT",
 	"TTT..,.....b..============.........o..TT",
 	"TTT.....R.....===,cW.c,===.b.....'....TT",
@@ -47,6 +47,7 @@ const BUILDINGS := {
 	"A": ["lina", Vector2i(3, 4), "res://assets/sprites/house_gable.png", 1],
 	"Z": ["mairie", Vector2i(3, 4), "res://assets/sprites/house_gable_gray.png", 1],
 	"W": ["well", Vector2i(1, 2), "res://assets/sprites/well.png", -1],
+	"M": ["mine", Vector2i(3, 2), "res://assets/sprites/mine_entrance.png", 1],
 }
 const STORE_OPEN := 9 * 60
 const STORE_CLOSE := 17 * 60
@@ -62,6 +63,10 @@ func _init() -> void:
 
 func _map_rows() -> Array:
 	return MAP
+
+
+func display_name() -> String:
+	return "Valfleur"
 
 
 func _place_special(cell: Vector2i, ch: String) -> void:
@@ -168,6 +173,9 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 		else:
 			EventBus.message_requested.emit("Épicerie de Rosalie", "C'est fermé. Horaires : de 9h à 17h.")
 		return
+	if building == "mine":
+		_enter_mine()
+		return
 	if building == "mairie":
 		EventBus.message_requested.emit("Mairie de Valfleur", "La porte est fermée. Une affiche : « Le maire reçoit sur rendez-vous... ou sur la place. »")
 		return
@@ -177,3 +185,24 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 			var text := "On entend du bruit à l'intérieur : %s est à la maison." % who if npc.is_inside() else "Personne ne répond. %s doit être en ville." % who
 			EventBus.message_requested.emit("Maison de %s" % who, text)
 			return
+
+
+func _enter_mine() -> void:
+	# Première visite : le coffre de Firmin, l'ancien fermier.
+	if not PlayerState.flags.has("mine_kit"):
+		if not Inventory.can_add("pickaxe") or not Inventory.can_add("rusty_sword", 1):
+			EventBus.toast("Libère de la place dans ton inventaire d'abord.")
+			return
+		PlayerState.flags["mine_kit"] = true
+		Inventory.add_item("pickaxe", 1)
+		Inventory.add_item("rusty_sword", 1)
+		EventBus.message_requested.emit("Un vieux coffre", "Devant la mine, un coffre poussiéreux. Une étiquette : « Pour qui veut descendre. Prends soin de toi. - Firmin ». Dedans : une pioche et une épée rouillée.")
+		return
+	var deepest := int(PlayerState.flags.get("mine_deepest", 1))
+	var levels: Array = [1]
+	for l in range(MineLevel.ELEVATOR_STEP, deepest + 1, MineLevel.ELEVATOR_STEP):
+		levels.append(l)
+	if levels.size() == 1:
+		EventBus.map_change_requested.emit("mine:1", Vector2i.ZERO)
+	else:
+		EventBus.elevator_requested.emit(levels)

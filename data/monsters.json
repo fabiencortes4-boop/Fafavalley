@@ -1,0 +1,107 @@
+{
+	"slime": {
+		"name": "Gelée",
+		"sprite": 0,
+		"hp": 14,
+		"damage": 6,
+		"speed": 40,
+		"behavior": "hop",
+		"levels": [
+			1,
+			14
+		],
+		"drop": "slime",
+		"drop_chance": 0.7,
+		"weight": 5
+	},
+	"bat": {
+		"name": "Chauve-souris",
+		"sprite": 1,
+		"hp": 10,
+		"damage": 7,
+		"speed": 46,
+		"behavior": "fly",
+		"levels": [
+			3,
+			30
+		],
+		"drop": "bat_wing",
+		"drop_chance": 0.5,
+		"weight": 3
+	},
+	"rat": {
+		"name": "Rat",
+		"sprite": 3,
+		"hp": 18,
+		"damage": 8,
+		"speed": 50,
+		"behavior": "chase",
+		"levels": [
+			6,
+			19
+		],
+		"drop": "fang",
+		"drop_chance": 0.5,
+		"weight": 4
+	},
+	"spider": {
+		"name": "Araignée",
+		"sprite": 2,
+		"hp": 30,
+		"damage": 12,
+		"speed": 44,
+		"behavior": "chase",
+		"levels": [
+			12,
+			30
+		],
+		"drop": "silk",
+		"drop_chance": 0.6,
+		"weight": 4
+	},
+	"cave_rat": {
+		"name": "Rat des cavernes",
+		"sprite": 4,
+		"hp": 40,
+		"damage": 14,
+		"speed": 58,
+		"behavior": "chase",
+		"levels": [
+			16,
+			30
+		],
+		"drop": "fang",
+		"drop_chance": 0.6,
+		"weight": 3
+	},
+	"crab": {
+		"name": "Crabe de roche",
+		"sprite": 5,
+		"hp": 70,
+		"damage": 18,
+		"speed": 32,
+		"behavior": "chase",
+		"levels": [
+			22,
+			30
+		],
+		"drop": "shell",
+		"drop_chance": 0.7,
+		"weight": 3
+	},
+	"ghost": {
+		"name": "Fantôme",
+		"sprite": 6,
+		"hp": 45,
+		"damage": 20,
+		"speed": 36,
+		"behavior": "fly",
+		"levels": [
+			24,
+			30
+		],
+		"drop": "ectoplasm",
+		"drop_chance": 0.6,
+		"weight": 2
+	}
+}

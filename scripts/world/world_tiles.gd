@@ -37,12 +37,32 @@ const FENCE_MID := 56
 const FENCE_RIGHT := 57
 const SIGN := 58
 const COBBLES := 59
-const COUNT := 60
+## Mine
+const MINE_VOID := 60  # 3 variantes : 60-62
+const MINE_WALL := 63
+const MINE_WALL_GRATE := 64
+const MINE_FLOOR := 65
+const MINE_FLOOR_2 := 66
+const MINE_FLOOR_SHADE := 67
+const MINE_RUBBLE := 68
+const LADDER_UP := 69
+const LADDER_DOWN := 70
+## Rochers (calque au-dessus du sol)
+const MINE_ROCK := 71
+const MINE_ROCK_SMALL := 72
+const MINE_ROCK_COAL := 73
+const MINE_ROCK_COPPER := 74
+const MINE_ROCK_IRON := 75
+const MINE_ROCK_GOLD := 76
+const MINE_ROCK_GEM := 77
+const COUNT := 78
 
 const SOLID := [
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
 	PINE, PINE_2, ROUND_TREE, BUSH, ROCK, SUNFLOWER, BIG_PINE, HAY, BARREL, STUMP,
 	FENCE_LEFT, FENCE_MID, FENCE_RIGHT, SIGN,
+	60, 61, 62, MINE_WALL, MINE_WALL_GRATE,
+	MINE_ROCK, MINE_ROCK_SMALL, MINE_ROCK_COAL, MINE_ROCK_COPPER, MINE_ROCK_IRON, MINE_ROCK_GOLD, MINE_ROCK_GEM,
 ]
 
 

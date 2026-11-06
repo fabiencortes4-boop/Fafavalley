@@ -69,10 +69,18 @@ func _load_map(map_id: String) -> void:
 		remove_child(_world)
 		_world.queue_free()
 	PlayerState.map = map_id
-	_world = Village.new() if map_id == "village" else Farm.new()
+	if map_id.begins_with("mine:"):
+		var mine := MineLevel.new()
+		mine.setup(int(map_id.trim_prefix("mine:")))
+		_world = mine
+	elif map_id == "village":
+		_world = Village.new()
+	else:
+		_world = Farm.new()
 	_world.hud = _hud
 	add_child(_world)
 	move_child(_world, 0)
+	_hud.set_location(_world.display_name())
 
 
 func _on_map_change_requested(map_id: String, cell: Vector2i) -> void:

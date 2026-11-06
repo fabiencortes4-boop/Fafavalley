@@ -9,6 +9,7 @@ var in_game: bool = false
 
 func _ready() -> void:
 	EventBus.passed_out.connect(_on_passed_out)
+	EventBus.player_fainted.connect(_on_player_fainted)
 
 
 func new_game() -> void:
@@ -51,3 +52,14 @@ func end_day(passed_out: bool = false) -> void:
 func _on_passed_out() -> void:
 	EventBus.toast("Tu t'es endormi·e de fatigue...")
 	end_day(true)
+
+
+## Vie à zéro dans la mine : on se réveille au village, soigné mais délesté.
+func _on_player_fainted() -> void:
+	var lost := mini(Inventory.gold / 10, 300)
+	Inventory.spend_gold(lost)
+	PlayerState.health = PlayerState.MAX_HEALTH / 4
+	PlayerState.energy = maxi(PlayerState.energy, 20)
+	EventBus.health_changed.emit(PlayerState.health, PlayerState.MAX_HEALTH)
+	EventBus.map_change_requested.emit("village", MineLevel.VILLAGE_EXIT)
+	EventBus.message_requested.emit("Évanouissement", "Tu t'es évanoui·e dans la mine... Gaston t'a ramené·e à la surface. Les soins t'ont coûté %d or." % lost)

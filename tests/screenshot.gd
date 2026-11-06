@@ -36,6 +36,17 @@ func _ready() -> void:
 			await get_tree().process_frame
 			if "--bite" not in args:
 				farm.fishing.on_action()
+		for a in args:
+			if a.begins_with("--mine="):
+				var lvl := int(a.trim_prefix("--mine="))
+				Inventory.add_item("rusty_sword", 1)
+				Inventory.select(3)
+				main.call("_switch_to", "mine:%d" % lvl)
+				await get_tree().process_frame
+				var m: MineLevel = main.call("current_map")
+				m.player.facing = Vector2i.RIGHT
+				m.player.swing(GameData.item_icon("rusty_sword"), 2.0)
+				main.get("_hud").close_modal()
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)

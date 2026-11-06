@@ -59,6 +59,10 @@ func _map_rows() -> Array:
 	return MAP
 
 
+func display_name() -> String:
+	return "Ferme"
+
+
 func _place_special(cell: Vector2i, ch: String) -> void:
 	match ch:
 		"H":

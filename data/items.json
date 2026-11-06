@@ -76,42 +76,66 @@
 		"type": "crop",
 		"icon": 8,
 		"stack": 99,
-		"sell": 35
+		"sell": 35,
+		"edible": [
+			18,
+			9
+		]
 	},
 	"turnip": {
 		"name": "Navet",
 		"type": "crop",
 		"icon": 9,
 		"stack": 99,
-		"sell": 60
+		"sell": 60,
+		"edible": [
+			30,
+			15
+		]
 	},
 	"corn": {
 		"name": "Maïs",
 		"type": "crop",
 		"icon": 10,
 		"stack": 99,
-		"sell": 50
+		"sell": 50,
+		"edible": [
+			25,
+			12
+		]
 	},
 	"tomato": {
 		"name": "Tomate",
 		"type": "crop",
 		"icon": 11,
 		"stack": 99,
-		"sell": 45
+		"sell": 45,
+		"edible": [
+			22,
+			11
+		]
 	},
 	"cabbage": {
 		"name": "Chou",
 		"type": "crop",
 		"icon": 12,
 		"stack": 99,
-		"sell": 90
+		"sell": 90,
+		"edible": [
+			45,
+			22
+		]
 	},
 	"wheat": {
 		"name": "Blé",
 		"type": "crop",
 		"icon": 13,
 		"stack": 99,
-		"sell": 25
+		"sell": 25,
+		"edible": [
+			12,
+			6
+		]
 	},
 	"fishing_rod": {
 		"name": "Canne à pêche",
@@ -129,55 +153,236 @@
 		"type": "fish",
 		"icon": 15,
 		"stack": 99,
-		"sell": 30
+		"sell": 30,
+		"edible": [
+			15,
+			7
+		]
 	},
 	"carp": {
 		"name": "Carpe",
 		"type": "fish",
 		"icon": 16,
 		"stack": 99,
-		"sell": 60
+		"sell": 60,
+		"edible": [
+			30,
+			15
+		]
 	},
 	"perch": {
 		"name": "Perche",
 		"type": "fish",
 		"icon": 17,
 		"stack": 99,
-		"sell": 75
+		"sell": 75,
+		"edible": [
+			38,
+			19
+		]
 	},
 	"pike": {
 		"name": "Brochet",
 		"type": "fish",
 		"icon": 18,
 		"stack": 99,
-		"sell": 150
+		"sell": 150,
+		"edible": [
+			60,
+			30
+		]
 	},
 	"eel": {
 		"name": "Anguille",
 		"type": "fish",
 		"icon": 19,
 		"stack": 99,
-		"sell": 120
+		"sell": 120,
+		"edible": [
+			60,
+			30
+		]
 	},
 	"trout": {
 		"name": "Truite arc-en-ciel",
 		"type": "fish",
 		"icon": 20,
 		"stack": 99,
-		"sell": 90
+		"sell": 90,
+		"edible": [
+			45,
+			22
+		]
 	},
 	"catfish": {
 		"name": "Poisson-chat",
 		"type": "fish",
 		"icon": 21,
 		"stack": 99,
-		"sell": 160
+		"sell": 160,
+		"edible": [
+			60,
+			30
+		]
 	},
 	"golden_carp": {
 		"name": "Carpe dorée",
 		"type": "fish",
 		"icon": 22,
 		"stack": 99,
-		"sell": 500
+		"sell": 500,
+		"edible": [
+			60,
+			30
+		]
+	},
+	"pickaxe": {
+		"name": "Pioche",
+		"type": "tool",
+		"tool": "pickaxe",
+		"icon": 23,
+		"stack": 1,
+		"energy": 2,
+		"description": "Casse les rochers de la mine."
+	},
+	"rusty_sword": {
+		"name": "Épée rouillée",
+		"type": "weapon",
+		"icon": 24,
+		"stack": 1,
+		"damage": [
+			5,
+			9
+		],
+		"cooldown": 0.4,
+		"knockback": 110,
+		"sell": 20,
+		"description": "Vieille, mais elle coupe encore."
+	},
+	"iron_sword": {
+		"name": "Épée en fer",
+		"type": "weapon",
+		"icon": 25,
+		"stack": 1,
+		"damage": [
+			11,
+			16
+		],
+		"cooldown": 0.35,
+		"knockback": 130,
+		"sell": 120,
+		"description": "Solide et bien équilibrée."
+	},
+	"war_axe": {
+		"name": "Hache de guerre",
+		"type": "weapon",
+		"icon": 26,
+		"stack": 1,
+		"damage": [
+			20,
+			28
+		],
+		"cooldown": 0.55,
+		"knockback": 180,
+		"sell": 300,
+		"description": "Lourde, lente... et redoutable."
+	},
+	"stone": {
+		"name": "Pierre",
+		"type": "material",
+		"icon": 27,
+		"stack": 99,
+		"sell": 2
+	},
+	"coal": {
+		"name": "Charbon",
+		"type": "material",
+		"icon": 28,
+		"stack": 99,
+		"sell": 15
+	},
+	"copper_ore": {
+		"name": "Minerai de cuivre",
+		"type": "material",
+		"icon": 29,
+		"stack": 99,
+		"sell": 10
+	},
+	"iron_ore": {
+		"name": "Minerai de fer",
+		"type": "material",
+		"icon": 30,
+		"stack": 99,
+		"sell": 25
+	},
+	"gold_ore": {
+		"name": "Minerai d'or",
+		"type": "material",
+		"icon": 31,
+		"stack": 99,
+		"sell": 50
+	},
+	"quartz": {
+		"name": "Quartz",
+		"type": "material",
+		"icon": 32,
+		"stack": 99,
+		"sell": 40
+	},
+	"amethyst": {
+		"name": "Améthyste",
+		"type": "material",
+		"icon": 33,
+		"stack": 99,
+		"sell": 100
+	},
+	"emerald": {
+		"name": "Émeraude",
+		"type": "material",
+		"icon": 34,
+		"stack": 99,
+		"sell": 250
+	},
+	"slime": {
+		"name": "Gelée verte",
+		"type": "loot",
+		"icon": 35,
+		"stack": 99,
+		"sell": 10
+	},
+	"bat_wing": {
+		"name": "Aile de chauve-souris",
+		"type": "loot",
+		"icon": 36,
+		"stack": 99,
+		"sell": 20
+	},
+	"silk": {
+		"name": "Fil de soie",
+		"type": "loot",
+		"icon": 37,
+		"stack": 99,
+		"sell": 30
+	},
+	"fang": {
+		"name": "Croc",
+		"type": "loot",
+		"icon": 38,
+		"stack": 99,
+		"sell": 25
+	},
+	"shell": {
+		"name": "Carapace",
+		"type": "loot",
+		"icon": 39,
+		"stack": 99,
+		"sell": 60
+	},
+	"ectoplasm": {
+		"name": "Ectoplasme",
+		"type": "loot",
+		"icon": 40,
+		"stack": 99,
+		"sell": 90
 	}
 }

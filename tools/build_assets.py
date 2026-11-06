@@ -99,6 +99,18 @@ def world():
     tiles += [on_grass(tile(FARM, i)) for i in (96, 85, 72, 38)]
     # 55-59 village : clôture (gauche, milieu, droite), panneau, pavés
     tiles += [on_grass(tile(TOWN, i)) for i in (80, 81, 82, 83, 43)]
+    # 60-70 mine : vide (x3), mur (x2), sol (x3), gravats, échelle montante, trou
+    floor = tile(DUNGEON, 48)
+    tiles += [tile(DUNGEON, i) for i in (0, 12, 24, 40, 28, 48, 49, 50, 42)]
+    up = floor.copy()
+    up.alpha_composite(tile(DUNGEON, 68))
+    tiles += [up, ladder_hole(floor)]
+    # 71-77 rochers (sur fond transparent, calque au-dessus du sol) :
+    # gros, petit, charbon, cuivre, fer, or, gemmes
+    rock = tile(FARM, 89)
+    tiles += [rock, tile(FARM, 77)]
+    for colors in ORE_SPECKS:
+        tiles.append(ore_rock(rock, colors))
     cols = 16
     rows = (len(tiles) + cols - 1) // cols
     out = Image.new("RGBA", (cols * T, rows * T), (0, 0, 0, 0))
@@ -154,8 +166,50 @@ def village():
     }
     for name, rows in builds.items():
         compose(TOWN, rows).save(os.path.join(OUT, name))
+    compose(DUNGEON, [[40, 40, 40], [40, 9, 40]]).save(os.path.join(OUT, "mine_entrance.png"))
+    # Monstres, dans l'ordre des "sprite" de data/monsters.json
+    compose(DUNGEON, [[108, 120, 122, 123, 124, 110, 121]]).save(os.path.join(OUT, "monsters.png"))
     # Habitants, dans l'ordre des "sprite" de data/npcs.json
     compose(DUNGEON, [[99, 86, 100, 85, 111]]).save(os.path.join(OUT, "npcs.png"))
+
+
+# Minerais visibles sur les rochers : (couleur claire, couleur sombre)
+ORE_SPECKS = [
+    ((60, 52, 60), (30, 26, 32)),      # charbon
+    ((242, 132, 74), (189, 88, 46)),   # cuivre
+    ((235, 239, 248), (170, 160, 190)),  # fer
+    ((253, 214, 83), (227, 160, 40)),  # or
+    ((200, 120, 240), (120, 200, 240)),  # gemmes
+]
+
+
+def ore_rock(rock, colors):
+    out = rock.copy()
+    px = out.load()
+    light, dark = colors
+    for (x, y) in ((5, 6), (9, 5), (7, 9), (11, 9), (4, 10)):
+        if px[x, y][3] > 0 and px[x, y][:3] != (63, 38, 49):
+            px[x, y] = light + (255,)
+            if px[x + 1, y + 1][3] > 0 and px[x + 1, y + 1][:3] != (63, 38, 49):
+                px[x + 1, y + 1] = dark + (255,)
+    return out
+
+
+def ladder_hole(floor):
+    out = floor.copy()
+    px = out.load()
+    for y in range(16):
+        for x in range(16):
+            d = ((x - 7.5) / 6.5) ** 2 + ((y - 8) / 5.5) ** 2
+            if d <= 1.0:
+                px[x, y] = (40, 24, 30, 255) if d < 0.75 else (63, 38, 49, 255)
+    for y in (5, 8, 11):
+        for x in range(5, 11):
+            px[x, y] = (189, 108, 74, 255)
+    for y in range(3, 13):
+        px[4, y] = (150, 84, 58, 255)
+        px[11, y] = (150, 84, 58, 255)
+    return out
 
 
 def compose_mixed(items):
@@ -267,6 +321,7 @@ def fishing():
     out.alpha_composite(draw_rod(), (14 * T, 0))  # 14 canne à pêche
     for k, (_id, rx, ry, body, belly, fin, pattern) in enumerate(FISH):
         out.alpha_composite(draw_fish(rx, ry, body, belly, fin, pattern), ((15 + k) * T, 0))
+    out = extend_icons(out)
     out.save(os.path.join(OUT, "icons.png"))
     # bouchon (8x8)
     bob = new_img(8, 8)
@@ -284,6 +339,84 @@ def fishing():
                 px[x, y] = OUTLINE
     bob.save(os.path.join(OUT, "bobber.png"))
     tile(UI, 77).save(os.path.join(OUT, "ui_alert.png"))
+
+
+# Minerais et butins dessinés au pixel : (forme, clair, moyen, sombre)
+LOOT = [
+    ("chunk", (180, 180, 188), (140, 140, 148), (104, 104, 114)),   # 27 pierre
+    ("chunk", (90, 84, 92), (60, 52, 60), (36, 30, 38)),            # 28 charbon
+    ("chunk", (250, 160, 100), (226, 120, 64), (170, 80, 44)),      # 29 cuivre
+    ("chunk", (235, 239, 248), (192, 203, 220), (139, 155, 180)),   # 30 fer
+    ("chunk", (255, 230, 120), (253, 190, 83), (210, 140, 40)),     # 31 or
+    ("gem", (245, 245, 255), (210, 220, 240), (160, 170, 200)),     # 32 quartz
+    ("gem", (220, 160, 255), (170, 100, 220), (110, 60, 160)),      # 33 améthyste
+    ("gem", (150, 245, 170), (60, 200, 110), (30, 130, 70)),        # 34 émeraude
+    ("blob", (150, 240, 170), (80, 200, 120), (40, 140, 80)),       # 35 gelée
+    ("wing", (170, 120, 110), (130, 84, 80), (90, 56, 56)),         # 36 aile
+    ("ball", (255, 255, 255), (230, 232, 240), (180, 184, 200)),    # 37 soie
+    ("fang", (255, 252, 240), (235, 230, 210), (190, 180, 160)),    # 38 croc
+    ("shell", (250, 110, 90), (210, 70, 60), (150, 40, 40)),        # 39 carapace
+    ("blob", (220, 240, 255), (170, 200, 240), (120, 140, 200)),    # 40 ectoplasme
+]
+
+
+def loot_mask(shape):
+    m = set()
+    for y in range(16):
+        for x in range(16):
+            if shape == "chunk":
+                ok = abs(x - 7.5) + abs(y - 8.5) * 1.3 <= 7 and y >= 4
+            elif shape == "gem":
+                ok = abs(x - 7.5) * 1.2 + abs(y - 8) <= 6.5
+            elif shape == "blob":
+                ok = ((x - 7.5) / 6) ** 2 + ((y - 9.5) / 4.5) ** 2 <= 1 or ((x - 7.5) / 3) ** 2 + ((y - 5) / 3) ** 2 <= 1
+            elif shape == "wing":
+                ok = 2 <= x <= 13 and (y - 4) >= abs(x - 7.5) * 0.6 and y <= 11 - (x % 4 == 0)
+            elif shape == "ball":
+                ok = ((x - 7.5) / 5.5) ** 2 + ((y - 8.5) / 5.5) ** 2 <= 1
+            elif shape == "fang":
+                ok = 5 <= x <= 10 and 2 <= y <= 13 and abs(x - 7.5) <= (14 - y) * 0.35
+            else:  # shell
+                ok = ((x - 7.5) / 6.5) ** 2 + ((y - 10) / 5.5) ** 2 <= 1 and y <= 12
+            if ok:
+                m.add((x, y))
+    return m
+
+
+def draw_loot(shape, light, mid, dark):
+    img = new_img(16, 16)
+    px = img.load()
+    m = loot_mask(shape)
+    for (x, y) in m:
+        px[x, y] = (mid if (x + y) % 5 else light) + (255,)
+        if (x + 1, y + 1) not in m or (x, y + 2) not in m:
+            px[x, y] = dark + (255,)
+        if (x - 1, y - 1) not in m and (x, y - 1) not in m:
+            px[x, y] = light + (255,)
+    for y in range(16):
+        for x in range(16):
+            if (x, y) not in m and any((x + dx, y + dy) in m for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                px[x, y] = OUTLINE
+    if shape == "shell":
+        for x in range(3, 13, 3):
+            for y in range(6, 12):
+                if (x, y) in m:
+                    px[x, y] = dark + (255,)
+    if shape == "ball":
+        for k in range(4, 12, 3):
+            px[k, k] = dark + (255,)
+    return img
+
+
+def extend_icons(sheet):
+    """Ajoute outils de mine, armes, minerais et butins (index 23+)."""
+    extra = [tile(TOWN, 115), tile(DUNGEON, 104), tile(DUNGEON, 106), tile(DUNGEON, 118)]
+    extra += [draw_loot(*l) for l in LOOT]
+    out = new_img(sheet.width + T * len(extra), T)
+    out.alpha_composite(sheet, (0, 0))
+    for k, img in enumerate(extra):
+        out.alpha_composite(img, (sheet.width + k * T, 0))
+    return out
 
 
 def new_img(w, h):
