@@ -23,6 +23,8 @@ var _top_panel: PanelContainer
 var _menu_button: Button
 var _bag_button: Button
 var _story_button: Button
+var _tutorial_panel: PanelContainer
+var _tutorial_label: Label
 var _closing_silently: bool = false
 var _title_box: VBoxContainer
 var _zone_label: Label
@@ -54,6 +56,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_root = Control.new()
 	_root.theme = UiTheme.build()
+	Settings.changed.connect(func() -> void:
+		# Taille du texte réglable (Menu -> Texte)
+		_root.theme.default_font_size = Settings.font_size()
+		_layout.call_deferred())
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_root)
@@ -102,6 +108,7 @@ func _ready() -> void:
 	EventBus.zone_entered.connect(_on_zone_entered)
 	EventBus.story_advanced.connect(_on_story_advanced)
 	EventBus.booth_requested.connect(open_booth)
+	_build_tutorial()
 	TimeManager.day_started.connect(func(_d: int, _s: int, _y: int) -> void:
 		var fest := Events.festival_today()
 		if not fest.is_empty():
@@ -299,6 +306,12 @@ func _layout() -> void:
 	_gold_panel.size = Vector2(_top_panel.size.x, gold.y)
 	_gold_panel.position = Vector2(_top_panel.position.x, _top_panel.position.y + _top_panel.size.y + 2)
 
+	if _tutorial_panel != null:
+		_tutorial_panel.size = Vector2(minf(300, vp.x - 140), 0)
+		_tutorial_panel.reset_size()
+		var tsize := _tutorial_panel.get_combined_minimum_size()
+		_tutorial_panel.size = Vector2(minf(300, vp.x - 140), tsize.y)
+		_tutorial_panel.position = Vector2((vp.x - _tutorial_panel.size.x) / 2.0, _hotbar.position.y - _tutorial_panel.size.y - 4)
 	_toast.position = Vector2(0, 44)
 	_toast.size = Vector2(vp.x, 16)
 	if _modal != null:
@@ -415,7 +428,7 @@ func is_over_ui(event: InputEvent) -> bool:
 	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
 	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
-	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _story_button, _hotbar, _joystick, _energy_bar, _health_bar, _minimap]:
+	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _story_button, _tutorial_panel, _hotbar, _joystick, _energy_bar, _health_bar, _minimap]:
 		if c.get_global_rect().has_point(point):
 			return true
 	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
@@ -497,7 +510,7 @@ func open_pause_menu() -> void:
 	var outer := _open_modal("Pause")
 	# Deux colonnes : tout tient sur l'écran d'un téléphone en paysage
 	var box := GridContainer.new()
-	box.columns = 2
+	box.columns = 3
 	box.add_theme_constant_override("h_separation", 6)
 	box.add_theme_constant_override("v_separation", 4)
 	outer.add_child(box)
@@ -511,6 +524,15 @@ func open_pause_menu() -> void:
 	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
 		Settings.toggle_sound()
 		open_pause_menu())
+	_add_button(box, "Musique : %s" % ("oui" if Settings.music else "non"), func() -> void:
+		Settings.toggle_music()
+		open_pause_menu())
+	_add_button(box, "Texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
+		Settings.cycle_text_size()
+		open_pause_menu())
+	_add_button(box, "Tutoriel", func() -> void:
+		Tutorial.restart()
+		close_modal())
 	_add_button(box, "Histoire", open_story)
 	_add_button(box, "Fabrication", open_crafting.bind("craft"))
 	_add_button(box, "Compétences", open_skills)
@@ -1378,6 +1400,47 @@ func open_mail() -> void:
 		_add_button(box, "Fermer", close_modal)
 
 
+# ------------------------------------------------------------ tutoriel
+func _build_tutorial() -> void:
+	_tutorial_panel = PanelContainer.new()
+	_tutorial_panel.add_theme_stylebox_override("panel", UiTheme.box("ui_panel", 5, 5))
+	_tutorial_panel.modulate.a = 0.95
+	_root.add_child(_tutorial_panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	_tutorial_panel.add_child(row)
+	_tutorial_label = Label.new()
+	_tutorial_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tutorial_label.custom_minimum_size = Vector2(180, 0)
+	row.add_child(_tutorial_label)
+	var skip := Button.new()
+	skip.text = "Passer"
+	skip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	skip.pressed.connect(Tutorial.skip)
+	row.add_child(skip)
+	Tutorial.changed.connect(_refresh_tutorial)
+	_refresh_tutorial()
+
+
+func _process(_delta: float) -> void:
+	# Le bandeau du tutoriel s'efface derrière les fenêtres et dialogues
+	if _tutorial_panel != null:
+		_tutorial_panel.visible = Tutorial.active() and _modal == null
+
+
+func _refresh_tutorial() -> void:
+	_tutorial_panel.visible = Tutorial.active()
+	if not Tutorial.active():
+		return
+	_tutorial_label.text = "Tutoriel %d/%d - %s" % [Tutorial.step + 1, Tutorial.STEPS.size(), Tutorial.text()]
+	# Petite animation pour attirer l'œil sur la nouvelle consigne
+	_tutorial_panel.scale = Vector2(1.06, 1.06)
+	_tutorial_panel.pivot_offset = _tutorial_panel.size / 2.0
+	create_tween().tween_property(_tutorial_panel, "scale", Vector2.ONE, 0.25)
+	_layout.call_deferred()
+
+
 # ------------------------------------------------------------ fêtes du village
 func open_booth() -> void:
 	var activity := Events.booth_activity()
@@ -1428,6 +1491,7 @@ func open_booth() -> void:
 
 # ------------------------------------------------------------ histoire
 func open_story() -> void:
+	Tutorial.notify("story")
 	var box := _open_modal("Histoire de Valfleur")
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(340, 165)

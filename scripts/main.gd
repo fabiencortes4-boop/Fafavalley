@@ -118,6 +118,8 @@ func _load_map(map_id: String) -> void:
 	move_child(_world, 0)
 	_hud.set_location(_world.display_name())
 	_hud.set_world(_world)
+	Music.set_place(map_id)
+	Tutorial.world = _world
 	_apply_view()
 
 

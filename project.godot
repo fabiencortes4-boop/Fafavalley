@@ -39,6 +39,8 @@ Animals="*res://scripts/autoload/animals.gd"
 Shops="*res://scripts/autoload/shops.gd"
 Story="*res://scripts/autoload/story.gd"
 Events="*res://scripts/autoload/events.gd"
+Music="*res://scripts/autoload/music.gd"
+Tutorial="*res://scripts/autoload/tutorial.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 

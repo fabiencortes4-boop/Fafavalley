@@ -80,6 +80,12 @@ func _ready() -> void:
 				m.player.position = m.cell_center(Vector2i(int(xy[0]), int(xy[1])))
 			if a.begins_with("--shopid="):
 				main.get("_hud").open_shop(a.trim_prefix("--shopid="))
+		if "--pause" in args:
+			main.get("_hud").open_pause_menu()
+		for a in args:
+			if a.begins_with("--text="):
+				Settings.text_size = int(a.trim_prefix("--text="))
+				Settings.changed.emit()
 		if "--journal" in args:
 			main.get("_hud").open_story()
 		if "--recipes" in args:

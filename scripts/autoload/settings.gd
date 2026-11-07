@@ -12,6 +12,11 @@ signal view_changed
 var zoom: float = DEFAULT_ZOOM
 var sound: bool = true
 var view_3d: bool = true
+var music: bool = true
+## Taille du texte : index dans TEXT_SIZES (Normal, Grand, Très grand)
+const TEXT_SIZES := [9, 11, 13]
+const TEXT_NAMES := ["normal", "grand", "très grand"]
+var text_size: int = 1
 
 
 func _ready() -> void:
@@ -21,6 +26,8 @@ func _ready() -> void:
 		zoom = float(cfg.get_value("affichage", "zoom_v2", DEFAULT_ZOOM))
 		sound = bool(cfg.get_value("son", "actif", true))
 		view_3d = bool(cfg.get_value("affichage", "vue_3d", true))
+		music = bool(cfg.get_value("son", "musique", true))
+		text_size = clampi(int(cfg.get_value("affichage", "texte", 1)), 0, TEXT_SIZES.size() - 1)
 	if not zoom in ZOOM_LEVELS:
 		zoom = DEFAULT_ZOOM
 
@@ -44,9 +51,27 @@ func toggle_sound() -> void:
 	changed.emit()
 
 
+func toggle_music() -> void:
+	music = not music
+	_save()
+	changed.emit()
+
+
+func cycle_text_size() -> void:
+	text_size = (text_size + 1) % TEXT_SIZES.size()
+	_save()
+	changed.emit()
+
+
+func font_size() -> int:
+	return TEXT_SIZES[text_size]
+
+
 func _save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("affichage", "zoom_v2", zoom)
 	cfg.set_value("son", "actif", sound)
 	cfg.set_value("affichage", "vue_3d", view_3d)
+	cfg.set_value("son", "musique", music)
+	cfg.set_value("affichage", "texte", text_size)
 	cfg.save(PATH)

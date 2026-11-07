@@ -56,3 +56,8 @@ Tiny Farm et Tiny Town ; la boîte aux lettres, la bûche, les fleurs sauvages e
 icônes météo sont dessinées par le script ; les planches d'automne et d'hiver sont
 des recolorations. L'enclume et le coffre viennent de Tiny Dungeon, le sac de Tiny Town ; la pioche renforcée, l'arrosoir en
 cuivre et l'engrais sont des recolorations de tuiles Kenney.
+
+## Musique
+
+Les musiques de `music/` sont des créations originales générées par
+`tools/build_music.py` (synthèse numpy) : domaine public (CC0).

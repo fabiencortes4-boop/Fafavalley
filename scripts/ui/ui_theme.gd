@@ -33,7 +33,7 @@ static func box(texture_name: String, margin: int = 5, padding: int = 5) -> Styl
 static func build() -> Theme:
 	var t := Theme.new()
 	t.default_font = font()
-	t.default_font_size = FONT_SIZE
+	t.default_font_size = Settings.font_size()
 	var panel := box("ui_panel", 5, 7)
 	t.set_stylebox("panel", "PanelContainer", panel)
 	t.set_stylebox("panel", "Panel", panel)

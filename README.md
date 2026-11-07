@@ -57,6 +57,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Musique d'ambiance** originale (composée par `tools/build_music.py`) : ferme, village,
+  mine, intérieurs, fêtes et nuit, avec fondu enchaîné (Menu → Musique pour couper).
+- **Tutoriel guidé** pour les nouvelles parties : une consigne à la fois (marcher, courrier,
+  labourer, semer, arroser, histoire, village, habitants, dormir), qui avance dès que
+  l'action est faite. Bouton « Passer », relançable depuis le menu.
+- **Texte plus grand** par défaut, réglable (Menu → Texte : normal, grand, très grand).
 - **Intérieurs** pour chaque bâtiment du village : épicerie, mairie (registre et tableau
   du projet), forge de Gaston, menuiserie, coopérative, ranch, maisons d'Odette et Théo,
   de Lina et de Jules. Les commerçants tiennent leur comptoir aux heures d'ouverture,
@@ -166,6 +172,7 @@ scripts/
   view3d/models.gd    # chargement et regroupement (MultiMesh) des modèles Kenney
 tools/build_assets.py     # assemble les sprites à partir des packs Kenney
 tools/build_sfx.py        # fabrique les bruitages (Kenney + sons synthétisés)
+tools/build_music.py      # compose les musiques d'ambiance (synthèse originale)
 assets/kenney/            # packs Kenney 2D et sons (CC0)
 assets/kenney3d/          # sélection de modèles 3D Kenney (CC0)
 assets/sprites/           # planches utilisées par le jeu
@@ -187,6 +194,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
 godot --headless res://tests/story_test.tscn      # histoire : chapitres, voies, déblocages, lettres
 godot --headless res://tests/animals_test.tscn    # maison, construction, achat d'animaux, foin, œufs, traite, boutiques
