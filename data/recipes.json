@@ -130,5 +130,31 @@
 			"milk": 2
 		},
 		"unlock": "ch4"
+	},
+	"pumpkin_soup": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"pumpkin": 1,
+			"milk": 1
+		}
+	},
+	"ratatouille": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"eggplant": 1,
+			"pepper": 1,
+			"tomato": 1
+		}
+	},
+	"blueberry_tart": {
+		"station": "craft",
+		"category": "Cuisine",
+		"ingredients": {
+			"blueberry": 3,
+			"wheat": 1,
+			"egg": 1
+		}
 	}
 }

@@ -780,5 +780,394 @@
 		"knockback": 170,
 		"sell": 1000,
 		"description": "L'épée du vieux fermier, cachée au fond de la mine. Elle brille encore."
+	},
+	"seed_radish": {
+		"name": "Graines de radis",
+		"type": "seed",
+		"crop": "radish",
+		"icon": 78,
+		"stack": 99,
+		"buy": 15,
+		"sell": 7
+	},
+	"radish": {
+		"name": "Radis",
+		"type": "crop",
+		"icon": 79,
+		"stack": 99,
+		"sell": 30,
+		"edible": [
+			14,
+			7
+		]
+	},
+	"seed_potato": {
+		"name": "Plants de pommes de terre",
+		"type": "seed",
+		"crop": "potato",
+		"icon": 80,
+		"stack": 99,
+		"buy": 40,
+		"sell": 20
+	},
+	"potato": {
+		"name": "Pomme de terre",
+		"type": "crop",
+		"icon": 81,
+		"stack": 99,
+		"sell": 70,
+		"edible": [
+			25,
+			12
+		]
+	},
+	"seed_strawberry": {
+		"name": "Plants de fraisiers",
+		"type": "seed",
+		"crop": "strawberry",
+		"icon": 82,
+		"stack": 99,
+		"buy": 80,
+		"sell": 40
+	},
+	"strawberry": {
+		"name": "Fraise",
+		"type": "crop",
+		"icon": 83,
+		"stack": 99,
+		"sell": 60,
+		"edible": [
+			20,
+			10
+		]
+	},
+	"seed_garlic": {
+		"name": "Caïeux d'ail",
+		"type": "seed",
+		"crop": "garlic",
+		"icon": 84,
+		"stack": 99,
+		"buy": 30,
+		"sell": 15
+	},
+	"garlic": {
+		"name": "Ail",
+		"type": "crop",
+		"icon": 85,
+		"stack": 99,
+		"sell": 55,
+		"edible": [
+			10,
+			5
+		]
+	},
+	"seed_cauliflower": {
+		"name": "Graines de chou-fleur",
+		"type": "seed",
+		"crop": "cauliflower",
+		"icon": 86,
+		"stack": 99,
+		"buy": 70,
+		"sell": 35
+	},
+	"cauliflower": {
+		"name": "Chou-fleur",
+		"type": "crop",
+		"icon": 87,
+		"stack": 99,
+		"sell": 160,
+		"edible": [
+			40,
+			20
+		]
+	},
+	"seed_green_bean": {
+		"name": "Graines de haricot",
+		"type": "seed",
+		"crop": "green_bean",
+		"icon": 88,
+		"stack": 99,
+		"buy": 50,
+		"sell": 25
+	},
+	"green_bean": {
+		"name": "Haricot vert",
+		"type": "crop",
+		"icon": 89,
+		"stack": 99,
+		"sell": 40,
+		"edible": [
+			16,
+			8
+		]
+	},
+	"seed_parsnip": {
+		"name": "Graines de panais",
+		"type": "seed",
+		"crop": "parsnip",
+		"icon": 90,
+		"stack": 99,
+		"buy": 20,
+		"sell": 10
+	},
+	"parsnip": {
+		"name": "Panais",
+		"type": "crop",
+		"icon": 91,
+		"stack": 99,
+		"sell": 40,
+		"edible": [
+			16,
+			8
+		]
+	},
+	"seed_onion": {
+		"name": "Bulbes d'oignon",
+		"type": "seed",
+		"crop": "onion",
+		"icon": 92,
+		"stack": 99,
+		"buy": 30,
+		"sell": 15
+	},
+	"onion": {
+		"name": "Oignon",
+		"type": "crop",
+		"icon": 93,
+		"stack": 99,
+		"sell": 55,
+		"edible": [
+			12,
+			6
+		]
+	},
+	"seed_melon": {
+		"name": "Graines de melon",
+		"type": "seed",
+		"crop": "melon",
+		"icon": 94,
+		"stack": 99,
+		"buy": 80,
+		"sell": 40
+	},
+	"melon": {
+		"name": "Melon",
+		"type": "crop",
+		"icon": 95,
+		"stack": 99,
+		"sell": 220,
+		"edible": [
+			45,
+			22
+		]
+	},
+	"seed_pepper": {
+		"name": "Graines de poivron",
+		"type": "seed",
+		"crop": "pepper",
+		"icon": 96,
+		"stack": 99,
+		"buy": 40,
+		"sell": 20
+	},
+	"pepper": {
+		"name": "Poivron",
+		"type": "crop",
+		"icon": 97,
+		"stack": 99,
+		"sell": 45,
+		"edible": [
+			14,
+			7
+		]
+	},
+	"seed_blueberry": {
+		"name": "Plants de myrtillier",
+		"type": "seed",
+		"crop": "blueberry",
+		"icon": 98,
+		"stack": 99,
+		"buy": 80,
+		"sell": 40
+	},
+	"blueberry": {
+		"name": "Myrtille",
+		"type": "crop",
+		"icon": 99,
+		"stack": 99,
+		"sell": 50,
+		"edible": [
+			15,
+			7
+		]
+	},
+	"seed_sunflower": {
+		"name": "Graines de tournesol",
+		"type": "seed",
+		"crop": "sunflower",
+		"icon": 100,
+		"stack": 99,
+		"buy": 60,
+		"sell": 30
+	},
+	"sunflower": {
+		"name": "Tournesol",
+		"type": "crop",
+		"icon": 101,
+		"stack": 99,
+		"sell": 120
+	},
+	"seed_eggplant": {
+		"name": "Graines d'aubergine",
+		"type": "seed",
+		"crop": "eggplant",
+		"icon": 102,
+		"stack": 99,
+		"buy": 30,
+		"sell": 15
+	},
+	"eggplant": {
+		"name": "Aubergine",
+		"type": "crop",
+		"icon": 103,
+		"stack": 99,
+		"sell": 55,
+		"edible": [
+			18,
+			9
+		]
+	},
+	"seed_pumpkin": {
+		"name": "Graines de citrouille",
+		"type": "seed",
+		"crop": "pumpkin",
+		"icon": 104,
+		"stack": 99,
+		"buy": 100,
+		"sell": 50
+	},
+	"pumpkin": {
+		"name": "Citrouille",
+		"type": "crop",
+		"icon": 105,
+		"stack": 99,
+		"sell": 280,
+		"edible": [
+			45,
+			22
+		]
+	},
+	"seed_beet": {
+		"name": "Graines de betterave",
+		"type": "seed",
+		"crop": "beet",
+		"icon": 106,
+		"stack": 99,
+		"buy": 20,
+		"sell": 10
+	},
+	"beet": {
+		"name": "Betterave",
+		"type": "crop",
+		"icon": 107,
+		"stack": 99,
+		"sell": 60,
+		"edible": [
+			18,
+			9
+		]
+	},
+	"seed_cranberry": {
+		"name": "Plants de canneberge",
+		"type": "seed",
+		"crop": "cranberry",
+		"icon": 108,
+		"stack": 99,
+		"buy": 120,
+		"sell": 60
+	},
+	"cranberry": {
+		"name": "Canneberge",
+		"type": "crop",
+		"icon": 109,
+		"stack": 99,
+		"sell": 70,
+		"edible": [
+			12,
+			6
+		]
+	},
+	"seed_grape": {
+		"name": "Plants de vigne",
+		"type": "seed",
+		"crop": "grape",
+		"icon": 110,
+		"stack": 99,
+		"buy": 60,
+		"sell": 30
+	},
+	"grape": {
+		"name": "Raisin",
+		"type": "crop",
+		"icon": 111,
+		"stack": 99,
+		"sell": 70,
+		"edible": [
+			16,
+			8
+		]
+	},
+	"seed_kale": {
+		"name": "Graines de chou kale",
+		"type": "seed",
+		"crop": "kale",
+		"icon": 112,
+		"stack": 99,
+		"buy": 50,
+		"sell": 25
+	},
+	"kale": {
+		"name": "Chou kale",
+		"type": "crop",
+		"icon": 113,
+		"stack": 99,
+		"sell": 100,
+		"edible": [
+			30,
+			15
+		]
+	},
+	"pumpkin_soup": {
+		"name": "Soupe de citrouille",
+		"type": "food",
+		"icon": 114,
+		"stack": 99,
+		"sell": 420,
+		"edible": [
+			90,
+			45
+		]
+	},
+	"ratatouille": {
+		"name": "Ratatouille",
+		"type": "food",
+		"icon": 115,
+		"stack": 99,
+		"sell": 260,
+		"edible": [
+			75,
+			40
+		]
+	},
+	"blueberry_tart": {
+		"name": "Tarte aux myrtilles",
+		"type": "food",
+		"icon": 116,
+		"stack": 99,
+		"sell": 300,
+		"edible": [
+			70,
+			30
+		]
 	}
 }

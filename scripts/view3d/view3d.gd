@@ -54,6 +54,9 @@ const ITEM_MODELS := {
 	"winter_root": ["food", "beet", 1.6], "daffodil": ["nature", "flower_yellowA", 2.0], "poppy": ["nature", "flower_redA", 2.0],
 	"wood": ["survival", "resource-wood", 2.0], "stone": ["survival", "resource-stone", 2.0],
 	"roach": ["survival", "fish", 2.0], "carp": ["survival", "fish-large", 1.6], "chest": ["survival", "chest", 1.6],
+	"radish": ["food", "radish", 1.4], "beet": ["food", "beet", 1.6], "onion": ["food", "onion", 1.6], "garlic": ["food", "onion", 1.2],
+	"pumpkin": ["nature", "crop_pumpkin", 0.9], "melon": ["nature", "crop_melon", 0.9], "cauliflower": ["food", "cabbage", 0.9],
+	"kale": ["food", "cabbage", 0.9], "potato": ["food", "onion", 1.3],
 }
 const TOOL_MODELS := {
 	"hoe": ["survival", "tool-hoe"], "axe": ["survival", "tool-axe"], "pickaxe": ["survival", "tool-pickaxe"],
@@ -1514,32 +1517,86 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 	_cells[cell] = node
 
 
+## Plante en 3D selon son stade et son apparence (data/crops.json, « look »).
 func _crop_model(crop: String, stage: int) -> Node3D:
+	var look: Dictionary = GameData.crop(crop).get("look", {})
+	var type := str(look.get("type", "root"))
+	var color := Color(str(look.get("color", "#ffffff")))
 	if stage <= 0:
 		return _model("nature", "crops_leafsStageA", 0.6)
-	match crop:
+	match type:
 		"corn":
 			return _model("nature", ["crops_cornStageA", "crops_cornStageB", "crops_cornStageC", "crops_cornStageD"][mini(stage, 3)], 0.8)
-		"wheat":
+		"grain":
 			return _model("nature", "crops_wheatStageA" if stage < 3 else "crops_wheatStageB", 1.2 + stage * 0.15)
+		"tall":
+			# Tournesol : une tige qui monte, puis une grande fleur jaune
+			var stem := _model("nature", ["crops_cornStageA", "crops_cornStageB", "crops_cornStageC", "crops_cornStageC"][mini(stage, 3)], 0.8)
+			if stage >= 3:
+				var head := MeshInstance3D.new()
+				var disc := CylinderMesh.new()
+				disc.top_radius = 0.22
+				disc.bottom_radius = 0.22
+				disc.height = 0.05
+				disc.material = _flat_material(color)
+				head.mesh = disc
+				head.rotation.x = PI / 2.5
+				head.position = Vector3(0, 1.0, 0.08) / 0.8
+				stem.add_child(head)
+				var heart := _box(Vector3(0.18, 0.06, 0.18), Color(0.4, 0.25, 0.1))
+				heart.rotation.x = PI / 2.5
+				heart.position = Vector3(0, 1.0, 0.11) / 0.8
+				stem.add_child(heart)
+			return stem
 	if stage == 1:
 		return _model("nature", "crops_leafsStageA", 1.2)
 	if stage == 2:
-		return _model("nature", "crops_leafsStageB", 1.2)
-	match crop:
-		"carrot":
-			return _model("nature", "crop_carrot", 1.4)
-		"turnip":
-			return _model("nature", "crop_turnip", 1.4)
-		"cabbage":
-			return _model("food", "cabbage", 1.6)
-		"tomato":
-			var n := _model("nature", "crops_leafsStageB", 1.3)
-			for k in 3:
-				var t := _model("food", "tomato", 1.6)
-				t.position = Vector3(cos(k * 2.1) * 0.12, 0.25 + k * 0.08, sin(k * 2.1) * 0.12) / 1.3
-				n.add_child(t)
-			return n
+		var young := _model("nature", "crops_leafsStageB", 1.2)
+		if type == "ground":
+			young.scale = Vector3.ONE * 1.4
+		return young
+	match type:
+		"root":
+			var spec: Array = look.get("model", ["nature", "crop_carrot"])
+			if spec[0] == "nature":
+				var plant := _model("nature", spec[1], 1.4)
+				if look.has("color"):
+					Models.tint(plant, color)
+				return plant
+			# Légume racine à moitié sorti de terre, sous ses feuilles
+			var leaves := _model("nature", "crops_leafsStageB", 1.0)
+			var root := _fitted(spec[0], spec[1], 0.44)
+			if look.has("color"):
+				Models.tint(root, color)
+			root.position = Vector3(0, 0.04, 0.12)
+			leaves.add_child(root)
+			return leaves
+		"head":
+			var head := _model("food", "cabbage", 1.6)
+			if look.has("color"):
+				Models.tint(head, color * Color(1.3, 1.3, 1.3))
+			return head
+		"ground":
+			var spec: Array = look.get("model", ["nature", "crop_pumpkin"])
+			return _model(spec[0], spec[1], 1.3)
+		"bush":
+			var bush := _model("nature", "crops_leafsStageB", 1.3)
+			var fruit_spec: Array = look.get("model", [])
+			for k in 4:
+				var fruit: Node3D
+				if not fruit_spec.is_empty():
+					fruit = _model(fruit_spec[0], fruit_spec[1], 1.6)
+				else:
+					var berry := MeshInstance3D.new()
+					var sphere := SphereMesh.new()
+					sphere.radius = 0.06
+					sphere.height = 0.12
+					sphere.material = _flat_material(color)
+					berry.mesh = sphere
+					fruit = berry
+				fruit.position = Vector3(cos(k * 1.7) * 0.13, 0.2 + k * 0.07, sin(k * 1.7) * 0.13) / 1.3
+				bush.add_child(fruit)
+			return bush
 	return _model("nature", "crops_leafsStageB", 1.3)
 
 

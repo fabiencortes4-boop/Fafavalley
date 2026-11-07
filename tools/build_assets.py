@@ -135,9 +135,73 @@ CROP_ROWS = [0, 1, 2, 3, 4, 5]
 SEEDED = 7  # petite butte de terre semée
 
 
+def new_crops():
+    """Cultures ajoutées (data/crops.json, champ « art ») : dessinées en
+    recolorant une culture d'origine du pack Tiny Farm."""
+    import json
+    data = json.load(open(os.path.join(ROOT, "data", "crops.json")))
+    return [(cid, c["art"]) for cid, c in data.items() if "art" in c]
+
+
+def recolor_hue(img, art):
+    """Change la teinte des fruits (ou de toute la plante) d'une culture."""
+    import colorsys
+    out = img.copy()
+    px = out.load()
+    hue = art["hue"] / 360.0
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if not a:
+                continue
+            h, l, sat = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            if l < 0.2:
+                continue  # contour
+            green = 70 / 360 <= h <= 170 / 360 and sat > 0.2
+            if art["mode"] == "fruit" and green:
+                continue
+            if art["mode"] == "light" and l < 0.5:
+                continue
+            nl = min(0.95, max(0.08, l + art["light"]))
+            ns = art["sat"] * min(1.0, sat / 0.6 + 0.3)
+            nr, ng, nb = colorsys.hls_to_rgb(hue, nl, ns)
+            px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
+    return out
+
+
 def crops():
     rows = [[SEEDED, r * 12 + 4, r * 12 + 5, r * 12 + 6] for r in CROP_ROWS]
-    compose(FARM, rows).save(os.path.join(OUT, "crops.png"))
+    sheet = compose(FARM, rows)
+    extra = new_crops()
+    out = Image.new("RGBA", (sheet.width, T * (len(rows) + len(extra))), (0, 0, 0, 0))
+    out.alpha_composite(sheet, (0, 0))
+    for k, (cid, art) in enumerate(extra):
+        base = art["base"] * 12
+        for stage, i in enumerate([SEEDED, base + 4, base + 5, base + 6]):
+            img = tile(FARM, i) if stage == 0 else recolor_hue(tile(FARM, i), art)
+            out.alpha_composite(img, (stage * T, (len(rows) + k) * T))
+    out.save(os.path.join(OUT, "crops.png"))
+
+
+SUNFLOWER = 6 * 12 + 11  # tournesol du pack Tiny Farm
+
+
+def crop_icons():
+    """Icônes des cultures ajoutées : sachet de graines, puis récolte."""
+    icons = []
+    for cid, art in new_crops():
+        harvest = tile(FARM, SUNFLOWER) if cid == "sunflower" else recolor_hue(tile(FARM, art["base"] * 12 + 8), art)
+        packet = tile(FARM, 9)  # sachet (celui des carottes), image remplacée
+        px = packet.load()
+        paper = px[8, 4]
+        for y in range(5, 13):
+            for x in range(4, 12):
+                if px[x, y][3] and px[x, y][:3] != OUTLINE[:3]:
+                    px[x, y] = paper
+        small = harvest.resize((8, 8), Image.NEAREST)
+        packet.alpha_composite(small, (4, 5))
+        icons += [packet, harvest]
+    return icons
 
 
 def icons():
@@ -467,6 +531,10 @@ def extend_icons(sheet):
     extra += [draw_jar((150, 40, 90), (195, 75, 120)), draw_cheese()]
     # 76-77 : lame d'acier (coffre du niveau 15), épée de Firmin (niveau 30)
     extra += [tint_metal(tile(DUNGEON, 106), (120, 190, 255)), tint_metal(tile(DUNGEON, 106), (255, 205, 80))]
+    # 78+ : cultures ajoutées (graines, récolte)
+    extra += crop_icons()
+    # puis 3 plats : soupe de citrouille, ratatouille, tarte aux myrtilles
+    extra += [draw_bowl((242, 150, 50), (250, 240, 220)), draw_bowl((200, 60, 50), (110, 50, 130)), draw_bowl((70, 80, 170), (240, 220, 160))]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

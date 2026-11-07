@@ -658,7 +658,7 @@ func _refresh_crop(cell: Vector2i) -> void:
 		sprite = Sprite2D.new()
 		sprite.texture = load("res://assets/sprites/crops.png")
 		sprite.hframes = CROP_STAGES
-		sprite.vframes = CROP_ROWS
+		sprite.vframes = maxi(CROP_ROWS, sprite.texture.get_height() / TILE)
 		sprite.centered = false
 		sprite.offset = Vector2(0, -13)
 		sprite.set_meta("no3d", true)

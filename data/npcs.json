@@ -6,14 +6,17 @@
 		"home": "store",
 		"loves": [
 			"tomato",
-			"cabbage"
+			"cabbage",
+			"strawberry"
 		],
 		"likes": [
 			"carrot",
 			"turnip",
 			"trout",
 			"berries",
-			"hazelnut"
+			"hazelnut",
+			"potato",
+			"onion"
 		],
 		"dislikes": [
 			"wheat",
@@ -93,13 +96,16 @@
 		"home": "gaston",
 		"loves": [
 			"corn",
-			"pike"
+			"pike",
+			"pumpkin"
 		],
 		"likes": [
 			"turnip",
 			"wheat",
 			"catfish",
-			"mushroom"
+			"mushroom",
+			"potato",
+			"garlic"
 		],
 		"dislikes": [
 			"cabbage"
@@ -187,13 +193,17 @@
 			"turnip",
 			"carrot",
 			"daffodil",
-			"leek"
+			"leek",
+			"cauliflower"
 		],
 		"likes": [
 			"tomato",
 			"cabbage",
 			"carp",
-			"roach"
+			"roach",
+			"parsnip",
+			"beet",
+			"green_bean"
 		],
 		"dislikes": [],
 		"schedule": [
@@ -277,14 +287,18 @@
 		"loves": [
 			"wheat",
 			"golden_carp",
-			"poppy"
+			"poppy",
+			"sunflower"
 		],
 		"likes": [
 			"corn",
 			"carrot",
 			"trout",
 			"daffodil",
-			"holly"
+			"holly",
+			"grape",
+			"blueberry",
+			"eggplant"
 		],
 		"dislikes": [
 			"turnip"
@@ -369,7 +383,8 @@
 		"home": "mairie",
 		"loves": [
 			"cabbage",
-			"pike"
+			"pike",
+			"melon"
 		],
 		"likes": [
 			"tomato",
@@ -377,7 +392,9 @@
 			"wheat",
 			"perch",
 			"winter_root",
-			"holly"
+			"holly",
+			"kale",
+			"onion"
 		],
 		"dislikes": [],
 		"schedule": [
@@ -465,7 +482,9 @@
 		],
 		"likes": [
 			"corn",
-			"mushroom"
+			"mushroom",
+			"pumpkin",
+			"radish"
 		],
 		"dislikes": [
 			"slime"
@@ -551,11 +570,14 @@
 		"shop": "cooperative",
 		"loves": [
 			"milk",
-			"egg"
+			"egg",
+			"pumpkin_soup"
 		],
 		"likes": [
 			"cabbage",
-			"wheat"
+			"wheat",
+			"potato",
+			"kale"
 		],
 		"dislikes": [
 			"fang"
@@ -637,7 +659,9 @@
 		],
 		"likes": [
 			"carrot",
-			"turnip"
+			"turnip",
+			"beet",
+			"parsnip"
 		],
 		"dislikes": [
 			"eel"
@@ -722,11 +746,15 @@
 		"loves": [
 			"berries",
 			"cherries",
-			"egg"
+			"egg",
+			"strawberry",
+			"blueberry"
 		],
 		"likes": [
 			"carrot",
-			"daffodil"
+			"daffodil",
+			"melon",
+			"pumpkin"
 		],
 		"dislikes": [
 			"cabbage",
@@ -812,12 +840,15 @@
 		"loves": [
 			"golden_carp",
 			"pike",
-			"grilled_fish"
+			"grilled_fish",
+			"ratatouille"
 		],
 		"likes": [
 			"carp",
 			"trout",
-			"roach"
+			"roach",
+			"radish",
+			"garlic"
 		],
 		"dislikes": [
 			"poppy"

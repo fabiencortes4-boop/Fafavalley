@@ -52,9 +52,17 @@ func items(id: String) -> Array:
 	var out: Array = []
 	for entry: Variant in info(id).get("items", []):
 		if str(entry) == "@seeds":
+			# Graines de la saison d'abord, puis les autres
+			var later: Array = []
 			for item_id: String in GameData.items:
-				if GameData.item(item_id).get("type") == "seed":
+				var item := GameData.item(item_id)
+				if item.get("type") != "seed":
+					continue
+				if GameData.crop_in_season(str(item.get("crop", "")), TimeManager.season):
 					out.append(item_id)
+				else:
+					later.append(item_id)
+			out.append_array(later)
 		else:
 			out.append(str(entry))
 	return out

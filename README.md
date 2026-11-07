@@ -57,6 +57,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **24 cultures** réparties sur les 4 saisons (hiver compris) : carotte, navet, maïs, tomate,
+  chou, blé, radis, pomme de terre, fraise, ail, chou-fleur, haricot vert, panais, oignon,
+  melon, poivron, myrtille, tournesol, aubergine, citrouille, betterave, canneberge,
+  raisin, chou kale. Certaines repoussent après récolte. Nouvelles recettes : soupe de
+  citrouille, ratatouille, tarte aux myrtilles. L'épicerie présente les graines de saison
+  en premier.
 - **Scénario détaillé** : scène d'arrivée sur la place de Valfleur (Bertrand et Rosalie),
   puis des objectifs qui **débloquent de nouvelles zones** : la **Forêt de la source** au
   nord de la ferme (tronc dégagé au chapitre 1 : cueillette, lac, campement de Firmin),
@@ -213,6 +219,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs

@@ -1,8 +1,602 @@
 {
-	"carrot": {"name": "Carotte", "seasons": [0], "stage_days": [1, 1, 2], "harvest": "carrot", "regrow": 0, "sprite_row": 0},
-	"turnip": {"name": "Navet", "seasons": [0, 2], "stage_days": [1, 2, 2], "harvest": "turnip", "regrow": 0, "sprite_row": 1},
-	"corn": {"name": "Maïs", "seasons": [1, 2], "stage_days": [2, 4, 4], "harvest": "corn", "regrow": 4, "sprite_row": 2},
-	"tomato": {"name": "Tomate", "seasons": [1], "stage_days": [2, 3, 3], "harvest": "tomato", "regrow": 3, "sprite_row": 3},
-	"cabbage": {"name": "Chou", "seasons": [0, 2], "stage_days": [2, 2, 2], "harvest": "cabbage", "regrow": 0, "sprite_row": 4},
-	"wheat": {"name": "Blé", "seasons": [1, 2], "stage_days": [1, 1, 2], "harvest": "wheat", "regrow": 0, "sprite_row": 5}
+	"carrot": {
+		"name": "Carotte",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			1,
+			1,
+			2
+		],
+		"harvest": "carrot",
+		"regrow": 0,
+		"sprite_row": 0,
+		"look": {
+			"type": "root",
+			"model": [
+				"nature",
+				"crop_carrot"
+			]
+		}
+	},
+	"turnip": {
+		"name": "Navet",
+		"seasons": [
+			0,
+			2
+		],
+		"stage_days": [
+			1,
+			2,
+			2
+		],
+		"harvest": "turnip",
+		"regrow": 0,
+		"sprite_row": 1,
+		"look": {
+			"type": "root",
+			"model": [
+				"nature",
+				"crop_turnip"
+			]
+		}
+	},
+	"corn": {
+		"name": "Maïs",
+		"seasons": [
+			1,
+			2
+		],
+		"stage_days": [
+			2,
+			4,
+			4
+		],
+		"harvest": "corn",
+		"regrow": 4,
+		"sprite_row": 2,
+		"look": {
+			"type": "corn"
+		}
+	},
+	"tomato": {
+		"name": "Tomate",
+		"seasons": [
+			1
+		],
+		"stage_days": [
+			2,
+			3,
+			3
+		],
+		"harvest": "tomato",
+		"regrow": 3,
+		"sprite_row": 3,
+		"look": {
+			"type": "bush",
+			"color": "#e0442e",
+			"model": [
+				"food",
+				"tomato"
+			]
+		}
+	},
+	"cabbage": {
+		"name": "Chou",
+		"seasons": [
+			0,
+			2
+		],
+		"stage_days": [
+			2,
+			2,
+			2
+		],
+		"harvest": "cabbage",
+		"regrow": 0,
+		"sprite_row": 4,
+		"look": {
+			"type": "head",
+			"color": "#7fbf5a"
+		}
+	},
+	"wheat": {
+		"name": "Blé",
+		"seasons": [
+			1,
+			2
+		],
+		"stage_days": [
+			1,
+			1,
+			2
+		],
+		"harvest": "wheat",
+		"regrow": 0,
+		"sprite_row": 5,
+		"look": {
+			"type": "grain"
+		}
+	},
+	"radish": {
+		"name": "Radis",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			1,
+			1,
+			1
+		],
+		"harvest": "radish",
+		"regrow": 0,
+		"sprite_row": 6,
+		"art": {
+			"base": 1,
+			"hue": 350,
+			"sat": 0.75,
+			"light": 0.05,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "root",
+			"model": [
+				"food",
+				"radish"
+			]
+		}
+	},
+	"potato": {
+		"name": "Pomme de terre",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			1,
+			2,
+			2
+		],
+		"harvest": "potato",
+		"regrow": 0,
+		"sprite_row": 7,
+		"art": {
+			"base": 1,
+			"hue": 30,
+			"sat": 0.45,
+			"light": -0.05,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "root",
+			"model": [
+				"food",
+				"onion"
+			],
+			"color": "#b58a5a"
+		}
+	},
+	"strawberry": {
+		"name": "Fraise",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			2,
+			2,
+			3
+		],
+		"harvest": "strawberry",
+		"regrow": 3,
+		"sprite_row": 8,
+		"art": {
+			"base": 3,
+			"hue": 350,
+			"sat": 0.9,
+			"light": 0.0,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "bush",
+			"color": "#e8384a"
+		}
+	},
+	"garlic": {
+		"name": "Ail",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			1,
+			1,
+			2
+		],
+		"harvest": "garlic",
+		"regrow": 0,
+		"sprite_row": 9,
+		"art": {
+			"base": 1,
+			"hue": 45,
+			"sat": 0.08,
+			"light": 0.25,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "root",
+			"model": [
+				"food",
+				"onion"
+			],
+			"color": "#f2ece0"
+		}
+	},
+	"cauliflower": {
+		"name": "Chou-fleur",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			2,
+			3,
+			3
+		],
+		"harvest": "cauliflower",
+		"regrow": 0,
+		"sprite_row": 10,
+		"art": {
+			"base": 4,
+			"hue": 50,
+			"sat": 0.2,
+			"light": 0.2,
+			"mode": "light"
+		},
+		"look": {
+			"type": "head",
+			"color": "#f4efd8"
+		}
+	},
+	"green_bean": {
+		"name": "Haricot vert",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			1,
+			2,
+			3
+		],
+		"harvest": "green_bean",
+		"regrow": 3,
+		"sprite_row": 11,
+		"art": {
+			"base": 3,
+			"hue": 105,
+			"sat": 0.6,
+			"light": -0.05,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "bush",
+			"color": "#4f9a3a"
+		}
+	},
+	"parsnip": {
+		"name": "Panais",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			1,
+			1,
+			2
+		],
+		"harvest": "parsnip",
+		"regrow": 0,
+		"sprite_row": 12,
+		"art": {
+			"base": 0,
+			"hue": 45,
+			"sat": 0.35,
+			"light": 0.15,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "root",
+			"model": [
+				"nature",
+				"crop_carrot"
+			],
+			"color": "#efe2b0"
+		}
+	},
+	"onion": {
+		"name": "Oignon",
+		"seasons": [
+			0,
+			3
+		],
+		"stage_days": [
+			1,
+			2,
+			2
+		],
+		"harvest": "onion",
+		"regrow": 0,
+		"sprite_row": 13,
+		"art": {
+			"base": 1,
+			"hue": 38,
+			"sat": 0.6,
+			"light": 0.0,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "root",
+			"model": [
+				"food",
+				"onion"
+			]
+		}
+	},
+	"melon": {
+		"name": "Melon",
+		"seasons": [
+			1
+		],
+		"stage_days": [
+			2,
+			3,
+			4
+		],
+		"harvest": "melon",
+		"regrow": 0,
+		"sprite_row": 14,
+		"art": {
+			"base": 4,
+			"hue": 85,
+			"sat": 0.6,
+			"light": 0.0,
+			"mode": "all"
+		},
+		"look": {
+			"type": "ground",
+			"model": [
+				"nature",
+				"crop_melon"
+			]
+		}
+	},
+	"pepper": {
+		"name": "Poivron",
+		"seasons": [
+			1
+		],
+		"stage_days": [
+			1,
+			2,
+			2
+		],
+		"harvest": "pepper",
+		"regrow": 3,
+		"sprite_row": 15,
+		"art": {
+			"base": 3,
+			"hue": 48,
+			"sat": 0.95,
+			"light": 0.05,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "bush",
+			"color": "#f2c230"
+		}
+	},
+	"blueberry": {
+		"name": "Myrtille",
+		"seasons": [
+			1
+		],
+		"stage_days": [
+			2,
+			3,
+			3
+		],
+		"harvest": "blueberry",
+		"regrow": 4,
+		"sprite_row": 16,
+		"art": {
+			"base": 3,
+			"hue": 228,
+			"sat": 0.7,
+			"light": -0.05,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "bush",
+			"color": "#3b56b8"
+		}
+	},
+	"sunflower": {
+		"name": "Tournesol",
+		"seasons": [
+			1,
+			2
+		],
+		"stage_days": [
+			2,
+			3,
+			3
+		],
+		"harvest": "sunflower",
+		"regrow": 0,
+		"sprite_row": 17,
+		"art": {
+			"base": 2,
+			"hue": 48,
+			"sat": 1.0,
+			"light": 0.05,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "tall",
+			"color": "#f5c82a"
+		}
+	},
+	"eggplant": {
+		"name": "Aubergine",
+		"seasons": [
+			1,
+			2
+		],
+		"stage_days": [
+			2,
+			2,
+			2
+		],
+		"harvest": "eggplant",
+		"regrow": 4,
+		"sprite_row": 18,
+		"art": {
+			"base": 3,
+			"hue": 280,
+			"sat": 0.55,
+			"light": -0.15,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "bush",
+			"color": "#5b2c7a"
+		}
+	},
+	"pumpkin": {
+		"name": "Citrouille",
+		"seasons": [
+			2
+		],
+		"stage_days": [
+			2,
+			4,
+			4
+		],
+		"harvest": "pumpkin",
+		"regrow": 0,
+		"sprite_row": 19,
+		"art": {
+			"base": 4,
+			"hue": 28,
+			"sat": 0.9,
+			"light": 0.0,
+			"mode": "all"
+		},
+		"look": {
+			"type": "ground",
+			"model": [
+				"nature",
+				"crop_pumpkin"
+			]
+		}
+	},
+	"beet": {
+		"name": "Betterave",
+		"seasons": [
+			2
+		],
+		"stage_days": [
+			1,
+			2,
+			2
+		],
+		"harvest": "beet",
+		"regrow": 0,
+		"sprite_row": 20,
+		"art": {
+			"base": 1,
+			"hue": 335,
+			"sat": 0.7,
+			"light": -0.15,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "root",
+			"model": [
+				"food",
+				"beet"
+			]
+		}
+	},
+	"cranberry": {
+		"name": "Canneberge",
+		"seasons": [
+			2
+		],
+		"stage_days": [
+			2,
+			2,
+			3
+		],
+		"harvest": "cranberry",
+		"regrow": 4,
+		"sprite_row": 21,
+		"art": {
+			"base": 3,
+			"hue": 352,
+			"sat": 0.85,
+			"light": -0.2,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "bush",
+			"color": "#a51e32"
+		}
+	},
+	"grape": {
+		"name": "Raisin",
+		"seasons": [
+			2
+		],
+		"stage_days": [
+			2,
+			3,
+			3
+		],
+		"harvest": "grape",
+		"regrow": 3,
+		"sprite_row": 22,
+		"art": {
+			"base": 3,
+			"hue": 272,
+			"sat": 0.6,
+			"light": -0.12,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "bush",
+			"color": "#6a3a8a"
+		}
+	},
+	"kale": {
+		"name": "Chou kale",
+		"seasons": [
+			3
+		],
+		"stage_days": [
+			1,
+			2,
+			3
+		],
+		"harvest": "kale",
+		"regrow": 0,
+		"sprite_row": 23,
+		"art": {
+			"base": 4,
+			"hue": 150,
+			"sat": 0.5,
+			"light": -0.15,
+			"mode": "all"
+		},
+		"look": {
+			"type": "head",
+			"color": "#2f6a4a"
+		}
+	}
 }

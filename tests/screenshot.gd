@@ -96,6 +96,20 @@ func _ready() -> void:
 			if a.begins_with("--text="):
 				Settings.text_size = int(a.trim_prefix("--text="))
 				Settings.changed.emit()
+		if "--garden" in args:
+			# Potager de démonstration : toutes les cultures, mûres
+			var k := 0
+			for crop: String in GameData.crops:
+				var cell := Vector2i(8 + (k % 8) * 2, 12 + (k / 8) * 2)
+				FarmState.till(cell)
+				FarmState.plant(cell, crop)
+				var total := 0
+				for d: Variant in GameData.crop(crop).stage_days:
+					total += int(d)
+				FarmState.tiles[cell].age = total
+				FarmState.water(cell)
+				k += 1
+			main.call("current_map").call("_refresh_all")
 		if "--forest" in args:
 			main.call("_switch_to", "forest")
 			await get_tree().process_frame
