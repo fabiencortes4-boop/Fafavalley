@@ -57,6 +57,11 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Maisons à l'échelle** du personnage (plain-pied) et plus soignées : soubassement en
+  pierre, toit de tuiles avec faîtage et avant-toit, jardinières fleuries sous les
+  fenêtres, marche, paillasson, lanterne. **Jardins des villageois** : massifs fleuris
+  clôturés, potager d'Odette, chevalet de Lina, filets de Jules, foin du ranch, caisses
+  de l'épicerie, mât de la mairie...
 - **Optimisé pour téléphone** : décor 3D découpé en morceaux (seul ce que voit la caméra
   est dessiné : 13 fois moins de triangles au village), murs des maisons regroupés,
   30 images/s sur téléphone et 20 dans les menus (batterie), mini-carte et aides

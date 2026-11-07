@@ -518,11 +518,11 @@ func _build_props() -> void:
 				_put(_fitted("survival", "bedroll", 0.8), c + Vector3(0.6, 0, 0.6), 0.4)
 			"s":
 				if chars.get(cell + Vector2i.LEFT, "") != "s":
-					var stall := _fitted("town", "stall-green" if _hash(cell) % 2 == 0 else "stall-red", 2.0)
+					var stall := _fitted("town", "stall-green" if _hash(cell) % 2 == 0 else "stall-red", 1.5)
 					_put(stall, c + Vector3(0.5 if chars.get(cell + Vector2i.RIGHT, "") == "s" else 0.0, 0, 0))
 					for k in 3:
 						var food := _fitted("food", ["tomato", "carrot", "cabbage", "corn", "leek"][(_hash(cell) + k) % 5], 0.22)
-						_put(food, c + Vector3(0.1 + k * 0.32, 0.55, 0.15))
+						_put(food, c + Vector3(0.1 + k * 0.32, 0.42, 0.12))
 			".":
 				if TimeManager.season != 3 and _hash(cell) % 9 == 0:
 					_place(batch, "nature", "grass", c, 1.4, rot)
@@ -556,6 +556,7 @@ func _build_props() -> void:
 	_wall_batch = null
 	if map is Village:
 		_build_event_decor()
+		_build_gardens()
 
 
 func _build_buildings(chars: Dictionary) -> void:
@@ -601,7 +602,7 @@ func _build_buildings(chars: Dictionary) -> void:
 					_put(_fitted("nature", "log_stack", 0.8), front + Vector3(-0.5, 0, -0.9))
 				"cooperative":
 					_house(cell, size, b[3], "wall", Color(0.36, 0.6, 0.32))
-					_put(_fitted("town", "stall-green", 1.6), front + Vector3(size.x + 0.2, 0, -0.9), -PI / 2.0)
+					_put(_fitted("town", "stall-green", 1.2), front + Vector3(size.x + 0.2, 0, -0.9), -PI / 2.0)
 					_put(_fitted("survival", "box-large", 0.5), front + Vector3(-0.5, 0, -0.6))
 					_put(_fitted("survival", "barrel", 0.45), front + Vector3(-0.5, 0, -1.3))
 				"ranch":
@@ -632,7 +633,10 @@ func _build_buildings(chars: Dictionary) -> void:
 			_static.add_child(anvil)
 
 
-## Maison : murs Kenney (porte, fenêtres) sur 2 étages et toit à deux pans.
+## Maison de plain-pied, à la taille du personnage : soubassement en pierre,
+## murs Kenney (porte, fenêtres à volets), toit de tuiles avec faîtage et
+## avant-toit, jardinières sous les fenêtres, marche, paillasson, lanterne.
+## Toits et détails sont regroupés en un seul objet par maison (léger).
 func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_color: Color) -> void:
 	var root := Node3D.new()
 	_static.add_child(root)
@@ -640,25 +644,80 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 	var z0 := float(cell.y)
 	var w := size.x
 	var d := size.y
-	for level in 2:
-		var y := float(level)
-		for i in w:
-			var front: String = wall + "-window-shutters"
-			if level == 0 and i == door_col:
-				front = wall + "-door"
-			elif level == 1 or (i % 2 == 0 and i != door_col):
-				front = wall if level == 1 and i % 2 == 0 else wall + "-window-shutters"
-			_wall(root, front, Vector3(x0 + i + 0.5, y, z0 + d - 0.5), -PI / 2.0)
-			_wall(root, wall, Vector3(x0 + i + 0.5, y, z0 + 0.5), PI / 2.0)
-		for j in d:
-			_wall(root, wall if j % 2 == 0 else wall + "-window-shutters", Vector3(x0 + 0.5, y, z0 + j + 0.5), PI)
-			_wall(root, wall, Vector3(x0 + w - 0.5, y, z0 + j + 0.5), 0.0)
-	root.add_child(_roof(Vector3(x0, 2.0, z0), float(w), float(d), roof_color))
-	var chimney := _model("town", "chimney", 1.0)
-	chimney.position = Vector3(x0 + w - 0.7, 2.3, z0 + 0.8)
+	var base := 0.1  # hauteur du soubassement
+	var front_z := z0 + d - 0.5
+	for i in w:
+		var front: String = wall + ("-door" if i == door_col else "-window-shutters")
+		_wall(root, front, Vector3(x0 + i + 0.5, base, front_z), -PI / 2.0)
+		_wall(root, wall, Vector3(x0 + i + 0.5, base, z0 + 0.5), PI / 2.0)
+	for j in d:
+		var side: String = wall + ("-window-shutters" if j == d / 2 else "")
+		_wall(root, side, Vector3(x0 + 0.5, base, z0 + j + 0.5), PI)
+		_wall(root, side, Vector3(x0 + w - 0.5, base, z0 + j + 0.5), 0.0)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# Soubassement en pierre
+	_st_box(st, Vector3(x0 + w / 2.0, base / 2.0, z0 + d / 2.0), Vector3(w + 0.08, base, d + 0.08), Color(0.58, 0.56, 0.54))
+	# Toit de tuiles
+	_roof_into(st, Vector3(x0, base + 1.0, z0), float(w), float(d), roof_color)
+	# Jardinières fleuries sous les fenêtres, marche et paillasson devant la porte
+	var flowers := [Color(0.92, 0.3, 0.3), Color(0.98, 0.82, 0.3), Color(0.85, 0.5, 0.9), Color(1, 1, 1)]
+	for i in w:
+		var cx := x0 + i + 0.5
+		var fz := z0 + d + 0.02
+		if i == door_col:
+			_st_box(st, Vector3(cx, 0.04, fz + 0.18), Vector3(0.62, 0.08, 0.34), Color(0.62, 0.6, 0.58))
+			_st_box(st, Vector3(cx, 0.085, fz + 0.16), Vector3(0.42, 0.01, 0.22), Color(0.7, 0.28, 0.24))
+			continue
+		_st_box(st, Vector3(cx, base + 0.36, fz + 0.06), Vector3(0.5, 0.1, 0.14), Color(0.48, 0.32, 0.2))
+		for k in 3:
+			var col: Color = flowers[(k + cell.x + i) % flowers.size()]
+			_st_box(st, Vector3(cx - 0.15 + k * 0.15, base + 0.45, fz + 0.06), Vector3(0.09, 0.09, 0.09), col)
+			_st_box(st, Vector3(cx - 0.15 + k * 0.15, base + 0.41, fz + 0.06), Vector3(0.05, 0.05, 0.05), Color(0.3, 0.6, 0.3))
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.9
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = mat
+	root.add_child(mi)
+	# Lanterne près de la porte
+	var lamp := MeshInstance3D.new()
+	var bulb := BoxMesh.new()
+	bulb.size = Vector3(0.1, 0.14, 0.1)
+	var lm := StandardMaterial3D.new()
+	lm.albedo_color = Color(1, 0.85, 0.5)
+	lm.emission_enabled = true
+	lm.emission = Color(1, 0.75, 0.35)
+	lm.emission_energy_multiplier = 1.5
+	bulb.material = lm
+	lamp.mesh = bulb
+	lamp.position = Vector3(x0 + door_col + 0.92, base + 0.72, z0 + d + 0.05)
+	root.add_child(lamp)
+	var chimney := _model("town", "chimney", 0.7)
+	chimney.position = Vector3(x0 + w - 0.7, base + 1.3, z0 + 0.75)
 	root.add_child(chimney)
 	if Settings.quality > 0:
-		root.add_child(_smoke(chimney.position + Vector3(0, 0.9, 0)))
+		root.add_child(_smoke(chimney.position + Vector3(0, 0.65, 0)))
+
+
+## Boîte colorée ajoutée à un maillage (détails regroupés en un seul objet).
+func _st_box(st: SurfaceTool, center: Vector3, size: Vector3, color: Color) -> void:
+	var h := size / 2.0
+	var p := [
+		center + Vector3(-h.x, -h.y, -h.z), center + Vector3(h.x, -h.y, -h.z), center + Vector3(h.x, h.y, -h.z), center + Vector3(-h.x, h.y, -h.z),
+		center + Vector3(-h.x, -h.y, h.z), center + Vector3(h.x, -h.y, h.z), center + Vector3(h.x, h.y, h.z), center + Vector3(-h.x, h.y, h.z),
+	]
+	var faces := [[0, 1, 2, 3], [5, 4, 7, 6], [4, 0, 3, 7], [1, 5, 6, 2], [3, 2, 6, 7], [4, 5, 1, 0]]
+	for k in faces.size():
+		var f: Array = faces[k]
+		# Faces du dessus plus claires, du dessous plus sombres : relief sans lumière
+		st.set_color(color.lightened(0.06) if k == 4 else (color.darkened(0.2) if k == 5 else color))
+		for idx: int in [f[0], f[1], f[2], f[0], f[2], f[3]]:
+			st.add_vertex(p[idx])
 
 
 ## Fumée de cheminée : quelques bouffées grises qui montent et s'effacent.
@@ -876,6 +935,86 @@ func _spring(center: Vector3) -> void:
 	_put(light, center + Vector3(0, 1.2, 0))
 
 
+## Jardins des villageois : massifs fleuris bordés de petites clôtures,
+## potager d'Odette, et un objet propre au métier de chacun.
+func _build_gardens() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var batch := Models.Batch.new()
+	var soil := Color(0.45, 0.31, 0.2)
+	var picket := Color(0.93, 0.9, 0.84)
+	var petals := [Color(0.95, 0.35, 0.4), Color(0.98, 0.82, 0.3), Color(0.75, 0.5, 0.95), Color(1, 0.6, 0.25), Color(1, 1, 1)]
+	for g: Array in Village.gardens():
+		var cell: Vector2i = g[0]
+		var c := _cell3d(cell)
+		var hsh := _hash(cell)
+		match str(g[1]):
+			"flowers", "veggies":
+				_st_box(st, c + Vector3(0, 0.04, 0), Vector3(0.86, 0.08, 0.86), soil)
+				# Petite clôture blanche sur le devant
+				for k in 4:
+					_st_box(st, c + Vector3(-0.39 + k * 0.26, 0.15, 0.45), Vector3(0.05, 0.3, 0.05), picket)
+				_st_box(st, c + Vector3(0, 0.22, 0.45), Vector3(0.86, 0.04, 0.03), picket)
+				if g[1] == "flowers":
+					for k in 6:
+						var px := -0.28 + float(k % 3) * 0.28
+						var pz := -0.18 + float(k / 3) * 0.3
+						var col: Color = petals[(hsh + k) % petals.size()]
+						_st_box(st, c + Vector3(px, 0.14, pz), Vector3(0.04, 0.14, 0.04), Color(0.3, 0.6, 0.28))
+						_st_box(st, c + Vector3(px, 0.24, pz), Vector3(0.13, 0.08, 0.13), col)
+				else:
+					var crops := ["carrot", "cabbage", "tomato", "leek"]
+					for k in 4:
+						_place(batch, "food", crops[(hsh + k) % crops.size()], c + Vector3(-0.2 + float(k % 2) * 0.4, 0.08, -0.18 + float(k / 2) * 0.32), 1.0, float(k))
+			"planter":
+				_st_box(st, c + Vector3(0, 0.18, 0), Vector3(0.8, 0.36, 0.5), Color(0.5, 0.34, 0.22))
+				_st_box(st, c + Vector3(0, 0.38, 0), Vector3(0.72, 0.04, 0.42), soil)
+				_place(batch, "nature", "plant_bushSmall", c + Vector3(-0.18, 0.38, 0), 1.0, float(hsh % 6))
+				_place(batch, "nature", "flower_redA", c + Vector3(0.2, 0.38, 0.05), 0.9, 0.0)
+			"bush":
+				_place(batch, "nature", "plant_bushLarge", c, 1.4, float(hsh % 6))
+				_place(batch, "nature", "flower_yellowA", c + Vector3(0.3, 0, 0.3), 0.8, 0.0)
+			"crates":
+				_place(batch, "survival", "box", c + Vector3(-0.15, 0, 0), 1.3, 0.2)
+				_place(batch, "survival", "box-open", c + Vector3(0.2, 0, 0.15), 1.1, -0.3)
+				_place(batch, "food", "pumpkin", c + Vector3(0.2, 0.3, 0.15), 0.8, 0.0)
+			"barrels":
+				_place(batch, "survival", "barrel", c + Vector3(-0.15, 0, -0.1), 1.8, 0.0)
+				_place(batch, "survival", "barrel", c + Vector3(0.2, 0, 0.2), 1.6, 1.0)
+			"logs":
+				_place(batch, "nature", "log_stack", c, 1.2, float(hsh % 4))
+			"hay":
+				_st_box(st, c + Vector3(0, 0.25, 0), Vector3(0.8, 0.5, 0.6), Color(0.9, 0.78, 0.4))
+				_st_box(st, c + Vector3(0, 0.25, 0.31), Vector3(0.82, 0.04, 0.02), Color(0.6, 0.45, 0.25))
+			"flagpole":
+				_st_box(st, c + Vector3(0, 0.9, 0), Vector3(0.06, 1.8, 0.06), Color(0.7, 0.7, 0.72))
+				_st_box(st, c + Vector3(0.22, 1.6, 0), Vector3(0.4, 0.26, 0.02), Color(0.3, 0.5, 0.85))
+				_st_box(st, c + Vector3(0, 0.08, 0), Vector3(0.4, 0.16, 0.4), Color(0.6, 0.58, 0.56))
+			"easel":
+				for leg: Vector3 in [Vector3(-0.15, 0.35, 0.1), Vector3(0.15, 0.35, 0.1), Vector3(0, 0.35, -0.12)]:
+					_st_box(st, c + leg, Vector3(0.04, 0.7, 0.04), Color(0.55, 0.38, 0.22))
+				_st_box(st, c + Vector3(0, 0.62, 0.14), Vector3(0.5, 0.4, 0.03), Color(0.97, 0.95, 0.9))
+				_st_box(st, c + Vector3(-0.08, 0.66, 0.16), Vector3(0.18, 0.12, 0.01), Color(0.4, 0.65, 0.9))
+				_st_box(st, c + Vector3(0.1, 0.56, 0.16), Vector3(0.14, 0.1, 0.01), Color(0.95, 0.75, 0.3))
+			"fish":
+				_place(batch, "survival", "barrel", c + Vector3(-0.15, 0, 0), 1.6, 0.0)
+				_place(batch, "survival", "fish", c + Vector3(-0.15, 0.48, 0), 1.4, 0.5)
+				# Filet de pêche tendu sur deux piquets
+				for px: float in [0.1, 0.42]:
+					_st_box(st, c + Vector3(px, 0.35, 0.1), Vector3(0.04, 0.7, 0.04), Color(0.5, 0.35, 0.22))
+				_st_box(st, c + Vector3(0.26, 0.45, 0.1), Vector3(0.32, 0.4, 0.01), Color(0.75, 0.72, 0.6, 1))
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 1.0
+	mi.material_override = mat
+	_static.add_child(mi)
+	batch.build(_static)
+
+
 ## Puits en pierre avec son petit toit.
 func _well(c: Vector3) -> void:
 	var stone := MeshInstance3D.new()
@@ -905,7 +1044,7 @@ func _build_event_decor() -> void:
 	if activity == "":
 		return
 	var booth := _cell3d(Events.BOOTH)
-	_put(_fitted("town", "stall-red" if activity == "contest" else "stall-green", 1.6), booth)
+	_put(_fitted("town", "stall-red" if activity == "contest" else "stall-green", 1.3), booth)
 	var fest := Events.festival_today()
 	if activity == "market":
 		for k in 3:
@@ -1098,34 +1237,45 @@ func _wall(parent: Node3D, model: String, at: Vector3, rot: float) -> void:
 	parent.add_child(n)
 
 
-## Toit à deux pans (prisme) dessiné à la main, couleurs façon Kenney.
+## Toit à deux pans, en rangées de tuiles, avec avant-toit et faîtage.
+func _roof_into(st: SurfaceTool, origin: Vector3, w: float, d: float, color: Color) -> void:
+	var o := 0.22  # débord
+	var h := 1.05
+	var rows := 5
+	var x0 := origin.x - o
+	var x1 := origin.x + w + o
+	var zm := origin.z + d / 2.0
+	for side in 2:
+		var z_edge := origin.z + d + o if side == 0 else origin.z - o
+		for r in rows:
+			var t0 := float(r) / rows
+			var t1 := float(r + 1) / rows
+			var za := lerpf(z_edge, zm, t0)
+			var zb := lerpf(z_edge, zm, t1)
+			var ya := origin.y + h * t0
+			var yb := origin.y + h * t1
+			var shade := color.darkened(0.12 if side == 1 else 0.0)
+			# Rangées de tuiles bien marquées : claire en haut, ombrée en bas
+			var lip := 0.05
+			st.set_color(shade.darkened(0.16) if r % 2 == 0 else shade.lightened(0.04))
+			for p: Vector3 in [Vector3(x0, ya - lip, za), Vector3(x1, ya - lip, za), Vector3(x1, yb, zb), Vector3(x0, ya - lip, za), Vector3(x1, yb, zb), Vector3(x0, yb, zb)]:
+				st.add_vertex(p)
+		# Avant-toit (planche de rive)
+		_st_box(st, Vector3((x0 + x1) / 2.0, origin.y - 0.03, z_edge), Vector3(x1 - x0, 0.06, 0.06), Color(0.45, 0.3, 0.2))
+	# Pignons (couleur claire) et faîtage
+	var gable := Color(0.93, 0.86, 0.72)
+	st.set_color(gable)
+	for gx: float in [origin.x + 0.02, origin.x + w - 0.02]:
+		for p: Vector3 in [Vector3(gx, origin.y, origin.z + d), Vector3(gx, origin.y, origin.z), Vector3(gx, origin.y + h - 0.04, zm)]:
+			st.add_vertex(p)
+	_st_box(st, Vector3((x0 + x1) / 2.0, origin.y + h + 0.02, zm), Vector3(x1 - x0, 0.08, 0.12), color.darkened(0.3))
+
+
+## Toit à deux pans (objet séparé) : bâtiments de la ferme.
 func _roof(origin: Vector3, w: float, d: float, color: Color) -> MeshInstance3D:
-	var o := 0.18  # débord
-	var h := 1.1
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var x0 := -o
-	var x1 := w + o
-	var zf := d + o
-	var zb := -o
-	var zm := d / 2.0
-	var a := Vector3(x0, 0, zb)
-	var b := Vector3(x1, 0, zb)
-	var c := Vector3(x1, 0, zf)
-	var e := Vector3(x0, 0, zf)
-	var r0 := Vector3(x0, h, zm)
-	var r1 := Vector3(x1, h, zm)
-	st.set_color(color)
-	for p in [e, c, r1, e, r1, r0]:  # pan avant
-		st.add_vertex(p)
-	st.set_color(color.darkened(0.15))
-	for p in [b, a, r0, b, r0, r1]:  # pan arrière
-		st.add_vertex(p)
-	st.set_color(Color(0.9, 0.82, 0.68))
-	for p in [Vector3(o, 0, zf - o), Vector3(o, 0, zb + o), Vector3(o, h - 0.1, zm)]:  # pignons
-		st.add_vertex(p)
-	for p in [Vector3(w - o, 0, zb + o), Vector3(w - o, 0, zf - o), Vector3(w - o, h - 0.1, zm)]:
-		st.add_vertex(p)
+	_roof_into(st, Vector3.ZERO, w, d, color)
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()

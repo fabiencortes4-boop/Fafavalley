@@ -103,6 +103,10 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 	if BUILDINGS.has(ch):
 		var b: Array = BUILDINGS[ch]
 		var door := _add_building(cell, b[1], b[2], b[3])
+		for g: Array in gardens():
+			if g[2] == b[0]:
+				_blocked[g[0]] = true
+				_add_static_block(g[0])
 		if b[0] == "mine":
 			# La colline rocheuse autour de l'entrée de la mine
 			for dx in range(-2, 5):
@@ -167,7 +171,58 @@ func _build_navigation() -> void:
 			_astar.set_point_weight_scale(cell, 0.5)  # les habitants préfèrent les chemins
 
 
-## Case devant la porte d'un bâtiment (pour ressortir d'un intérieur).
+## Décor des jardins, selon le bâtiment : ce qu'on pose sur les côtés
+const GARDEN_PROPS := {
+	"store": "crates", "mairie": "flagpole", "gaston": "barrels", "menuiserie": "logs",
+	"cooperative": "hay", "ranch": "hay", "odette": "veggies", "lina": "easel", "jules": "fish",
+}
+static var _gardens: Array = []
+
+
+## Jardins des villageois : devant la façade (massifs de fleurs, potager)
+## et sur les côtés (objet propre au métier de l'habitant). Seulement sur
+## l'herbe, jamais devant une porte ni là où les habitants se rendent.
+## [[case, sorte, bâtiment], ...]
+static func gardens() -> Array:
+	if not _gardens.is_empty():
+		return _gardens
+	var spots := {}
+	for id: String in GameData.npcs:
+		for e: Dictionary in GameData.npc(id).get("schedule", []):
+			if e.has("cell"):
+				spots[Vector2i(int(e.cell[0]), int(e.cell[1]))] = true
+	var fronts := {}
+	for ch: String in BUILDINGS:
+		var b: Array = BUILDINGS[ch]
+		if int(b[3]) >= 0:
+			fronts[door_front(str(b[0]))] = true
+	for y in MAP.size():
+		var row := String(MAP[y])
+		for x in row.length():
+			var ch := row[x]
+			if not BUILDINGS.has(ch) or not GARDEN_PROPS.has(str(BUILDINGS[ch][0])):
+				continue
+			var b: Array = BUILDINGS[ch]
+			var id := str(b[0])
+			var size: Vector2i = b[1]
+			var door := int(b[3])
+			var cand: Array = []
+			var front_y := y + size.y
+			for dx in size.x:
+				if dx != door:
+					cand.append([Vector2i(x + dx, front_y), "veggies" if id == "odette" else ("planter" if id in ["store", "mairie", "cooperative"] else "flowers")])
+			cand.append([Vector2i(x - 1, y + size.y - 1), GARDEN_PROPS[id]])
+			cand.append([Vector2i(x + size.x, y + size.y - 1), "bush" if id != "mairie" else "flowers"])
+			for c: Array in cand:
+				var cell: Vector2i = c[0]
+				if cell.y < 0 or cell.y >= MAP.size() or cell.x < 0 or cell.x >= String(MAP[cell.y]).length():
+					continue
+				if not String(MAP[cell.y])[cell.x] in [".", ","] or spots.has(cell) or fronts.has(cell):
+					continue
+				if fronts.has(cell + Vector2i.LEFT) or fronts.has(cell + Vector2i.RIGHT):
+					continue  # on laisse le passage devant les portes
+				_gardens.append([cell, c[1], id])
+	return _gardens
 static func door_front(id: String) -> Vector2i:
 	for ch: String in BUILDINGS:
 		var b: Array = BUILDINGS[ch]

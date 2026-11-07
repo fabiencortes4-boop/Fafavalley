@@ -24,6 +24,13 @@ func _ready() -> void:
 	_check(village.player_cell() == Vector2i(2, 19), "on arrive à l'entrée du village")
 	var v: Village = village as Village
 	_check(v.npcs.size() == 10, "10 habitants au village")
+	# Jardins : ils ne coupent aucun trajet des habitants
+	var blocked_routes: Array = []
+	for n: Npc in v.npcs:
+		for e: Dictionary in GameData.npc(n.id).get("schedule", []):
+			if e.has("cell") and v.find_path(n.home_cell, Vector2i(int(e.cell[0]), int(e.cell[1]))).is_empty():
+				blocked_routes.append("%s -> %s" % [n.id, e.cell])
+	_check(Village.gardens().size() >= 15 and blocked_routes.is_empty(), "%d jardins, tous les trajets restent possibles %s" % [Village.gardens().size(), blocked_routes])
 	# 6h : tout le monde dort encore
 	# (sauf Jules le pêcheur, déjà au bord de l'étang à 6h)
 	_check(v.npcs.all(func(n: Npc) -> bool: return n.is_inside() or n.id == "jules"), "à 6h, les habitants sont chez eux")
