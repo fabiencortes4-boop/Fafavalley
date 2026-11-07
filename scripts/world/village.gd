@@ -117,7 +117,7 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 		return
 	match ch:
 		"P":
-			_add_sign(cell, "Tableau d'affichage", Events.calendar_text())
+			_interactables[cell] = "board"
 		"Q":
 			_add_sign(cell, "Panneau", "<- Vers la ferme")
 		"N":
@@ -283,7 +283,10 @@ func _on_day_started(day: int, season: int, year: int) -> void:
 func action_hint(cell: Vector2i) -> String:
 	if not fishing.busy() and npc_at(cell) != null:
 		var slot: Variant = Inventory.get_selected()
-		var gift: bool = slot != null and GameData.item(slot.id).get("type") in ["crop", "fish"]
+		var gift: bool = slot != null and GameData.item(slot.id).get("type") in ["crop", "fish", "forage", "animal", "food"]
+		var npc_id := npc_at(cell).id
+		if Quests.deliverable(npc_id) >= 0:
+			return "Livrer"
 		return "Offrir" if gift else "Parler"
 	return super(cell)
 
@@ -305,15 +308,7 @@ func act_on(cell: Vector2i) -> void:
 
 
 func _talk_to(npc: Npc) -> void:
-	npc.face(player.position)
-	var slot: Variant = Inventory.get_selected()
-	if slot != null and GameData.item(slot.id).get("type") in ["crop", "fish"]:
-		var result := Relations.give_gift(npc.id, slot.id)
-		if result.accepted:
-			Inventory.remove_from_slot(Inventory.selected, 1)
-		EventBus.dialogue_requested.emit(npc.id, result.text)
-	else:
-		EventBus.dialogue_requested.emit(npc.id, Relations.talk(npc.id))
+	talk_to_npc(npc)
 
 
 func _interact(kind: String, _cell: Vector2i) -> void:
@@ -322,6 +317,9 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 		return
 	if kind == "booth":
 		EventBus.booth_requested.emit()
+		return
+	if kind == "board":
+		EventBus.board_requested.emit()
 		return
 	var building := kind.trim_prefix("door:")
 	if building == "mine":
@@ -339,7 +337,16 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 			EventBus.message_requested.emit(InteriorMap.LAYOUTS[building].name, InteriorMap.closed_text(building))
 
 
+## L'entrée de la mine est-elle dégagée ? (Gaston, fin du chapitre 2)
+static func mine_open() -> bool:
+	# (les parties commencées avant l'éboulement gardent l'accès)
+	return PlayerState.flags.has("story_ch2") or PlayerState.flags.has("mine_kit")
+
+
 func _enter_mine() -> void:
+	if not mine_open():
+		EventBus.message_requested.emit("Un éboulement", "Des rochers bouchent l'entrée de la mine depuis l'éboulement d'il y a dix ans. Gaston dit qu'il la dégagera quand le village sera de nouveau uni (chapitre 2 de l'histoire).")
+		return
 	# Première visite : le coffre de Firmin, l'ancien fermier.
 	if not PlayerState.flags.has("mine_kit"):
 		if not Inventory.can_add("pickaxe") or not Inventory.can_add("rusty_sword", 1):

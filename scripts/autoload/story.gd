@@ -13,6 +13,10 @@ signal changed
 const COUNTERS := ["harvest", "cleared", "earned", "gifts", "monsters", "ores", "fish", "cooked", "shipped", "products"]
 
 var prologue: String = ""
+var arrival: Array = []  # scène d'arrivée à Valfleur (nouvelle partie)
+## Jouer la scène d'arrivée au début d'une nouvelle partie (désactivé
+## pour les tests automatiques).
+static var play_arrival: bool = true
 var chapters: Array = []
 var chapter: int = 0  # index du chapitre en cours (= nombre de chapitres terminés)
 var stats: Dictionary = {}  # compteur -> total depuis le début de la partie
@@ -27,6 +31,7 @@ func _ready() -> void:
 		if data is Dictionary:
 			prologue = str(data.get("prologue", ""))
 			chapters = data.get("chapters", [])
+			arrival = data.get("arrival", [])
 	# Une lettre par chapitre terminé, déposée par le courrier
 	for c: Dictionary in chapters:
 		Mail.letters["story_" + str(c.id)] = {

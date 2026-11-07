@@ -29,6 +29,10 @@ signal shop_opened(shop_id: String)
 signal animals_requested(building: String)
 signal zone_entered(name: String)
 ## Un chapitre de l'histoire est terminé (par la voie indiquée)
+## Une scène de cœur avec un habitant
+signal heart_scene_requested(npc_id: String, scene: Dictionary)
+## Le tableau des demandes (place du village)
+signal board_requested
 ## Le stand de la fête ou du marché, sur la place
 signal booth_requested
 signal story_advanced(chapter_id: String, path_label: String)

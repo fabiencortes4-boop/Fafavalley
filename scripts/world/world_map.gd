@@ -235,6 +235,19 @@ func _add_building(cell: Vector2i, size_cells: Vector2i, texture_path: String, d
 	return cell + Vector2i(door_column, size_cells.y - 1)
 
 
+## Rend une case infranchissable (collision comprise).
+func block_cell(cell: Vector2i) -> void:
+	_blocked[cell] = true
+	var body := StaticBody2D.new()
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(TILE, TILE) * 0.9
+	shape.shape = rect
+	shape.position = cell_center(cell)
+	body.add_child(shape)
+	add_child(body)
+
+
 func _add_sign(cell: Vector2i, title: String, text: String) -> void:
 	_interactables[cell] = "sign"
 	_signs[cell] = [title, text]
@@ -317,6 +330,7 @@ const KIND_HINTS := {
 	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
 	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
 	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
+	"board": "Demandes", "gate": "Voir", "log_gate": "Voir",
 }
 const TOOL_HINTS := {
 	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",
@@ -364,6 +378,31 @@ func _tool_hint(_cell: Vector2i) -> String:
 		"fertilizer":
 			return "Engrais"
 	return "Manger" if item.has("edible") else ""
+
+
+## Parler à un habitant : livrer une demande, scène de cœur, cadeau ou
+## discussion (dans cet ordre).
+func talk_to_npc(npc: Npc) -> void:
+	npc.face(player.position)
+	var id := npc.id
+	var qi := Quests.deliverable(id)
+	if qi >= 0:
+		var q := Quests.deliver(qi)
+		Sfx.play("coins")
+		EventBus.dialogue_requested.emit(id, "Oh, %d %s ! C'est exactement ce qu'il me fallait. Merci mille fois ! (+%d or)" % [int(q.qty), GameData.item_name(str(q.item)).to_lower(), int(q.gold)])
+		return
+	var scene := HeartEvents.pending(id)
+	if not scene.is_empty():
+		EventBus.heart_scene_requested.emit(id, scene)
+		return
+	var slot: Variant = Inventory.get_selected()
+	if slot != null and GameData.item(slot.id).get("type") in ["crop", "fish", "forage", "animal", "food"]:
+		var result := Relations.give_gift(id, slot.id)
+		if result.accepted:
+			Inventory.remove_from_slot(Inventory.selected, 1)
+		EventBus.dialogue_requested.emit(id, result.text)
+	else:
+		EventBus.dialogue_requested.emit(id, Relations.talk(id))
 
 
 func _is_farmland() -> bool:

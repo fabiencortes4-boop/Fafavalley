@@ -11,10 +11,12 @@ func _ready() -> void:
 	add_child(main)
 	await get_tree().process_frame
 	if "--title" not in args:
+		Story.play_arrival = "--arrival" in args
 		main.call("_start", false)
 		if "--debris" not in args:
 			FarmState.debris.clear()
-			main.call("current_map").call("_refresh_all")
+			if main.call("current_map") is Farm:
+				main.call("current_map").call("_refresh_all")
 		_setup_demo()
 		if "--notuto" in args:
 			Tutorial.skip()
@@ -94,6 +96,28 @@ func _ready() -> void:
 			if a.begins_with("--text="):
 				Settings.text_size = int(a.trim_prefix("--text="))
 				Settings.changed.emit()
+		if "--forest" in args:
+			main.call("_switch_to", "forest")
+			await get_tree().process_frame
+			for a in args:
+				if a.begins_with("--fat="):
+					var xy := a.trim_prefix("--fat=").split(",")
+					var fm: WorldMap = main.call("current_map")
+					fm.player.position = fm.cell_center(Vector2i(int(xy[0]), int(xy[1])))
+		if "--board" in args:
+			Quests.accept(0)
+			main.get("_hud").open_board()
+		if "--relations" in args:
+			for id: String in GameData.npcs:
+				Relations.met[id] = true
+				Relations.add_points(id, randi_range(0, 1500))
+			main.get("_hud").open_relations()
+		for a in args:
+			if a.begins_with("--heart="):
+				var who := a.trim_prefix("--heart=")
+				Relations.met[who] = true
+				Relations.add_points(who, 600)
+				EventBus.heart_scene_requested.emit(who, HeartEvents.pending(who))
 		if "--journal" in args:
 			main.get("_hud").open_story()
 		if "--recipes" in args:

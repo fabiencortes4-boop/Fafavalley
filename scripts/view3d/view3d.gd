@@ -452,6 +452,42 @@ func _build_props() -> void:
 				_put(_box(Vector3(0.6, 0.3, 0.6), Color(0.95, 0.85, 0.5)), c + Vector3(0, 0.68, 0))
 			"w":
 				_well(c)
+			"L":
+				# Tronc qui barre le chemin de la forêt (tant qu'il n'est pas dégagé)
+				if not PlayerState.flags.has("story_ch1") and chars.get(cell + Vector2i.LEFT, "") != "L":
+					var trunk := MeshInstance3D.new()
+					var cyl := CylinderMesh.new()
+					cyl.top_radius = 0.38
+					cyl.bottom_radius = 0.42
+					cyl.height = 2.6
+					cyl.material = _flat_material(Color(0.42, 0.28, 0.18))
+					trunk.mesh = cyl
+					trunk.rotation.z = PI / 2.0
+					_put(trunk, c + Vector3(0.5, 0.38, 0), 0.15)
+					_put(_fitted("nature", "plant_bushLarge", 0.8), c + Vector3(1.6, 0.3, -0.1))
+			"X":
+				# Mur de ronces (coupé au chapitre 4 : il reste des souches)
+				if ForestMap.brambles_cut():
+					if _hash(cell) % 3 == 0:
+						_place(batch, "nature", "stump_old", c, 1.2, rot)
+				else:
+					_place(batch, "nature", "plant_bushLarge", c, 2.6, rot)
+					_place(batch, "nature", "plant_bushLarge", c + Vector3(0.2, 0.3, 0.1), 1.8, rot + 1.0)
+			"S":
+				if chars.get(cell + Vector2i.LEFT, "") != "S" and chars.get(cell + Vector2i.UP, "") != "S":
+					_spring(Vector3(cell.x + 1.0, 0, cell.y + 1.0))
+			"j":
+				_place(batch, "nature", "campfire_stones", c, 1.4, 0.0)
+			"z":
+				# Tente de toile usée
+				var tent := MeshInstance3D.new()
+				var prism := PrismMesh.new()
+				prism.size = Vector3(1.1, 0.85, 1.3)
+				prism.material = _flat_material(Color(0.78, 0.7, 0.52))
+				tent.mesh = prism
+				_put(tent, c + Vector3(0, 0.42, 0), PI / 2.0)
+				_put(_box(Vector3(0.3, 0.5, 0.02), Color(0.2, 0.15, 0.1)), c + Vector3(0.66, 0.25, 0), PI / 2.0)
+				_put(_fitted("survival", "bedroll", 0.8), c + Vector3(0.6, 0, 0.6), 0.4)
 			"s":
 				if chars.get(cell + Vector2i.LEFT, "") != "s":
 					var stall := _fitted("town", "stall-green" if _hash(cell) % 2 == 0 else "stall-red", 2.0)
@@ -688,6 +724,11 @@ func _mine_entrance(cell: Vector2i, door_col: int) -> void:
 		_put(_fitted("nature", "rock_smallA", 0.6), Vector3(door_x + side * 0.75, 0, face_z + 0.4), side * 2.0)
 	# Galerie sombre
 	_put(_box(Vector3(1.5, 1.55, 0.3), Color(0.03, 0.025, 0.02)), Vector3(door_x, 0.78, face_z + 0.02))
+	if not Village.mine_open():
+		# Éboulement : des rochers bouchent la galerie
+		for k in 7:
+			var rock := _fitted("nature", "rock_largeA" if k < 3 else "rock_smallA", 0.75 if k < 3 else 0.45)
+			_put(rock, Vector3(door_x - 0.5 + float(k % 3) * 0.5, float(k / 3) * 0.35, face_z + 0.35 + float(k % 2) * 0.15), float(k))
 	# Charpente en bois : montants, linteau, contrefiches
 	var wood := Color(0.48, 0.31, 0.18)
 	for side: float in [-0.82, 0.82]:
@@ -750,6 +791,53 @@ func _mine_entrance(cell: Vector2i, door_col: int) -> void:
 		Models.tint(ore, [Color(1, 0.65, 0.45), Color(0.4, 0.38, 0.42), Color(0.7, 0.78, 0.95), Color(1, 0.88, 0.45)][k])
 		_put(ore, cart + Vector3(-0.15 + (k % 2) * 0.3, 0.55, -0.1 + (k / 2) * 0.2))
 	_put(_fitted("survival", "tool-pickaxe", 0.5), Vector3(door_x - 1.5, 0.05, face_z + 0.6), 0.6).rotation.z = PI / 2.0
+
+
+## Bassin de la source, dans la forêt : sec, puis jaillissant à la fin.
+func _spring(center: Vector3) -> void:
+	var ring := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.95
+	cyl.bottom_radius = 1.0
+	cyl.height = 0.35
+	cyl.material = _flat_material(Color(0.6, 0.6, 0.6))
+	ring.mesh = cyl
+	_put(ring, center + Vector3(0, 0.17, 0))
+	var inner := MeshInstance3D.new()
+	var disc := CylinderMesh.new()
+	disc.top_radius = 0.8
+	disc.bottom_radius = 0.8
+	disc.height = 0.02
+	var flows := ForestMap.spring_flows()
+	disc.material = _flat_material(Color(0.35, 0.65, 0.95) if flows else Color(0.45, 0.4, 0.35))
+	inner.mesh = disc
+	_put(inner, center + Vector3(0, 0.36, 0))
+	for k in 6:
+		var a := k * TAU / 6.0
+		_put(_fitted("nature", "rock_smallA", 0.35), center + Vector3(cos(a), 0, sin(a)) * 1.15, a)
+	if not flows:
+		return
+	var jet := CPUParticles3D.new()
+	var drop := SphereMesh.new()
+	drop.radius = 0.05
+	drop.height = 0.1
+	var mat := _flat_material(Color(0.65, 0.88, 1.0, 0.85))
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	drop.material = mat
+	jet.mesh = drop
+	jet.amount = 50
+	jet.lifetime = 1.1
+	jet.direction = Vector3.UP
+	jet.spread = 15.0
+	jet.initial_velocity_min = 2.4
+	jet.initial_velocity_max = 3.0
+	jet.gravity = Vector3(0, -6, 0)
+	_put(jet, center + Vector3(0, 0.4, 0))
+	var light := OmniLight3D.new()
+	light.light_color = Color(0.7, 0.9, 1.0)
+	light.omni_range = 3.0
+	light.light_energy = 0.8
+	_put(light, center + Vector3(0, 1.2, 0))
 
 
 ## Puits en pierre avec son petit toit.
@@ -1738,6 +1826,10 @@ func _update_light(_h: int, _m: int) -> void:
 	_sun.light_color = Color(1.0, 0.96, 0.88).lerp(Color(0.55, 0.6, 1.0), night)
 	_env.ambient_light_color = Color(0.62, 0.66, 0.78).lerp(Color(0.16, 0.2, 0.36), night)
 	_env.ambient_light_energy = 0.55
+	if map is ForestMap:
+		# Identité de la forêt : lumière verte, filtrée par les feuilles
+		_sun.light_energy *= 0.8
+		_env.ambient_light_color = Color(0.5, 0.68, 0.55).lerp(Color(0.12, 0.2, 0.2), night)
 	if map is Village:
 		# Identité du village : lumière dorée, chaleureuse
 		_sun.light_color = Color(1.0, 0.92, 0.78).lerp(Color(0.6, 0.55, 0.9), night)

@@ -7,10 +7,10 @@ extends WorldMap
 ## B coffre d'expédition, C poule, V vache, X boîte aux lettres.
 
 const MAP := [
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TTTTT..T.T..T...TTT......T..TTT.......TT",
-	"TTT........f.........R.......K...J....TT",
+	"TTTTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTT",
+	"TTTTTTTTTTTTTTTTTTTTTTTLLTTTTTTTTTTTTTTT",
+	"TTTTT..T.T..T...TTT....==T..TTT.......TT",
+	"TTT........f.........R.==....K...J....TT",
 	"TT....H.........o.....................TT",
 	"TTT........................Q..........TT",
 	"TT..X.....B.........'......==.........TT",
@@ -81,6 +81,11 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_spawn_cell = door + Vector2i.DOWN
 		"K", "J":
 			_place_plot("coop" if ch == "K" else "barn", cell)
+		"L":
+			# Un tronc barre le chemin de la forêt (dégagé au chapitre 1)
+			if not PlayerState.flags.has("story_ch1"):
+				block_cell(cell)
+				_interactables[cell] = "log_gate"
 		"B":
 			_add_building(cell, Vector2i(1, 1), "res://assets/sprites/shipping_bin.png")
 			_interactables[cell] = "bin"
@@ -123,6 +128,8 @@ func _after_build() -> void:
 
 
 func _warp_for(cell: Vector2i) -> Dictionary:
+	if cell.y <= 0:
+		return {"map": "forest", "cell": Vector2i(22, 23)}
 	if cell.x >= _map_size.x - 1:
 		return {"map": "village", "cell": Vector2i(2, 9 + clampi(cell.y, 9, 10) + 1)}
 	return {}
@@ -151,6 +158,8 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 			EventBus.map_change_requested.emit("home", Vector2i(6, 6))
 		"bin":
 			_ship_selected()
+		"log_gate":
+			EventBus.message_requested.emit("Un tronc énorme", "Un vieux chêne est tombé en travers du chemin de la forêt. Impossible de passer seul... Bertrand a promis de t'aider quand la ferme aura fait ses preuves (chapitre 1 de l'histoire).")
 		_:
 			var parts := kind.split(":")
 			if parts.size() == 2:

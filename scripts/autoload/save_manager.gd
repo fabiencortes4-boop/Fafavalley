@@ -32,6 +32,8 @@ func save_game() -> void:
 		"story": Story.to_dict(),
 		"events": Events.to_dict(),
 		"tutorial": Tutorial.to_dict(),
+		"quests": Quests.to_dict(),
+		"hearts_seen": HeartEvents.to_dict(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -63,6 +65,8 @@ func load_game() -> bool:
 	Story.from_dict(data.get("story", {}))
 	Events.from_dict(data.get("events", {}))
 	Tutorial.from_dict(data.get("tutorial", {}))
+	Quests.from_dict(data.get("quests", {}))
+	HeartEvents.from_dict(data.get("hearts_seen", {}))
 	return true
 
 

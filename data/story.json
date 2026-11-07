@@ -6,44 +6,106 @@
 			"title": "Le retour à la terre",
 			"giver": "bertrand",
 			"from": "Bertrand, maire de Valfleur",
-			"intro": "Bertrand doute qu'on puisse encore cultiver quoi que ce soit ici. Montre-lui que la ferme de Firmin peut revivre.",
+			"intro": "Bertrand doute qu'on puisse encore cultiver quoi que ce soit ici. Montre-lui que la ferme de Firmin peut revivre. Récompense : le chemin de la forêt, au nord de la ferme, sera dégagé.",
 			"paths": [
-				{"label": "Récolter des cultures", "stat": "harvest", "goal": 15},
-				{"label": "Défricher la ferme (herbes, branches, pierres)", "stat": "cleared", "goal": 40},
-				{"label": "Gagner de l'or en expédiant", "stat": "earned", "goal": 500}
+				{
+					"label": "Récolter des cultures",
+					"stat": "harvest",
+					"goal": 15
+				},
+				{
+					"label": "Défricher la ferme (herbes, branches, pierres)",
+					"stat": "cleared",
+					"goal": 40
+				},
+				{
+					"label": "Gagner de l'or en expédiant",
+					"stat": "earned",
+					"goal": 500
+				}
 			],
-			"letter": "Je dois l'admettre : ta ferme reprend vie ! Ça faisait des années que je n'avais pas vu de fumée sortir de la cheminée de Firmin. Firmin, justement... Il faisait de la confiture avec les baies sauvages et de l'engrais avec la gelée des grottes. Je t'ai recopié ses recettes. Prochaine étape : fais-toi connaître au village. Les gens ont perdu l'habitude de se parler.",
-			"items": [["gold", 250]],
-			"unlock_text": "Engrais, poisson grillé, confiture de baies"
+			"letter": "Je dois l'admettre : ta ferme reprend vie ! Pour te remercier, Mathis et moi avons scié le vieux chêne tombé au nord de ta ferme : le chemin de la Forêt de la source est ouvert ! Champignons, baies, bois, un lac poissonneux... et le vieux campement de Firmin. Firmin faisait aussi de la confiture et de l'engrais : je t'ai recopié ses recettes. Prochaine étape : fais-toi connaître au village.",
+			"items": [
+				[
+					"gold",
+					250
+				]
+			],
+			"unlock_text": "Forêt de la source (au nord de la ferme), engrais, poisson grillé, confiture",
+			"zone": "Forêt de la source"
 		},
 		{
 			"id": "ch2",
 			"title": "Les gens de Valfleur",
 			"giver": "rosalie",
 			"from": "Rosalie, l'épicière",
-			"intro": "Rosalie dit qu'un village, ce sont d'abord des voisins. Rencontre les habitants, rends-leur visite, gagne leur amitié.",
+			"intro": "Rosalie dit qu'un village, ce sont d'abord des voisins. Rencontre les habitants, aide-les grâce au tableau des demandes, gagne leur amitié. Récompense : Gaston dégagera l'entrée de la mine.",
 			"paths": [
-				{"label": "Rencontrer des habitants", "stat": "met", "goal": 8},
-				{"label": "Offrir des cadeaux", "stat": "gifts", "goal": 6},
-				{"label": "Devenir proche de quelqu'un (cœurs)", "stat": "hearts_max", "goal": 3}
+				{
+					"label": "Rencontrer des habitants",
+					"stat": "met",
+					"goal": 8
+				},
+				{
+					"label": "Offrir des cadeaux",
+					"stat": "gifts",
+					"goal": 6
+				},
+				{
+					"label": "Répondre aux demandes du tableau (place du village)",
+					"stat": "quests",
+					"goal": 3
+				},
+				{
+					"label": "Devenir proche de quelqu'un (cœurs)",
+					"stat": "hearts_max",
+					"goal": 3
+				}
 			],
-			"letter": "Tout le monde parle de toi à l'épicerie ! Odette m'a raconté une chose que j'ignorais : la source ne s'est pas tarie toute seule. Le jour de l'éboulement, au fond de la mine, l'eau s'est arrêtée de couler. Firmin y est descendu des semaines entières... Gaston en sait plus, mais il faut lui prouver que tu tiens la pioche. En attendant, voici les recettes de salade et d'omelette de ma grand-mère.",
-			"items": [["seed_carrot", 10]],
-			"unlock_text": "Salade, omelette"
+			"letter": "Tout le monde parle de toi à l'épicerie ! Et j'ai une grande nouvelle : Gaston, Mathis et Léon ont passé la nuit à dégager l'éboulement. La mine est rouverte ! Odette m'a raconté que le jour de l'éboulement, au fond de la mine, l'eau s'est arrêtée de couler. Firmin y est descendu des semaines entières... Va voir Gaston. En attendant, voici les recettes de salade et d'omelette de ma grand-mère.",
+			"items": [
+				[
+					"seed_carrot",
+					10
+				]
+			],
+			"unlock_text": "La mine, salade, omelette",
+			"zone": "La mine"
 		},
 		{
 			"id": "ch3",
 			"title": "Le cœur de la montagne",
 			"giver": "gaston",
 			"from": "Gaston, le forgeron",
-			"intro": "Gaston pense que l'éboulement qui a bouché la source est très profond. Descends dans la mine : creuse, combats, rapporte du minerai.",
+			"intro": "Gaston pense que l'éboulement qui a bouché la source est très profond. Descends dans la mine : creuse, combats, rapporte du minerai. Des ascenseurs t'attendent tous les 5 étages.",
 			"paths": [
-				{"label": "Atteindre un niveau de la mine", "stat": "mine_depth", "goal": 5},
-				{"label": "Vaincre des monstres", "stat": "monsters", "goal": 15},
-				{"label": "Extraire du minerai", "stat": "ores", "goal": 25}
+				{
+					"label": "Atteindre un niveau de la mine",
+					"stat": "mine_depth",
+					"goal": 5
+				},
+				{
+					"label": "Vaincre des monstres",
+					"stat": "monsters",
+					"goal": 15
+				},
+				{
+					"label": "Extraire du minerai",
+					"stat": "ores",
+					"goal": 25
+				}
 			],
 			"letter": "Hm. Bon travail là-dessous. Au niveau 5, j'ai retrouvé un vieux carnet de Firmin. Il avait compris : la source passe sous la mine, et l'éboulement a coupé son chemin. Il voulait creuser, mais il était seul. Toi, tu ne l'es pas. Mon enclume peut maintenant améliorer ton arrosoir et ton épée. Et voici les plans de son arroseur.",
-			"items": [["copper_ore", 5], ["iron_ore", 2]],
+			"items": [
+				[
+					"copper_ore",
+					5
+				],
+				[
+					"iron_ore",
+					2
+				]
+			],
 			"unlock_text": "Arroseur, ragoût du mineur, arrosoir en cuivre, épée en fer"
 		},
 		{
@@ -51,15 +113,37 @@
 			"title": "La ferme vivante",
 			"giver": "leon",
 			"from": "Léon, l'éleveur",
-			"intro": "Le carnet de Firmin le dit : « Une vraie ferme nourrit tout un village. » Léon et Mathis veulent voir ta ferme grandir, d'une façon ou d'une autre.",
+			"intro": "Le carnet de Firmin le dit : « Une vraie ferme nourrit tout un village. » Léon et Mathis veulent voir ta ferme grandir. Récompense : Mathis coupera les ronces qui cachent la source, dans la forêt.",
 			"paths": [
-				{"label": "Faire construire un bâtiment d'élevage", "stat": "buildings", "goal": 1},
-				{"label": "Pêcher des poissons", "stat": "fish", "goal": 10},
-				{"label": "Cuisiner des plats", "stat": "cooked", "goal": 6}
+				{
+					"label": "Faire construire un bâtiment d'élevage",
+					"stat": "buildings",
+					"goal": 1
+				},
+				{
+					"label": "Pêcher des poissons",
+					"stat": "fish",
+					"goal": 10
+				},
+				{
+					"label": "Cuisiner des plats",
+					"stat": "cooked",
+					"goal": 6
+				}
 			],
-			"letter": "Ta ferme ressemble à celle de Firmin dans le temps : ça grouille de vie ! Il affinait son propre fromage, tu sais. Je t'envoie sa méthode, et Gaston dit que tu mérites sa pioche en acier. Il ne reste qu'une chose : Bertrand rêve de relancer la Fête des fleurs. Pour ça, il faut que tout Valfleur y croie.",
-			"items": [["hay", 10], ["gold", 500]],
-			"unlock_text": "Arroseur de qualité, fromage, pioche en acier"
+			"letter": "Ta ferme ressemble à celle de Firmin dans le temps : ça grouille de vie ! Mathis a sorti sa grande cisaille et a coupé les ronces du nord de la forêt : la source est derrière ! Elle est encore sèche... Il faut libérer l'eau, au fond de la mine. Je t'envoie aussi la méthode de Firmin pour le fromage, et Gaston dit que tu mérites sa pioche en acier.",
+			"items": [
+				[
+					"hay",
+					10
+				],
+				[
+					"gold",
+					500
+				]
+			],
+			"unlock_text": "Le cœur de la forêt et la source, arroseur de qualité, fromage, pioche en acier",
+			"zone": "La source"
 		},
 		{
 			"id": "ch5",
@@ -68,13 +152,60 @@
 			"from": "Bertrand, maire de Valfleur",
 			"intro": "Dernière étape : faire revenir la source et la fête. Remplis les étals du village, gagne le cœur de tout le monde, ou va déboucher la source au plus profond de la mine.",
 			"paths": [
-				{"label": "Expédier des produits", "stat": "shipped", "goal": 150},
-				{"label": "Cœurs d'amitié, tous habitants confondus", "stat": "hearts_sum", "goal": 20},
-				{"label": "Descendre au fond de la mine", "stat": "mine_depth", "goal": 15}
+				{
+					"label": "Expédier des produits",
+					"stat": "shipped",
+					"goal": 150
+				},
+				{
+					"label": "Cœurs d'amitié, tous habitants confondus",
+					"stat": "hearts_sum",
+					"goal": 20
+				},
+				{
+					"label": "Descendre au fond de la mine",
+					"stat": "mine_depth",
+					"goal": 15
+				}
 			],
-			"letter": "L'eau coule de nouveau dans la fontaine ! Tout Valfleur est sur la place, il y a des fleurs partout, et Rosalie a ressorti les guirlandes. La Fête des fleurs est de retour, grâce à toi. Ce matin, une lettre est arrivée pour toi à la mairie. Elle est signée... Firmin. « Merci d'avoir rendu ses couleurs à la vallée. La ferme est entre de bonnes mains. »",
-			"items": [["gold", 3000]],
-			"unlock_text": "Valfleur en fête !"
+			"letter": "L'eau jaillit de nouveau, dans la forêt comme sur la place ! Tout Valfleur est sur la place, il y a des fleurs partout, et Rosalie a ressorti les guirlandes. La Fête des fleurs est de retour, grâce à toi. Ce matin, une lettre est arrivée pour toi à la mairie. Elle est signée... Firmin. « Merci d'avoir rendu ses couleurs à la vallée. La ferme est entre de bonnes mains. »",
+			"items": [
+				[
+					"gold",
+					3000
+				]
+			],
+			"unlock_text": "La source et la fontaine coulent, Valfleur en fête !"
 		}
+	],
+	"arrival": [
+		[
+			"",
+			"La charrette s'arrête à l'entrée de Valfleur. Un petit village endormi au pied de la montagne, une place pavée, une fontaine... à sec."
+		],
+		[
+			"bertrand",
+			"Te voilà enfin ! Bertrand, maire de Valfleur. Bienvenue chez toi !"
+		],
+		[
+			"bertrand",
+			"Tu vois cette fontaine ? Il y a dix ans, elle chantait jour et nuit. Puis il y a eu l'éboulement dans la mine, et la source s'est tue."
+		],
+		[
+			"bertrand",
+			"Sans l'eau, plus de Fête des fleurs, plus de marché... Les gens sont partis. Le vieux Firmin a fini par fermer sa ferme."
+		],
+		[
+			"rosalie",
+			"Bertrand, laisse-lui le temps de poser ses valises ! Bonjour, moi c'est Rosalie, l'épicière. On compte tous sur toi, tu sais."
+		],
+		[
+			"bertrand",
+			"La ferme de Firmin est à l'ouest, au bout du chemin. Elle est à toi maintenant. Un tronc bloque la forêt au nord et la mine est encore éboulée... mais chaque chose en son temps !"
+		],
+		[
+			"",
+			"Ton aventure commence. Le bouton « Histoire » te rappellera toujours ce que la vallée attend de toi."
+		]
 	]
 }

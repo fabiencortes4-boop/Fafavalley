@@ -75,7 +75,10 @@ func give_gift(id: String, item_id: String) -> Dictionary:
 	var t := taste(id, item_id)
 	gifted_today[id] = true
 	met[id] = true
-	add_points(id, GIFT_POINTS[t])
+	var birthday := HeartEvents.is_birthday(id)
+	add_points(id, GIFT_POINTS[t] * (HeartEvents.BIRTHDAY_FACTOR if birthday and GIFT_POINTS[t] > 0 else 1))
+	if birthday:
+		return {"accepted": true, "taste": t, "text": "Pour mon anniversaire ? Oh, tu y as pensé ! " + str(lines.get("gift_" + t, "Merci."))}
 	Story.bump("gifts")
 	return {"accepted": true, "taste": t, "text": str(lines.get("gift_" + t, "Merci."))}
 

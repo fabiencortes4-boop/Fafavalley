@@ -14,6 +14,7 @@ func _ready() -> void:
 	_main.call("_start", false)
 	await get_tree().process_frame
 	var hud: Hud = _main.get("_hud")
+	PlayerState.flags["story_ch2"] = true  # l'entrée de la mine est dégagée
 	await _go("village", Vector2i(30, 4))
 	var village: Village = _main.call("current_map")
 	village.player.facing = Vector2i.UP

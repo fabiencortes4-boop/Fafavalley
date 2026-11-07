@@ -57,6 +57,17 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Scénario détaillé** : scène d'arrivée sur la place de Valfleur (Bertrand et Rosalie),
+  puis des objectifs qui **débloquent de nouvelles zones** : la **Forêt de la source** au
+  nord de la ferme (tronc dégagé au chapitre 1 : cueillette, lac, campement de Firmin),
+  la **mine** (éboulement dégagé au chapitre 2), la **source** derrière les ronces
+  (chapitre 4), qui jaillit de nouveau à la fin de l'histoire.
+- **Tableau des demandes** (panneau de la place) : 3 demandes d'habitants par jour ; on
+  en accepte jusqu'à 3, on livre en parlant à l'habitant, contre de l'or et de l'amitié.
+  Elles comptent aussi pour l'histoire (chapitre 2).
+- **Scènes de cœur** : 2 scènes par habitant (à 2 et 5 cœurs), avec un choix de réponse
+  qui compte. **Anniversaires** : un cadeau ce jour-là vaut 5 fois plus (dates dans
+  Menu → Habitants).
 - **Mine** : une vraie entrée au village (colline rocheuse, galerie, charpente, rails,
   wagonnet, lanternes). On change d'étage en **marchant sur les escaliers** : ceux qui
   descendent s'enfoncent dans le sol (cachés sous un rocher), ceux qui montent sortent
@@ -202,6 +213,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
 godot --headless res://tests/story_test.tscn      # histoire : chapitres, voies, déblocages, lettres

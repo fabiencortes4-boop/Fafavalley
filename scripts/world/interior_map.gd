@@ -250,7 +250,10 @@ func _spawn_residents() -> void:
 func action_hint(cell: Vector2i) -> String:
 	if not fishing.busy() and npc_at(cell) != null:
 		var slot: Variant = Inventory.get_selected()
-		var gift: bool = slot != null and GameData.item(slot.id).get("type") in ["crop", "fish"]
+		var gift: bool = slot != null and GameData.item(slot.id).get("type") in ["crop", "fish", "forage", "animal", "food"]
+		var npc_id := npc_at(cell).id
+		if Quests.deliverable(npc_id) >= 0:
+			return "Livrer"
 		return "Offrir" if gift else "Parler"
 	return super(cell)
 
@@ -275,15 +278,7 @@ func act_on(cell: Vector2i) -> void:
 
 
 func _talk_to(npc: Npc) -> void:
-	npc.face(player.position)
-	var slot: Variant = Inventory.get_selected()
-	if slot != null and GameData.item(slot.id).get("type") in ["crop", "fish"]:
-		var result := Relations.give_gift(npc.id, slot.id)
-		if result.accepted:
-			Inventory.remove_from_slot(Inventory.selected, 1)
-		EventBus.dialogue_requested.emit(npc.id, result.text)
-	else:
-		EventBus.dialogue_requested.emit(npc.id, Relations.talk(npc.id))
+	talk_to_npc(npc)
 
 
 func _interact(kind: String, _cell: Vector2i) -> void:

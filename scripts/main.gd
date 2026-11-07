@@ -87,6 +87,10 @@ func _start(load_save: bool) -> void:
 	Settings.view_changed.connect(_apply_view)
 	TimeManager.day_started.connect(_on_day_started)
 	GameFlow.begin()
+	if not PlayerState.flags.has("arrived"):
+		PlayerState.flags["arrived"] = true
+		if Story.play_arrival and DisplayServer.get_name() != "headless":
+			_play_arrival()
 
 
 func current_map() -> WorldMap:
@@ -107,6 +111,8 @@ func _load_map(map_id: String) -> void:
 		_world = Village.new()
 	elif map_id == "home":
 		_world = HomeMap.new()
+	elif map_id == "forest":
+		_world = ForestMap.new()
 	elif map_id.begins_with("in:"):
 		var inside := InteriorMap.new()
 		inside.setup(map_id.trim_prefix("in:"))
@@ -156,12 +162,25 @@ func _switch_to(map_id: String) -> void:
 	_announce(map_id, previous)
 
 
+## Nouvelle partie : arrivée sur la place de Valfleur, accueil par le maire,
+## puis direction la ferme.
+func _play_arrival() -> void:
+	_arrival = Vector2(29 * 16 + 8, 29 * 16 + 12)  # sur la place, devant la fontaine
+	_switch_to("village")
+	await get_tree().create_timer(0.6).timeout
+	_hud.play_scene("Arrivée à Valfleur", Story.arrival, {}, Callable(), func() -> void:
+		_arrival = Vector2(7 * 16 + 8, 7 * 16 + 12)  # devant la maison de la ferme
+		_switch_to("farm"))
+
+
 ## Carte de titre + ambiance sonore à chaque changement de lieu : chaque
 ## lieu a son identité (couleur, sous-titre, bruitage).
 func _announce(map_id: String, previous: String) -> void:
 	var seasons := ["Printemps", "Été", "Automne", "Hiver"]
 	if map_id == "home":
 		_hud.title_card("Chez toi", "La maison de Firmin", Color(1, 0.82, 0.6))
+	elif map_id == "forest":
+		_hud.title_card("Forêt de la source", "Au nord de la ferme", Color(0.6, 0.95, 0.7))
 	elif map_id == "farm":
 		_hud.title_card("La ferme", "%s, jour %d" % [seasons[TimeManager.season % 4], TimeManager.day], Color(0.75, 1, 0.65))
 	elif map_id == "village" and not previous.begins_with("in:"):

@@ -1,0 +1,147 @@
+extends Node
+## Tableau des demandes (panneau de la place) : chaque jour, quelques
+## habitants demandent un objet. On accepte une demande (3 au plus), on
+## apporte l'objet à l'habitant en lui parlant : or et amitié en récompense.
+
+signal changed
+
+const MAX_ACTIVE := 3
+const OFFERS_PER_DAY := 3
+
+var active: Array = []  # [{"npc", "item", "qty", "gold", "points", "days_left", "text"}]
+var taken_today: Dictionary = {}  # index d'offre -> true
+var completed: int = 0
+
+const LINES := [
+	"J'aurais besoin de %s pour %s.",
+	"Quelqu'un aurait %s ? C'est pour %s.",
+	"Je cherche %s, pour %s. Merci d'avance !",
+]
+const REASONS := {
+	"rosalie": ["remplir mes étagères", "une recette de grand-mère"],
+	"gaston": ["un essai à la forge", "mon déjeuner"],
+	"odette": ["une tarte pour Théo", "mon herbier"],
+	"lina": ["un tableau de nature morte", "trouver la bonne couleur"],
+	"bertrand": ["le banquet de la mairie", "la vitrine de la mairie"],
+	"mathis": ["un nouveau meuble", "nourrir l'équipe du chantier"],
+	"margot": ["les clients de la coopérative", "un échange avec la ville"],
+	"leon": ["mes bêtes", "un concours d'éleveurs"],
+	"theo": ["mon goûter", "ma collection secrète"],
+	"jules": ["un appât spécial", "mon dîner au bord de l'eau"],
+}
+
+
+func reset() -> void:
+	active.clear()
+	taken_today.clear()
+	completed = 0
+	changed.emit()
+
+
+## Objets que l'on peut demander en ce moment (de saison, accessibles).
+func _pool() -> Array:
+	var pool: Array = []
+	for crop: String in GameData.crops:
+		if GameData.crop_in_season(crop, TimeManager.season):
+			pool.append([str(GameData.crop(crop).get("harvest", crop)), 3, 6])
+	for id: String in GameData.items:
+		var item := GameData.item(id)
+		match str(item.get("type", "")):
+			"forage":
+				if GameData.items[id].get("seasons", [TimeManager.season]).has(float(TimeManager.season)) or not item.has("seasons"):
+					pool.append([id, 1, 3])
+			"fish":
+				if id in ["roach", "carp", "perch", "trout"]:
+					pool.append([id, 1, 2])
+	pool.append(["wood", 20, 40])
+	pool.append(["stone", 15, 30])
+	if PlayerState.flags.has("mine_kit"):
+		pool.append(["copper_ore", 5, 10])
+		pool.append(["coal", 3, 6])
+	if not Animals.animals.is_empty():
+		pool.append(["egg", 2, 4])
+	return pool
+
+
+## Les demandes affichées aujourd'hui (les mêmes toute la journée).
+func offers() -> Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["demandes", TimeManager.year, TimeManager.season, TimeManager.day])
+	var pool := _pool()
+	var npcs: Array = GameData.npcs.keys()
+	var out: Array = []
+	for i in OFFERS_PER_DAY:
+		var pick: Array = pool[rng.randi() % pool.size()]
+		var npc: String = npcs[rng.randi() % npcs.size()]
+		var qty := rng.randi_range(int(pick[1]), int(pick[2]))
+		var item := str(pick[0])
+		var value := maxi(10, int(GameData.item(item).get("sell", 10)))
+		var reasons: Array = REASONS.get(npc, ["me rendre service"])
+		var what := "%d %s" % [qty, GameData.item_name(item).to_lower()]
+		out.append({
+			"npc": npc, "item": item, "qty": qty,
+			"gold": int(value * qty * 1.3 + 40), "points": 120,
+			"days_left": 3,
+			"text": LINES[rng.randi() % LINES.size()] % [what, reasons[rng.randi() % reasons.size()]],
+		})
+	return out
+
+
+func can_accept(index: int) -> bool:
+	return active.size() < MAX_ACTIVE and not taken_today.has(index)
+
+
+func accept(index: int) -> bool:
+	if not can_accept(index):
+		return false
+	var q: Dictionary = offers()[index].duplicate()
+	active.append(q)
+	taken_today[index] = true
+	changed.emit()
+	return true
+
+
+## Demande en cours pour cet habitant, que l'on peut livrer maintenant.
+func deliverable(npc_id: String) -> int:
+	for i in active.size():
+		var q: Dictionary = active[i]
+		if q.npc == npc_id and Inventory.count_of(str(q.item)) >= int(q.qty):
+			return i
+	return -1
+
+
+## Livre la demande : retire les objets, donne la récompense.
+func deliver(index: int) -> Dictionary:
+	var q: Dictionary = active[index]
+	Inventory.remove_item(str(q.item), int(q.qty))
+	Inventory.add_gold(int(q.gold))
+	Relations.add_points(str(q.npc), int(q.points))
+	active.remove_at(index)
+	completed += 1
+	Story.bump("quests")
+	changed.emit()
+	return q
+
+
+func new_day() -> void:
+	taken_today.clear()
+	for q: Dictionary in active.duplicate():
+		q.days_left = int(q.days_left) - 1
+		if int(q.days_left) <= 0:
+			active.erase(q)
+	changed.emit()
+
+
+func to_dict() -> Dictionary:
+	return {"active": active.duplicate(true), "taken": taken_today.keys(), "completed": completed}
+
+
+func from_dict(data: Dictionary) -> void:
+	reset()
+	for q: Variant in data.get("active", []):
+		if q is Dictionary:
+			active.append(q)
+	for k: Variant in data.get("taken", []):
+		taken_today[int(k)] = true
+	completed = int(data.get("completed", 0))
+	changed.emit()

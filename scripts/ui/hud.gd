@@ -110,11 +110,16 @@ func _ready() -> void:
 	EventBus.zone_entered.connect(_on_zone_entered)
 	EventBus.story_advanced.connect(_on_story_advanced)
 	EventBus.booth_requested.connect(open_booth)
+	EventBus.board_requested.connect(open_board)
+	EventBus.heart_scene_requested.connect(_on_heart_scene)
 	_build_tutorial()
 	TimeManager.day_started.connect(func(_d: int, _s: int, _y: int) -> void:
 		var fest := Events.festival_today()
+		var bday := HeartEvents.birthday_today()
 		if not fest.is_empty():
-			show_toast("Aujourd'hui : %s au village, de %dh à %dh !" % [fest.name, int(fest.start), int(fest.end)]))
+			show_toast("Aujourd'hui : %s au village, de %dh à %dh !" % [fest.name, int(fest.start), int(fest.end)])
+		elif bday != "":
+			show_toast("C'est l'anniversaire de %s aujourd'hui ! Un cadeau lui ferait plaisir." % GameData.npc(bday).name))
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
 			show_toast("%s : %s" % [GameData.npc(npc_id).get("name", ""), text]))
@@ -550,6 +555,7 @@ func open_pause_menu() -> void:
 	_add_button(box, "Fabrication", open_crafting.bind("craft"))
 	_add_button(box, "Compétences", open_skills)
 	_add_button(box, "Habitants", open_relations)
+	_add_button(box, "Demandes", open_requests)
 	_add_button(box, "Carnet de pêche", open_fish_log)
 	_add_button(box, "Réglages", open_settings)
 	_add_button(box, "Sauvegarder", func() -> void:
@@ -1066,21 +1072,40 @@ func _hearts_row(count: int) -> HBoxContainer:
 
 func open_relations() -> void:
 	var box := _open_modal("Habitants de Valfleur")
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(360, 170)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 4)
+	scroll.add_child(list)
 	for id: String in GameData.npcs:
 		var data := GameData.npc(id)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
-		box.add_child(row)
+		list.add_child(row)
 		var face := TextureRect.new()
 		face.texture = GameData.npc_texture(id)
 		face.custom_minimum_size = Vector2(16, 16)
 		row.add_child(face)
-		var label := Label.new()
 		var known := Relations.met.has(id)
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override("separation", 0)
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(col)
+		var label := Label.new()
 		label.text = "%s, %s" % [data.name, data.get("title", "")] if known else "???"
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.custom_minimum_size = Vector2(110, 0)
-		row.add_child(label)
+		col.add_child(label)
+		if known:
+			var extra := Label.new()
+			var scenes: Array = HeartEvents.events.get(id, [])
+			extra.text = "Anniversaire : %s  -  Souvenirs : %d/%d" % [HeartEvents.birthday_text(id), HeartEvents.count_seen(id), scenes.size()]
+			if HeartEvents.is_birthday(id):
+				extra.text = "C'est son anniversaire aujourd'hui !"
+			extra.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+			extra.add_theme_font_size_override("font_size", maxi(8, Settings.font_size() - 2))
+			col.add_child(extra)
 		var info := VBoxContainer.new()
 		info.add_theme_constant_override("separation", 0)
 		row.add_child(info)
@@ -1090,6 +1115,171 @@ func open_relations() -> void:
 		status.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
 		info.add_child(status)
 	_add_button(box, "Retour", open_pause_menu)
+
+
+# ------------------------------------------------------------ scènes
+## Petite scène : une suite de répliques (portrait, nom, texte), puis
+## éventuellement un choix. lines : [[id de l'habitant ou "", texte], ...]
+func play_scene(title: String, lines: Array, choice: Dictionary = {}, on_choice: Callable = Callable(), on_done: Callable = Callable()) -> void:
+	_scene_step(title, lines, 0, choice, on_choice, on_done)
+
+
+func _scene_step(title: String, lines: Array, index: int, choice: Dictionary, on_choice: Callable, on_done: Callable) -> void:
+	if index >= lines.size():
+		if choice.is_empty():
+			close_modal()
+			if on_done.is_valid():
+				on_done.call()
+			return
+		var box := _open_modal(title, false)
+		_add_label(box, str(choice.get("prompt", "Ta réponse :")))
+		var options: Array = choice.get("options", [])
+		for k in options.size():
+			var opt: Array = options[k]
+			_add_button(box, str(opt[0]), func() -> void:
+				var reply := str(on_choice.call(k)) if on_choice.is_valid() else ""
+				if reply != "":
+					var speaker: String = str(lines[lines.size() - 1][0])
+					_scene_step(title, [[speaker, reply]], 0, {}, Callable(), on_done)
+				else:
+					close_modal()
+					if on_done.is_valid():
+						on_done.call())
+		return
+	var entry: Array = lines[index]
+	var who := str(entry[0])
+	var box := _open_modal(title, false)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	box.add_child(row)
+	if who != "":
+		var frame := PanelContainer.new()
+		frame.add_theme_stylebox_override("panel", UiTheme.box("ui_slot_selected", 4, 4))
+		frame.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		row.add_child(frame)
+		var face := TextureRect.new()
+		face.texture = GameData.npc_texture(who)
+		face.custom_minimum_size = Vector2(40, 40)
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		frame.add_child(face)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.custom_minimum_size = Vector2(280, 0)
+	row.add_child(col)
+	if who != "":
+		var name_label := Label.new()
+		name_label.text = str(GameData.npc(who).get("name", who))
+		name_label.add_theme_color_override("font_color", UiTheme.ACCENT)
+		col.add_child(name_label)
+	var text := _add_label(col, str(entry[1]))
+	if who == "":
+		text.add_theme_color_override("font_color", Color(0.85, 0.82, 0.75))  # narration
+	text.visible_ratio = 0.0
+	create_tween().tween_property(text, "visible_ratio", 1.0, clampf(str(entry[1]).length() * 0.015, 0.2, 1.8))
+	_add_button(box, "Suivant  >" if index < lines.size() - 1 or not choice.is_empty() else "Fermer", func() -> void:
+		if text.visible_ratio < 1.0:
+			text.visible_ratio = 1.0
+		else:
+			Sfx.play("page")
+			_scene_step(title, lines, index + 1, choice, on_choice, on_done))
+
+
+func _on_heart_scene(npc_id: String, scene: Dictionary) -> void:
+	var lines: Array = []
+	var raw: Array = scene.get("lines", [])
+	for k in raw.size():
+		# La première ligne décrit la scène ; les suivantes sont des répliques
+		lines.append(["" if k == 0 else npc_id, str(raw[k])])
+	title_card("Souvenir", str(scene.get("title", "")), Color(1, 0.7, 0.8))
+	Sfx.play("levelup")
+	play_scene(str(scene.get("title", "")), lines, scene.get("choice", {}), func(option: int) -> String:
+		return HeartEvents.choose(npc_id, scene, option))
+
+
+# ------------------------------------------------------------ tableau des demandes
+func open_board() -> void:
+	var box := _open_modal("Tableau des demandes")
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(380, 170)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 5)
+	scroll.add_child(list)
+	var offers := Quests.offers()
+	for i in offers.size():
+		var q: Dictionary = offers[i]
+		var row := _quest_row(q, false)
+		var accept := Button.new()
+		accept.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		accept.text = "Prise" if Quests.taken_today.has(i) else "Accepter"
+		accept.disabled = not Quests.can_accept(i)
+		accept.pressed.connect(func() -> void:
+			if Quests.accept(i):
+				Sfx.play("page")
+				show_toast("Demande acceptée : apporte-la à %s." % GameData.npc(str(q.npc)).name)
+				open_board())
+		row.add_child(accept)
+		list.add_child(row)
+	_requests_section(list)
+	var cal := _add_label(list, Events.calendar_text())
+	cal.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+	var bday := HeartEvents.birthday_today()
+	if bday != "":
+		_add_label(list, "Aujourd'hui, c'est l'anniversaire de %s !" % GameData.npc(bday).name)
+	_add_button(box, "Fermer", close_modal)
+
+
+## Demandes en cours (aussi dans le menu).
+func open_requests() -> void:
+	var box := _open_modal("Mes demandes")
+	_requests_section(box)
+	if Quests.active.is_empty():
+		_add_label(box, "Aucune demande en cours. Le tableau des demandes est sur la place du village, près de la mairie.")
+	_add_button(box, "Retour", open_pause_menu)
+
+
+func _requests_section(list: Container) -> void:
+	if Quests.active.is_empty():
+		return
+	var header := _add_label(list, "En cours (%d/%d) - parle à l'habitant pour livrer :" % [Quests.active.size(), Quests.MAX_ACTIVE])
+	header.add_theme_color_override("font_color", UiTheme.ACCENT)
+	for q: Dictionary in Quests.active:
+		list.add_child(_quest_row(q, true))
+
+
+func _quest_row(q: Dictionary, progress: bool) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var face := TextureRect.new()
+	face.texture = GameData.npc_texture(str(q.npc))
+	face.custom_minimum_size = Vector2(16, 16)
+	face.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(face)
+	var icon := TextureRect.new()
+	icon.texture = GameData.item_icon(str(q.item))
+	icon.custom_minimum_size = Vector2(16, 16)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(icon)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(col)
+	var text := Label.new()
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.text = "%s : « %s »" % [GameData.npc(str(q.npc)).name, q.text]
+	col.add_child(text)
+	var reward := Label.new()
+	var have := Inventory.count_of(str(q.item))
+	reward.text = "Récompense : %d or et de l'amitié" % int(q.gold)
+	if progress:
+		reward.text = "%d/%d  -  %d or  -  encore %d jour(s)" % [mini(have, int(q.qty)), int(q.qty), int(q.gold), int(q.days_left)]
+		reward.add_theme_color_override("font_color", INGREDIENT_OK if have >= int(q.qty) else Color(0.85, 0.8, 0.7))
+	else:
+		reward.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+	col.add_child(reward)
+	return row
 
 
 ## Fondu au noir qui s'efface (changement de carte).

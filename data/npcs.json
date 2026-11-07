@@ -80,7 +80,11 @@
 			"gift_disliked": "Oh... ce n'est vraiment pas mon truc, désolée.",
 			"gift_again": "Tu m'as déjà fait un cadeau aujourd'hui. Garde-le pour demain !"
 		},
-		"shop": "store"
+		"shop": "store",
+		"birthday": [
+			0,
+			5
+		]
 	},
 	"gaston": {
 		"name": "Gaston",
@@ -168,7 +172,11 @@
 			"gift_disliked": "Non. Juste... non.",
 			"gift_again": "Un cadeau par jour, ça suffit. Hm."
 		},
-		"shop": "forge"
+		"shop": "forge",
+		"birthday": [
+			2,
+			22
+		]
 	},
 	"odette": {
 		"name": "Odette",
@@ -255,7 +263,11 @@
 			"gift_neutral": "Merci, mon trésor. C'est l'intention qui compte.",
 			"gift_disliked": "Hum... merci quand même.",
 			"gift_again": "Tu me gâtes ! Un cadeau par jour, c'est déjà beaucoup."
-		}
+		},
+		"birthday": [
+			0,
+			20
+		]
 	},
 	"lina": {
 		"name": "Lina",
@@ -344,7 +356,11 @@
 			"gift_neutral": "Merci ! Je trouverai bien à le dessiner.",
 			"gift_disliked": "Hum... ça ne m'inspire pas du tout, désolée.",
 			"gift_again": "Encore ? Tu me gâtes ! Garde ça pour demain."
-		}
+		},
+		"birthday": [
+			1,
+			9
+		]
 	},
 	"bertrand": {
 		"name": "Bertrand",
@@ -431,7 +447,11 @@
 			"gift_neutral": "Merci, c'est fort aimable.",
 			"gift_disliked": "Hum... merci, je suppose.",
 			"gift_again": "Doucement, doucement ! Un cadeau par jour suffit amplement."
-		}
+		},
+		"birthday": [
+			3,
+			14
+		]
 	},
 	"mathis": {
 		"name": "Mathis",
@@ -517,7 +537,11 @@
 			"gift_neutral": "Ah, merci.",
 			"gift_disliked": "Euh... ça colle aux doigts, ce truc.",
 			"gift_again": "Un cadeau par jour, ça suffit largement !"
-		}
+		},
+		"birthday": [
+			1,
+			25
+		]
 	},
 	"margot": {
 		"name": "Margot",
@@ -595,7 +619,11 @@
 			"gift_neutral": "Merci !",
 			"gift_disliked": "Hum... je ne sais pas trop quoi en faire.",
 			"gift_again": "Tu m'as déjà gâtée aujourd'hui !"
-		}
+		},
+		"birthday": [
+			2,
+			8
+		]
 	},
 	"leon": {
 		"name": "Léon",
@@ -680,7 +708,11 @@
 			"gift_neutral": "Merci bien.",
 			"gift_disliked": "Une anguille ? Non merci, ça me donne des frissons.",
 			"gift_again": "Un seul cadeau par jour, voyons !"
-		}
+		},
+		"birthday": [
+			3,
+			3
+		]
 	},
 	"theo": {
 		"name": "Théo",
@@ -766,7 +798,11 @@
 			"gift_neutral": "Ah. Merci.",
 			"gift_disliked": "Beurk ! Tu veux m'empoisonner ?",
 			"gift_again": "Encore un cadeau ? Mamie va dire que tu me gâtes !"
-		}
+		},
+		"birthday": [
+			1,
+			16
+		]
 	},
 	"jules": {
 		"name": "Jules",
@@ -852,6 +888,10 @@
 			"gift_neutral": "Mm. Merci.",
 			"gift_disliked": "Des fleurs ? Je ne suis pas un jardin.",
 			"gift_again": "Un par jour. Comme les poissons."
-		}
+		},
+		"birthday": [
+			2,
+			27
+		]
 	}
 }

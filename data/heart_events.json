@@ -1,0 +1,122 @@
+{
+	"rosalie": [
+		{"hearts": 2, "title": "Les comptes de Rosalie",
+			"lines": ["Rosalie compte et recompte la caisse, l'air soucieux.", "Ah, c'est toi... Les affaires reprennent un peu depuis que ta ferme produit. Mais il y a des soirs où je me demande si l'épicerie tiendra.", "Ma mère tenait déjà cette boutique. Je ne veux pas être celle qui ferme la porte."],
+			"choice": {"prompt": "Que lui dis-tu ?", "options": [
+				["Je t'apporterai mes plus beaux légumes.", 80, "Tu es un amour. Avec toi, on va remplir ces étagères !"],
+				["Tu devrais vendre plus cher.", -20, "Hm. Les gens d'ici n'ont pas beaucoup d'argent, tu sais..."]]}},
+		{"hearts": 5, "title": "La vitrine fleurie",
+			"lines": ["Rosalie a sorti une vieille boîte de photos sur le comptoir.", "Regarde : la vitrine, le jour de la Fête des fleurs. Ma mère y mettait des bouquets de toute la vallée.", "Je crois que je vais recommencer. Pour toi, pour le village... et un peu pour elle."],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Je t'aiderai à la décorer.", 100, "Marché conclu ! Tu choisiras les couleurs."],
+				["Elle serait fière de toi.", 120, "...Merci. Vraiment. Ça compte beaucoup."]]}}
+	],
+	"gaston": [
+		{"hearts": 2, "title": "Le marteau de Gaston",
+			"lines": ["Gaston fixe un vieux marteau ébréché, accroché au mur de la forge.", "Celui-là, c'était le marteau de mon père. Il l'a usé sur les rails de la mine.", "Depuis l'éboulement, plus personne ne descend. Le métal s'ennuie."],
+			"choice": {"prompt": "Que dis-tu ?", "options": [
+				["Je descendrai à la mine pour toi.", 80, "Hm. Pas de bêtises en bas. Mais... ça me ferait plaisir."],
+				["Tu pourrais le jeter, il est cassé.", -30, "...Il y a des choses qu'on ne jette pas, petit."]]}},
+		{"hearts": 5, "title": "Les étais de Firmin",
+			"lines": ["Gaston te tend une vieille poutre gravée d'un « F ».", "Firmin m'avait commandé ces étais pour soutenir la galerie, juste avant l'éboulement. Je ne les ai jamais livrés.", "Si j'avais été plus rapide, peut-être que la source coulerait encore."],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Ce n'était pas ta faute, Gaston.", 120, "...Tu parles comme lui. Merci."],
+				["On va réparer ça ensemble.", 100, "Ensemble. Oui. J'aime bien ce mot."]]}}
+	],
+	"odette": [
+		{"hearts": 2, "title": "Le jardin d'Odette",
+			"lines": ["Odette s'agenouille devant un carré de terre, une petite pelle à la main.", "Mes vieux genoux ne m'obéissent plus comme avant, mon trésor. Mais un jardin, ça ne s'abandonne pas.", "Firmin me disait toujours : « La terre rend ce qu'on lui donne. »"],
+			"choice": {"prompt": "Que fais-tu ?", "options": [
+				["Je l'aide à planter.", 100, "Quelles mains de jardinier ! Firmin aurait aimé te voir."],
+				["Je lui conseille de se reposer.", 40, "Tu as raison... mais je me reposerai quand je serai morte, ha !"]]}},
+		{"hearts": 5, "title": "La danse de la fontaine",
+			"lines": ["Odette montre une photo jaunie : elle danse devant la fontaine, avec Firmin.", "C'était la dernière Fête des fleurs. Le lendemain, la mine s'est effondrée et l'eau s'est tue.", "Firmin est parti quelques années plus tard. Il disait qu'il reviendrait quand la vallée refleurirait."],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Alors faisons-la refleurir.", 120, "Oh, mon trésor... Tu me redonnes mes vingt ans."],
+				["Où est-il aujourd'hui ?", 60, "Personne ne le sait. Mais je suis sûre qu'il nous regarde."]]}}
+	],
+	"lina": [
+		{"hearts": 2, "title": "Le carnet de Lina",
+			"lines": ["Lina te montre son carnet de croquis, un peu gênée.", "Ce sont des dessins de la fontaine... telle que je l'imagine quand elle coulait. Je ne l'ai jamais vue en vrai.", "Grand-mère dit que l'eau sentait la violette."],
+			"choice": {"prompt": "Que dis-tu ?", "options": [
+				["Tes dessins sont magnifiques.", 100, "Tu trouves ? Personne ne les avait jamais regardés..."],
+				["Il manque de la couleur.", 20, "Ah... oui. Le bleu de l'eau, je ne le trouve pas."]]}},
+		{"hearts": 5, "title": "Le tableau de la vallée",
+			"lines": ["Lina a installé son chevalet face à ta ferme.", "Je peins la vallée telle qu'elle devient grâce à toi. Regarde : les champs, la fumée de ta cheminée...", "J'aimerais que tu sois dans le tableau. Tu veux bien poser ?"],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Avec plaisir !", 120, "Ne bouge plus... parfait. C'est mon plus beau tableau."],
+				["Je suis trop timide.", 50, "Alors je te peindrai de dos, en train de semer. Ça te ressemble."]]}}
+	],
+	"bertrand": [
+		{"hearts": 2, "title": "Le registre du maire",
+			"lines": ["Bertrand feuillette le registre de la mairie, l'air fatigué.", "Quarante habitants il y a dix ans. Dix aujourd'hui. Chaque départ, je l'ai noté ici.", "Je suis maire d'un village qui s'efface... Enfin, qui s'effaçait. Depuis ton arrivée, j'ai repris espoir."],
+			"choice": {"prompt": "Que dis-tu ?", "options": [
+				["Valfleur va renaître, promis.", 100, "Une promesse ! Je la note dans le registre. À l'encre indélébile."],
+				["Pourquoi ne pas être parti ?", 40, "Parce qu'un maire ne quitte pas son navire. Même échoué."]]}},
+		{"hearts": 5, "title": "Le discours",
+			"lines": ["Bertrand répète un discours devant la fontaine vide.", "« Chers habitants, la Fête des fleurs est de retour ! » ...Trop solennel ? Trop joyeux ?", "J'ai écrit ce discours il y a dix ans, en espérant le lire un jour."],
+			"choice": {"prompt": "Ton avis :", "options": [
+				["Il est parfait, ne change rien.", 120, "Alors je le garde ! Tu seras au premier rang, hein ?"],
+				["Ajoute une blague.", 80, "Une blague... « Pourquoi la fontaine est triste ? » Hum. J'y travaille."]]}}
+	],
+	"mathis": [
+		{"hearts": 2, "title": "L'établi de Mathis",
+			"lines": ["Mathis ponce une petite chaise en bois, le front plissé.", "C'est pour Théo. Il casse tout, ce gamin ! Mais il a besoin d'une chaise à sa taille.", "Mon atelier, c'est ma façon de dire aux gens que je tiens à eux."],
+			"choice": {"prompt": "Que dis-tu ?", "options": [
+				["C'est une belle façon de le dire.", 100, "Tu trouves ? Je ne suis pas doué avec les mots, alors je parle avec le bois."],
+				["Tu devrais faire des meubles à vendre.", 40, "Je préfère faire des choses qui servent à quelqu'un."]]}},
+		{"hearts": 5, "title": "Le pont du parc",
+			"lines": ["Mathis contemple les planches de la vieille passerelle du parc.", "C'est mon grand-père qui l'a construite. J'ai juré de l'entretenir tant que je vivrai.", "Tu veux m'aider à changer une planche ? Ça porte bonheur, paraît-il."],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Passe-moi le marteau !", 120, "Bien tapé ! Cette planche portera ton nom, maintenant."],
+				["Je vais te regarder faire.", 50, "Ha ! Regarde bien, la prochaine fois c'est toi."]]}}
+	],
+	"margot": [
+		{"hearts": 2, "title": "Les comptes de la coopérative",
+			"lines": ["Margot range des sacs de foin, en grommelant contre une facture.", "La coopérative appartient à tous les fermiers de la vallée. Enfin... il n'en reste qu'un. Toi.", "Si ta ferme marche, la coopérative revit. Pas de pression, hein !"],
+			"choice": {"prompt": "Que dis-tu ?", "options": [
+				["Je ferai de mon mieux.", 80, "Je n'en doute pas. Tiens, je te garde le meilleur foin."],
+				["Ça fait beaucoup de pression...", 40, "Ha ! Je plaisante. À moitié."]]}},
+		{"hearts": 5, "title": "Le premier œuf",
+			"lines": ["Margot tient un œuf entre ses doigts comme un trésor.", "Le premier œuf vendu à la coopérative depuis six ans. Il vient de ta ferme, tu sais ?", "Je vais l'encadrer. Non, je plaisante... je vais en faire une omelette géante pour fêter ça !"],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Je viendrai la manger avec toi !", 120, "Évidemment ! Apporte du fromage, si tu en as."],
+				["Encadre-le, c'est historique.", 80, "Tu as raison... un œuf historique. Mathis me fera un cadre."]]}}
+	],
+	"leon": [
+		{"hearts": 2, "title": "La vache de Léon",
+			"lines": ["Léon caresse une vache qui le regarde avec adoration.", "Elle s'appelle Pâquerette. Elle a douze ans. Une vache, ça se souvient de tout, tu sais.", "Elle se souvient de la fête. Elle meuglait en rythme avec la musique."],
+			"choice": {"prompt": "Que fais-tu ?", "options": [
+				["Je caresse Pâquerette.", 100, "Elle t'aime bien ! Elle ne laisse pas tout le monde l'approcher."],
+				["Une vache qui danse ? Vraiment ?", 40, "Ne te moque pas. Tu verras à la prochaine fête."]]}},
+		{"hearts": 5, "title": "Le rêve de Léon",
+			"lines": ["Léon regarde les prés vides au-delà du ranch.", "Autrefois, il y avait des moutons jusqu'à la forêt. Mon rêve, c'est de revoir la vallée pleine de bêtes heureuses.", "Grâce à toi, c'est en train de revenir. Doucement, mais sûrement."],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["On remplira ces prés ensemble.", 120, "Je te prends au mot, fermier ! Le ranch et ta ferme, main dans la main."],
+				["Des moutons ? Il n'y en a pas au ranch.", 50, "Pas encore ! Patience, patience..."]]}}
+	],
+	"theo": [
+		{"hearts": 2, "title": "Le trésor de Théo",
+			"lines": ["Théo te tire par la manche, tout excité.", "Viens voir ! J'ai trouvé un trésor dans la forêt : une vieille boussole ! Elle indique toujours la mine, même quand on la tourne !", "Mamie dit que c'était celle de Firmin."],
+			"choice": {"prompt": "Que dis-tu ?", "options": [
+				["Incroyable ! Tu es un vrai aventurier.", 100, "Oui ! Quand je serai grand, je descendrai au fond de la mine. Comme toi !"],
+				["Rends-la à Odette.", 30, "Ooooh... D'accord. Mais je l'emprunte le dimanche !"]]}},
+		{"hearts": 5, "title": "Le dessin de Théo",
+			"lines": ["Théo te tend un dessin froissé.", "C'est toi ! Là, avec les poules. Et là, la fontaine qui fait de l'eau. Et là, c'est moi, je suis ton assistant.", "Je peux être ton assistant pour de vrai ?"],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Assistant officiel de la ferme !", 120, "OUAIS ! Je vais le dire à tout le monde !"],
+				["Quand tu seras plus grand.", 50, "Je grandis vite, tu sais ! Déjà deux centimètres cette année !"]]}}
+	],
+	"jules": [
+		{"hearts": 2, "title": "Le silence de l'étang",
+			"lines": ["Jules ne quitte pas son bouchon des yeux. Il parle à voix basse.", "Tu sais pourquoi je pêche ici depuis cinquante ans ? Pas pour les poissons.", "Pour le silence. L'étang, c'est le seul endroit où le temps s'arrête."],
+			"choice": {"prompt": "Que fais-tu ?", "options": [
+				["Je m'assois en silence à côté de lui.", 120, "...Tu comprends, toi. Reviens quand tu veux."],
+				["Je lui parle de ma journée.", 30, "Chut. Le silence, je t'ai dit."]]}},
+		{"hearts": 5, "title": "La carpe dorée",
+			"lines": ["Jules sort de sa poche un hameçon doré, minuscule.", "Firmin et moi, on cherchait la carpe dorée. On ne l'a jamais attrapée. Il m'a laissé cet hameçon en partant.", "Prends-le. Toi, tu as la main chanceuse."],
+			"choice": {"prompt": "Ta réponse :", "options": [
+				["Je l'attraperai pour vous deux.", 120, "Ha ! Si tu y arrives, je t'offre ma canne. Et ma cabane, tiens."],
+				["Garde-le, c'est un souvenir.", 80, "Les souvenirs, ça doit servir. Mais merci de ta délicatesse."]]}}
+	]
+}

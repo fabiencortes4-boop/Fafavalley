@@ -2,7 +2,7 @@ extends Node
 ## Cueillette : plantes sauvages qui apparaissent chaque jour, selon la
 ## saison, sur l'herbe de la ferme et du village.
 
-const PER_MAP := {"farm": 4, "village": 6}
+const PER_MAP := {"farm": 4, "village": 6, "forest": 10}
 
 var spots: Dictionary = {}  # map_id -> {"x,y": item_id}
 var _last_day: Dictionary = {}  # map_id -> numéro de jour du dernier remplissage
