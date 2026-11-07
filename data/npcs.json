@@ -2,6 +2,7 @@
 	"rosalie": {
 		"name": "Rosalie",
 		"title": "l'épicière",
+		"voice": 1.2,
 		"sprite": 0,
 		"home": "store",
 		"loves": [
@@ -96,6 +97,7 @@
 	"gaston": {
 		"name": "Gaston",
 		"title": "le forgeron",
+		"voice": 0.72,
 		"sprite": 1,
 		"home": "gaston",
 		"loves": [
@@ -195,6 +197,7 @@
 	"odette": {
 		"name": "Odette",
 		"title": "la jardinière",
+		"voice": 1.05,
 		"sprite": 2,
 		"home": "odette",
 		"loves": [
@@ -290,6 +293,7 @@
 	"lina": {
 		"name": "Lina",
 		"title": "la peintre",
+		"voice": 1.3,
 		"sprite": 3,
 		"home": "lina",
 		"loves": [
@@ -391,6 +395,7 @@
 	"bertrand": {
 		"name": "Bertrand",
 		"title": "le maire",
+		"voice": 0.85,
 		"sprite": 4,
 		"home": "mairie",
 		"loves": [
@@ -489,6 +494,7 @@
 	"mathis": {
 		"name": "Mathis",
 		"title": "le charpentier",
+		"voice": 0.92,
 		"sprite": 5,
 		"home": "menuiserie",
 		"shop": "carpenter",
@@ -585,6 +591,7 @@
 	"margot": {
 		"name": "Margot",
 		"title": "la coopérative",
+		"voice": 1.22,
 		"sprite": 6,
 		"home": "cooperative",
 		"shop": "cooperative",
@@ -674,6 +681,7 @@
 	"leon": {
 		"name": "Léon",
 		"title": "l'éleveur",
+		"voice": 0.8,
 		"sprite": 7,
 		"home": "ranch",
 		"shop": "ranch",
@@ -769,6 +777,7 @@
 	"theo": {
 		"name": "Théo",
 		"title": "le petit-fils d'Odette",
+		"voice": 1.5,
 		"sprite": 8,
 		"home": "odette",
 		"loves": [
@@ -863,6 +872,7 @@
 	"jules": {
 		"name": "Jules",
 		"title": "le pêcheur",
+		"voice": 0.78,
 		"sprite": 9,
 		"home": "jules",
 		"loves": [
@@ -960,6 +970,7 @@
 	"marius": {
 		"name": "Marius",
 		"title": "le tavernier",
+		"voice": 0.75,
 		"sprite": 10,
 		"home": "taverne",
 		"shop": "tavern",
@@ -1035,6 +1046,7 @@
 	"nina": {
 		"name": "Nina",
 		"title": "la gardienne du phare",
+		"voice": 1.15,
 		"sprite": 11,
 		"home": "phare",
 		"map": "port",
@@ -1127,6 +1139,7 @@
 	"basile": {
 		"name": "Basile",
 		"title": "le marchand du port",
+		"voice": 0.95,
 		"sprite": 12,
 		"home": "comptoir",
 		"shop": "comptoir",
@@ -1217,6 +1230,7 @@
 	"celeste": {
 		"name": "Céleste",
 		"title": "la musicienne",
+		"voice": 1.38,
 		"sprite": 13,
 		"home": "celeste",
 		"map": "port",

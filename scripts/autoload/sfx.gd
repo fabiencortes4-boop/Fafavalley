@@ -9,7 +9,7 @@ const VOICES := 14
 const VOLUME := {
 	"step": -14.0, "step_stone": -12.0, "water": -6.0, "whoosh": -8.0, "swish": -6.0,
 	"click": -6.0, "select": -8.0, "pickup": -6.0, "coins": -4.0, "levelup": -3.0,
-	"catch": -3.0, "sleep": -4.0, "cloth": -10.0, "plant": -4.0,
+	"catch": -3.0, "sleep": -4.0, "cloth": -10.0, "plant": -4.0, "voice": -13.0,
 }
 
 var _streams: Dictionary = {}  # nom -> Array[AudioStream]
@@ -43,7 +43,7 @@ func _ready() -> void:
 	print("[sfx] %d sons chargés" % _streams.size())
 
 
-func play(name: String, volume_db: float = 0.0, pitch_spread: float = 0.08) -> void:
+func play(name: String, volume_db: float = 0.0, pitch_spread: float = 0.08, pitch: float = 1.0) -> void:
 	if not Settings.sound or not _streams.has(name):
 		return
 	var variants: Array = _streams[name]
@@ -51,7 +51,7 @@ func play(name: String, volume_db: float = 0.0, pitch_spread: float = 0.08) -> v
 	_next = (_next + 1) % _players.size()
 	p.stream = variants[randi() % variants.size()]
 	p.volume_db = float(VOLUME.get(name, 0.0)) + volume_db
-	p.pitch_scale = 1.0 + randf_range(-pitch_spread, pitch_spread)
+	p.pitch_scale = pitch * (1.0 + randf_range(-pitch_spread, pitch_spread))
 	p.play()
 
 

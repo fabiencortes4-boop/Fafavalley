@@ -39,11 +39,6 @@ var _is_home: bool = false
 var _lanterns: Array[OmniLight3D] = []  # lanternes du village, allumées le soir
 var _lantern_glows: Array[MeshInstance3D] = []
 
-const NPC_MODELS := ["character-b", "character-c", "character-d", "character-e", "character-f",
-	"character-g", "character-h", "character-i", "character-j", "character-k",
-	"character-l", "character-c", "character-e", "character-g"]
-## Gens du port : variantes teintées pour les distinguer
-const NPC_TINTS := {11: Color(0.75, 0.9, 1.25), 12: Color(0.85, 1.15, 0.85), 13: Color(1.15, 0.85, 1.2)}
 ## Animaux (Cube Pets) : espèce -> [modèle, hauteur à l'écran en cases]
 const PET_MODELS := {
 	"chicken": ["animal-chick", 0.42], "bunny": ["animal-bunny", 0.45], "cat": ["animal-cat", 0.45],
@@ -692,7 +687,7 @@ func _build_buildings(chars: Dictionary) -> void:
 					_put(_box(Vector3(1.4, 0.36, 0.06), Color(0.45, 0.3, 0.18)), pfront + Vector3(pb[3], 1.5, -0.42))
 					var sign := Label3D.new()
 					sign.text = "TAVERNE"
-					sign.font = UiTheme.font()
+					sign.font = UiTheme.title_font()
 					sign.font_size = 56
 					sign.pixel_size = 0.0045
 					sign.modulate = Color(1, 0.85, 0.45)
@@ -961,7 +956,7 @@ func _mine_entrance(cell: Vector2i, door_col: int) -> void:
 	_put(_box(Vector3(1.1, 0.34, 0.06), Color(0.62, 0.44, 0.26)), Vector3(door_x, 2.2, face_z + 0.3))
 	var label := Label3D.new()
 	label.text = "MINE"
-	label.font = UiTheme.font()
+	label.font = UiTheme.title_font()
 	label.font_size = 64
 	label.pixel_size = 0.005
 	label.modulate = Color(0.22, 0.13, 0.08)
@@ -2245,11 +2240,10 @@ func _sync_proxies() -> void:
 
 func _make_proxy(node: Node) -> Node3D:
 	if node is Npc:
-		var index := int(GameData.npc((node as Npc).id).get("sprite", 0)) % NPC_MODELS.size()
-		# Théo est un enfant : plus petit
-		var npc := _model("blocky", NPC_MODELS[index], CHARACTER_SCALE * (0.75 if (node as Npc).id == "theo" else 1.0))
-		if NPC_TINTS.has(index):
-			Models.tint(npc, NPC_TINTS[index])
+		# Chaque habitant porte la tenue de son métier ; Théo est un enfant : plus petit
+		var npc_id := (node as Npc).id
+		var npc := Models.npc(npc_id)
+		npc.scale = Vector3.ONE * CHARACTER_SCALE * (0.75 if npc_id == "theo" else 1.0)
 		npc.add_child(_blob(1.6))
 		npc.set_meta("npc_id", (node as Npc).id)
 		return npc
@@ -2689,7 +2683,7 @@ func _on_combat_hit(monster: Node2D, amount: int) -> void:
 		tw.tween_property(proxy, "scale", base, 0.12)
 	var label := Label3D.new()
 	label.text = str(amount)
-	label.font = UiTheme.font()
+	label.font = UiTheme.title_font()
 	label.font_size = 56
 	label.pixel_size = 0.007
 	label.outline_size = 12

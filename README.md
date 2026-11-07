@@ -148,6 +148,13 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
   vers le sac et petits tremblements d'écran sur les gros coups.
+- **Habitants cohérents** : chaque habitant porte une tenue liée à son métier (tablier de
+  cuir du forgeron, ciré jaune du pêcheur, costume du maire, vareuse du tavernier...),
+  générée par `tools/build_npc_textures.py`. Portraits des dialogues et petits sprites 2D
+  sont rendus depuis ces mêmes modèles 3D (`tools/render_characters.tscn -- --portraits`).
+- **Textes lisibles** : police arrondie Nunito (OFL) pour les textes, police pixel pour
+  les titres. Le texte des dialogues défile avec une petite « voix » propre à chaque
+  habitant (plus grave pour Gaston, plus aiguë pour Théo...).
 - **Album de collections** (Menu → Album) : chaque objet obtenu pour la première fois
   s'inscrit dans 6 collections (récoltes, cueillette, poissons, élevage, cuisine, mine),
   silhouettes pour ce qui reste à trouver ; or en récompense à la moitié et à la totalité.
@@ -321,3 +328,5 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 
 Graphismes et police : **Kenney** (www.kenney.nl), licence CC0. Détails dans
 [`assets/LICENSE.md`](assets/LICENSE.md).
+Police des textes : **Nunito** (The Nunito Project Authors), SIL Open Font License 1.1,
+voir [`assets/fonts/nunito_OFL.txt`](assets/fonts/nunito_OFL.txt).

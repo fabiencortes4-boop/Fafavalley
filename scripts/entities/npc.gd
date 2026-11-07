@@ -23,7 +23,7 @@ var _working: bool = false  # commerçant dans sa boutique pendant les heures d'
 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
-	_sprite.texture = GameData.npc_texture(id)
+	_sprite.texture = GameData.npc_sprite(id)
 	_sprite.offset = Vector2(0, -8)
 	add_child(_sprite)
 	# Le joueur ne traverse pas les habitants.

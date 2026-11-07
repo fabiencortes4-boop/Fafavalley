@@ -1,24 +1,44 @@
 class_name UiTheme
 extends RefCounted
 ## Thème pixel art construit à partir du « UI Pack Pixel Adventure » de Kenney
-## et de la police KenPixel (CC0).
+## et de la police KenPixel (CC0) pour les titres ; les textes utilisent
+## Nunito (OFL), une police arrondie avec minuscules, bien plus lisible.
 
 const TEXT := Color(0.99, 0.95, 0.85)
 const TEXT_DARK := Color(0.30, 0.18, 0.12)
 const ACCENT := Color(1.0, 0.84, 0.36)
-const FONT_PATH := "res://assets/kenney/fonts/kenpixel_mini_square.ttf"
+const FONT_PATH := "res://assets/fonts/nunito_bold.woff2"
+const TITLE_FONT_PATH := "res://assets/kenney/fonts/kenpixel_mini_square.ttf"
 const FONT_SIZE := 8
 
 static var _font: FontFile
+static var _title_font: FontFile
 
 
 static func font() -> FontFile:
 	if _font == null:
+		# Lissée : sur les écrans de téléphone (5x la résolution de base), le
+		# texte est rendu en haute définition, net et régulier.
 		_font = load(FONT_PATH)
-		_font.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		_font.hinting = TextServer.HINTING_NONE
-		_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+		_font.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+		_font.hinting = TextServer.HINTING_LIGHT
+		_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
 	return _font
+
+
+## Police des titres (fenêtres, horloge, grands titres) : capitales pixel.
+static func title_font() -> FontFile:
+	if _title_font == null:
+		_title_font = _pixel(TITLE_FONT_PATH)
+	return _title_font
+
+
+static func _pixel(path: String) -> FontFile:
+	var f: FontFile = load(path)
+	f.antialiasing = TextServer.FONT_ANTIALIASING_NONE
+	f.hinting = TextServer.HINTING_NONE
+	f.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+	return f
 
 
 ## Boîte 9-slice à partir d'une tuile 16x16 de l'UI pack.

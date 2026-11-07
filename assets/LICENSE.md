@@ -61,3 +61,9 @@ cuivre et l'engrais sont des recolorations de tuiles Kenney.
 
 Les musiques de `music/` sont des créations originales générées par
 `tools/build_music.py` (synthèse numpy) : domaine public (CC0).
+
+## Police Nunito
+
+`fonts/nunito_bold.woff2` : Nunito, Copyright 2014 The Nunito Project Authors
+(https://github.com/googlefonts/nunito), SIL Open Font License 1.1
+(texte complet dans `fonts/nunito_OFL.txt`).

@@ -79,6 +79,29 @@ static func parts(model_path: String) -> Array:
 
 
 ## Teinte un modèle (multiplie la couleur de ses matériaux).
+## Remplace la texture d'un personnage Blocky (tenue d'un habitant).
+static func retexture(node: Node, texture_path: String) -> void:
+	var tex: Texture2D = load(texture_path)
+	for n in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		for i in mi.mesh.get_surface_count():
+			var base := mi.get_active_material(i)
+			if base is StandardMaterial3D:
+				var mat := (base as StandardMaterial3D).duplicate() as StandardMaterial3D
+				mat.albedo_texture = tex
+				mi.set_surface_override_material(i, mat)
+
+
+## Un habitant en 3D : le corps Blocky commun avec sa tenue de métier
+## (assets/kenney3d/blocky/Textures/npc/<id>.png, tools/build_npc_textures.py).
+static func npc(id: String) -> Node3D:
+	var model := instance(path("blocky", "character-a"))
+	var tex := "res://assets/kenney3d/blocky/Textures/npc/%s.png" % id
+	if ResourceLoader.exists(tex):
+		retexture(model, tex)
+	return model
+
+
 static func tint(node: Node, color: Color) -> void:
 	for n in node.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D

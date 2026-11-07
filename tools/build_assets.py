@@ -261,16 +261,9 @@ def village():
     compose(DUNGEON, [[40, 40, 40], [40, 9, 40]]).save(os.path.join(OUT, "mine_entrance.png"))
     # Monstres, dans l'ordre des "sprite" de data/monsters.json
     compose(DUNGEON, [[108, 120, 122, 123, 124, 110, 121]]).save(os.path.join(OUT, "monsters.png"))
-    # Habitants, dans l'ordre des "sprite" de data/npcs.json
-    # + Mathis, Margot, Léon, Théo, Jules
-    sheet = compose(DUNGEON, [[99, 86, 100, 85, 111, 87, 88, 98, 112, 84]])
-    # + gens du port, recolorés (cheveux, vêtements) : Marius, Nina, Basile, Céleste
-    port = [(98, 15, 0.45), (99, 200, 0.7), (88, 140, 0.45), (99, 300, 0.6)]
-    out = Image.new("RGBA", (sheet.width + T * len(port), T), (0, 0, 0, 0))
-    out.alpha_composite(sheet, (0, 0))
-    for k, (base, hue, sat) in enumerate(port):
-        out.alpha_composite(recolor_clothes(tile(DUNGEON, base), hue, sat), (sheet.width + k * T, 0))
-    out.save(os.path.join(OUT, "npcs.png"))
+    # Habitants (npcs.png) : rendus depuis leurs modèles 3D par
+    # tools/render_characters.gd --portraits, pour que vue 2D, portraits et
+    # vue 3D se ressemblent.
 
 
 # Minerais visibles sur les rochers : (couleur claire, couleur sombre)

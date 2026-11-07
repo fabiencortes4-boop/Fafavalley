@@ -87,6 +87,20 @@ func npc_texture(id: String) -> Texture2D:
 	var key := "npc:" + id
 	if _icon_cache.has(key):
 		return _icon_cache[key]
+	# Portrait tiré du modèle 3D (tools/render_characters.gd --portraits),
+	# pour que visage et corps se ressemblent ; sinon l'ancien sprite 2D.
+	var portrait := "res://assets/sprites/portraits/%s.png" % id
+	if ResourceLoader.exists(portrait):
+		_icon_cache[key] = load(portrait)
+		return _icon_cache[key]
+	return npc_sprite(id)
+
+
+## Petit sprite 16x16 de l'habitant (vue 2D).
+func npc_sprite(id: String) -> Texture2D:
+	var key := "npc_sprite:" + id
+	if _icon_cache.has(key):
+		return _icon_cache[key]
 	var tex := AtlasTexture.new()
 	tex.atlas = load("res://assets/sprites/npcs.png")
 	tex.region = Rect2(int(npc(id).get("sprite", 0)) * ICON_SIZE, 0, ICON_SIZE, ICON_SIZE)

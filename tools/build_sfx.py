@@ -174,6 +174,17 @@ def synth_all():
     # Poisson perdu : glissando descendant
     save("escape", sweep(600, 200, 0.4, "tri") * env(int(RATE * 0.4), 0.01, 5))
     synth_rewards()
+    synth_voice()
+
+
+def synth_voice():
+    """« Voix » des dialogues : petits bips doux joués pendant que le texte
+    défile ; la hauteur change selon l'habitant."""
+    for k, (f, shape) in enumerate(((520, "tri"), (580, "tri"), (470, "tri"))):
+        d = 0.055
+        tone = sweep(f, f * 1.06, d, shape) * env(int(RATE * d), 0.004, 45)
+        body = sweep(f / 2, f / 2 * 1.04, d) * env(int(RATE * d), 0.004, 55) * 0.5
+        save("voice_%d" % k, mix(tone, body), 0.55)
 
 
 def synth_rewards():

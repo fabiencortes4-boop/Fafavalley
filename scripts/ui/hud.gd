@@ -166,6 +166,7 @@ func _build_top_panel() -> void:
 	row.add_child(_weather_icon)
 	_time_label = Label.new()
 	_time_label.add_theme_font_size_override("font_size", 16)
+	_time_label.add_theme_font_override("font", UiTheme.title_font())
 	row.add_child(_time_label)
 	_location_label = Label.new()
 	_location_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -738,6 +739,7 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 	var heading := Label.new()
 	heading.text = title
 	heading.add_theme_font_size_override("font_size", 16)
+	heading.add_theme_font_override("font", UiTheme.title_font())
 	heading.add_theme_color_override("font_color", UiTheme.ACCENT)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -907,9 +909,7 @@ func open_shop(shop_id: String = "store") -> void:
 	header.add_theme_constant_override("separation", 6)
 	box.add_child(header)
 	if owner != "":
-		var face := TextureRect.new()
-		face.texture = GameData.npc_texture(owner)
-		header.add_child(face)
+		header.add_child(_portrait(owner, 36))
 	var gold := Label.new()
 	gold.text = "Ton or : %d" % Inventory.gold
 	header.add_child(gold)
@@ -1186,6 +1186,7 @@ func title_card(title: String, subtitle: String, tint: Color = Color(1, 0.95, 0.
 	var big := Label.new()
 	big.text = title
 	big.add_theme_font_size_override("font_size", 24)
+	big.add_theme_font_override("font", UiTheme.title_font())
 	big.add_theme_color_override("font_color", tint)
 	big.add_theme_constant_override("shadow_offset_x", 2)
 	big.add_theme_constant_override("shadow_offset_y", 2)
@@ -1224,13 +1225,56 @@ func set_world(world: WorldMap) -> void:
 
 
 # ------------------------------------------------------------ dialogues
+## Portrait d'un habitant (tiré de son modèle 3D) à une taille donnée.
+func _portrait(npc_id: String, size: int) -> TextureRect:
+	var face := TextureRect.new()
+	face.texture = GameData.npc_texture(npc_id)
+	face.custom_minimum_size = Vector2(size, size)
+	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	face.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return face
+
+
 func show_dialogue(npc_id: String, text: String) -> void:
 	var data := GameData.npc(npc_id)
+	_dialog_voice = float(data.get("voice", 1.0))
 	_open_dialog(str(data.get("name", npc_id)), GameData.npc_texture(npc_id), text, Relations.hearts(npc_id))
 
 
 func show_message(title: String, text: String) -> void:
+	_dialog_voice = 1.0
 	_open_dialog(title, null, text, -1)
+
+
+## Hauteur de la « voix » du prochain dialogue (champ "voice" de npcs.json)
+var _dialog_voice: float = 1.0
+var _voice_shown: int = 0
+
+
+## Le texte apparaît lettre par lettre, avec un petit bip toutes les deux
+## lettres (pas sur les espaces), à la hauteur de voix de l'habitant.
+func _type_text(label: Label, text: String) -> void:
+	label.visible_characters = 0
+	_voice_shown = 0
+	var total := label.get_total_character_count()
+	if total <= 0:
+		total = text.length()
+	var voice := _dialog_voice
+	_dialog_tween = create_tween()
+	_dialog_tween.tween_method(func(n: int) -> void:
+		if not is_instance_valid(label):
+			return
+		label.visible_characters = n
+		if n - _voice_shown >= 2:
+			_voice_shown = n
+			var c := text.substr(clampi(n - 1, 0, text.length() - 1), 1)
+			if voice > 0.0 and c != " " and c != "\n":
+				Sfx.play("voice", 0.0, 0.06, voice), 0, total, clampf(total * 0.03, 0.3, 3.5))
+	_dialog_tween.tween_callback(func() -> void:
+		if is_instance_valid(label):
+			label.visible_characters = -1)
 
 
 func _open_dialog(title: String, portrait: Texture2D, text: String, hearts: int) -> void:
@@ -1293,10 +1337,8 @@ func _open_dialog(title: String, portrait: Texture2D, text: String, hearts: int)
 	_dialog_label.text = text
 	_dialog_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_dialog_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_dialog_label.visible_ratio = 0.0
 	col.add_child(_dialog_label)
-	_dialog_tween = create_tween()
-	_dialog_tween.tween_property(_dialog_label, "visible_ratio", 1.0, clampf(text.length() * 0.02, 0.3, 2.5))
+	_type_text(_dialog_label, text)
 
 
 func _on_dialog_input(event: InputEvent) -> void:
@@ -1310,8 +1352,10 @@ func _on_dialog_input(event: InputEvent) -> void:
 func _advance_dialog() -> void:
 	if _dialog_label == null:
 		return
-	if _dialog_label.visible_ratio < 1.0:
-		_dialog_label.visible_ratio = 1.0
+	if _dialog_label.visible_characters != -1 and _dialog_label.visible_ratio < 1.0:
+		if _dialog_tween != null:
+			_dialog_tween.kill()
+		_dialog_label.visible_characters = -1
 	else:
 		close_modal()
 
@@ -1346,10 +1390,7 @@ func open_relations() -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 		list.add_child(row)
-		var face := TextureRect.new()
-		face.texture = GameData.npc_texture(id)
-		face.custom_minimum_size = Vector2(16, 16)
-		row.add_child(face)
+		row.add_child(_portrait(id, 26))
 		var known := Relations.met.has(id)
 		var col := VBoxContainer.new()
 		col.add_theme_constant_override("separation", 0)
@@ -1435,11 +1476,14 @@ func _scene_step(title: String, lines: Array, index: int, choice: Dictionary, on
 	var text := _add_label(col, str(entry[1]))
 	if who == "":
 		text.add_theme_color_override("font_color", Color(0.85, 0.82, 0.75))  # narration
-	text.visible_ratio = 0.0
-	create_tween().tween_property(text, "visible_ratio", 1.0, clampf(str(entry[1]).length() * 0.015, 0.2, 1.8))
+	# La narration défile en silence ; les habitants parlent avec leur voix
+	_dialog_voice = 0.0 if who == "" else float(GameData.npc(who).get("voice", 1.0))
+	_type_text(text, str(entry[1]))
 	_add_button(box, "Suivant  >" if index < lines.size() - 1 or not choice.is_empty() else "Fermer", func() -> void:
-		if text.visible_ratio < 1.0:
-			text.visible_ratio = 1.0
+		if text.visible_characters != -1 and text.visible_ratio < 1.0:
+			if _dialog_tween != null:
+				_dialog_tween.kill()
+			text.visible_characters = -1
 		else:
 			Sfx.play("page")
 			_scene_step(title, lines, index + 1, choice, on_choice, on_done))
@@ -1513,11 +1557,7 @@ func _requests_section(list: Container) -> void:
 func _quest_row(q: Dictionary, progress: bool) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	var face := TextureRect.new()
-	face.texture = GameData.npc_texture(str(q.npc))
-	face.custom_minimum_size = Vector2(16, 16)
-	face.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(face)
+	row.add_child(_portrait(str(q.npc), 20))
 	var icon := TextureRect.new()
 	icon.texture = GameData.item_icon(str(q.item))
 	icon.custom_minimum_size = Vector2(16, 16)
