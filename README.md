@@ -63,6 +63,15 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   rafraîchies moins souvent. Réglage **Qualité** (économie, normale, élevée), choisi
   automatiquement selon l'appareil. Banc d'essai : `tools/benchmark.tscn`.
 - **Rendu plus lisse** : textures filtrées, bords adoucis (anticrénelage), sol en dégradés.
+- **Arbres fruitiers** (chez Rosalie) : cerisier, pêcher, oranger, pommier. Adultes en
+  10-12 jours, ils donnent un fruit par jour dans leur saison (3 au plus) : on les secoue.
+- **Serre** (construite par Mathis : or, bois, pierre, quartz) : on y cultive tout, en
+  toute saison, à l'abri de la pluie.
+- **Mariage** : Rosalie, Lina, Mathis ou Margot. À 8 cœurs, une scène puis un bouquet
+  (chez Rosalie) pour sortir ensemble ; à 10 cœurs, le pendentif de la source (forgé par
+  Gaston) pour la demande. Mariage sur la place 3 jours plus tard ; ensuite, la personne
+  vit à la ferme (à la maison le matin et le soir, dehors l'après-midi) et aide chaque
+  matin : arrosage, foin, petit plat.
 - **24 cultures** réparties sur les 4 saisons (hiver compris) : carotte, navet, maïs, tomate,
   chou, blé, radis, pomme de terre, fraise, ail, chou-fleur, haricot vert, panais, oignon,
   melon, poivron, myrtille, tournesol, aubergine, citrouille, betterave, canneberge,
@@ -225,6 +234,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mariage
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte

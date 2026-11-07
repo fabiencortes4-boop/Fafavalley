@@ -119,7 +119,9 @@ func _ready() -> void:
 		if not fest.is_empty():
 			show_toast("Aujourd'hui : %s au village, de %dh à %dh !" % [fest.name, int(fest.start), int(fest.end)])
 		elif bday != "":
-			show_toast("C'est l'anniversaire de %s aujourd'hui ! Un cadeau lui ferait plaisir." % GameData.npc(bday).name))
+			show_toast("C'est l'anniversaire de %s aujourd'hui ! Un cadeau lui ferait plaisir." % GameData.npc(bday).name)
+		elif Marriage.last_help != "":
+			show_toast(Marriage.last_help))
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
 			show_toast("%s : %s" % [GameData.npc(npc_id).get("name", ""), text]))
@@ -1696,9 +1698,23 @@ func _build_tutorial() -> void:
 
 
 var _hint_timer: float = 0.0
+var _wedding_playing: bool = false
+
+
+func _play_wedding() -> void:
+	_wedding_playing = true
+	title_card("Le mariage", "Sur la place de Valfleur", Color(1, 0.75, 0.85))
+	Sfx.play("levelup")
+	play_scene("Le mariage", Marriage.wedding_lines(), {}, Callable(), func() -> void:
+		Marriage.wedding_pending = false
+		_wedding_playing = false
+		show_toast("%s vit maintenant avec toi à la ferme." % GameData.npc(Marriage.spouse).name))
 
 
 func _process(_delta: float) -> void:
+	# Le matin du mariage : la scène, dès qu'aucune fenêtre n'est ouverte
+	if Marriage.wedding_pending and _modal == null and not _wedding_playing:
+		_play_wedding()
 	# Le bandeau du tutoriel s'efface derrière les fenêtres et dialogues
 	if _tutorial_panel != null:
 		_tutorial_panel.visible = Tutorial.active() and _modal == null

@@ -1,0 +1,34 @@
+{
+	"cherry": {
+		"name": "Cerisier",
+		"sapling": "sapling_cherry",
+		"fruit": "cherry",
+		"season": 0,
+		"grow_days": 10,
+		"color": "#d42a3c"
+	},
+	"peach": {
+		"name": "Pêcher",
+		"sapling": "sapling_peach",
+		"fruit": "peach",
+		"season": 1,
+		"grow_days": 10,
+		"color": "#f5a46a"
+	},
+	"orange": {
+		"name": "Oranger",
+		"sapling": "sapling_orange",
+		"fruit": "orange",
+		"season": 1,
+		"grow_days": 12,
+		"color": "#f08a1e"
+	},
+	"apple": {
+		"name": "Pommier",
+		"sapling": "sapling_apple",
+		"fruit": "apple",
+		"season": 2,
+		"grow_days": 10,
+		"color": "#c8302a"
+	}
+}

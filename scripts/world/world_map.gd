@@ -344,6 +344,8 @@ func action_hint(cell: Vector2i) -> String:
 		return "Ferrer !" if fishing.state == Fishing.State.BITE else "Pêche..."
 	if _forage_sprites.has(cell):
 		return "Cueillir"
+	if _spouse_at(cell):
+		return "Parler"
 	var kind: String = _interactables.get(cell, "")
 	if kind != "":
 		if kind.begins_with("door:"):
@@ -364,7 +366,7 @@ func _tool_hint(_cell: Vector2i) -> String:
 	var type := str(item.get("type", ""))
 	var tool := str(item.get("tool", ""))
 	# Houe, arrosoir, graines... ne servent qu'à la ferme
-	if not _is_farmland() and (type in ["seed", "placeable", "fertilizer"] or tool in ["hoe", "watering_can", "scythe", "axe", "brush", "milk_pail"]):
+	if not _is_farmland() and (type in ["seed", "placeable", "fertilizer", "sapling"] or tool in ["hoe", "watering_can", "scythe", "axe", "brush", "milk_pail"]):
 		return ""
 	match type:
 		"tool":
@@ -375,9 +377,29 @@ func _tool_hint(_cell: Vector2i) -> String:
 			return "Semer"
 		"placeable":
 			return "Poser"
+		"sapling":
+			return "Planter"
 		"fertilizer":
 			return "Engrais"
 	return "Manger" if item.has("edible") else ""
+
+
+# ------------------------------------------------------------ époux / épouse
+var _spouse_npc: Npc
+
+
+## Fait apparaître l'époux ou l'épouse sur cette carte (maison, ferme).
+func _spawn_spouse(cell: Vector2i) -> void:
+	if Marriage.spouse == "":
+		return
+	_spouse_npc = Npc.new()
+	_spouse_npc.id = Marriage.spouse
+	_spouse_npc.position = cell_center(cell)
+	_entities.add_child(_spouse_npc)
+
+
+func _spouse_at(cell: Vector2i) -> bool:
+	return _spouse_npc != null and is_instance_valid(_spouse_npc) and _spouse_npc.position.distance_to(cell_center(cell)) < TILE * 0.8
 
 
 ## Parler à un habitant : livrer une demande, scène de cœur, cadeau ou
@@ -390,6 +412,20 @@ func talk_to_npc(npc: Npc) -> void:
 		var q := Quests.deliver(qi)
 		Sfx.play("coins")
 		EventBus.dialogue_requested.emit(id, "Oh, %d %s ! C'est exactement ce qu'il me fallait. Merci mille fois ! (+%d or)" % [int(q.qty), GameData.item_name(str(q.item)).to_lower(), int(q.gold)])
+		return
+	var slot0: Variant = Inventory.get_selected()
+	if slot0 != null and GameData.item(slot0.id).get("type") == "gift_special":
+		var res := Marriage.give(id, str(slot0.id))
+		if res.used:
+			Inventory.remove_from_slot(Inventory.selected, 1)
+			Sfx.play("levelup")
+		EventBus.dialogue_requested.emit(id, res.text)
+		return
+	if id == Marriage.spouse:
+		if not Relations.talked_today.has(id):
+			Relations.talked_today[id] = true
+			Relations.add_points(id, Relations.TALK_POINTS)
+		EventBus.dialogue_requested.emit(id, Marriage.spouse_line())
 		return
 	var scene := HeartEvents.pending(id)
 	if not scene.is_empty():
@@ -448,6 +484,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func act_on(cell: Vector2i) -> void:
 	if fishing.busy():
 		fishing.on_action()
+		return
+	if _spouse_at(cell):
+		talk_to_npc(_spouse_npc)
 		return
 	if _forage_sprites.has(cell):
 		_pick_forage(cell)

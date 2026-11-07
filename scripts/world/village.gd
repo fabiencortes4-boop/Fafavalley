@@ -143,6 +143,8 @@ func _after_build() -> void:
 		_interactables[Events.BOOTH] = "booth"
 	_build_navigation()
 	for id: String in GameData.npcs:
+		if id == Marriage.spouse:
+			continue  # vit désormais à la ferme
 		var npc := Npc.new()
 		npc.id = id
 		npc.village = self

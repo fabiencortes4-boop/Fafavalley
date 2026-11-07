@@ -96,6 +96,40 @@ func _ready() -> void:
 			if a.begins_with("--text="):
 				Settings.text_size = int(a.trim_prefix("--text="))
 				Settings.changed.emit()
+		if "--orchard" in args:
+			var k := 0
+			for t: String in FarmState.tree_data:
+				for stage in 3:
+					var c := Vector2i(20 + k * 3, 14 + stage * 2)
+					FarmState.tiles.erase(c)
+					if not FarmState.plant_tree(c, t):
+						continue
+					FarmState.trees[c].age = [0, 6, 12][stage]
+					FarmState.trees[c].fruits = 3 if stage == 2 else 0
+				k += 1
+			main.call("current_map").call("_refresh_all")
+			main.call("_switch_to", "farm")
+			await get_tree().process_frame
+		if "--greenhouse" in args:
+			Animals.buildings.greenhouse.built = true
+			var k := 0
+			for crop: String in ["tomato", "pumpkin", "melon", "strawberry", "sunflower", "blueberry", "eggplant", "cauliflower"]:
+				var c := Vector2i(4 + k % 6, 21 + (k / 6) * 2)
+				FarmState.till(c)
+				FarmState.plant(c, crop)
+				FarmState.tiles[c].age = 30
+				k += 1
+			main.call("_switch_to", "farm")
+			await get_tree().process_frame
+		for a in args:
+			if a.begins_with("--married="):
+				Marriage.spouse = a.trim_prefix("--married=")
+				TimeManager.minutes = 14 * 60
+				main.call("_switch_to", "farm")
+				await get_tree().process_frame
+			if a.begins_with("--wedding="):
+				Marriage.spouse = a.trim_prefix("--wedding=")
+				Marriage.wedding_pending = true
 		if "--garden" in args:
 			# Potager de démonstration : toutes les cultures, mûres
 			var k := 0
@@ -212,6 +246,11 @@ func _ready() -> void:
 		if "--summary" in args:
 			FarmState.ship("carrot", 6)
 			GameFlow.end_day(false)
+	for a in args:
+		if a.begins_with("--fat=") and not "--forest" in args:
+			var xy := a.trim_prefix("--fat=").split(",")
+			var fm: WorldMap = main.call("current_map")
+			fm.player.position = fm.cell_center(Vector2i(int(xy[0]), int(xy[1])))
 	var delay := 1.0
 	for a in args:
 		if a.begins_with("--act="):

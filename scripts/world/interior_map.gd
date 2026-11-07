@@ -237,7 +237,7 @@ func _spawn_residents() -> void:
 	for id: String in GameData.npcs:
 		var data := GameData.npc(id)
 		var lives_here := str(data.get("home", "")) == building
-		if not lives_here or not Npc.is_home_at(id, TimeManager.minutes):
+		if not lives_here or id == Marriage.spouse or not Npc.is_home_at(id, TimeManager.minutes):
 			continue
 		var npc := Npc.new()
 		npc.id = id

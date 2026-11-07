@@ -25,6 +25,51 @@ const SPRINKLER_RANGE := {
 }
 const FERTILIZER_EVERY := 3  # une nuit de croissance bonus toutes les 3 nuits arrosées
 
+## Arbres fruitiers : Vector2i -> {"type": String, "age": int, "fruits": int}
+var trees: Dictionary = {}
+var tree_data: Dictionary = {}  # data/fruit_trees.json
+const MAX_FRUITS := 3
+## La serre (une fois construite) : intérieur cultivable en toute saison
+const GREENHOUSE_PLOT := Vector2i(3, 20)
+const GREENHOUSE_INNER := Rect2i(4, 21, 6, 4)
+
+
+func _ready() -> void:
+	var file := FileAccess.open("res://data/fruit_trees.json", FileAccess.READ)
+	if file != null:
+		var data: Variant = JSON.parse_string(file.get_as_text())
+		if data is Dictionary:
+			tree_data = data
+
+
+func in_greenhouse(cell: Vector2i) -> bool:
+	return GREENHOUSE_INNER.has_point(cell) and Animals.is_built("greenhouse")
+
+
+func plant_tree(cell: Vector2i, type: String) -> bool:
+	if objects.has(cell) or tiles.has(cell) or not tree_data.has(type):
+		return false
+	objects[cell] = "tree"
+	trees[cell] = {"type": type, "age": 0, "fruits": 0}
+	return true
+
+
+## Stade d'un arbre : 0 jeune pousse, 1 arbuste, 2 adulte (donne des fruits).
+func tree_stage(cell: Vector2i) -> int:
+	var t: Dictionary = trees[cell]
+	var grow := int(tree_data[t.type].grow_days)
+	if int(t.age) >= grow:
+		return 2
+	return 1 if int(t.age) >= grow / 2 else 0
+
+
+## Secoue l'arbre : renvoie [fruit, nombre] (nombre = 0 s'il n'y a rien).
+func shake_tree(cell: Vector2i) -> Array:
+	var t: Dictionary = trees[cell]
+	var n := int(t.fruits)
+	t.fruits = 0
+	return [str(tree_data[t.type].fruit), n]
+
 
 func reset() -> void:
 	tiles.clear()
@@ -32,6 +77,7 @@ func reset() -> void:
 	objects.clear()
 	chests.clear()
 	debris.clear()
+	trees.clear()
 
 
 func is_tilled(cell: Vector2i) -> bool:
@@ -167,9 +213,10 @@ func sell_shipping(report: Dictionary) -> int:
 func advance_day(new_season: int, raining: bool) -> void:
 	for cell: Vector2i in tiles:
 		var t: Dictionary = tiles[cell]
+		var sheltered := in_greenhouse(cell)
 		if t.crop != "":
-			if not GameData.crop_in_season(t.crop, new_season):
-				t.crop = ""  # la culture meurt hors saison
+			if not sheltered and not GameData.crop_in_season(t.crop, new_season):
+				t.crop = ""  # la culture meurt hors saison (sauf dans la serre)
 				t.age = 0
 			elif t.watered:
 				t.age += 1
@@ -178,7 +225,13 @@ func advance_day(new_season: int, raining: bool) -> void:
 					if t.fert_progress >= FERTILIZER_EVERY:
 						t.fert_progress = 0
 						t.age += 1
-		t.watered = raining
+		t.watered = raining and not sheltered  # la pluie n'entre pas dans la serre
+	# Les arbres grandissent ; adultes, ils donnent un fruit par jour en saison.
+	for cell: Vector2i in trees:
+		var tree: Dictionary = trees[cell]
+		tree.age = int(tree.age) + 1
+		if tree_stage(cell) == 2 and int(tree_data[tree.type].season) == new_season:
+			tree.fruits = mini(int(tree.fruits) + 1, MAX_FRUITS)
 	# Les arroseurs arrosent au lever du jour.
 	for cell: Vector2i in objects:
 		for offset: Vector2i in SPRINKLER_RANGE.get(objects[cell], []):
@@ -199,7 +252,10 @@ func to_dict() -> Dictionary:
 	var boxes := {}
 	for cell: Vector2i in chests:
 		boxes["%d,%d" % [cell.x, cell.y]] = chests[cell].duplicate(true)
-	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs, "chests": boxes, "debris": junk}
+	var orchard := {}
+	for cell: Vector2i in trees:
+		orchard["%d,%d" % [cell.x, cell.y]] = trees[cell].duplicate()
+	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs, "chests": boxes, "debris": junk, "trees": orchard}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -234,5 +290,10 @@ func from_dict(data: Dictionary) -> void:
 			if content[i] is Dictionary:
 				slots[i] = {"id": str(content[i].id), "qty": int(content[i].qty)}
 		chests[Vector2i(int(parts[0]), int(parts[1]))] = slots
+	var orchard: Dictionary = data.get("trees", {})
+	for key: String in orchard:
+		var parts := key.split(",")
+		var t: Dictionary = orchard[key]
+		trees[Vector2i(int(parts[0]), int(parts[1]))] = {"type": str(t.type), "age": int(t.age), "fruits": int(t.get("fruits", 0))}
 	for entry: Variant in data.get("shipping", []):
 		shipping.append({"id": str(entry.id), "qty": int(entry.qty)})

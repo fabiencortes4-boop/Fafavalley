@@ -1,0 +1,113 @@
+{
+	"candidates": [
+		"rosalie",
+		"lina",
+		"mathis",
+		"margot"
+	],
+	"bouquet_hearts": 8,
+	"pendant_hearts": 10,
+	"wedding_delay": 3,
+	"rosalie": {
+		"dating": "Un bouquet... pour moi ? Oh. Oh ! Oui. Oui, je veux bien qu'on se voie... un peu plus que pour acheter des graines.",
+		"proposal": "Le pendentif de la source... Tu sais ce qu'il veut dire, ici ? ...Oui. Mille fois oui !",
+		"vow": "Je promets de garder les étagères pleines et ton cœur aussi. Enfin... tu vois ce que je veux dire !",
+		"spouse": {
+			"morning": [
+				"J'ai préparé le café. Tu as vu le lever de soleil sur les champs ?",
+				"Bonne journée, mon cœur. Ne travaille pas trop !"
+			],
+			"day": [
+				"J'ai fait le tour des cultures : elles sont magnifiques.",
+				"Je pensais à repeindre la vitrine de l'épicerie en vert. Comme nos champs !"
+			],
+			"evening": [
+				"Tu rentres tard... Viens t'asseoir, j'ai gardé de la soupe au chaud.",
+				"Raconte-moi ta journée. Je veux tout savoir."
+			]
+		}
+	},
+	"lina": {
+		"dating": "Des fleurs ? Je vais les peindre... et les garder pour toujours. Oui, sortons ensemble !",
+		"proposal": "Tu... tu me demandes en mariage ? Attends, je dois dessiner ce moment. ...Oui ! Évidemment oui !",
+		"vow": "Je promets de peindre chacun de nos jours, même les gris. Surtout les gris.",
+		"spouse": {
+			"morning": [
+				"J'ai peint l'aube par la fenêtre. Tu veux voir ?",
+				"Le ciel est rose ce matin. Un bon présage !"
+			],
+			"day": [
+				"J'installe mon chevalet près des champs. Tu poses pour moi plus tard ?",
+				"La lumière est parfaite aujourd'hui."
+			],
+			"evening": [
+				"Regarde, j'ai fini le tableau de la ferme ! On l'accroche où ?",
+				"Tu as de la terre sur le nez. Ne bouge pas, je te dessine."
+			]
+		}
+	},
+	"mathis": {
+		"dating": "Un bouquet. Pour moi. Personne ne m'avait jamais... Bon. D'accord. On essaie ? Oui. On essaie.",
+		"proposal": "Un pendentif... Je ne suis pas doué avec les mots, alors : oui. Et je te fabrique une table pour notre maison.",
+		"vow": "Je promets de réparer tout ce qui casse. Sauf ton cœur : celui-là, je ne le casserai jamais.",
+		"spouse": {
+			"morning": [
+				"J'ai resserré la porte de la grange. Elle grinçait.",
+				"Bien dormi ? J'ai déjà fait le tour des clôtures."
+			],
+			"day": [
+				"Je te construis une étagère pour la cuisine. Surprise ! ...Enfin, plus maintenant.",
+				"Il fait beau : parfait pour travailler dehors."
+			],
+			"evening": [
+				"Assieds-toi, je t'ai fait un tabouret à ta taille.",
+				"Une bonne journée de travail. On est bien, là."
+			]
+		}
+	},
+	"margot": {
+		"dating": "Des fleurs ! Pour moi ? Bon, je ne vais pas faire semblant : j'attendais ça depuis des semaines. Oui !",
+		"proposal": "Le pendentif... Ha ! J'ai déjà dit oui dans ma tête il y a trois semaines. OUI !",
+		"vow": "Je promets de ne jamais compter le foin que tu me dois. Enfin... presque jamais.",
+		"spouse": {
+			"morning": [
+				"Les bêtes ont mangé, j'ai vérifié. Café ?",
+				"Debout, fermier ! La coopérative n'attend pas."
+			],
+			"day": [
+				"J'ai fait l'inventaire de la grange. Tout est en ordre, chef !",
+				"Tu as vu le prix du lait ? On devrait en vendre plus."
+			],
+			"evening": [
+				"Quelle journée ! Viens, on fait le bilan au coin du feu.",
+				"J'ai gardé le meilleur œuf du jour pour ton omelette."
+			]
+		}
+	},
+	"wedding": [
+		[
+			"",
+			"Trois jours plus tard, toute la vallée s'est réunie sur la place de Valfleur, sous une pluie de pétales."
+		],
+		[
+			"bertrand",
+			"Mes amis ! Je n'avais pas célébré de mariage depuis... oh, depuis bien trop longtemps. Quel bonheur !"
+		],
+		[
+			"@spouse",
+			"@vow"
+		],
+		[
+			"bertrand",
+			"Par les pouvoirs qui me sont conférés par la mairie de Valfleur... je vous déclare unis ! Vive les mariés !"
+		],
+		[
+			"",
+			"Odette pleure de joie, Théo lance des fleurs partout, et Gaston fait semblant d'avoir une poussière dans l'œil."
+		],
+		[
+			"@spouse",
+			"Allez, rentrons à la maison. Notre maison."
+		]
+	]
+}

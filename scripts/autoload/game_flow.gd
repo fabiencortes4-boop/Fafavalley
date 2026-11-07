@@ -29,6 +29,7 @@ func new_game() -> void:
 	Tutorial.start()
 	Quests.reset()
 	HeartEvents.reset()
+	Marriage.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])
 	Inventory.add_gold(STARTING_GOLD)
@@ -63,6 +64,7 @@ func end_day(passed_out: bool = false) -> void:
 	Quests.new_day()
 	Forage.new_day()
 	var ranch := Animals.new_day(TimeManager.season)
+	Marriage.new_day()
 	report["animals"] = ranch
 	Mail.check()
 	TimeManager.start_day()

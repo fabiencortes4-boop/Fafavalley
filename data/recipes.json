@@ -156,5 +156,13 @@
 			"wheat": 1,
 			"egg": 1
 		}
+	},
+	"pendant": {
+		"station": "forge",
+		"gold": 500,
+		"ingredients": {
+			"amethyst": 1,
+			"gold_ore": 2
+		}
 	}
 }

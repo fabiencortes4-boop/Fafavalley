@@ -43,6 +43,7 @@ Music="*res://scripts/autoload/music.gd"
 Tutorial="*res://scripts/autoload/tutorial.gd"
 Quests="*res://scripts/autoload/quests.gd"
 HeartEvents="*res://scripts/autoload/heart_events.gd"
+Marriage="*res://scripts/autoload/marriage.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 

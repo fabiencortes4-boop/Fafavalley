@@ -11,10 +11,15 @@
 		],
 		"items": [
 			"@seeds",
+			"sapling_apple",
+			"sapling_orange",
+			"sapling_peach",
+			"sapling_cherry",
 			"fishing_rod",
 			"chest",
 			"backpack_24",
-			"backpack_36"
+			"backpack_36",
+			"bouquet"
 		]
 	},
 	"cooperative": {

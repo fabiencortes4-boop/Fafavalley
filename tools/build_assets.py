@@ -535,6 +535,11 @@ def extend_icons(sheet):
     extra += crop_icons()
     # puis 3 plats : soupe de citrouille, ratatouille, tarte aux myrtilles
     extra += [draw_bowl((242, 150, 50), (250, 240, 220)), draw_bowl((200, 60, 50), (110, 50, 130)), draw_bowl((70, 80, 170), (240, 220, 160))]
+    # 117+ : arbres fruitiers (jeune arbre, fruit) : cerisier, pêcher, oranger, pommier
+    for color, leaf in (((212, 42, 60), True), ((245, 164, 106), True), ((240, 138, 30), True), ((200, 48, 42), True)):
+        extra += [draw_sapling(color), draw_fruit(color, cherry=(color == (212, 42, 60)))]
+    # 125 bouquet, 126 pendentif de la source (mariage)
+    extra += [draw_bouquet(), draw_pendant()]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):
@@ -619,6 +624,75 @@ def tint_metal(img, color):
                 k = (r + g + b) / 3 / 255
                 px[x, y] = (min(255, int(color[0] * k * 1.25)), min(255, int(color[1] * k * 1.25)), min(255, int(color[2] * k * 1.25)), a)
     return out
+
+
+def draw_fruit(color, cherry=False):
+    img = new_img(16, 16)
+    px = img.load()
+    light = tuple(min(255, c + 60) for c in color)
+    centers = [(5, 10), (10, 10)] if cherry else [(8, 9)]
+    radius = 3.2 if cherry else 5.2
+    for (cx, cy) in centers:
+        for y in range(16):
+            for x in range(16):
+                if (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2:
+                    px[x, y] = color + (255,)
+        px[cx - 1, cy - 1] = light + (255,)
+    stem = (90, 60, 30, 255)
+    if cherry:
+        for k in range(5):
+            px[5 + k // 2, 6 - k] = stem
+            px[10 - k // 2, 6 - k] = stem
+    else:
+        px[8, 3] = stem
+        px[8, 2] = stem
+        px[9, 2] = (78, 151, 76, 255)
+        px[10, 2] = (78, 151, 76, 255)
+    return outlined(img)
+
+
+def draw_sapling(fruit_color):
+    """Jeune arbre en pot de terre, avec un fruit pour le reconnaître."""
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(11, 15):
+        for x in range(5, 11):
+            px[x, y] = (150, 95, 60, 255)
+    for y in range(6, 11):
+        px[8, y] = (110, 75, 45, 255)
+    for y in range(1, 8):
+        for x in range(3, 13):
+            if (x - 8) ** 2 / 25 + (y - 4.5) ** 2 / 10 <= 1:
+                px[x, y] = (78, 151, 76, 255) if (x + y) % 3 else (101, 165, 86, 255)
+    px[6, 4] = fruit_color + (255,)
+    px[10, 5] = fruit_color + (255,)
+    return outlined(img)
+
+
+def draw_bouquet():
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(8, 15):
+        for x in range(7 - (14 - y) // 3, 9 + (14 - y) // 3):
+            px[x, y] = (101, 165, 86, 255)
+    for x in range(5, 11):
+        px[x, 10] = (240, 230, 210, 255)
+    for (cx, cy, col) in ((5, 5, (232, 69, 55)), (8, 3, (253, 214, 83)), (11, 5, (190, 110, 210)), (7, 7, (255, 160, 190)), (10, 7, (232, 69, 55))):
+        for dx, dy in ((0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)):
+            px[cx + dx, cy + dy] = col + (255,)
+    return outlined(img)
+
+
+def draw_pendant():
+    img = new_img(16, 16)
+    px = img.load()
+    for k in range(9):
+        px[3 + k, 2 + abs(4 - k) // 2] = (230, 200, 90, 255)
+    for y in range(7, 14):
+        for x in range(5, 12):
+            if abs(x - 8) + abs(y - 10) <= 3:
+                px[x, y] = (110, 190, 240, 255) if (x + y) % 3 else (180, 230, 255, 255)
+    return outlined(img)
 
 
 def draw_jar(jam, light):

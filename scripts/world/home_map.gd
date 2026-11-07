@@ -63,6 +63,8 @@ func _after_build() -> void:
 	# Au réveil : à côté du lit
 	_spawn_cell = bed_cell + Vector2i(1, 1)
 	_place_player()
+	if Marriage.spouse_place() == "home":
+		_spawn_spouse(Vector2i(8, 5))
 
 
 func _place_player() -> void:

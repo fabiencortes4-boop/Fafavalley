@@ -502,7 +502,7 @@ func _build_props() -> void:
 					_place(batch, "nature", "plant_bushLarge", c, 2.6, rot)
 					_place(batch, "nature", "plant_bushLarge", c + Vector3(0.2, 0.3, 0.1), 1.8, rot + 1.0)
 			"S":
-				if chars.get(cell + Vector2i.LEFT, "") != "S" and chars.get(cell + Vector2i.UP, "") != "S":
+				if map is ForestMap and chars.get(cell + Vector2i.LEFT, "") != "S" and chars.get(cell + Vector2i.UP, "") != "S":
 					_spring(Vector3(cell.x + 1.0, 0, cell.y + 1.0))
 			"j":
 				_place(batch, "nature", "campfire_stones", c, 1.4, 0.0)
@@ -624,8 +624,8 @@ func _build_buildings(chars: Dictionary) -> void:
 						_festival(Vector3(cell.x + 1.0, 0, cell.y + 1.0))
 				"mine":
 					_mine_entrance(cell, b[3])
-		if map is Farm and (ch == "K" or ch == "J"):
-			_farm_plot("coop" if ch == "K" else "barn")
+		if map is Farm and ch in ["K", "J", "S"]:
+			_farm_plot({"K": "coop", "J": "barn", "S": "greenhouse"}[ch])
 		if ch == "N":
 			var anvil := _model("survival", "workbench-anvil", 2.2)
 			anvil.position = _cell3d(cell)
@@ -948,6 +948,64 @@ func _build_event_decor() -> void:
 			_put(_fitted("nature", "pot_small", 0.4), Vector3(31.0, 0, 27.0) + Vector3(cos(a), 0, sin(a)) * 2.2)
 
 
+## Serre vitrée : soubassement en bois, montants, vitres claires, toit de verre.
+func _greenhouse(cell: Vector2i, size: Vector2i, door_col: int) -> void:
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.75, 0.92, 1.0, 0.28)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.roughness = 0.1
+	glass.metallic_specular = 0.9
+	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var wood := Color(0.55, 0.38, 0.24)
+	var white := Color(0.92, 0.92, 0.9)
+	var x0 := float(cell.x)
+	var z0 := float(cell.y)
+	var w := float(size.x)
+	var d := float(size.y)
+	var h := 1.6
+	# Murs : soubassement + vitre, sur le pourtour (porte ouverte)
+	for dx in size.x:
+		for dy in size.y:
+			var border := dx == 0 or dy == 0 or dx == size.x - 1 or dy == size.y - 1
+			if not border or (dy == size.y - 1 and dx == door_col):
+				continue
+			var c := Vector3(x0 + dx + 0.5, 0, z0 + dy + 0.5)
+			_put(_box(Vector3(1.0, 0.35, 1.0) * Vector3(1 if dy == 0 or dy == size.y - 1 else 0.25, 1, 1 if dx == 0 or dx == size.x - 1 else 0.25), wood), c + Vector3(0, 0.17, 0))
+	for side: Array in [[Vector3(x0 + w / 2.0, 0, z0 + 0.5), Vector3(w, h, 0.04)], [Vector3(x0 + 0.5, 0, z0 + d / 2.0), Vector3(0.04, h, d)],
+			[Vector3(x0 + w - 0.5, 0, z0 + d / 2.0), Vector3(0.04, h, d)]]:
+		var pane := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = side[1]
+		box.material = glass
+		pane.mesh = box
+		_put(pane, side[0] + Vector3(0, 0.35 + h / 2.0, 0))
+	# Façade vitrée de part et d'autre de la porte
+	for part: Array in [[x0 + 0.5, x0 + door_col], [x0 + door_col + 1, x0 + w - 0.5]]:
+		var width := float(part[1]) - float(part[0])
+		if width <= 0.05:
+			continue
+		var front := MeshInstance3D.new()
+		var fb := BoxMesh.new()
+		fb.size = Vector3(width, h, 0.04)
+		fb.material = glass
+		front.mesh = fb
+		_put(front, Vector3((float(part[0]) + float(part[1])) / 2.0, 0.35 + h / 2.0, z0 + d - 0.5))
+	# Montants blancs
+	for dx in range(0, size.x, 2):
+		for z: float in [z0 + 0.5, z0 + d - 0.5]:
+			_put(_box(Vector3(0.07, h + 0.35, 0.07), white), Vector3(x0 + dx + 0.5, (h + 0.35) / 2.0, z))
+	# Toit de verre à deux pans
+	for k in 2:
+		var roof := MeshInstance3D.new()
+		var rb := BoxMesh.new()
+		rb.size = Vector3(w - 0.8, 0.04, d / 2.0 + 0.1)
+		rb.material = glass
+		roof.mesh = rb
+		roof.rotation.x = -0.45 if k == 0 else 0.45
+		_put(roof, Vector3(x0 + w / 2.0, 0.35 + h + 0.38, z0 + 0.5 + (d - 1.0) * (0.25 if k == 0 else 0.75)))
+	_put(_box(Vector3(w - 0.8, 0.08, 0.08), white), Vector3(x0 + w / 2.0, 0.35 + h + 0.82, z0 + d / 2.0))
+
+
 ## Lanterne du village (et sa lumière, allumée le soir).
 func _village_lantern(cell: Vector2i) -> void:
 	var c := _cell3d(cell)
@@ -990,6 +1048,9 @@ func _farm_plot(id: String) -> void:
 	var cell: Vector2i = plot.cell
 	var size: Vector2i = plot.size
 	var door := int(Animals.building_info(id).get("door", 1))
+	if Animals.is_built(id) and id == "greenhouse":
+		_greenhouse(cell, size, door)
+		return
 	if Animals.is_built(id):
 		if id == "coop":
 			_house(cell, size, door, "wall-wood", Color(0.85, 0.7, 0.35))
@@ -1538,6 +1599,8 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 			var s := _billboard(GameData.item_icon(str(FarmState.objects[cell])), 0.04)
 			s.position.y = 0.32
 			node.add_child(s)
+		"tree":
+			node.add_child(_fruit_tree(cell))
 	if FarmState.debris.has(cell):
 		var debris: Node3D
 		match str(FarmState.debris[cell].type):
@@ -1559,6 +1622,35 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 
 
 ## Plante en 3D selon son stade et son apparence (data/crops.json, « look »).
+## Arbre fruitier : jeune pousse, arbuste, puis arbre avec ses fruits.
+func _fruit_tree(cell: Vector2i) -> Node3D:
+	var t: Dictionary = FarmState.trees[cell]
+	var info: Dictionary = FarmState.tree_data[t.type]
+	var stage := FarmState.tree_stage(cell)
+	var autumn := TimeManager.season == 2
+	var model := "tree_default_fall" if autumn else "tree_default"
+	if TimeManager.season == 3:
+		model = "tree_default_dark" if ResourceLoader.exists(Models.path("nature", "tree_default_dark")) else "tree_default"
+	var tree := _model("nature", model, [0.45, 0.9, 1.55][stage])
+	tree.rotation.y = float(_hash(cell) % 628) / 100.0
+	var holder := Node3D.new()
+	holder.add_child(tree)
+	# Fleurs blanches au printemps pour le cerisier, fruits mûrs sinon
+	var count := int(t.fruits) * 3
+	var color := Color(str(info.color))
+	for k in count:
+		var fruit := MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.07 if t.type != "cherry" else 0.05
+		sphere.height = sphere.radius * 2.0
+		sphere.material = _flat_material(color)
+		fruit.mesh = sphere
+		var a := k * 2.4
+		fruit.position = Vector3(cos(a) * 0.38, 0.95 + float(k % 3) * 0.18, sin(a) * 0.38)
+		holder.add_child(fruit)
+	return holder
+
+
 func _crop_model(crop: String, stage: int) -> Node3D:
 	var look: Dictionary = GameData.crop(crop).get("look", {})
 	var type := str(look.get("type", "root"))

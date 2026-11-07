@@ -27,9 +27,9 @@ const MAP := [
 	"TTT.......................~~~~~~~~~...TT",
 	"TT........'...............~~~~~~~~~~..TT",
 	"TT........................~~~~~~~~~~..TT",
-	"TT.....................o..~~~~~~~~~~..TT",
+	"TT.S...................o..~~~~~~~~~~..TT",
 	"TTT.............,.........~~~~~~~~~~..TT",
-	"TT....,....................~~~~~~~~...TT",
+	"TT.........................~~~~~~~~...TT",
 	"TTT.........................~~~~~~...TTT",
 	"TT...................................oTT",
 	"TTT.........b......................m..TT",
@@ -79,8 +79,8 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			var door := _add_building(cell, Vector2i(3, 3), "res://assets/sprites/house.png", 1)
 			_interactables[door] = "door"
 			_spawn_cell = door + Vector2i.DOWN
-		"K", "J":
-			_place_plot("coop" if ch == "K" else "barn", cell)
+		"K", "J", "S":
+			_place_plot({"K": "coop", "J": "barn", "S": "greenhouse"}[ch], cell)
 		"L":
 			# Un tronc barre le chemin de la forêt (dégagé au chapitre 1)
 			if not PlayerState.flags.has("story_ch1"):
@@ -125,6 +125,8 @@ func _after_build() -> void:
 	Mail.mail_changed.connect(_update_mail_alert)
 	_update_mail_alert()
 	_spawn_animals()
+	if Marriage.spouse_place() == "farm":
+		_spawn_spouse(Vector2i(9, 8))
 
 
 func _warp_for(cell: Vector2i) -> Dictionary:
@@ -190,6 +192,9 @@ func _act_on_ground(cell: Vector2i) -> bool:
 					Sfx.play("drop")
 					Fx.puff(_entities, cell_center(cell), Color(0.93, 0.88, 0.78, 0.8), 1.4))
 			return true
+		"sapling":
+			_plant_tree(cell, str(item.get("tree", "")))
+			return true
 		"fertilizer":
 			_deferring = FarmState.is_tilled(cell) and not FarmState.is_fertilized(cell)
 			if FarmState.is_tilled(cell) and FarmState.fertilize(cell):
@@ -218,6 +223,9 @@ func act_on(cell: Vector2i) -> void:
 		else:
 			EventBus.toast("%s a déjà eu ses caresses aujourd'hui." % a.name)
 		return
+	if FarmState.objects.get(cell) == "tree" and not fishing.busy():
+		_shake_tree(cell)
+		return
 	if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe" and not fishing.busy():
 		EventBus.chest_requested.emit(cell)
 		return
@@ -233,6 +241,16 @@ func _place_plot(id: String, cell: Vector2i) -> void:
 	var size := Vector2i(int(info.size[0]), int(info.size[1]))
 	var door := cell + Vector2i(int(info.get("door", 1)), size.y - 1)
 	plots[id] = {"cell": cell, "size": size, "door": door}
+	if Animals.is_built(id) and id == "greenhouse":
+		# Serre : murs vitrés tout autour (sauf la porte), intérieur cultivable
+		for dx in size.x:
+			for dy in size.y:
+				var c := cell + Vector2i(dx, dy)
+				var border := dx == 0 or dy == 0 or dx == size.x - 1 or dy == size.y - 1
+				if border and c != door:
+					block_cell(c)
+				FarmState.debris.erase(c)
+		return
 	if Animals.is_built(id):
 		_add_building(cell, size, "res://assets/sprites/house_gray.png" if id == "coop" else "res://assets/sprites/store.png", int(info.get("door", 1)))
 		_interactables[door] = "animals:" + id
@@ -253,7 +271,7 @@ func _interact_plot(kind: String, id: String) -> void:
 		"construction":
 			EventBus.message_requested.emit(name, "Le chantier avance : encore %d jour(s) et Mathis aura terminé." % int(Animals.buildings[id].days_left))
 		"plot":
-			EventBus.message_requested.emit("Terrain à bâtir", "Un emplacement parfait pour un %s. Mathis, le charpentier du village, peut le construire." % name.to_lower())
+			EventBus.message_requested.emit("Terrain à bâtir", "Emplacement prévu : %s. Mathis, le charpentier du village, peut le construire." % name.to_lower())
 
 
 ## En journée, par beau temps, les animaux se promènent devant leur bâtiment.
@@ -273,6 +291,52 @@ func _spawn_animals() -> void:
 		_entities.add_child(critter)
 
 
+# ------------------------------------------------------------ arbres fruitiers
+func _plant_tree(cell: Vector2i, type: String) -> void:
+	if not _can_place(cell) or FarmState.in_greenhouse(cell):
+		EventBus.toast("Plante l'arbre sur de l'herbe libre.")
+		return
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			if FarmState.trees.has(cell + Vector2i(dx, dy)):
+				EventBus.toast("Trop près d'un autre arbre : laisse-lui de la place.")
+				return
+	_deferring = true
+	if FarmState.plant_tree(cell, type):
+		Inventory.remove_from_slot(Inventory.selected, 1)
+		_gesture("bend", cell, func() -> void:
+			Sfx.play("plant")
+			Fx.puff(_entities, cell_center(cell), Color(0.62, 0.45, 0.3, 0.7), 1.2))
+		var info: Dictionary = FarmState.tree_data[type]
+		EventBus.toast("%s planté ! Adulte dans %d jours." % [info.name, int(info.grow_days)])
+	else:
+		_deferring = false
+
+
+func _shake_tree(cell: Vector2i) -> void:
+	var t: Dictionary = FarmState.trees[cell]
+	var info: Dictionary = FarmState.tree_data[t.type]
+	player.face_towards(cell - player_cell())
+	player.play_use()
+	if FarmState.tree_stage(cell) < 2:
+		EventBus.toast("%s : encore %d jour(s) avant d'être adulte." % [info.name, int(info.grow_days) - int(t.age)])
+		return
+	if int(t.fruits) == 0:
+		EventBus.toast("Pas de fruits aujourd'hui. Un fruit par jour en %s." % ["printemps", "été", "automne", "hiver"][int(info.season)])
+		return
+	var got := FarmState.shake_tree(cell)
+	var left := Inventory.add_item(got[0], int(got[1]))
+	if left > 0:
+		t.fruits = left
+	Sfx.play("harvest")
+	shake(1.5, 0.12)
+	Fx.burst(_entities, cell_center(cell) + Vector2(0, -14), [Color(0.4, 0.75, 0.3), Color(0.3, 0.6, 0.25)], 12, 50.0)
+	Skills.add_xp("farming", 4 * int(got[1]))
+	Story.bump("harvest", int(got[1]) - left)
+	EventBus.toast("+%d %s" % [int(got[1]) - left, GameData.item_name(got[0])])
+	visual_changed.emit(cell)
+
+
 func _is_farmland() -> bool:
 	return true
 
@@ -283,6 +347,8 @@ func action_hint(cell: Vector2i) -> String:
 			return "Caresser"
 		if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe":
 			return "Ouvrir"
+		if FarmState.objects.get(cell) == "tree":
+			return "Cueillir" if int(FarmState.trees[cell].fruits) > 0 else "Voir"
 		if FarmState.is_mature(cell):
 			return "Récolter"
 	return super(cell)
@@ -328,7 +394,7 @@ func _scatter_debris(count: int, only_weeds: bool = false) -> void:
 	for cell: Vector2i in _ground_chars:
 		if not str(_ground_chars[cell]) in TILLABLE or not is_walkable(cell) or _interactables.has(cell):
 			continue
-		if FarmState.is_tilled(cell) or (cell - _spawn_cell).length() < 4:
+		if FarmState.is_tilled(cell) or (cell - _spawn_cell).length() < 4 or FarmState.in_greenhouse(cell):
 			continue
 		cells.append(cell)
 	cells.shuffle()
@@ -433,7 +499,7 @@ func _can_place(cell: Vector2i) -> bool:
 func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 	if _hit_debris(cell, "pickaxe", energy):
 		return
-	if not FarmState.objects.has(cell):
+	if not FarmState.objects.has(cell) or FarmState.objects[cell] == "tree":
 		return
 	var id := FarmState.objects[cell] as String
 	if id == "chest" and not FarmState.chest_is_empty(cell):
@@ -524,8 +590,8 @@ func _can_till(cell: Vector2i) -> bool:
 func _plant(cell: Vector2i, crop_id: String) -> void:
 	if crop_id == "" or not FarmState.is_tilled(cell) or FarmState.get_crop(cell) != "":
 		return
-	if not GameData.crop_in_season(crop_id, TimeManager.season):
-		EventBus.toast("Ce n'est pas la saison pour planter ça.")
+	if not GameData.crop_in_season(crop_id, TimeManager.season) and not FarmState.in_greenhouse(cell):
+		EventBus.toast("Ce n'est pas la saison pour planter ça (sauf dans une serre).")
 		return
 	_deferring = true
 	if not FarmState.plant(cell, crop_id):
@@ -618,6 +684,9 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.QUALITY_SPRINKLER))
 		"chest":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.CHEST))
+		"tree":
+			var stage := FarmState.tree_stage(cell)
+			_objects.set_cell(cell, 0, WorldTiles.coords([WorldTiles.GRASS_TUFT, WorldTiles.BUSH, WorldTiles.ROUND_TREE][stage]))
 		_:
 			_objects.erase_cell(cell)
 	if FarmState.debris.has(cell):

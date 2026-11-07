@@ -31,6 +31,23 @@
 			],
 			"door": 1,
 			"description": "Abrite vaches et cochons."
+		},
+		"greenhouse": {
+			"name": "Serre",
+			"price": 6000,
+			"materials": {
+				"wood": 200,
+				"stone": 100,
+				"quartz": 5
+			},
+			"capacity": 0,
+			"days": 3,
+			"size": [
+				8,
+				6
+			],
+			"door": 3,
+			"description": "Une serre vitrée : on y cultive tout, en toute saison."
 		}
 	},
 	"animals": {

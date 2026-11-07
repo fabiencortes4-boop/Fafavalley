@@ -1169,5 +1169,106 @@
 			70,
 			30
 		]
+	},
+	"sapling_cherry": {
+		"name": "Jeune cerisier",
+		"type": "sapling",
+		"tree": "cherry",
+		"icon": 117,
+		"stack": 99,
+		"buy": 900,
+		"sell": 450,
+		"description": "À planter sur l'herbe de la ferme. Donne des fruits chaque jour en printemps, une fois adulte (10 jours)."
+	},
+	"cherry": {
+		"name": "Cerises",
+		"type": "crop",
+		"icon": 118,
+		"stack": 99,
+		"sell": 80,
+		"edible": [
+			20,
+			10
+		]
+	},
+	"sapling_peach": {
+		"name": "Jeune pêcher",
+		"type": "sapling",
+		"tree": "peach",
+		"icon": 119,
+		"stack": 99,
+		"buy": 1200,
+		"sell": 600,
+		"description": "À planter sur l'herbe de la ferme. Donne des fruits chaque jour en été, une fois adulte (10 jours)."
+	},
+	"peach": {
+		"name": "Pêche",
+		"type": "crop",
+		"icon": 120,
+		"stack": 99,
+		"sell": 140,
+		"edible": [
+			20,
+			10
+		]
+	},
+	"sapling_orange": {
+		"name": "Jeune oranger",
+		"type": "sapling",
+		"tree": "orange",
+		"icon": 121,
+		"stack": 99,
+		"buy": 1100,
+		"sell": 550,
+		"description": "À planter sur l'herbe de la ferme. Donne des fruits chaque jour en été, une fois adulte (12 jours)."
+	},
+	"orange": {
+		"name": "Orange",
+		"type": "crop",
+		"icon": 122,
+		"stack": 99,
+		"sell": 100,
+		"edible": [
+			20,
+			10
+		]
+	},
+	"sapling_apple": {
+		"name": "Jeune pommier",
+		"type": "sapling",
+		"tree": "apple",
+		"icon": 123,
+		"stack": 99,
+		"buy": 1000,
+		"sell": 500,
+		"description": "À planter sur l'herbe de la ferme. Donne des fruits chaque jour en automne, une fois adulte (10 jours)."
+	},
+	"apple": {
+		"name": "Pomme",
+		"type": "crop",
+		"icon": 124,
+		"stack": 99,
+		"sell": 100,
+		"edible": [
+			20,
+			10
+		]
+	},
+	"bouquet": {
+		"name": "Bouquet",
+		"type": "gift_special",
+		"icon": 125,
+		"stack": 9,
+		"buy": 200,
+		"sell": 50,
+		"description": "Offert à un habitant célibataire à 8 cœurs : pour sortir ensemble."
+	},
+	"pendant": {
+		"name": "Pendentif de la source",
+		"type": "gift_special",
+		"icon": 126,
+		"stack": 1,
+		"sell": 500,
+		"description": "Forgé par Gaston. Offert à 10 cœurs : une demande en mariage."
 	}
 }

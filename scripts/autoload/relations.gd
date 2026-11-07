@@ -29,7 +29,9 @@ func hearts(id: String) -> int:
 
 
 func add_points(id: String, amount: int) -> void:
-	points[id] = clampi(int(points.get(id, 0)) + amount, 0, POINTS_PER_HEART * MAX_HEARTS)
+	# Célibataires : 8 cœurs au plus tant qu'on ne sort pas ensemble
+	var cap := POINTS_PER_HEART * Marriage.heart_cap(id)
+	points[id] = clampi(int(points.get(id, 0)) + amount, 0, maxi(cap, mini(int(points.get(id, 0)), POINTS_PER_HEART * MAX_HEARTS)))
 	EventBus.relations_changed.emit()
 
 
