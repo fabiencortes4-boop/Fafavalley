@@ -260,6 +260,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 		return
 	_invulnerable = INVULNERABLE_TIME
 	_knockback = (position - from).normalized() * 160.0
+	EventBus.player_hurt.emit(from)
 	Input.vibrate_handheld(80)
 	Sfx.play("hurt")
 	EventBus.camera_shake.emit(3.0, 0.2)

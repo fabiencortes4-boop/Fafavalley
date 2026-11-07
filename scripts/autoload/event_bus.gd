@@ -29,6 +29,10 @@ signal shop_opened(shop_id: String)
 signal animals_requested(building: String)
 signal zone_entered(name: String)
 ## Un chapitre de l'histoire est terminé (par la voie indiquée)
+## Combat (pour la vue 3D) : coup porté, monstre vaincu, joueur touché
+signal combat_hit(monster: Node2D, amount: int)
+signal monster_killed(at: Vector2, kind: String)
+signal player_hurt(from: Vector2)
 ## Une scène de cœur avec un habitant
 signal heart_scene_requested(npc_id: String, scene: Dictionary)
 ## Le tableau des demandes (place du village)

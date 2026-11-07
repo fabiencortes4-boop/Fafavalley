@@ -6,6 +6,12 @@ extends Node2D
 
 enum State { IDLE, WAITING, BITE, REELING }
 
+## Pour la vue 3D : lancer, touche, prise, poisson échappé
+signal cast_started(target: Vector2)
+signal bitten
+signal caught(fish_id: String)
+signal escaped
+
 const CAST_RANGE := 3
 const BITE_WINDOW := 1.0
 const WAIT_MIN := 1.5
@@ -70,6 +76,7 @@ func try_cast(energy: int) -> bool:
 	_bobber.position = _bobber_base
 	_bobber.visible = true
 	_line.visible = true
+	cast_started.emit(_bobber_base)
 	return true
 
 
@@ -103,11 +110,13 @@ func _process(delta: float) -> void:
 				_alert.visible = true
 				Input.vibrate_handheld(150)
 				Sfx.play("bite")
+				bitten.emit()
 				Fx.burst(map.get("_entities"), _bobber_base, Fx.WATER, 10, 55.0)
 		State.BITE:
 			_timer -= delta
 			if _timer <= 0.0:
 				Sfx.play("escape")
+				escaped.emit()
 				EventBus.toast("Le poisson s'est échappé... Sois plus rapide !")
 				_reset()
 
@@ -131,9 +140,11 @@ func _on_minigame_finished(success: bool) -> void:
 				text += " Nouveau record !"
 			EventBus.toast(text)
 			Sfx.play("catch")
+			caught.emit(_fish_id)
 			Fx.item_pop(map.get("_entities"), _bobber_base, GameData.item_icon(_fish_id), map.player)
 	else:
 		Sfx.play("escape")
+		escaped.emit()
 		EventBus.toast("Le poisson s'est décroché...")
 	_reset()
 

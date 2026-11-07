@@ -103,6 +103,7 @@ func _wander_dir() -> Vector2:
 ## Coup reçu : recul, flash blanc, mort éventuelle.
 func hit(amount: int, from: Vector2, knockback: float) -> void:
 	hp -= amount
+	EventBus.combat_hit.emit(self, amount)
 	Sfx.play("hit")
 	Fx.burst(get_parent(), position + Vector2(0, -6), [Color(1, 1, 1), Color(1, 0.85, 0.5)], 6, 45.0, true, 120.0, 0.25)
 	_stun = STUN_TIME
@@ -112,6 +113,7 @@ func hit(amount: int, from: Vector2, knockback: float) -> void:
 	var tween := create_tween()
 	tween.tween_property(_sprite, "modulate", Color.WHITE, 0.15)
 	if hp <= 0:
+		EventBus.monster_killed.emit(position, kind)
 		died.emit(self)
 		set_physics_process(false)
 		var fade := create_tween()

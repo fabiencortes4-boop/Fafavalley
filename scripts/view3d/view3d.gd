@@ -63,6 +63,7 @@ const TOOL_MODELS := {
 	"steel_pickaxe": ["survival", "tool-pickaxe-upgraded"], "watering_can": ["survival", "bucket"],
 	"copper_can": ["survival", "bucket"], "scythe": ["survival", "tool-shovel"],
 	"rusty_sword": ["dungeon", "weapon-sword"], "iron_sword": ["dungeon", "weapon-sword"], "war_axe": ["survival", "tool-axe-upgraded"],
+	"steel_sword": ["dungeon", "weapon-sword"], "firmin_blade": ["dungeon", "weapon-sword"],
 }
 ## Monstres : [modèle, teinte, échelle, hauteur de vol]
 const MONSTER_LOOKS := {
@@ -109,6 +110,21 @@ func setup(world: WorldMap) -> void:
 	TimeManager.day_started.connect(_on_day_started)
 	Settings.changed.connect(_update_camera.bind(true))
 	EventBus.npc_bubble.connect(_on_npc_bubble)
+	EventBus.combat_hit.connect(_on_combat_hit)
+	EventBus.monster_killed.connect(_on_monster_killed)
+	EventBus.player_hurt.connect(_on_player_hurt)
+	map.fishing.cast_started.connect(_on_cast)
+	map.fishing.bitten.connect(_on_bite)
+	map.fishing.caught.connect(_on_caught)
+	_line = MeshInstance3D.new()
+	_line.mesh = ImmediateMesh.new()
+	var line_mat := StandardMaterial3D.new()
+	line_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	line_mat.albedo_color = Color(0.95, 0.95, 0.9, 0.85)
+	line_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_line.material_override = line_mat
+	_line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_line)
 	_update_light(0, 0)
 	_update_weather()
 	_cam_target = _to3d(map.player.position)
@@ -1543,10 +1559,20 @@ func _stairs_up(cell: Vector2i) -> void:
 
 ## Puits d'escalier qui s'enfonce dans le sol (révélé sous un rocher).
 func _stairs_down(cell: Vector2i) -> void:
-	if _ladder_floor != null:
-		_ladder_floor.queue_free()
-		_ladder_floor = null
 	var c := _cell3d(cell)
+	if _ladder_floor == null or _ladder_floor.position.distance_to(c) > 0.1:
+		# Escalier apparu sous un autre rocher : le sol est d'un seul tenant,
+		# on dessine un trou sombre et des marches qui s'assombrissent.
+		_put(_box(Vector3(0.92, 0.02, 0.92), Color(0.05, 0.04, 0.04)), c + Vector3(0, 0.012, 0))
+		for k in 4:
+			_put(_box(Vector3(0.8, 0.02, 0.2), STONE_STEP.darkened(0.2 + 0.18 * k)), c + Vector3(0, 0.025, 0.32 - k * 0.2))
+		for edge: Array in [[Vector3(1.0, 0.08, 0.08), Vector3(0, 0.04, -0.5)], [Vector3(1.0, 0.08, 0.08), Vector3(0, 0.04, 0.5)],
+				[Vector3(0.08, 0.08, 1.0), Vector3(-0.5, 0.04, 0)], [Vector3(0.08, 0.08, 1.0), Vector3(0.5, 0.04, 0)]]:
+			_put(_box(edge[0], Color(0.5, 0.33, 0.2)), c + edge[1])
+		_stair_arrows.append([_put(_arrow(false), c + Vector3(0, 1.0, 0)), 1.0])
+		return
+	_ladder_floor.queue_free()
+	_ladder_floor = null
 	var dark := Color(0.08, 0.07, 0.07)
 	# Parois du puits
 	for wall: Array in [[Vector3(0.96, 1.2, 0.04), Vector3(0, -0.6, -0.48)], [Vector3(0.96, 1.2, 0.04), Vector3(0, -0.6, 0.48)],
@@ -1901,6 +1927,8 @@ func _on_gesture(gesture: String) -> void:
 	var slot: Variant = Inventory.get_selected()
 	var id: String = "" if slot == null or gesture == "bend" else str(slot.id)
 	_show_tool(id)
+	if gesture == "strike" and slot != null and GameData.item(str(slot.id)).get("type") == "weapon":
+		_slash()
 
 
 func _show_tool(id: String) -> void:
@@ -1912,6 +1940,10 @@ func _show_tool(id: String) -> void:
 	if _tool3d != null:
 		_tool3d.queue_free()
 		_tool3d = null
+	if id == "fishing_rod":
+		_tool3d = _rod()
+		_hand.add_child(_tool3d)
+		return
 	if TOOL_MODELS.has(id):
 		var spec: Array = TOOL_MODELS[id]
 		_tool3d = _model(spec[0], spec[1], 1.0)
@@ -2066,8 +2098,9 @@ func _update_proxy(node: Node2D, proxy: Node3D) -> void:
 			proxy.rotation.y = lerp_angle(proxy.rotation.y, atan2(moved.x, moved.z), 0.25)
 		if not proxy.has_meta("ap"):
 			var found := proxy.find_children("*", "AnimationPlayer", true, false)
-			proxy.set_meta("ap", found[0] if not found.is_empty() else null)
-		var ap := proxy.get_meta("ap") as AnimationPlayer
+			proxy.set_meta("ap", found[0] if not found.is_empty() else false)
+		var ap_value: Variant = proxy.get_meta("ap")
+		var ap: AnimationPlayer = ap_value if ap_value is AnimationPlayer else null
 		if ap != null:
 			var want := "walk" if walking else ("static" if node is Critter else "idle")
 			if ap.current_animation != want and ap.has_animation(want):
@@ -2094,8 +2127,25 @@ func _process(delta: float) -> void:
 	var fishing := map.fishing
 	_bobber.visible = fishing.busy()
 	if fishing.busy():
+		# La canne reste en main pendant toute la pêche
+		if _tool_id != "fishing_rod":
+			_show_tool("fishing_rod")
+		if _tool3d != null:
+			_tool3d.visible = true
 		var bob: Vector2 = fishing.get("_bobber_base")
-		_bobber.position = _to3d(bob, -0.06 + sin(Time.get_ticks_msec() / 300.0) * 0.02 - (0.05 if fishing.state == Fishing.State.BITE else 0.0))
+		var reel := fishing.state == Fishing.State.REELING
+		if not _bobber_flying:
+			_bobber.position = _to3d(bob, -0.06 + sin(Time.get_ticks_msec() / 300.0) * 0.02 - (0.06 if fishing.state == Fishing.State.BITE else 0.0))
+			if reel:
+				_bobber.position += Vector3(randf_range(-0.04, 0.04), 0, randf_range(-0.04, 0.04))
+		# Petites touches : des ronds dans l'eau de temps en temps
+		_nibble -= delta
+		if _nibble <= 0.0 and fishing.state == Fishing.State.WAITING and not _bobber_flying:
+			_nibble = randf_range(0.8, 2.0)
+			_ripple(_bobber.position, 0.5)
+		_draw_line(reel)
+	else:
+		(_line.mesh as ImmediateMesh).clear_surfaces()
 	_bite_alert.visible = fishing.state == Fishing.State.BITE
 	_bite_alert.position = _player3d.position + Vector3(0, 1.45, 0)
 	if _water_mat != null:
@@ -2235,6 +2285,216 @@ func _update_weather() -> void:
 	_weather.initial_velocity_max = 8.0 if kind == "rain" else 0.9
 	_weather.local_coords = false
 	add_child(_weather)
+
+
+# ------------------------------------------------------------ pêche (3D)
+var _line: MeshInstance3D
+var _bobber_flying: bool = false
+var _nibble: float = 1.0
+
+
+## Canne à pêche : manche en bois, moulinet, scion fin ; « Tip » = bout.
+func _rod() -> Node3D:
+	var rod := Node3D.new()
+	var s := 1.0 / CHARACTER_SCALE
+	for part: Array in [[Vector3(0.05, 0.5, 0.05), Vector3(0, 0.0, 0), Color(0.45, 0.3, 0.18)], [Vector3(0.025, 0.75, 0.025), Vector3(0, 0.6, 0), Color(0.85, 0.8, 0.7)]]:
+		var b := _box(part[0], part[2])
+		b.position = part[1]
+		rod.add_child(b)
+	var reel := _box(Vector3(0.1, 0.1, 0.06), Color(0.3, 0.32, 0.35))
+	reel.position = Vector3(0.05, 0.12, 0)
+	rod.add_child(reel)
+	var tip := Node3D.new()
+	tip.name = "Tip"
+	tip.position = Vector3(0, 0.98, 0)
+	rod.add_child(tip)
+	rod.scale = Vector3.ONE * s
+	rod.position = Vector3(0, -0.6, 0.15)
+	rod.rotation_degrees = Vector3(70, 0, 0)
+	return rod
+
+
+func _rod_tip() -> Vector3:
+	if _tool3d != null and _tool3d.has_node("Tip"):
+		return (_tool3d.get_node("Tip") as Node3D).global_position
+	return _player3d.position + Vector3(0, 1.0, 0)
+
+
+## Fil de pêche : de la canne au bouchon, avec un peu de mou (tendu au moulinet).
+func _draw_line(taut: bool) -> void:
+	var mesh := _line.mesh as ImmediateMesh
+	mesh.clear_surfaces()
+	var a := _rod_tip()
+	var b := _bobber.position + Vector3(0, 0.05, 0)
+	mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+	var sag := 0.05 if taut else 0.35
+	for k in 13:
+		var t := k / 12.0
+		mesh.surface_add_vertex(a.lerp(b, t) - Vector3(0, sin(t * PI) * sag, 0))
+	mesh.surface_end()
+
+
+## Lancer : le bouchon part de la canne et décrit un arc jusqu'à l'eau.
+func _on_cast(target: Vector2) -> void:
+	_show_tool("fishing_rod")
+	var start := _rod_tip()
+	var end := _to3d(target, -0.06)
+	_bobber_flying = true
+	var tw := create_tween()
+	tw.tween_interval(0.18)  # le temps de lever la canne
+	tw.tween_method(func(t: float) -> void:
+		_bobber.position = start.lerp(end, t) + Vector3(0, sin(t * PI) * 1.3, 0), 0.0, 1.0, 0.5)
+	tw.tween_callback(func() -> void:
+		_bobber_flying = false
+		_ripple(end, 0.9)
+		fx_burst(target, [Color(0.75, 0.88, 1.0), Color(1, 1, 1)], 10, 50.0))
+
+
+## La touche : le bouchon plonge, gerbe d'eau et grands ronds.
+func _on_bite() -> void:
+	_ripple(_bobber.position, 1.3)
+	_ripple(_bobber.position, 0.8)
+
+
+## Prise : le poisson jaillit de l'eau et vole jusqu'au joueur.
+func _on_caught(fish_id: String) -> void:
+	var fish := _fitted("survival", "fish-large" if int(GameData.fish(fish_id).get("difficulty", 30)) > 50 else "fish", 0.45)
+	var start := _bobber.position
+	add_child(fish)
+	fish.position = start
+	_ripple(start, 1.2)
+	var tw := create_tween()
+	tw.tween_method(func(t: float) -> void:
+		var end := _player3d.position + Vector3(0, 0.9, 0)
+		fish.position = start.lerp(end, t) + Vector3(0, sin(t * PI) * 1.6, 0)
+		fish.rotation = Vector3(t * TAU, t * PI, 0), 0.0, 1.0, 0.7).set_trans(Tween.TRANS_SINE)
+	tw.tween_callback(fish.queue_free)
+
+
+## Rond dans l'eau qui s'élargit et s'efface.
+func _ripple(at: Vector3, size: float) -> void:
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.16
+	torus.outer_radius = 0.2
+	torus.rings = 16
+	torus.ring_segments = 4
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.9, 0.97, 1.0, 0.7)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	torus.material = mat
+	ring.mesh = torus
+	ring.position = Vector3(at.x, -0.07, at.z)
+	ring.scale = Vector3(1, 0.15, 1)
+	add_child(ring)
+	var tw := ring.create_tween().set_parallel()
+	tw.tween_property(ring, "scale", Vector3(size * 3.0, 0.15, size * 3.0), 0.9)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.9)
+	tw.chain().tween_callback(ring.queue_free)
+
+
+# ------------------------------------------------------------ combat (3D)
+## Arc lumineux du coup d'épée, devant le joueur.
+func _slash() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var steps := 10
+	for k in steps:
+		var a0 := deg_to_rad(-75.0 + 150.0 * k / steps)
+		var a1 := deg_to_rad(-75.0 + 150.0 * (k + 1) / steps)
+		var alpha := 0.15 + 0.75 * float(k) / steps
+		st.set_color(Color(1, 1, 0.9, alpha))
+		var pts := [Vector3(sin(a0), 0, cos(a0)) * 0.45, Vector3(sin(a0), 0, cos(a0)) * 0.95, Vector3(sin(a1), 0, cos(a1)) * 0.95, Vector3(sin(a1), 0, cos(a1)) * 0.45]
+		for idx: int in [0, 1, 2, 0, 2, 3]:
+			st.add_vertex(pts[idx])
+	var arc := MeshInstance3D.new()
+	arc.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	arc.material_override = mat
+	arc.position = _player3d.position + Vector3(0, 0.45, 0)
+	arc.rotation.y = _player3d.rotation.y - 0.6
+	add_child(arc)
+	var tw := arc.create_tween().set_parallel()
+	tw.tween_property(arc, "rotation:y", _player3d.rotation.y + 0.6, 0.18)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.22)
+	tw.chain().tween_callback(arc.queue_free)
+
+
+## Coup porté : le monstre sursaute, un chiffre de dégâts s'envole.
+func _on_combat_hit(monster: Node2D, amount: int) -> void:
+	var proxy: Node3D = _proxies.get(monster.get_instance_id())
+	if proxy != null:
+		var base := proxy.scale
+		var tw := proxy.create_tween()
+		tw.tween_property(proxy, "scale", base * Vector3(1.3, 0.75, 1.3), 0.06)
+		tw.tween_property(proxy, "scale", base, 0.12)
+	var label := Label3D.new()
+	label.text = str(amount)
+	label.font = UiTheme.font()
+	label.font_size = 56
+	label.pixel_size = 0.007
+	label.outline_size = 12
+	label.modulate = Color(1, 0.9, 0.3) if amount < 15 else Color(1, 0.45, 0.3)
+	label.outline_modulate = Color(0.2, 0.05, 0.05)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.position = _to3d(monster.position, 0.9)
+	add_child(label)
+	var tw2 := label.create_tween().set_parallel()
+	tw2.tween_property(label, "position:y", label.position.y + 0.8, 0.7).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw2.tween_property(label, "modulate:a", 0.0, 0.7).set_delay(0.3)
+	tw2.chain().tween_callback(label.queue_free)
+
+
+## Monstre vaincu : il tourbillonne, rétrécit et disparaît dans un nuage.
+func _on_monster_killed(at: Vector2, _kind: String) -> void:
+	var target := _to3d(at)
+	var best: int = -1
+	var best_d := 1.0
+	for id: int in _proxies:
+		var d := (_proxies[id] as Node3D).position.distance_to(target)
+		if d < best_d:
+			best_d = d
+			best = id
+	if best == -1:
+		return
+	var proxy: Node3D = _proxies[best]
+	_proxies.erase(best)  # on l'anime nous-mêmes
+	var tw := proxy.create_tween().set_parallel()
+	tw.tween_property(proxy, "rotation:y", proxy.rotation.y + TAU * 1.5, 0.45)
+	tw.tween_property(proxy, "position:y", proxy.position.y + 0.5, 0.2)
+	tw.tween_property(proxy, "scale", Vector3.ONE * 0.01, 0.45).set_delay(0.1)
+	tw.chain().tween_callback(func() -> void:
+		fx_puff(at, Color(0.95, 0.95, 1.0, 0.9), 2.2)
+		proxy.queue_free())
+
+
+## Joueur touché : il clignote en rouge, le monstre s'est jeté sur lui.
+func _on_player_hurt(from: Vector2) -> void:
+	var overlay := StandardMaterial3D.new()
+	overlay.albedo_color = Color(1, 0.15, 0.1, 0.6)
+	overlay.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	overlay.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for mi in _player3d.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).material_overlay = overlay
+	var tw := create_tween()
+	tw.tween_property(overlay, "albedo_color:a", 0.0, 0.35)
+	tw.tween_callback(func() -> void:
+		for mi in _player3d.find_children("*", "MeshInstance3D", true, false):
+			(mi as MeshInstance3D).material_overlay = null)
+	# Le monstre le plus proche fait un bond vers le joueur
+	var src := _to3d(from)
+	for proxy: Node3D in _proxies.values():
+		if proxy.position.distance_to(src) < 0.6:
+			var dir := (_player3d.position - proxy.position).normalized() * 0.3
+			var lunge := proxy.create_tween()
+			lunge.tween_property(proxy, "position", proxy.position + dir, 0.08)
+			break
 
 
 # ------------------------------------------------------------ bulles des habitants

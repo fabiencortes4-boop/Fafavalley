@@ -43,6 +43,7 @@ var _up_cell: Vector2i
 var elevator_cell: Vector2i = Vector2i(-1, -1)
 var treasure_cell: Vector2i = Vector2i(-1, -1)
 var _from_below: bool = false
+var _initial_rocks: int = 0
 
 
 func setup(depth: int) -> void:
@@ -270,6 +271,7 @@ func _after_build() -> void:
 	add_child(_rocks)
 	for c: Vector2i in _rock_data:
 		_rocks.set_cell(c, 0, WorldTiles.coords(ROCKS[_rock_data[c].type][0]))
+	_initial_rocks = _rock_data.size()
 	if level < MAX_LEVEL and _ladder_cell == Vector2i(-1, -1):
 		_reveal_ladder(_monster_cells[0] if not _monster_cells.is_empty() else _spawn_cell + Vector2i.RIGHT)
 	if _from_below:
@@ -457,6 +459,12 @@ func _break_rock(cell: Vector2i) -> Array:
 				out.append(str(d[0]))
 	if cell == _ladder_cell:
 		_reveal_ladder(cell, false)  # trouvée tout de suite, affichée à l'impact
+	elif not _ladder_found and level < MAX_LEVEL:
+		# Un escalier peut apparaître sous n'importe quel rocher cassé : de
+		# plus en plus probable à mesure qu'on dégage le niveau.
+		var cleared := 1.0 - float(_rock_data.size()) / float(maxi(_initial_rocks, 1))
+		if randf() < 0.03 + 0.12 * cleared:
+			_reveal_ladder(cell, false)
 	return out
 
 

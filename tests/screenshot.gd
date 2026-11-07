@@ -181,10 +181,15 @@ func _ready() -> void:
 			farm.player.position = farm.cell_center(Vector2i(25, 18))
 			farm.player.facing = Vector2i.RIGHT
 			farm.act_on(Vector2i(26, 18))
-			farm.fishing.set("_timer", 100.0 if "--bite" in args else 0.0)
+			farm.fishing.set("_timer", 100.0 if ("--bite" in args or "--line" in args or "--catch" in args) else 0.0)
 			await get_tree().process_frame
-			if "--bite" not in args:
+			if "--bite" not in args and "--line" not in args:
 				farm.fishing.on_action()
+			if "--catch" in args:
+				await get_tree().create_timer(0.8).timeout
+				farm.fishing.call("_on_minigame_finished", true)
+				await get_tree().create_timer(0.25).timeout
+				Engine.time_scale = 0.03
 		for a in args:
 			if a.begins_with("--mine="):
 				var lvl := int(a.trim_prefix("--mine="))
@@ -196,6 +201,25 @@ func _ready() -> void:
 				m.player.facing = Vector2i.RIGHT
 				m.player.swing(GameData.item_icon("rusty_sword"), 2.0)
 				main.get("_hud").close_modal()
+				if "--fight" in args:
+					# Un monstre juste devant : on le frappe pour voir les effets
+					for mo in get_tree().get_nodes_in_group("monsters"):
+						mo.queue_free()
+					await get_tree().process_frame
+					var foe := Monster.new()
+					foe.kind = "cave_rat"
+					foe.level = lvl
+					foe.target = m.player
+					foe.position = m.player.position + Vector2(16, 0)
+					foe.add_to_group("monsters")
+					m.get("_entities").add_child(foe)
+					foe.set_physics_process(false)
+					await get_tree().create_timer(0.5).timeout
+					m.player.set("_swing_cooldown", 0.0)
+					m.player.locked = false
+					m.player.facing = Vector2i.RIGHT
+					m.act_on(m.player_cell() + Vector2i.RIGHT)
+					Engine.time_scale = 0.03  # ralenti : l'effet reste visible pour la capture
 				if "--reveal" in args:
 					# Escalier qui descend dégagé, joueur posté à côté
 					var lad: Vector2i = m.get("_ladder_cell")
@@ -251,7 +275,14 @@ func _ready() -> void:
 			var xy := a.trim_prefix("--fat=").split(",")
 			var fm: WorldMap = main.call("current_map")
 			fm.player.position = fm.cell_center(Vector2i(int(xy[0]), int(xy[1])))
+	# Capture fidèle : sans anticrénelage (sinon l'image lue peut dater)
+	get_viewport().msaa_3d = Viewport.MSAA_DISABLED
 	var delay := 1.0
+	for a in args:
+		if a.begins_with("--delay="):
+			delay = float(a.trim_prefix("--delay="))
+	if Engine.time_scale < 1.0:
+		delay *= Engine.time_scale  # le minuteur suit le ralenti
 	for a in args:
 		if a.begins_with("--act="):
 			delay = await _act(main, a.trim_prefix("--act="), args)
