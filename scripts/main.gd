@@ -107,6 +107,10 @@ func _load_map(map_id: String) -> void:
 		_world = Village.new()
 	elif map_id == "home":
 		_world = HomeMap.new()
+	elif map_id.begins_with("in:"):
+		var inside := InteriorMap.new()
+		inside.setup(map_id.trim_prefix("in:"))
+		_world = inside
 	else:
 		_world = Farm.new()
 	_world.hud = _hud
@@ -158,8 +162,15 @@ func _announce(map_id: String, previous: String) -> void:
 		_hud.title_card("Chez toi", "La maison de Firmin", Color(1, 0.82, 0.6))
 	elif map_id == "farm":
 		_hud.title_card("La ferme", "%s, jour %d" % [seasons[TimeManager.season % 4], TimeManager.day], Color(0.75, 1, 0.65))
-	elif map_id == "village":
-		_hud.title_card("Valfleur", "Le village", Color(1, 0.92, 0.55))
+	elif map_id == "village" and not previous.begins_with("in:"):
+		var fest := Events.festival_today()
+		if not fest.is_empty():
+			_hud.title_card(str(fest.name), "Sur la place, de %dh à %dh" % [int(fest.start), int(fest.end)], Color(1, 0.75, 0.9))
+		else:
+			_hud.title_card("Valfleur", "Le village", Color(1, 0.92, 0.55))
+	elif map_id.begins_with("in:"):
+		var layout: Dictionary = InteriorMap.LAYOUTS.get(map_id.trim_prefix("in:"), {})
+		_hud.title_card(str(layout.get("name", "")), "", Color(1, 0.9, 0.75))
 	elif map_id.begins_with("mine:") and not previous.begins_with("mine:"):
 		_hud.title_card("La mine", "Niveau %s" % map_id.trim_prefix("mine:"), Color(0.65, 0.8, 1))
 

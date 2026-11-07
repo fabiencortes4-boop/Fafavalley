@@ -76,7 +76,7 @@ func setup(world: WorldMap) -> void:
 	map = world
 	current = self
 	_is_mine = map is MineLevel
-	_is_home = map is HomeMap
+	_is_home = map is HomeMap or map is InteriorMap
 	_build_environment()
 	_static = Node3D.new()
 	add_child(_static)
@@ -285,6 +285,12 @@ func _build_ground() -> void:
 			for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 				if chars.get(cell + d, "~") != "~":
 					_bank(st, cell, d, h, Color(0.52, 0.40, 0.27))
+	# Au-delà des bords : le monde continue (plus de vide bleu)
+	for cell: Vector2i in _outskirts():
+		var road := _outskirt_road(cell)
+		var col: Color = Color(0.86, 0.69, 0.47) if road else (colors.grass if _hash(cell) % 3 != 0 else colors.grass2)
+		col = col.darkened(0.04 * float(_hash(cell) % 3))
+		_quad(st, Vector3(cell.x, 0, cell.y), Vector3(cell.x + 1, 0, cell.y + 1), col)
 	st.generate_normals()
 	var ground := MeshInstance3D.new()
 	ground.mesh = st.commit()
@@ -314,6 +320,32 @@ func _build_ground() -> void:
 		wmi.material_override = _water_mat
 		wmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_static.add_child(wmi)
+
+
+const OUTSKIRT := 14  # cases de décor au-delà des bords de la carte
+var _outskirt_cache: Array[Vector2i] = []
+
+
+## Cases hors de la carte, tout autour (sol et forêt de décor).
+func _outskirts() -> Array[Vector2i]:
+	if _outskirt_cache.is_empty():
+		var size: Vector2i = map.get("_map_size")
+		for y in range(-OUTSKIRT, size.y + OUTSKIRT):
+			for x in range(-OUTSKIRT, size.x + OUTSKIRT):
+				if x < 0 or y < 0 or x >= size.x or y >= size.y:
+					_outskirt_cache.append(Vector2i(x, y))
+	return _outskirt_cache
+
+
+## Une route qui sort de la carte se prolonge tout droit dans le décor.
+func _outskirt_road(cell: Vector2i) -> bool:
+	var size: Vector2i = map.get("_map_size")
+	var out_x := cell.x < 0 or cell.x >= size.x
+	var out_y := cell.y < 0 or cell.y >= size.y
+	if out_x == out_y:
+		return false  # dans la carte, ou dans un coin
+	var edge := Vector2i(clampi(cell.x, 0, size.x - 1), clampi(cell.y, 0, size.y - 1))
+	return map.get("_ground_chars").get(edge, "") == "="
 
 
 func _quad(st: SurfaceTool, a: Vector3, b: Vector3, color: Color) -> void:
@@ -398,6 +430,28 @@ func _build_props() -> void:
 				_place(batch, "nature", "sign", c, 2.2, 0.0)
 			"n":
 				_village_lantern(cell)
+			"v":
+				# Jardinière fleurie
+				_put(_box(Vector3(0.85, 0.32, 0.6), Color(0.55, 0.36, 0.22)), c + Vector3(0, 0.16, 0))
+				for k in 3:
+					_put(_fitted("nature", ["flower_redA", "flower_yellowA", "flower_purpleA"][(k + cell.x) % 3], 0.4), c + Vector3(-0.27 + k * 0.27, 0.3, 0))
+			"c":
+				# Grand bac à fleurs de la place
+				_put(_fitted("nature", "pot_large", 0.8), c)
+				_put(_fitted("nature", "flower_redA", 0.45), c + Vector3(-0.12, 0.45, 0))
+				_put(_fitted("nature", "flower_yellowB", 0.45), c + Vector3(0.12, 0.45, 0.05))
+			"q":
+				_bench(c, 0.0 if cell.y < 25 or cell.y == 29 else PI / 2.0)
+			"g":
+				_put(_fitted("town", "hedge", 1.0), c)
+			"u":
+				_put(_fitted("survival", "barrel", 0.55), c + Vector3(-0.18, 0, 0.1))
+				_put(_fitted("survival", "box", 0.45), c + Vector3(0.22, 0, -0.15))
+			"y":
+				_put(_box(Vector3(0.9, 0.55, 0.9), Color(0.92, 0.8, 0.42)), c + Vector3(0, 0.27, 0))
+				_put(_box(Vector3(0.6, 0.3, 0.6), Color(0.95, 0.85, 0.5)), c + Vector3(0, 0.68, 0))
+			"w":
+				_well(c)
 			"s":
 				if chars.get(cell + Vector2i.LEFT, "") != "s":
 					var stall := _fitted("town", "stall-green" if _hash(cell) % 2 == 0 else "stall-red", 2.0)
@@ -408,8 +462,29 @@ func _build_props() -> void:
 			".":
 				if TimeManager.season != 3 and _hash(cell) % 9 == 0:
 					_place(batch, "nature", "grass", c, 1.4, rot)
+	# Forêt dense autour de la carte, en laissant la route dégagée
+	for cell: Vector2i in _outskirts():
+		if _outskirt_road(cell):
+			continue
+		var near_road := false
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(2, 0), Vector2i(-2, 0), Vector2i(0, 2), Vector2i(0, -2)]:
+			if _outskirt_road(cell + d):
+				near_road = true
+		var r := _hash(cell) % 10
+		var c := _cell3d(cell)
+		if near_road:
+			if r < 2:
+				_place(batch, "nature", "plant_bushLarge", c, 2.0, float(r))
+			continue
+		if r < 7:
+			var jitter := Vector3(float(_hash(cell + Vector2i(3, 1)) % 40) / 100.0 - 0.2, 0, float(_hash(cell + Vector2i(1, 3)) % 40) / 100.0 - 0.2)
+			_place(batch, "nature", _tree_model(cell), c + jitter, 1.6 + float(_hash(cell) % 40) / 100.0, float(_hash(cell) % 628) / 100.0)
+		elif r == 7:
+			_place(batch, "nature", "plant_bushLarge", c, 2.2, 0.0)
 	batch.build(_static)
 	_build_buildings(chars)
+	if map is Village:
+		_build_event_decor()
 
 
 func _build_buildings(chars: Dictionary) -> void:
@@ -469,7 +544,8 @@ func _build_buildings(chars: Dictionary) -> void:
 					_put(_fitted("nature", "pot_small", 0.35), front + Vector3(size.x - 0.3, 0, -0.45))
 				"jules":
 					_house(cell, size, b[3], "wall-wood", Color(0.3, 0.55, 0.5))
-					_put(_fitted("survival", "tent", 0.9), front + Vector3(size.x + 0.4, 0, -1.2), -0.5)
+					_put(_fitted("survival", "barrel", 0.5), front + Vector3(size.x + 0.3, 0, -0.9))
+					_put(_fitted("survival", "fish-large", 0.45), front + Vector3(size.x + 0.3, 0.5, -0.9))
 				"fountain":
 					var f := _fitted("town", "fountain-round-detail", 2.2)
 					_put(f, Vector3(cell.x + 1.0, 0, cell.y + 1.0))
@@ -581,6 +657,95 @@ func _festival(center: Vector3) -> void:
 	jet.initial_velocity_max = 2.6
 	jet.gravity = Vector3(0, -6, 0)
 	_put(jet, center + Vector3(0, 1.0, 0))
+
+
+## Banc de parc en bois (assise, dossier, pieds en fer).
+func _bench(c: Vector3, rot: float) -> void:
+	var bench := Node3D.new()
+	var wood := Color(0.62, 0.4, 0.24)
+	var iron := Color(0.25, 0.25, 0.28)
+	for part: Array in [
+		[Vector3(0.9, 0.06, 0.32), Vector3(0, 0.3, 0), wood],
+		[Vector3(0.9, 0.22, 0.05), Vector3(0, 0.5, -0.15), wood],
+		[Vector3(0.06, 0.3, 0.3), Vector3(-0.38, 0.15, 0), iron],
+		[Vector3(0.06, 0.3, 0.3), Vector3(0.38, 0.15, 0), iron],
+	]:
+		var b := _box(part[0], part[2])
+		b.position = part[1]
+		bench.add_child(b)
+	_put(bench, c, rot)
+
+
+## Puits en pierre avec son petit toit.
+func _well(c: Vector3) -> void:
+	var stone := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.42
+	cyl.bottom_radius = 0.45
+	cyl.height = 0.5
+	cyl.material = _flat_material(Color(0.6, 0.58, 0.56))
+	stone.mesh = cyl
+	_put(stone, c + Vector3(0, 0.25, 0))
+	var water := MeshInstance3D.new()
+	var disc := CylinderMesh.new()
+	disc.top_radius = 0.34
+	disc.bottom_radius = 0.34
+	disc.height = 0.02
+	disc.material = _flat_material(Color(0.3, 0.55, 0.85))
+	water.mesh = disc
+	_put(water, c + Vector3(0, 0.45, 0))
+	for side: float in [-0.38, 0.38]:
+		_put(_box(Vector3(0.08, 0.9, 0.08), Color(0.45, 0.3, 0.18)), c + Vector3(side, 0.7, 0))
+	_put(_box(Vector3(1.0, 0.08, 0.7), Color(0.7, 0.3, 0.25)), c + Vector3(0, 1.18, 0))
+
+
+## Décor des événements : stand, guirlandes de fanions, lanternes volantes.
+func _build_event_decor() -> void:
+	var activity := Events.booth_activity()
+	if activity == "":
+		return
+	var booth := _cell3d(Events.BOOTH)
+	_put(_fitted("town", "stall-red" if activity == "contest" else "stall-green", 1.6), booth)
+	var fest := Events.festival_today()
+	if activity == "market":
+		for k in 3:
+			_put(_fitted("survival", "box", 0.4), booth + Vector3(-0.6 + k * 0.6, 0, 0.7))
+		_put(_fitted("food", "pumpkin", 0.35), booth + Vector3(0.3, 0.6, 0.1))
+	if fest.is_empty():
+		return
+	# Guirlandes de fanions colorés au-dessus de la place
+	var corners := [Vector3(24.5, 0, 22.5), Vector3(37.5, 0, 22.5), Vector3(37.5, 0, 31.5), Vector3(24.5, 0, 31.5)]
+	var colors := [Color(0.9, 0.25, 0.25), Color(0.95, 0.8, 0.2), Color(0.3, 0.6, 0.9), Color(0.4, 0.75, 0.35), Color(0.85, 0.45, 0.8)]
+	for i in 4:
+		var a: Vector3 = corners[i]
+		var b: Vector3 = corners[(i + 1) % 4]
+		_put(_box(Vector3(0.08, 2.2, 0.08), Color(0.5, 0.35, 0.2)), a + Vector3(0, 1.1, 0))
+		var n := int(a.distance_to(b) / 0.5)
+		for k in n:
+			var t := float(k) / n
+			var p := a.lerp(b, t) + Vector3(0, 2.1 - sin(t * PI) * 0.4, 0)
+			var flag := _box(Vector3(0.22, 0.22, 0.02), colors[k % colors.size()])
+			_put(flag, p, atan2(b.x - a.x, b.z - a.z) + PI / 2.0)
+			flag.rotation.z = PI / 4.0
+	if str(fest.id) == "lantern_night":
+		for k in 18:
+			var glow := MeshInstance3D.new()
+			var sphere := SphereMesh.new()
+			sphere.radius = 0.12
+			sphere.height = 0.3
+			var m := StandardMaterial3D.new()
+			m.albedo_color = Color(1.0, 0.7, 0.35)
+			m.emission_enabled = true
+			m.emission = Color(1.0, 0.6, 0.25)
+			m.emission_energy_multiplier = 3.0
+			sphere.material = m
+			glow.mesh = sphere
+			_put(glow, Vector3(25.0 + float(_hash(Vector2i(k, 1)) % 12), 2.4 + float(k % 4) * 0.4, 23.0 + float(_hash(Vector2i(1, k)) % 9)))
+	else:
+		# Pots de fleurs autour de la fontaine
+		for k in 8:
+			var a := k * TAU / 8.0
+			_put(_fitted("nature", "pot_small", 0.4), Vector3(31.0, 0, 27.0) + Vector3(cos(a), 0, sin(a)) * 2.2)
 
 
 ## Lanterne du village (et sa lumière, allumée le soir).
@@ -710,18 +875,28 @@ func _roof(origin: Vector3, w: float, d: float, color: Color) -> MeshInstance3D:
 func _build_home() -> void:
 	_env.background_color = Color(0.08, 0.05, 0.04)
 	var chars: Dictionary = map.get("_ground_chars")
+	# Chaque intérieur a son style (sol, murs, tapis)
+	var floor_style := "light"
+	var wall_style := "wood"
+	if map is InteriorMap:
+		floor_style = (map as InteriorMap).floor_style
+		wall_style = (map as InteriorMap).wall_style
+	var floor_base: Color = {"light": Color(0.80, 0.62, 0.42), "dark": Color(0.55, 0.38, 0.25), "stone": Color(0.62, 0.6, 0.58)}.get(floor_style, Color(0.8, 0.62, 0.42))
+	var rug: Color = [Color(0.32, 0.45, 0.72), Color(0.7, 0.25, 0.25), Color(0.35, 0.6, 0.38), Color(0.6, 0.4, 0.7)][absi(map.map_id.hash()) % 4]
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
 		if ch == "#":
 			continue
-		# Lames de parquet claires, une teinte par rangée
-		var plank := Color(0.80, 0.62, 0.42).darkened(float((cell.y * 7 + (cell.x + cell.y) / 4) % 3) * 0.04)
+		# Lames de parquet (ou dalles), une teinte par rangée
+		var plank := floor_base.darkened(float((cell.y * 7 + (cell.x + cell.y) / 4) % 3) * 0.04)
+		if floor_style == "stone":
+			plank = floor_base.darkened(0.08 if (cell.x + cell.y) % 2 == 0 else 0.0)
 		if ch == "r":
-			# Tapis bleu à bordure crème
+			# Tapis à bordure crème
 			var edge: bool = chars.get(cell + Vector2i.LEFT, "") != "r" or chars.get(cell + Vector2i.RIGHT, "") != "r"
-			plank = Color(0.93, 0.86, 0.7) if edge else Color(0.32, 0.45, 0.72)
+			plank = Color(0.93, 0.86, 0.7) if edge else rug
 		elif ch == "D":
 			plank = Color(0.4, 0.27, 0.17)
 		_quad(st, Vector3(cell.x, 0, cell.y), Vector3(cell.x + 1, 0, cell.y + 1), plank)
@@ -735,7 +910,9 @@ func _build_home() -> void:
 	floor_mi.material_override = fmat
 	_static.add_child(floor_mi)
 	var size: Vector2i = map.get("_map_size")
-	var wall_mat := _flat_material(Color(0.52, 0.35, 0.22))
+	var wall_color: Color = {"wood": Color(0.52, 0.35, 0.22), "cream": Color(0.86, 0.78, 0.62), "blue": Color(0.5, 0.6, 0.76),
+		"green": Color(0.52, 0.68, 0.48), "stone": Color(0.5, 0.49, 0.5)}.get(wall_style, Color(0.52, 0.35, 0.22))
+	var wall_mat := _flat_material(wall_color)
 	var beam_mat := _flat_material(Color(0.36, 0.23, 0.14))
 	for cell: Vector2i in chars:
 		if chars[cell] != "#":
@@ -750,7 +927,9 @@ func _build_home() -> void:
 		wall.mesh = box
 		_put(wall, _cell3d(cell) + Vector3(0, h / 2.0, 0))
 	# Fenêtres lumineuses sur le mur du fond
-	for x: int in [3, 6, 9]:
+	for x in range(3, size.x - 2, 3):
+		if chars.get(Vector2i(x, 0), "") != "#":
+			continue
 		var win := MeshInstance3D.new()
 		var pane := QuadMesh.new()
 		pane.size = Vector2(0.7, 0.55)
@@ -765,7 +944,7 @@ func _build_home() -> void:
 	for cell: Vector2i in chars:
 		var c := _cell3d(cell)
 		match chars[cell]:
-			"Z":
+			"Z", "B":
 				_put(_fitted("nature", "bed", 1.4), c + Vector3(0.0, 0, 0.2), PI / 2.0)
 				# Table de chevet et sa bougie
 				_put(_box(Vector3(0.35, 0.4, 0.35), Color(0.45, 0.3, 0.2)), c + Vector3(0.75, 0.2, -0.25))
@@ -826,13 +1005,57 @@ func _build_home() -> void:
 				fire.omni_range = 3.5
 				fire.light_energy = 1.0
 				_put(fire, c + Vector3(0.5, 0.7, 0))
-	# Plantes vertes sous les fenêtres et bannière au mur
-	for x: int in [2, 5, 10]:
-		if chars.get(Vector2i(x, 1), "#") == "_":
-			_put(_fitted("nature", "pot_small", 0.45), _cell3d(Vector2i(x, 1)) + Vector3(0, 0, -0.25))
-	var banner := _fitted("dungeon", "banner", 1.1)
-	Models.tint(banner, Color(0.7, 1.0, 0.75))
-	_put(banner, Vector3(4.5, 0, 1.15))
+			"C":
+				# Comptoir : caisson en bois, plateau clair
+				_put(_box(Vector3(1.0, 0.55, 0.7), Color(0.5, 0.33, 0.2)), c + Vector3(0, 0.27, 0))
+				_put(_box(Vector3(1.04, 0.06, 0.76), Color(0.85, 0.7, 0.5)), c + Vector3(0, 0.58, 0))
+				if (cell.x + cell.y) % 3 == 0:
+					_put(_fitted("dungeon", "coin", 0.18), c + Vector3(0.1, 0.62, 0))
+			"S":
+				# Étagère garnie de produits
+				_put(_box(Vector3(0.95, 1.3, 0.45), Color(0.45, 0.3, 0.18)), c + Vector3(0, 0.65, -0.2))
+				var goods := ["carrot", "tomato", "cabbage", "corn", "leek", "radish", "beet"]
+				for level in 2:
+					for k in 2:
+						var g := _fitted("food", goods[(cell.x * 2 + level + k) % goods.size()], 0.24)
+						_put(g, c + Vector3(-0.22 + k * 0.44, 0.45 + level * 0.5, 0.05))
+			"K":
+				# Bibliothèque aux livres colorés
+				_put(_box(Vector3(0.95, 1.5, 0.45), Color(0.4, 0.26, 0.16)), c + Vector3(0, 0.75, -0.2))
+				for level in 3:
+					for k in 5:
+						var book_col: Color = [Color(0.75, 0.2, 0.2), Color(0.2, 0.45, 0.75), Color(0.3, 0.6, 0.3), Color(0.85, 0.7, 0.2), Color(0.55, 0.3, 0.6)][(k + level + cell.x) % 5]
+						_put(_box(Vector3(0.12, 0.32, 0.3), book_col), c + Vector3(-0.32 + k * 0.16, 0.3 + level * 0.45, 0.02))
+			"M":
+				_put(_box(Vector3(0.95, 0.8, 0.08), Color(0.55, 0.38, 0.22)), c + Vector3(0, 1.0, -0.4))
+				for k in 4:
+					_put(_box(Vector3(0.2, 0.25, 0.02), Color(0.95, 0.92, 0.85)), c + Vector3(-0.3 + k * 0.2, 1.0 + (k % 2) * 0.15, -0.35))
+			"b":
+				_put(_fitted("survival", "barrel", 0.6), c)
+			"P":
+				_put(_fitted("nature", "pot_large", 0.55), c)
+				_put(_fitted("nature", "plant_bushLarge", 0.5), c + Vector3(0, 0.3, 0))
+			"N":
+				_put(_fitted("survival", "workbench-anvil", 0.8), c)
+			"W":
+				_put(_fitted("survival", "workbench", 0.9), c, PI)
+			"L":
+				_put(_fitted("nature", "log_stack", 0.9), c)
+			"H":
+				_put(_box(Vector3(0.9, 0.6, 0.9), Color(0.9, 0.78, 0.4)), c + Vector3(0, 0.3, 0))
+			"A":
+				_put(_fitted("pets", "animal-chick", 0.4), c, PI / 6.0)
+			"F":
+				_put(_fitted("survival", "barrel", 0.55), c)
+				_put(_fitted("survival", "fish", 0.4), c + Vector3(0, 0.55, 0))
+	# Plantes vertes sous les fenêtres et bannière au mur (maison)
+	if map is HomeMap:
+		for x: int in [2, 5, 10]:
+			if chars.get(Vector2i(x, 1), "#") == "_":
+				_put(_fitted("nature", "pot_small", 0.45), _cell3d(Vector2i(x, 1)) + Vector3(0, 0, -0.25))
+		var banner := _fitted("dungeon", "banner", 1.1)
+		Models.tint(banner, Color(0.7, 1.0, 0.75))
+		_put(banner, Vector3(4.5, 0, 1.15))
 	var lamp := OmniLight3D.new()
 	lamp.light_color = Color(1.0, 0.93, 0.82)
 	lamp.omni_range = 9.0
@@ -1212,6 +1435,11 @@ func _update_camera(snap: bool = false, delta: float = 0.016) -> void:
 	if map == null or not is_instance_valid(map):
 		return
 	var target := _to3d(map.player.position) + Vector3(0, 0.4, 0)
+	if _is_home:
+		# Petites pièces : on cadre toute la pièce, en suivant un peu le joueur
+		var size: Vector2i = map.get("_map_size")
+		var center := Vector3(size.x / 2.0, 0.4, size.y / 2.0 + 0.4)
+		target = center + (target - center) * 0.5
 	_cam_target = target if snap else _cam_target.lerp(target, minf(1.0, delta * 6.0))
 	var distance := 17.0 / Settings.zoom
 	var offset := Vector3(0, sin(CAMERA_PITCH), cos(CAMERA_PITCH)) * distance

@@ -22,7 +22,7 @@ func _ready() -> void:
 	var village: WorldMap = _main.call("current_map")
 	_check(village is Village, "le bord est de la ferme mène au village")
 	_check(village.player_cell() == Vector2i(2, 19), "on arrive à l'entrée du village")
-	var v := village as Village
+	var v: Village = village as Village
 	_check(v.npcs.size() == 10, "10 habitants au village")
 	# 6h : tout le monde dort encore
 	# (sauf Jules le pêcheur, déjà au bord de l'étang à 6h)
@@ -57,22 +57,42 @@ func _ready() -> void:
 	v.act_on(Vector2i(24, 18))
 	_check(Inventory.count_of("tomato") == 1, "un seul cadeau par jour")
 	_main._hud.close_modal()
-	# Épicerie : ouverte à 9h30, fermée à 18h
+	# Épicerie : on entre (9h30), Rosalie est au comptoir, on ressort ; fermée à 18h
 	TimeManager.minutes = 9 * 60 + 30
+	TimeManager.time_changed.emit(9, 30)
+	v.act_on(Vector2i(26, 17))
+	await _frames(3)
+	var store: WorldMap = _main.call("current_map")
+	_check(store is InteriorMap and store.map_id == "in:store", "la porte mène à l'intérieur de l'épicerie")
+	_check((store as InteriorMap).residents.any(func(n: Npc) -> bool: return n.id == "rosalie"), "Rosalie tient sa boutique à 9h30")
 	var opened := [false]
 	EventBus.shop_opened.connect(func(_id: String) -> void: opened[0] = true)
-	v.act_on(Vector2i(26, 17))
-	_check(opened[0], "l'épicerie ouvre à 9h30")
+	store.act_on(Vector2i(4, 3))
+	_check(opened[0], "le comptoir ouvre la boutique")
 	_main._hud.close_modal()
-	opened[0] = false
+	store.player.position = store.cell_center(Vector2i(5, 7))
+	await get_tree().physics_frame
+	await _frames(3)
+	v = _main.call("current_map")
+	_check(v is Village and v.player_cell() == Vector2i(26, 18), "on ressort devant l'épicerie")
 	TimeManager.minutes = 18 * 60
 	v.act_on(Vector2i(26, 17))
-	_check(not opened[0], "l'épicerie est fermée à 18h")
+	await _frames(3)
+	_check(_main.call("current_map") == v, "l'épicerie est fermée à 18h")
 	_main._hud.close_modal()
+	# Une maison : on entre chez Odette en journée
+	TimeManager.minutes = 10 * 60
+	v.act_on(Vector2i(6, 26))
+	await _frames(3)
+	_check(_main.call("current_map").map_id == "in:odette", "on peut rendre visite à Odette")
+	_main.call("current_map").player.position = _main.call("current_map").cell_center(Vector2i(4, 6))
+	await get_tree().physics_frame
+	await _frames(3)
+	v = _main.call("current_map")
 	# Le soir, tout le monde rentre
 	TimeManager.minutes = 22 * 60
 	TimeManager.time_changed.emit(22, 0)
-	await get_tree().create_timer(6.0).timeout
+	await get_tree().create_timer(22.0).timeout
 	_check(v.npcs.all(func(n: Npc) -> bool: return n.is_inside()), "à 22h, les habitants sont rentrés")
 	# S'évanouir au village -> réveil à la maison
 	GameFlow.end_day(true)
@@ -82,6 +102,11 @@ func _ready() -> void:
 	_check(not Relations.talked_today.has("rosalie"), "les discussions sont remises à zéro chaque jour")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
+
+
+func _frames(n: int) -> void:
+	for i in n:
+		await get_tree().process_frame
 
 
 func _check(condition: bool, label: String) -> void:

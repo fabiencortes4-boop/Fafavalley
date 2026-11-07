@@ -11,7 +11,7 @@ const DAYS_PER_SEASON := 28
 const START_MINUTES := 6 * 60
 const PASS_OUT_MINUTES := 26 * 60  # 2h du matin
 const MINUTES_PER_TICK := 10
-const REAL_SECONDS_PER_TICK := 7.0
+const REAL_SECONDS_PER_TICK := 4.5  # une journée (6h-2h) dure environ 9 minutes
 const RAIN_CHANCE := 0.2
 
 var minutes: int = START_MINUTES

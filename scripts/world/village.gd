@@ -6,7 +6,8 @@ extends WorldMap
 ## Bâtiments : E épicerie, Z mairie, Y forge de Gaston, K menuiserie,
 ## U coopérative, L ranch, H maison d'Odette, A maison de Lina,
 ## J cabane de Jules, M mine, O fontaine. Décor : N enclume, n lanterne,
-## s étal du marché. Animaux : C poule, V vache, I cochon, d chien, e chat.
+## s étal du marché, v jardinière fleurie, q banc, g haie, u tonneaux,
+## y meule de foin, w puits, c bac à fleurs de la place. Animaux : C poule, V vache, I cochon, d chien, e chat.
 
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
@@ -15,38 +16,38 @@ const MAP := [
 	"TT........................................................TT",
 	"TT........R.........R.........==........o...........R....TTT",
 	"TT............................==..........................TT",
-	"TTT...........U...............==.............L............TT",
+	"TTT...........U...u...........==.............L............TT",
 	"TT............................==..................FFFFFFFTTT",
-	"TT...........k.....k..........==..........................TT",
+	"TT...........k.....k..........==.......................y..TT",
 	"TT..b...........==......R.....==......b.......==.h...C...TTT",
 	"TT..............==............==..............==....V..I..TT",
 	"TTT.....'.......==.........m..==....,.........==.........TTT",
 	"TTT.............==....,.......==..............==...C..V..TTT",
 	"TTT.............==............==..............==.h.......TTT",
-	"TT...Y......K...==............==..Z.......'...==.........TTT",
-	"TTT.............==......E.....==..............==..FFFFFFF.TT",
+	"TT...Y.....hK...==............==..Z.......'...==...y.....TTT",
+	"TTT.u...........==......E.....==..............==..FFFFFFF.TT",
 	"TT.......N......==............==..............==..........TT",
 	"TTT...==.....==.==............==..............==.........TTT",
-	"TTTQn.==....n==.==..n.....==n.==.P.==.......n.==....n...b.TT",
+	"TTTQn.==.v..n==.==v.n..v..==n.==.P.==..v.v..n.==..v.n..vb.TT",
 	"==========================================================TT",
 	"==========================================================TT",
-	"TT..n.....==n.......n.......n.==....n.......n.......n.....TT",
-	"TT........==.........ss.==============.ss................TTT",
-	"TT........==............==============....................TT",
-	"TTT..H....==..A.........===.....d..===...................TTT",
-	"TTT,......==.......b....===.c....c.===.J..................TT",
-	"TT........==............===...O....===................R..TTT",
+	"TT..n..v..==n...v...n...v.q.n.==..q.n...v...n...v...n...v.TT",
+	"TT.,.....,==.........ss.==============.ss................TTT",
+	"TT.gggggg.==.ggggg.,....==============......,.....,.......TT",
+	"TTT..H....==..A.........===.....d..===ggggg.............,TTT",
+	"TTT,......==.......b....===.v....v.===.J..................TT",
+	"TT........==..........,.===...O....===.........q....q.R..TTT",
 	"TTT...======............===........===.....f..............TT",
-	"TT....===========.......===.c....c.===..==.....~~~~~~~~..TTT",
-	"TTT.......=======.......===........===..==....~~~~~~~~~~..TT",
-	"TTT.e.....==.........'..==============..==...~~~~~~~~~~~.TTT",
-	"TT........==....b.......==============..==.,.~~~~~~~~~~~.TTT",
+	"TT....===========.......===.v....v.===..==.....~~~~~~~~..TTT",
+	"TTT.......=======.......===...qq...===..==....~~~~~~~~~~..TT",
+	"TTT.e.....==,........'..==============..==...~~~~~~~~~~~.TTT",
+	"TT........==....b....w..==============..==.,.~~~~~~~~~~~.TTT",
 	"TTT..b....==............................==...~~~~~~~~~~~.TTT",
-	"TT........============..................=====~~~~~~~~~~~.TTT",
-	"TT........============..................=====~~~~~~~~~~~..TT",
-	"TT........==...................b.............~~~~~~~~~~~.TTT",
-	"TTT...b...==..FFFFFFF.....R.........f........~~~~~~~~~~~..TT",
-	"TT........==............................b.....~~~~~~~~~~..TT",
+	"TT........============......,...........=====~~~~~~~~~~~.TTT",
+	"TT......R.============..................=====~~~~~~~~~~~..TT",
+	"TT........==......,......,.....b.............~~~~~~~~~~~.TTT",
+	"TTT...b...==..FFFFFFF.....R.........f.R......~~~~~~~~~~~..TT",
+	"TT....,...==.......................,....b.....~~~~~~~~~~..TT",
 	"TTT.......................................................TT",
 	"TTTTT....T.TTTT.....T..T.T.....TT.'TTTT....T...TTT...T.TTTTT",
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
@@ -108,12 +109,12 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 		return
 	match ch:
 		"P":
-			_add_sign(cell, "Tableau d'affichage", "Bienvenue à Valfleur ! Épicerie de Rosalie : 9h - 17h. La mairie cherche des légumes pour relancer le marché. Fête des moissons : bientôt !")
+			_add_sign(cell, "Tableau d'affichage", Events.calendar_text())
 		"Q":
 			_add_sign(cell, "Panneau", "<- Vers la ferme")
 		"N":
 			_interactables[cell] = "forge"
-		"n", "s":
+		"n", "s", "v", "q", "g", "u", "y", "w", "c":
 			_blocked[cell] = true
 			_add_static_block(cell)
 		_:
@@ -127,6 +128,11 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 
 func _after_build() -> void:
 	_spawn_cell = Vector2i(2, 19)
+	# Jour de fête ou de marché : un stand sur la place
+	if Events.booth_activity() != "":
+		_blocked[Events.BOOTH] = true
+		_add_static_block(Events.BOOTH)
+		_interactables[Events.BOOTH] = "booth"
 	_build_navigation()
 	for id: String in GameData.npcs:
 		var npc := Npc.new()
@@ -149,6 +155,48 @@ func _build_navigation() -> void:
 			_astar.set_point_solid(cell, true)
 		elif _ground_chars[cell] == "=":
 			_astar.set_point_weight_scale(cell, 0.5)  # les habitants préfèrent les chemins
+
+
+## Case devant la porte d'un bâtiment (pour ressortir d'un intérieur).
+static func door_front(id: String) -> Vector2i:
+	for ch: String in BUILDINGS:
+		var b: Array = BUILDINGS[ch]
+		if b[0] != id:
+			continue
+		for y in MAP.size():
+			var x := String(MAP[y]).find(ch)
+			if x >= 0:
+				var size: Vector2i = b[1]
+				return Vector2i(x + int(b[3]), y + size.y)
+	return Vector2i(2, 19)
+
+
+var _gather_cache: Dictionary = {}
+
+
+## n-ième case libre autour d'un lieu de rassemblement (en spirale).
+func gather_cell(place: Vector2i, index: int) -> Vector2i:
+	if not _gather_cache.has(place):
+		var cells: Array[Vector2i] = []
+		var seen := {place: true}
+		var queue: Array[Vector2i] = [place]
+		while not queue.is_empty() and cells.size() < 24:
+			var c: Vector2i = queue.pop_front()
+			if is_walkable(c) and c != Events.BOOTH + Vector2i.DOWN:
+				cells.append(c)
+			for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				var n := c + d
+				if not seen.has(n) and _ground_chars.has(n) and (is_walkable(n) or not is_walkable(c)):
+					seen[n] = true
+					queue.append(n)
+		# Une case sur deux : on ne se colle pas
+		var spread: Array[Vector2i] = []
+		for i in cells.size():
+			if i % 2 == 0:
+				spread.append(cells[i])
+		_gather_cache[place] = spread if not spread.is_empty() else [place]
+	var list: Array = _gather_cache[place]
+	return list[maxi(index, 0) % list.size()]
 
 
 func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
@@ -198,7 +246,11 @@ func _process(delta: float) -> void:
 		_bubble_timer = randf_range(5.0, 9.0)
 		for npc in npcs:
 			if not npc.is_inside() and npc.position.distance_to(player.position) < TILE * 5:
-				EventBus.npc_bubble.emit(npc.id, BUBBLES[randi() % BUBBLES.size()])
+				var event := Events.happening_now()
+				var line: String = BUBBLES[randi() % BUBBLES.size()]
+				if not event.is_empty() and randf() < 0.6:
+					line = str(event.get("bubble", "Vive la fête !"))
+				EventBus.npc_bubble.emit(npc.id, line)
 				break
 
 
@@ -252,27 +304,23 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 	if kind == "forge":
 		EventBus.forge_requested.emit()
 		return
-	var building := kind.trim_prefix("door:")
-	if SHOP_DOORS.has(building):
-		var shop: String = SHOP_DOORS[building]
-		if Shops.is_open(shop):
-			Sfx.play("door")
-			EventBus.shop_opened.emit(shop)
-		else:
-			EventBus.message_requested.emit(str(Shops.info(shop).get("name", "")), "C'est fermé. " + Shops.hours_text(shop))
+	if kind == "booth":
+		EventBus.booth_requested.emit()
 		return
+	var building := kind.trim_prefix("door:")
 	if building == "mine":
 		_enter_mine()
 		return
-	if building == "mairie":
-		EventBus.message_requested.emit("Mairie de Valfleur", "La porte est fermée. Une affiche : « Le maire reçoit sur rendez-vous... ou sur la place. »")
-		return
-	for npc in npcs:
-		if GameData.npc(npc.id).get("home") == building:
-			var who := str(GameData.npc(npc.id).name)
-			var text := "On entend du bruit à l'intérieur : %s est à la maison." % who if npc.is_inside() else "Personne ne répond. %s doit être en ville." % who
-			EventBus.message_requested.emit("Maison de %s" % who, text)
-			return
+	if InteriorMap.LAYOUTS.has(building):
+		if Events.gathering_now():
+			EventBus.message_requested.emit(InteriorMap.LAYOUTS[building].name, "Fermé pour la fête ! Tout le monde est sur la place.")
+		elif InteriorMap.is_open(building):
+			Sfx.play("door")
+			var rows: Array = InteriorMap.LAYOUTS[building].rows
+			var door_x := String(rows[rows.size() - 1]).find("D")
+			EventBus.map_change_requested.emit("in:" + building, Vector2i(door_x, rows.size() - 2))
+		else:
+			EventBus.message_requested.emit(InteriorMap.LAYOUTS[building].name, InteriorMap.closed_text(building))
 
 
 func _enter_mine() -> void:

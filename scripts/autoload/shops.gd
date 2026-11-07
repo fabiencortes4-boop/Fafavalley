@@ -17,7 +17,15 @@ func info(id: String) -> Dictionary:
 	return shops.get(id, {})
 
 
+## Prix d'achat (certaines boutiques ont leurs propres prix).
+func price(shop_id: String, item_id: String) -> int:
+	var prices: Dictionary = info(shop_id).get("prices", {})
+	return int(prices.get(item_id, GameData.item(item_id).get("buy", 0)))
+
+
 func is_open(id: String) -> bool:
+	if id != "market" and Events.gathering_now():
+		return false  # tout le monde est à la fête
 	var s := info(id)
 	var hours: Array = s.get("open", [9, 17])
 	var weekday := (TimeManager.day - 1) % 7

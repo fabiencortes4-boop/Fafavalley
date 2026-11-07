@@ -101,6 +101,11 @@ func _ready() -> void:
 	EventBus.kitchen_requested.connect(open_crafting.bind("craft"))
 	EventBus.zone_entered.connect(_on_zone_entered)
 	EventBus.story_advanced.connect(_on_story_advanced)
+	EventBus.booth_requested.connect(open_booth)
+	TimeManager.day_started.connect(func(_d: int, _s: int, _y: int) -> void:
+		var fest := Events.festival_today()
+		if not fest.is_empty():
+			show_toast("Aujourd'hui : %s au village, de %dh à %dh !" % [fest.name, int(fest.start), int(fest.end)]))
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
 			show_toast("%s : %s" % [GameData.npc(npc_id).get("name", ""), text]))
@@ -614,10 +619,11 @@ func _item_row(id: String) -> HBoxContainer:
 	var owned: bool = (item.get("type") == "tool" and Inventory.count_of(id) > 0) or (is_bag and Inventory.capacity >= int(item.capacity))
 	# Le sac de voyageur demande d'avoir déjà le grand sac.
 	var locked: bool = is_bag and Inventory.capacity < int(item.capacity) - Inventory.HOTBAR
-	var row := _shop_row(GameData.item_icon(id), "%s - %d or%s" % [item.name, int(item.get("buy", 0)), "" if in_season else " (hors saison)"])
+	var price := Shops.price(_current_shop, id)
+	var row := _shop_row(GameData.item_icon(id), "%s - %d or%s" % [item.name, price, "" if in_season else " (hors saison)"])
 	var buy := Button.new()
 	buy.text = "Acquis" if owned else "Acheter"
-	buy.disabled = not in_season or owned or locked or Inventory.gold < int(item.get("buy", 0))
+	buy.disabled = not in_season or owned or locked or Inventory.gold < price
 	buy.pressed.connect(_buy.bind(id))
 	row.add_child(buy)
 	return row
@@ -693,7 +699,7 @@ func _building_row(id: String) -> VBoxContainer:
 
 func _buy(id: String) -> void:
 	var item := GameData.item(id)
-	var price := int(item.get("buy", 0))
+	var price := Shops.price(_current_shop, id)
 	if item.get("type") == "backpack":
 		var target := int(item.capacity)
 		# Jamais de sac plus petit, et on agrandit un palier à la fois.
@@ -1370,6 +1376,54 @@ func open_mail() -> void:
 			open_mail())
 	else:
 		_add_button(box, "Fermer", close_modal)
+
+
+# ------------------------------------------------------------ fêtes du village
+func open_booth() -> void:
+	var activity := Events.booth_activity()
+	var fest := Events.festival_today()
+	var title := str(fest.get("name", "Marché du samedi"))
+	if not Events.booth_open():
+		var hours: Dictionary = fest if not fest.is_empty() else Events.weekly_today()
+		show_message(title, "Le stand n'est pas encore ouvert (de %dh à %dh)." % [int(hours.get("start", 9)), int(hours.get("end", 14))])
+		return
+	if activity == "market":
+		open_shop("market")
+		return
+	var box := _open_modal(title)
+	_add_label(box, str(fest.get("desc", "")))
+	if Events.is_done(str(fest.id)):
+		_add_label(box, "Tu as déjà participé cette année. Profite de la fête !")
+	elif activity == "contest":
+		var slot: Variant = Inventory.get_selected()
+		var item := {} if slot == null else GameData.item(slot.id)
+		if slot == null or int(item.get("sell", 0)) <= 0 or item.get("type") in ["tool", "weapon", "seed"]:
+			_add_label(box, "Choisis dans ta barre l'objet à présenter (légume, poisson, produit d'élevage, plat...), puis reviens au stand.")
+		else:
+			var id := str(slot.id)
+			_add_button(box, "Présenter : %s" % GameData.item_name(id), func() -> void:
+				var result := Events.enter_contest(id)
+				if result.is_empty():
+					return
+				Sfx.play("levelup")
+				show_message(str(result.title), "Le jury goûte, soupèse, admire... %s ! Tu gagnes %d or, et tout le village t'applaudit." % [result.title, int(result.gold)]))
+	elif activity == "dance":
+		_add_label(box, "Qui veux-tu inviter à danser ?")
+		var row := HFlowContainer.new()
+		box.add_child(row)
+		for id: String in GameData.npcs:
+			if not Relations.met.has(id):
+				continue
+			var b := Button.new()
+			b.text = str(GameData.npc(id).name)
+			b.pressed.connect(func() -> void:
+				Events.dance_with(id)
+				Sfx.play("levelup")
+				show_message("Nuit des lanternes", "Tu danses avec %s autour de la fontaine, sous les lanternes. Un moment inoubliable !" % GameData.npc(id).name))
+			row.add_child(b)
+		if row.get_child_count() == 0:
+			_add_label(box, "Tu ne connais encore personne... Va saluer les habitants !")
+	_add_button(box, "Fermer", close_modal)
 
 
 # ------------------------------------------------------------ histoire

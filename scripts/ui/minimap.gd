@@ -10,6 +10,9 @@ const COLORS := {
 	"=": Color(0.86, 0.7, 0.48), "c": Color(0.7, 0.7, 0.7), "~": Color(0.35, 0.62, 0.9),
 	"#": Color(0.2, 0.17, 0.2), "_": Color(0.6, 0.5, 0.38), "r": Color(0.7, 0.4, 0.35),
 	"o": Color(0.55, 0.55, 0.58), "F": Color(0.6, 0.45, 0.3),
+	"v": Color(0.9, 0.5, 0.65), "q": Color(0.6, 0.45, 0.3), "g": Color(0.2, 0.45, 0.25),
+	"u": Color(0.6, 0.45, 0.3), "y": Color(0.92, 0.8, 0.42), "w": Color(0.6, 0.6, 0.62), "n": Color(0.3, 0.3, 0.32),
+	"s": Color(0.8, 0.35, 0.3),
 }
 const GRASS := Color(0.45, 0.7, 0.36)
 const BUILDING := Color(0.72, 0.36, 0.3)
@@ -39,7 +42,7 @@ func setup(map: WorldMap) -> void:
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
 		var color: Color = COLORS.get(ch, GRASS)
-		if blocked.has(cell):
+		if blocked.has(cell) and not COLORS.has(ch):
 			color = BUILDING
 		if map is MineLevel and ch != "#":
 			color = Color(0.55, 0.48, 0.4)

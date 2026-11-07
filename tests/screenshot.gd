@@ -17,6 +17,20 @@ func _ready() -> void:
 			main.call("current_map").call("_refresh_all")
 		_setup_demo()
 		for a in args:
+			if a.begins_with("--day="):
+				TimeManager.day = int(a.trim_prefix("--day="))
+			if a.begins_with("--season="):
+				TimeManager.season = int(a.trim_prefix("--season="))
+			if a.begins_with("--time="):
+				TimeManager.minutes = int(a.trim_prefix("--time=")) * 60
+			if a.begins_with("--interior="):
+				TimeManager.minutes = maxi(TimeManager.minutes, 10 * 60)
+				var rows: Array = InteriorMap.LAYOUTS[a.trim_prefix("--interior=")].rows
+				PlayerState.position = Vector2(String(rows[rows.size() - 1]).find("D") * 16 + 8, (rows.size() - 2) * 16 + 12)
+				PlayerState.has_position = true
+				main.call("_switch_to", "in:" + a.trim_prefix("--interior="))
+				await get_tree().process_frame
+		for a in args:
 			if a.begins_with("--chapter="):
 				# Histoire avancée jusqu'au chapitre donné (5 = fin, fête au village)
 				for i in mini(int(a.trim_prefix("--chapter=")), Story.chapters.size()):
@@ -26,7 +40,8 @@ func _ready() -> void:
 		if "--shop" in args:
 			EventBus.shop_requested.emit()
 		if "--village" in args:
-			TimeManager.minutes = 13 * 60 + 30
+			if not " ".join(args).contains("--time="):
+				TimeManager.minutes = 13 * 60 + 30
 			PlayerState.position = Vector2(19 * 16 + 8, 17 * 16 + 12)
 			PlayerState.has_position = true
 			main.call("_switch_to", "village")

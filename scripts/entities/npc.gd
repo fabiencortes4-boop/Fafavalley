@@ -18,6 +18,7 @@ var _going_home: bool = false
 var _inside: bool = false
 var _entry_index: int = -2
 var _bob: float = 0.0
+var _working: bool = false  # commerçant dans sa boutique pendant les heures d'ouverture
 
 
 func _ready() -> void:
@@ -42,7 +43,8 @@ func _ready() -> void:
 			"cell": Vector2i(int(cell[0]), int(cell[1])),
 			"home": bool(entry.get("home", false)),
 		})
-	sync_to_time()
+	if village != null:  # dans un intérieur, l'habitant ne bouge pas
+		sync_to_time()
 
 
 func cell() -> Vector2i:
@@ -51,6 +53,36 @@ func cell() -> Vector2i:
 
 func is_inside() -> bool:
 	return _inside
+
+
+## Case où se rendre pour un événement du village (sinon (-1, -1)).
+func _event_spot() -> Vector2i:
+	var p := Events.place_for(id)
+	if p.is_empty() or village == null:
+		return Vector2i(-1, -1)
+	return village.gather_cell(p.place, int(p.index))
+
+
+## Le commerçant tient sa boutique pendant ses heures d'ouverture.
+func _works_now() -> bool:
+	var shop := str(GameData.npc(id).get("shop", ""))
+	return Shops.shops.has(shop) and Shops.is_open(shop)
+
+
+## Est-ce que l'habitant est chez lui (ou dans sa boutique) à cette heure ?
+static func is_home_at(npc_id: String, minutes: int) -> bool:
+	var data := GameData.npc(npc_id)
+	var shop := str(data.get("shop", ""))
+	if Shops.shops.has(shop) and Shops.is_open(shop):
+		return true
+	if Events.gathering_now():
+		return false  # tout le monde est à la fête
+	var home := true
+	for entry: Dictionary in data.get("schedule", []):
+		var parts := str(entry.get("time", "06:00")).split(":")
+		if int(parts[0]) * 60 + int(parts[1]) <= minutes:
+			home = bool(entry.get("home", false))
+	return home
 
 
 func _entry_at(minutes: int) -> int:
@@ -66,7 +98,14 @@ func _entry_at(minutes: int) -> int:
 func sync_to_time() -> void:
 	_entry_index = _entry_at(TimeManager.minutes)
 	_path.clear()
-	if _entry_index < 0 or _schedule[_entry_index].home:
+	_working = _works_now()
+	var gather := _event_spot()
+	if gather != Vector2i(-1, -1) and not _working:
+		_gather_target = gather
+		position = village.cell_center(gather)
+		_set_inside(false)
+		return
+	if _working or _entry_index < 0 or _schedule[_entry_index].home:
 		position = village.cell_center(home_cell)
 		_set_inside(true)
 	else:
@@ -77,6 +116,26 @@ func sync_to_time() -> void:
 ## Appelé à chaque changement d'heure : part vers la prochaine étape.
 func on_time_changed() -> void:
 	var index := _entry_at(TimeManager.minutes)
+	var working := _works_now()
+	var gather := _event_spot()
+	if gather != Vector2i(-1, -1) and not working:
+		# Événement au village : tout le monde se rassemble
+		if _gather_target != gather:
+			_gather_target = gather
+			_walk_to(gather, false)
+		return
+	if _gather_target != Vector2i(-1, -1):
+		_gather_target = Vector2i(-1, -1)
+		_entry_index = -2  # fin de l'événement : on reprend l'emploi du temps
+	if working != _working:
+		_working = working
+		_entry_index = -2
+		if working:
+			_walk_to(home_cell, true)
+			_entry_index = index
+			return
+	if working:
+		return
 	if index == _entry_index or index < 0:
 		return
 	_entry_index = index
@@ -86,8 +145,19 @@ func on_time_changed() -> void:
 			return
 		position = village.cell_center(home_cell)
 		_set_inside(false)
-	_going_home = entry.home
-	var target: Vector2i = home_cell if entry.home else entry.cell
+	_walk_to(home_cell if entry.home else entry.cell, entry.home)
+
+
+var _gather_target: Vector2i = Vector2i(-1, -1)
+
+
+func _walk_to(target: Vector2i, going_home: bool) -> void:
+	if _inside:
+		if going_home:
+			return
+		position = village.cell_center(home_cell)
+		_set_inside(false)
+	_going_home = going_home
 	_path = village.find_path(cell(), target)
 	_path_index = 0
 	if _path.is_empty():  # pas de chemin : on se téléporte
@@ -96,7 +166,7 @@ func on_time_changed() -> void:
 
 
 func _process(delta: float) -> void:
-	if _inside or _path_index >= _path.size():
+	if village == null or _inside or _path_index >= _path.size():
 		_sprite.position.y = 0.0
 		return
 	var target := village.cell_center(_path[_path_index])

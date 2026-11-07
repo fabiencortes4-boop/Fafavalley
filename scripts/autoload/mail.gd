@@ -33,6 +33,8 @@ func check() -> void:
 			continue
 		if when.has("season") and TimeManager.season != int(when.season):
 			continue
+		if when.has("day") and TimeManager.day != int(when.day):
+			continue
 		if when.has("flag") and not PlayerState.flags.has(str(when.flag)):
 			continue
 		if when.has("flag_min"):

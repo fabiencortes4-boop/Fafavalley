@@ -1,0 +1,42 @@
+{
+	"festivals": [
+		{
+			"id": "spring_fair", "name": "Fête des semis", "season": 0, "day": 13, "start": 9, "end": 15,
+			"activity": "contest",
+			"desc": "Concours du plus beau produit de la ferme sur la place ! Présente ton meilleur légume, fruit ou produit d'élevage au stand de Bertrand.",
+			"letter": "Demain, c'est la Fête des semis ! Rendez-vous sur la place de 9h à 15h. Il y aura un concours : apporte ce que ta ferme fait de mieux. Les boutiques seront fermées pendant la fête."
+		},
+		{
+			"id": "lantern_night", "name": "Nuit des lanternes", "season": 1, "day": 20, "start": 18, "end": 23,
+			"activity": "dance",
+			"desc": "Le soir, tout Valfleur allume des lanternes et danse autour de la fontaine. Invite quelqu'un à danser au stand !",
+			"letter": "Demain soir, Nuit des lanternes sur la place, de 18h à 23h ! On danse autour de la fontaine. Qui vas-tu inviter ?"
+		},
+		{
+			"id": "harvest_fest", "name": "Fête des récoltes", "season": 2, "day": 16, "start": 9, "end": 15,
+			"activity": "contest",
+			"desc": "La grande fête de l'automne : concours des récoltes au stand, et toute la ville sur la place.",
+			"letter": "Demain, Fête des récoltes ! Le concours est ouvert à tous : présente ta plus belle récolte sur la place, de 9h à 15h."
+		},
+		{
+			"id": "winter_market", "name": "Marché d'hiver", "season": 3, "day": 8, "start": 10, "end": 16,
+			"activity": "market",
+			"desc": "Un marché sous la neige : vin chaud, lanternes et produits rares au stand du colporteur.",
+			"letter": "Demain, Marché d'hiver sur la place, de 10h à 16h. Le colporteur revient avec des marchandises rares !"
+		}
+	],
+	"weekly": [
+		{"weekday": 0, "name": "Partie de pétanque", "npcs": ["gaston", "bertrand", "jules"], "start": 14, "end": 17, "place": [33, 24], "bubble": "Allez, tire ! Tire !"},
+		{"weekday": 1, "name": "Lina peint la fontaine", "npcs": ["lina", "theo"], "start": 10, "end": 13, "place": [28, 27], "bubble": "Encore un peu de bleu..."},
+		{"weekday": 2, "name": "Pique-nique au parc", "npcs": ["odette", "theo", "lina"], "start": 12, "end": 14, "place": [42, 29], "bubble": "Une part de tarte ?"},
+		{"weekday": 3, "name": "Concours de pêche", "npcs": ["jules", "leon", "theo"], "start": 9, "end": 12, "place": [44, 33], "bubble": "Ça mord !"},
+		{"weekday": 4, "name": "Répétition de la chorale", "npcs": ["rosalie", "odette", "bertrand", "margot"], "start": 18, "end": 20, "place": [30, 24], "bubble": "La la laaa !"},
+		{"weekday": 5, "name": "Marché du samedi", "npcs": ["odette", "lina", "theo", "gaston", "bertrand", "jules"], "start": 9, "end": 14, "place": [29, 25], "market": true, "bubble": "Tu as vu les prix ?"},
+		{"weekday": 6, "name": "Balade du dimanche", "npcs": ["rosalie", "mathis", "margot"], "start": 10, "end": 13, "place": [40, 26], "bubble": "Quel beau dimanche !"}
+	],
+	"market": {
+		"name": "Stand du colporteur",
+		"items": [["seed_wheat", 70], ["seed_tomato", 80], ["fertilizer", 45], ["hay", 70], ["copper_ore", 90], ["iron_ore", 160], ["quartz", 140], ["coal", 60], ["berries", 60], ["truffle", 700], ["backpack_24", 2400]]
+	},
+	"contest_prizes": [[300, 1000, "Premier prix"], [120, 400, "Deuxième prix"], [0, 120, "Prix de participation"]]
+}

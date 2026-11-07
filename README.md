@@ -57,6 +57,19 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Intérieurs** pour chaque bâtiment du village : épicerie, mairie (registre et tableau
+  du projet), forge de Gaston, menuiserie, coopérative, ranch, maisons d'Odette et Théo,
+  de Lina et de Jules. Les commerçants tiennent leur comptoir aux heures d'ouverture,
+  les habitants sont chez eux selon leur emploi du temps ; livres et albums racontent
+  l'histoire de Valfleur.
+- **Événements** : une grande fête par saison (Fête des semis et Fête des récoltes avec
+  concours, Nuit des lanternes avec danse, Marché d'hiver), annoncée par lettre la veille ;
+  tout le village se rassemble sur la place, décorée de fanions. Marché du colporteur
+  chaque samedi matin, et une animation chaque jour (pétanque, peinture, pique-nique,
+  concours de pêche, chorale, balade). Le tableau d'affichage donne le calendrier.
+- **Village décoré** : jardinières fleuries, bancs, haies, puits, meules de foin,
+  tonneaux, bacs à fleurs sur la place ; forêt et route qui continuent au-delà des bords.
+- Le temps passe plus vite : une journée dure environ 9 minutes.
 - **Histoire en 5 chapitres** (bouton *Histoire*) : la source de Valfleur s'est tarie,
   la Fête des fleurs a disparu, Firmin a quitté la ferme... À toi de faire refleurir la
   vallée. Chaque chapitre propose **3 voies au choix** (cultiver, défricher, vendre,
@@ -174,6 +187,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
 godot --headless res://tests/story_test.tscn      # histoire : chapitres, voies, déblocages, lettres
 godot --headless res://tests/animals_test.tscn    # maison, construction, achat d'animaux, foin, œufs, traite, boutiques
 godot --headless res://tests/crafting_test.tscn   # arroseurs, engrais, cuisine, forge

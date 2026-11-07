@@ -25,6 +25,7 @@ func new_game() -> void:
 	Forage.reset()
 	Animals.reset()
 	Story.reset()
+	Events.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])
 	Inventory.add_gold(STARTING_GOLD)
