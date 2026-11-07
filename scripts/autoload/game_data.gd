@@ -36,7 +36,78 @@ func _load_json(path: String) -> Dictionary:
 
 
 func item(id: String) -> Dictionary:
-	return items.get(id, {})
+	if items.has(id):
+		return items[id]
+	if id.contains("@"):
+		return _quality_item(id)
+	return {}
+
+
+# ------------------------------------------------------------ qualité
+## Qualité des récoltes, poissons, cueillettes, fruits, fleurs et produits
+## d'élevage : normale, argent, or, cristal. Un objet de qualité a pour
+## identifiant « carotte@2 » ; il vaut plus cher et nourrit davantage.
+## Inventory.count_of("carrot") compte toutes les qualités.
+const QUALITY_NAMES := ["normale", "argent", "or", "cristal"]
+const QUALITY_PRICE := [1.0, 1.25, 1.5, 2.0]
+const QUALITY_COLORS := [Color(1, 1, 1), Color(0.82, 0.86, 0.95), Color(1.0, 0.8, 0.25), Color(0.55, 0.95, 1.0)]
+const QUALITY_TYPES := ["crop", "fish", "forage", "animal"]
+var _quality_cache: Dictionary = {}
+
+
+static func base_id(id: String) -> String:
+	return id.get_slice("@", 0)
+
+
+static func quality_of(id: String) -> int:
+	return clampi(int(id.get_slice("@", 1)), 0, 3) if id.contains("@") else 0
+
+
+static func with_quality(id: String, quality: int) -> String:
+	var base := base_id(id)
+	return base if quality <= 0 else "%s@%d" % [base, mini(quality, 3)]
+
+
+func has_quality(id: String) -> bool:
+	return str(items.get(base_id(id), {}).get("type", "")) in QUALITY_TYPES
+
+
+func _quality_item(id: String) -> Dictionary:
+	if _quality_cache.has(id):
+		return _quality_cache[id]
+	var base: Dictionary = items.get(base_id(id), {})
+	if base.is_empty():
+		return {}
+	var q := quality_of(id)
+	var out := base.duplicate(true)
+	out["quality"] = q
+	out["base"] = base_id(id)
+	out["name"] = "%s %s" % [base.get("name", id), ["", "★ argent", "★ or", "★ cristal"][q]]
+	if base.has("sell"):
+		out["sell"] = int(round(float(base.sell) * QUALITY_PRICE[q]))
+	if base.has("edible"):
+		var e: Array = base.edible
+		out["edible"] = [int(round(float(e[0]) * (1.0 + 0.2 * q))), int(round(float(e[1]) * (1.0 + 0.2 * q)))]
+	_quality_cache[id] = out
+	return out
+
+
+## Tire une qualité : `level` (0 à 10, compétence), `bonus` (0 à 1 : engrais,
+## âge de l'arbre, bonheur de l'animal, taille du poisson...).
+func roll_quality(level: int, bonus: float = 0.0, rng: RandomNumberGenerator = null) -> int:
+	var r := randf() if rng == null else rng.randf()
+	var crystal := 0.0
+	if level >= 6 or bonus >= 0.5:
+		crystal = 0.005 + 0.004 * level + 0.04 * bonus
+	var gold := 0.02 + 0.012 * level + 0.12 * bonus
+	var silver := 0.12 + 0.025 * level + 0.2 * bonus
+	if r < crystal:
+		return 3
+	if r < crystal + gold:
+		return 2
+	if r < crystal + gold + silver:
+		return 1
+	return 0
 
 
 func crop(id: String) -> Dictionary:
@@ -115,12 +186,44 @@ func item_name(id: String) -> String:
 func item_icon(id: String) -> Texture2D:
 	if _icon_cache.has(id):
 		return _icon_cache[id]
+	if id.contains("@"):
+		# Objet de qualité : l'icône de base avec une étoile dans le coin
+		_icon_cache[id] = _starred_icon(item_icon(base_id(id)), quality_of(id))
+		return _icon_cache[id]
 	var tex := AtlasTexture.new()
 	tex.atlas = _icons_texture
 	var index := int(item(id).get("icon", 0))
 	tex.region = Rect2(index * ICON_SIZE, 0, ICON_SIZE, ICON_SIZE)
 	_icon_cache[id] = tex
 	return tex
+
+
+## Petite étoile (argent, or ou cristal) en bas à gauche de l'icône.
+func _starred_icon(base: Texture2D, quality: int) -> Texture2D:
+	var img := base.get_image()
+	if img == null:
+		return base
+	img = img.duplicate()
+	img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	var fill: Color = QUALITY_COLORS[quality]
+	var dark := Color(0.25, 0.15, 0.2)
+	# Étoile 5x5 dans le coin, contour sombre puis remplissage
+	var shape := ["..X..", ".XXX.", "XXXXX", ".XXX.", ".X.X."]
+	var pts: Array[Vector2i] = []
+	for y in shape.size():
+		for x in 5:
+			if shape[y][x] == "X":
+				pts.append(Vector2i(x, 10 + y))
+	for p: Vector2i in pts:
+		for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var n := p + d
+			if n.x >= 0 and n.x < 16 and n.y >= 0 and n.y < 16 and not n in pts:
+				img.set_pixelv(n, dark)
+	for p: Vector2i in pts:
+		img.set_pixelv(p, fill)
+	img.set_pixel(2, 11, fill.lightened(0.5))
+	return ImageTexture.create_from_image(img)
 
 
 ## Durée totale de croissance (en jours arrosés) d'une culture.

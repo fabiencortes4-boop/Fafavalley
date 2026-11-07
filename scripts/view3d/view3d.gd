@@ -285,7 +285,7 @@ func _build_ground() -> void:
 	var land := {}
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
-		if ch == "~":
+		if ch == "~" or ch == "W":
 			continue
 		var col: Color
 		match _base_char(cell, chars):
@@ -296,7 +296,7 @@ func _build_ground() -> void:
 			":":
 				col = Color(0.93, 0.85, 0.62)  # sable
 			"#":
-				col = Color(0.55, 0.38, 0.23) if (cell.x + cell.y) % 2 == 0 else Color(0.6, 0.42, 0.26)  # planches
+				col = Color(0.16, 0.2, 0.24)  # ombre sous les planches du ponton
 			_:
 				col = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
 		var v := (float(_hash(cell) % 100) / 100.0 - 0.5) * 0.04
@@ -317,14 +317,14 @@ func _build_ground() -> void:
 			corner.call(cell.x, cell.y), corner.call(cell.x + 1, cell.y), corner.call(cell.x + 1, cell.y + 1), corner.call(cell.x, cell.y + 1))
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
-		if ch != "~":
+		if ch != "~" and ch != "W":
 			continue
 		var h := -0.28
 		_quad(st, Vector3(cell.x, h, cell.y), Vector3(cell.x + 1, h, cell.y + 1), Color(0.55, 0.47, 0.33))
 		# Berges de l'eau : parois verticales
 		if ch == "~":
 			for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
-				if chars.get(cell + d, "~") != "~":
+				if not chars.get(cell + d, "~") in ["~", "W"]:
 					_bank(st, cell, d, h, Color(0.52, 0.40, 0.27))
 	st.generate_normals()
 	var ground := MeshInstance3D.new()
@@ -342,7 +342,7 @@ func _build_ground() -> void:
 	water.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var has_water := false
 	for cell: Vector2i in chars:
-		if chars[cell] == "~":
+		if chars[cell] == "~" or chars[cell] == "W":
 			has_water = true
 			_quad(water, Vector3(cell.x, -0.1, cell.y), Vector3(cell.x + 1, -0.1, cell.y + 1), Color.WHITE)
 	if has_water:
@@ -539,6 +539,8 @@ func _build_props() -> void:
 		var ch: String = chars[cell]
 		var c := _cell3d(cell)
 		var rot := float(_hash(cell) % 628) / 100.0
+		if ch != "#" and DECOR_CHARS.contains(ch) and _base_char(cell, chars) == "#":
+			_dock_cell(cell, chars)  # un tonneau sur le ponton : planches dessous
 		match ch:
 			"T":
 				_place(batch, "nature", _tree_model(cell), c, 1.5 + float(_hash(cell) % 30) / 100.0, rot)
@@ -641,10 +643,7 @@ func _build_props() -> void:
 					var along_x: bool = chars.get(cell + Vector2i.RIGHT, "") == "W"
 					_boat(c + (Vector3(0.5, 0, 0) if along_x else Vector3(0, 0, 0.5)), 0.0 if along_x else PI / 2.0, _hash(cell))
 			"#":
-				# Pontons : poteaux aux bords qui donnent sur l'eau
-				for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
-					if chars.get(cell + d, "") == "~" and _hash(cell + d) % 2 == 0:
-						_put(_box(Vector3(0.1, 0.6, 0.1), Color(0.4, 0.27, 0.16)), c + Vector3(d.x, 0, d.y) * 0.45 + Vector3(0, 0.05, 0))
+				_dock_cell(cell, chars)
 			"L":
 				# Tronc qui barre le chemin de la forêt (tant qu'il n'est pas dégagé)
 				if not PlayerState.flags.has("story_ch1") and chars.get(cell + Vector2i.LEFT, "") != "L":
@@ -716,6 +715,7 @@ func _build_props() -> void:
 			_place(batch, "nature", "plant_bushLarge", c, 2.2, 0.0)
 	batch.build(_static)
 	_finish_lamps()
+	_finish_docks()
 	_wall_batch = Models.Batch.new()
 	_build_buildings(chars)
 	_wall_batch.build(_static)
@@ -1367,42 +1367,246 @@ func _build_gardens() -> void:
 ## Bateau de pêche : coque en bois, banc, mât et voile roulée.
 func _boat(c: Vector3, rot: float, h: int) -> void:
 	var boat := Node3D.new()
-	var hull_color: Color = [Color(0.75, 0.3, 0.25), Color(0.3, 0.5, 0.7), Color(0.95, 0.92, 0.85)][h % 3]
-	# Coque peinte en planches, pont en bois, voile de toile
-	var hull_mat := _plank_material(hull_color)
-	var deck_mat := _plank_material(Color(0.62, 0.43, 0.27))
-	var sail_mat := _flat_material(Color(0.95, 0.93, 0.85))
-	for part: Array in [
-		[Vector3(1.7, 0.22, 0.6), Vector3(0, -0.02, 0), hull_mat],
-		[Vector3(1.5, 0.06, 0.48), Vector3(0, 0.1, 0), deck_mat],
-		[Vector3(0.12, 0.26, 0.5), Vector3(0.8, 0.06, 0), hull_mat],
-		[Vector3(0.12, 0.2, 0.44), Vector3(-0.8, 0.05, 0), hull_mat],
-		[Vector3(0.3, 0.06, 0.5), Vector3(0.1, 0.16, 0), deck_mat],
-		[Vector3(0.06, 1.1, 0.06), Vector3(-0.2, 0.65, 0), _flat_material(Color(0.45, 0.3, 0.18))],
-		[Vector3(0.7, 0.1, 0.1), Vector3(0.1, 0.4, 0), sail_mat],
-		[Vector3(1.72, 0.04, 0.62), Vector3(0, 0.07, 0), _flat_material(Color(0.95, 0.93, 0.88))],  # liseré
-	]:
-		var b := MeshInstance3D.new()
-		var bm := BoxMesh.new()
-		bm.size = part[0]
-		bm.material = part[2]
-		b.mesh = bm
-		b.position = part[1]
-		boat.add_child(b)
-	# Voile hissée : un triangle de toile
-	var sail := MeshInstance3D.new()
-	var prism := PrismMesh.new()
-	prism.size = Vector3(0.7, 0.8, 0.02)
-	prism.left_to_right = 0.0
-	prism.material = sail_mat
-	sail.mesh = prism
-	sail.position = Vector3(0.15, 0.85, 0)
-	boat.add_child(sail)
-	_put(boat, c + Vector3(0, -0.12, 0), rot)
-	# Il tangue doucement
+	var kind := h % 3
+	# 0 : barque de pêche à voile (bleue), 1 : canot à rames (rouge),
+	# 2 : petit bateau à cabine (blanc et vert)
+	var hull_col: Color = [Color(0.22, 0.42, 0.66), Color(0.74, 0.24, 0.2), Color(0.93, 0.92, 0.88)][kind]
+	var stripe_col: Color = [Color(0.95, 0.94, 0.9), Color(0.96, 0.85, 0.4), Color(0.2, 0.55, 0.4)][kind]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_hull(st, 1.9, 0.36, hull_col, stripe_col)
+	var wood := Color(0.6, 0.42, 0.26)
+	var dark := Color(0.36, 0.24, 0.15)
+	# Bancs de nage
+	for x: float in [-0.45, 0.15]:
+		_st_box(st, Vector3(x, 0.12, 0), Vector3(0.14, 0.04, 0.6), wood)
+	match kind:
+		0:
+			# Mât, bôme, caisse de poissons et filet
+			_st_box(st, Vector3(0.15, 0.75, 0), Vector3(0.06, 1.3, 0.06), dark)
+			_st_box(st, Vector3(-0.2, 0.32, 0), Vector3(0.75, 0.04, 0.04), dark)
+			_st_box(st, Vector3(-0.6, 0.12, 0.08), Vector3(0.3, 0.12, 0.24), Color(0.7, 0.55, 0.35))
+			_st_box(st, Vector3(-0.6, 0.19, 0.08), Vector3(0.26, 0.03, 0.2), Color(0.75, 0.82, 0.88))
+			_st_box(st, Vector3(0.55, 0.1, -0.05), Vector3(0.3, 0.06, 0.3), Color(0.32, 0.42, 0.4))
+		1:
+			# Avirons posés en travers, cordage, petite ancre
+			for z: float in [-0.12, 0.12]:
+				_st_box(st, Vector3(-0.1, 0.17, z), Vector3(1.5, 0.03, 0.04), Color(0.72, 0.55, 0.35))
+				_st_box(st, Vector3(-0.78, 0.17, z), Vector3(0.22, 0.02, 0.1), Color(0.72, 0.55, 0.35))
+			for k in 6:
+				var ang := k * TAU / 6.0
+				_st_box(st, Vector3(0.6 + cos(ang) * 0.08, 0.1, sin(ang) * 0.08), Vector3(0.05, 0.04, 0.05), Color(0.85, 0.76, 0.55))
+		2:
+			# Cabine : murs, fenêtres, toit, mât court et fanion
+			_st_box(st, Vector3(-0.25, 0.32, 0), Vector3(0.6, 0.4, 0.5), Color(0.96, 0.95, 0.9))
+			for z: float in [-0.255, 0.255]:
+				_st_box(st, Vector3(-0.2, 0.36, z), Vector3(0.14, 0.12, 0.01), Color(0.45, 0.65, 0.85))
+				_st_box(st, Vector3(-0.42, 0.36, z), Vector3(0.12, 0.12, 0.01), Color(0.45, 0.65, 0.85))
+			_st_box(st, Vector3(-0.25, 0.55, 0), Vector3(0.7, 0.05, 0.6), stripe_col)
+			_st_box(st, Vector3(-0.1, 0.85, 0), Vector3(0.04, 0.6, 0.04), dark)
+			_st_box(st, Vector3(-0.0, 1.08, 0), Vector3(0.18, 0.1, 0.01), Color(0.9, 0.3, 0.25))
+			_st_box(st, Vector3(0.5, 0.12, 0), Vector3(0.24, 0.1, 0.2), Color(0.55, 0.38, 0.24))
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.75
+	mi.material_override = mat
+	boat.add_child(mi)
+	if kind == 0:
+		# Voile latine en toile écrue, légèrement gonflée
+		var sail := MeshInstance3D.new()
+		var sst := SurfaceTool.new()
+		sst.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var pts := [Vector3(0.18, 0.36, 0), Vector3(-0.55, 0.36, 0), Vector3(0.18, 1.35, 0)]
+		var belly := Vector3(-0.1, 0.7, 0.08)
+		for tri: Array in [[pts[0], pts[1], belly], [pts[1], pts[2], belly], [pts[2], pts[0], belly]]:
+			for v: Vector3 in tri:
+				sst.set_color(Color(0.93, 0.88, 0.76))
+				sst.add_vertex(v)
+			for i in [2, 1, 0]:
+				sst.set_color(Color(0.86, 0.8, 0.68))
+				sst.add_vertex(tri[i])
+		sst.generate_normals()
+		sail.mesh = sst.commit()
+		var smat := StandardMaterial3D.new()
+		smat.vertex_color_use_as_albedo = true
+		smat.vertex_color_is_srgb = true
+		smat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		sail.material_override = smat
+		boat.add_child(sail)
+	_put(boat, c + Vector3(0, -0.08, 0), rot)
+	# Il tangue et se balance doucement, chacun à son rythme
+	var period := 1.4 + float(h % 5) * 0.15
 	var tw := boat.create_tween().set_loops()
-	tw.tween_property(boat, "rotation:z", 0.05, 1.6).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(boat, "rotation:z", -0.05, 1.6).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(boat, "rotation:z", 0.045, period).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(boat, "rotation:z", -0.045, period).set_trans(Tween.TRANS_SINE)
+	var bob := boat.create_tween().set_loops()
+	bob.tween_property(boat, "position:y", boat.position.y + 0.03, period * 0.8).set_trans(Tween.TRANS_SINE)
+	bob.tween_property(boat, "position:y", boat.position.y - 0.02, period * 0.8).set_trans(Tween.TRANS_SINE)
+
+
+## Coque profilée : sections transversales de la poupe (tableau arrière)
+## à la proue pointue et relevée ; bande colorée sous le plat-bord,
+## intérieur en bois et plancher.
+func _hull(st: SurfaceTool, length: float, half_w: float, color: Color, stripe: Color) -> void:
+	var n := 10
+	var sections: Array = []
+	for i in n + 1:
+		var t := float(i) / n * 2.0 - 1.0  # -1 poupe, +1 proue
+		var x := t * length / 2.0
+		var w: float = half_w * (1.0 - 0.35 * t * t) if t < 0.0 else half_w * sqrt(maxf(0.0, 1.0 - pow(t, 2.4)))
+		var bottom := -0.2 + 0.14 * pow(maxf(t, 0.0), 2.0)
+		var rail := 0.16 + 0.12 * pow(maxf(t, 0.0), 2.0) + 0.03 * t * t
+		# Profil d'une section : du plat-bord gauche au plat-bord droit
+		sections.append([
+			Vector3(x, rail, -w), Vector3(x, rail - 0.12, -w * 0.98), Vector3(x, bottom + 0.12, -w * 0.8),
+			Vector3(x, bottom + 0.02, -w * 0.4), Vector3(x, bottom, 0),
+			Vector3(x, bottom + 0.02, w * 0.4), Vector3(x, bottom + 0.12, w * 0.8), Vector3(x, rail - 0.12, w * 0.98), Vector3(x, rail, w),
+		])
+	var wood_in := Color(0.55, 0.38, 0.23)
+	for i in n:
+		var a: Array = sections[i]
+		var b: Array = sections[i + 1]
+		for j in a.size() - 1:
+			# Face extérieure : bande claire sous le plat-bord, coque peinte, fond sombre
+			var col := stripe if j == 0 or j == a.size() - 2 else (color.darkened(0.35) if j in [3, 4] else color)
+			_tri_quad(st, a[j], b[j], b[j + 1], a[j + 1], col)
+			# Face intérieure (bois), tournée vers le haut
+			_tri_quad(st, a[j + 1], b[j + 1], b[j], a[j], wood_in if j not in [0, a.size() - 2] else wood_in.lightened(0.1))
+		# Plat-bord : liston sombre sur le dessus
+		for side in [0, a.size() - 1]:
+			var p0: Vector3 = a[side]
+			var p1: Vector3 = b[side]
+			_st_box(st, (p0 + p1) / 2.0 + Vector3(0, 0.015, 0), Vector3(absf(p1.x - p0.x) + 0.01, 0.035, 0.05), Color(0.4, 0.27, 0.17))
+	# Tableau arrière (poupe) : on ferme la première section
+	var first: Array = sections[0]
+	for j in range(1, first.size() - 2):
+		_tri(st, first[0], first[j], first[j + 1], color.darkened(0.1))
+		_tri(st, first[0], first[j + 1], first[j], color.darkened(0.1))
+	_tri(st, first[0], first[first.size() - 2], first[first.size() - 1], color.darkened(0.1))
+	_tri(st, first[0], first[first.size() - 1], first[first.size() - 2], color.darkened(0.1))
+	# Plancher
+	_st_box(st, Vector3(-0.05, -0.07, 0), Vector3(length * 0.75, 0.03, half_w * 1.0), Color(0.5, 0.35, 0.22))
+
+
+func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
+	st.set_color(color)
+	st.add_vertex(a)
+	st.add_vertex(b)
+	st.add_vertex(c)
+
+
+func _tri_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, color: Color) -> void:
+	_tri(st, a, b, c, color)
+	_tri(st, a, c, d, color)
+
+
+# ------------------------------------------------------------ pontons
+## Pontons : planches disjointes de teintes variées sur des longerons,
+## pieux qui plongent dans l'eau (bas mouillé et algues), bornes, cordes,
+## échelles au bout des jetées, bouées et cordages. Un seul maillage.
+var _dock_st: SurfaceTool
+
+
+func _dock_cell(cell: Vector2i, chars: Dictionary) -> void:
+	if _dock_st == null:
+		_dock_st = SurfaceTool.new()
+		_dock_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var st := _dock_st
+	var is_dock := func(c: Vector2i) -> bool:
+		var ch: String = chars.get(c, "")
+		return ch == "#" or (DECOR_CHARS.contains(ch) and ch != "" and _base_char(c, chars) == "#")
+	var water := func(c: Vector2i) -> bool: return chars.get(c, "") in ["~", "W"]
+	# Sens des planches : en travers de la jetée (on mesure sa longueur
+	# dans chaque direction depuis cette case)
+	var run := func(d: Vector2i) -> int:
+		var n := 0
+		var c2 := cell + d
+		while is_dock.call(c2) and n < 30:
+			n += 1
+			c2 += d
+		return n
+	var run_x: int = run.call(Vector2i.LEFT) + run.call(Vector2i.RIGHT)
+	var run_y: int = run.call(Vector2i.UP) + run.call(Vector2i.DOWN)
+	var along_x := run_y > run_x  # jetée verticale : planches dans le sens x
+	var o := Vector3(cell.x, 0, cell.y)
+	var top := 0.1
+	var wood := [Color(0.62, 0.45, 0.29), Color(0.56, 0.4, 0.25), Color(0.67, 0.5, 0.33), Color(0.52, 0.38, 0.25), Color(0.6, 0.44, 0.3)]
+	for k in 5:
+		var col: Color = wood[(_hash(cell + Vector2i(k, 3)) + k) % wood.size()]
+		var off := 0.1 + k * 0.2
+		var center := o + (Vector3(0.5, top, off) if along_x else Vector3(off, top, 0.5))
+		var size := Vector3(1.0, 0.05, 0.18) if along_x else Vector3(0.18, 0.05, 1.0)
+		# Planches un peu décalées : le ponton a vécu
+		center.y += float(_hash(cell + Vector2i(k, 9)) % 3) * 0.006
+		_st_box(st, center, size, col)
+		# Clous aux extrémités
+		for e: float in [0.08, 0.92]:
+			var nail := o + (Vector3(e, top + 0.028, off) if along_x else Vector3(off, top + 0.028, e))
+			_st_box(st, nail, Vector3(0.025, 0.006, 0.025), Color(0.3, 0.3, 0.32))
+	# Longerons sous les planches
+	for e: float in [0.15, 0.85]:
+		var beam := o + (Vector3(e, top - 0.06, 0.5) if along_x else Vector3(0.5, top - 0.06, e))
+		_st_box(st, beam, Vector3(0.08, 0.07, 1.0) if along_x else Vector3(1.0, 0.07, 0.08), Color(0.36, 0.25, 0.16))
+	# Bords qui donnent sur l'eau : pieux, poutre de rive, cordes
+	var water_sides := 0
+	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if not water.call(cell + d):
+			continue
+		water_sides += 1
+		var edge := o + Vector3(0.5 + d.x * 0.47, 0, 0.5 + d.y * 0.47)
+		var side := Vector3(absf(d.y), 0, absf(d.x))  # le long du bord
+		_st_box(st, edge + Vector3(0, top - 0.02, 0), Vector3(0.06, 0.1, 0.06) + side * 0.94, Color(0.42, 0.29, 0.18))
+		for e: float in [-0.42, 0.42]:
+			var p := edge + side * e
+			_st_box(st, p + Vector3(0, -0.12, 0), Vector3(0.11, 0.56, 0.11), Color(0.38, 0.27, 0.17))
+			_st_box(st, p + Vector3(0, -0.36, 0), Vector3(0.12, 0.12, 0.12), Color(0.2, 0.3, 0.24))  # algues
+			if _hash(cell + d) % 3 == 0:
+				_st_box(st, p + Vector3(0, top + 0.12, 0), Vector3(0.1, 0.2, 0.1), Color(0.38, 0.27, 0.17))
+				_st_box(st, p + Vector3(0, top + 0.23, 0), Vector3(0.13, 0.03, 0.13), Color(0.3, 0.21, 0.13))
+		# Corde tendue entre deux pieux, parfois
+		if _hash(cell + d * 3) % 4 == 0:
+			_st_box(st, edge + Vector3(0, top + 0.2, 0), Vector3(0.02, 0.02, 0.02) + side * 0.84, Color(0.85, 0.76, 0.55))
+	# Bout de jetée : échelle qui descend dans l'eau, bouée de sauvetage
+	if water_sides >= 3:
+		for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			if water.call(cell + d) and not water.call(cell - d):
+				var edge2 := o + Vector3(0.5 + d.x * 0.52, 0, 0.5 + d.y * 0.52)
+				var side2 := Vector3(absf(d.y), 0, absf(d.x))
+				for e: float in [-0.14, 0.14]:
+					_st_box(st, edge2 + side2 * e + Vector3(0, -0.15, 0), Vector3(0.04, 0.6, 0.04), Color(0.45, 0.45, 0.48))
+				for k in 4:
+					_st_box(st, edge2 + Vector3(0, -0.38 + k * 0.13, 0), Vector3(0.03, 0.03, 0.03) + side2 * 0.28, Color(0.45, 0.45, 0.48))
+				break
+		var ring_at := o + Vector3(0.5, top + 0.3, 0.5)
+		for k in 8:
+			var ang := k * TAU / 8.0
+			_st_box(st, ring_at + Vector3(cos(ang) * 0.14, sin(ang) * 0.14, 0), Vector3(0.07, 0.07, 0.05), Color(0.92, 0.25, 0.2) if k % 2 == 0 else Color(0.97, 0.96, 0.92))
+		_st_box(st, o + Vector3(0.5, top + 0.12, 0.5), Vector3(0.06, 0.24, 0.06), Color(0.38, 0.27, 0.17))
+	elif _hash(cell) % 7 == 0:
+		# Rouleau de cordage
+		var coil := o + Vector3(0.3 + float(_hash(cell) % 4) * 0.1, top + 0.05, 0.35)
+		for k in 6:
+			var ang := k * TAU / 6.0
+			_st_box(st, coil + Vector3(cos(ang) * 0.09, 0, sin(ang) * 0.09), Vector3(0.06, 0.05, 0.06), Color(0.82, 0.72, 0.5))
+
+
+func _finish_docks() -> void:
+	if _dock_st == null:
+		return
+	_dock_st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = _dock_st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.95
+	mi.material_override = mat
+	_static.add_child(mi)
+	_dock_st = null
 
 
 ## Phare rayé rouge et blanc, sur son rocher ; allumé la nuit une fois réparé.
@@ -2533,8 +2737,8 @@ func _make_proxy(node: Node) -> Node3D:
 
 func _item_node(item: String, node: Node) -> Node3D:
 	var holder := Node3D.new()
-	if ITEM_MODELS.has(item):
-		var spec: Array = ITEM_MODELS[item]
+	if ITEM_MODELS.has(GameData.base_id(item)):
+		var spec: Array = ITEM_MODELS[GameData.base_id(item)]
 		holder.add_child(_model(spec[0], spec[1], spec[2]))
 	else:
 		var tex: Texture2D = GameData.item_icon(item) if item != "" else (node as Sprite2D).texture if node is Sprite2D else null

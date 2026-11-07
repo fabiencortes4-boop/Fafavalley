@@ -1607,7 +1607,7 @@ func _quest_row(q: Dictionary, progress: bool) -> HBoxContainer:
 	row.add_theme_constant_override("separation", 6)
 	row.add_child(_portrait(str(q.npc), 20))
 	var icon := TextureRect.new()
-	icon.texture = GameData.item_icon(str(q.item))
+	icon.texture = GameData.item_icon(GameData.with_quality(str(q.item), int(q.get("quality", 0))))
 	icon.custom_minimum_size = Vector2(16, 16)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(icon)
@@ -1620,8 +1620,10 @@ func _quest_row(q: Dictionary, progress: bool) -> HBoxContainer:
 	text.text = "%s : « %s »" % [GameData.npc(str(q.npc)).name, q.text]
 	col.add_child(text)
 	var reward := Label.new()
-	var have := Inventory.count_of(str(q.item))
+	var have := Quests.have(q)
 	reward.text = "Récompense : %d or et de l'amitié" % int(q.gold)
+	if int(q.get("quality", 0)) > 0:
+		reward.text += "  -  qualité %s exigée" % GameData.QUALITY_NAMES[int(q.quality)]
 	if progress:
 		reward.text = "%d/%d  -  %d or  -  encore %d jour(s)" % [mini(have, int(q.qty)), int(q.qty), int(q.gold), int(q.days_left)]
 		reward.add_theme_color_override("font_color", INGREDIENT_OK if have >= int(q.qty) else Color(0.85, 0.8, 0.7))
@@ -1656,27 +1658,45 @@ func start_fishing(fish_id: String, on_done: Callable) -> void:
 
 
 func open_fish_log() -> void:
-	var box := _open_modal("Carnet de pêche")
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 12)
-	box.add_child(grid)
-	for id: String in GameData.fishes:
-		var row := HBoxContainer.new()
-		grid.add_child(row)
-		var icon := TextureRect.new()
-		icon.texture = GameData.item_icon(id)
-		var entry: Variant = FishLog.caught.get(id)
-		if entry == null:
-			icon.modulate = Color(0, 0, 0, 0.6)  # silhouette : pas encore attrapé
-		row.add_child(icon)
-		var label := Label.new()
-		if entry == null:
-			label.text = "???"
-		else:
-			label.text = "%s\nx%d - record %d cm" % [GameData.fish(id).name, entry.count, entry.best]
-		row.add_child(label)
-	_add_label(box, "Espèces : %d / %d" % [FishLog.caught.size(), GameData.fishes.size()])
+	var box := _open_modal("Carnet de pêche  %d / %d" % [FishLog.caught.size(), GameData.fishes.size()])
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(360, 170)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	_remember_scroll(scroll, "fishlog")
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	# Deux sections : eau douce (étangs, lac de la forêt) et mer (port)
+	for water: Array in [["lac", "Étangs et lac de la forêt"], ["mer", "En mer, au port du Héron"]]:
+		list.add_child(_section_label(water[1]))
+		var grid := GridContainer.new()
+		grid.columns = 2
+		grid.add_theme_constant_override("h_separation", 12)
+		list.add_child(grid)
+		for id: String in GameData.fishes:
+			var f := GameData.fish(id)
+			if str(f.get("water", "lac")) != water[0]:
+				continue
+			var row := HBoxContainer.new()
+			row.custom_minimum_size = Vector2(170, 0)
+			grid.add_child(row)
+			var icon := TextureRect.new()
+			icon.texture = GameData.item_icon(id)
+			var entry: Variant = FishLog.caught.get(id)
+			if entry == null:
+				icon.modulate = Color(0, 0, 0, 0.6)  # silhouette : pas encore attrapé
+			row.add_child(icon)
+			var label := Label.new()
+			label.add_theme_font_size_override("font_size", maxi(8, Settings.font_size() - 1))
+			if entry == null:
+				var seasons: Array = []
+				for se: Variant in f.get("seasons", []):
+					seasons.append(["printemps", "été", "automne", "hiver"][int(se)])
+				label.text = "???  (%s)" % ", ".join(seasons)
+			else:
+				label.text = "%s\nx%d - record %d cm" % [f.name, entry.count, entry.best]
+			row.add_child(label)
 	_add_button(box, "Retour", open_pause_menu)
 
 

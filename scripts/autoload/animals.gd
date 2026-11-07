@@ -187,9 +187,12 @@ func milk(index: int) -> String:
 func _product_for(index: int) -> String:
 	var a: Dictionary = animals[index]
 	var info := animal_info(a.type)
+	var product := str(info.product)
 	if info.has("big_product") and int(a.friendship) >= 600 and randf() < 0.5:
-		return str(info.big_product)
-	return str(info.product)
+		product = str(info.big_product)
+	# Qualité : une bête aimée donne de meilleurs produits
+	var happiness := float(a.friendship) / float(MAX_FRIENDSHIP)
+	return GameData.with_quality(product, GameData.roll_quality(Skills.level("farming") / 2, happiness * 0.7))
 
 
 # ------------------------------------------------------------ chaque nuit

@@ -98,7 +98,7 @@ static func transfer(from_arr: Array, index: int, to_arr: Array) -> void:
 func add_item(id: String, qty: int = 1) -> int:
 	var left := add_to_slots(slots, id, qty)
 	if left < qty:
-		Collections.discover(id)
+		Collections.discover(GameData.base_id(id))
 	EventBus.inventory_changed.emit()
 	return left
 
@@ -107,7 +107,13 @@ func can_add(id: String, qty: int = 1) -> bool:
 	return space_in_slots(slots, id) >= qty
 
 
+## Quantité d'un objet. Avec un identifiant de base (« carrot »), toutes
+## les qualités comptent ; avec « carrot@2 », seulement celle-là.
 func count_of(id: String) -> int:
+	return count_min_quality(id, 0) if not id.contains("@") else _count_exact(id)
+
+
+func _count_exact(id: String) -> int:
 	var total := 0
 	for slot: Variant in slots:
 		if slot != null and slot.id == id:
@@ -115,13 +121,43 @@ func count_of(id: String) -> int:
 	return total
 
 
-## Retire une quantité d'un objet, quelles que soient les cases.
+## Quantité d'un objet de qualité au moins `min_quality` (demandes).
+func count_min_quality(base: String, min_quality: int) -> int:
+	var total := 0
+	for slot: Variant in slots:
+		if slot != null and GameData.base_id(str(slot.id)) == base and GameData.quality_of(str(slot.id)) >= min_quality:
+			total += int(slot.qty)
+	return total
+
+
+## Retire une quantité d'un objet, quelles que soient les cases. Avec un
+## identifiant de base, on prend d'abord la qualité la plus basse.
 func remove_item(id: String, qty: int) -> void:
+	if id.contains("@"):
+		_remove_matching(func(sid: String) -> bool: return sid == id, qty)
+	else:
+		remove_min_quality(id, qty, 0)
+
+
+## Retire `qty` objets de qualité au moins `min_quality`, les moins bons d'abord.
+func remove_min_quality(base: String, qty: int, min_quality: int) -> void:
+	for q in range(min_quality, 4):
+		if qty <= 0:
+			return
+		var target := GameData.with_quality(base, q)
+		var have := _count_exact(target)
+		var take := mini(have, qty)
+		if take > 0:
+			_remove_matching(func(sid: String) -> bool: return sid == target, take)
+			qty -= take
+
+
+func _remove_matching(match_id: Callable, qty: int) -> void:
 	for i in slots.size():
 		if qty <= 0:
 			break
 		var slot: Variant = slots[i]
-		if slot != null and slot.id == id:
+		if slot != null and match_id.call(str(slot.id)):
 			var taken := mini(qty, int(slot.qty))
 			remove_from_slot(i, taken)
 			qty -= taken

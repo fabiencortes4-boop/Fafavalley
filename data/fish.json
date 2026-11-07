@@ -5,8 +5,7 @@
 		"sell": 30,
 		"places": [
 			"farm",
-			"village",
-			"port"
+			"village"
 		],
 		"seasons": [
 			0,
@@ -25,7 +24,8 @@
 		"size": [
 			12,
 			28
-		]
+		],
+		"water": "lac"
 	},
 	"carp": {
 		"name": "Carpe",
@@ -34,8 +34,7 @@
 		"places": [
 			"farm",
 			"village",
-			"forest",
-			"port"
+			"forest"
 		],
 		"seasons": [
 			0,
@@ -53,7 +52,8 @@
 		"size": [
 			30,
 			70
-		]
+		],
+		"water": "lac"
 	},
 	"perch": {
 		"name": "Perche",
@@ -61,8 +61,7 @@
 		"sell": 75,
 		"places": [
 			"farm",
-			"forest",
-			"port"
+			"forest"
 		],
 		"seasons": [
 			1,
@@ -79,7 +78,8 @@
 		"size": [
 			15,
 			40
-		]
+		],
+		"water": "lac"
 	},
 	"pike": {
 		"name": "Brochet",
@@ -87,8 +87,7 @@
 		"sell": 150,
 		"places": [
 			"village",
-			"forest",
-			"port"
+			"forest"
 		],
 		"seasons": [
 			2,
@@ -105,7 +104,8 @@
 		"size": [
 			50,
 			110
-		]
+		],
+		"water": "lac"
 	},
 	"eel": {
 		"name": "Anguille",
@@ -113,8 +113,7 @@
 		"sell": 120,
 		"places": [
 			"farm",
-			"village",
-			"port"
+			"village"
 		],
 		"seasons": [
 			0,
@@ -132,7 +131,8 @@
 		"size": [
 			40,
 			90
-		]
+		],
+		"water": "lac"
 	},
 	"trout": {
 		"name": "Truite arc-en-ciel",
@@ -157,15 +157,15 @@
 		"size": [
 			25,
 			60
-		]
+		],
+		"water": "lac"
 	},
 	"catfish": {
 		"name": "Poisson-chat",
 		"icon": 21,
 		"sell": 160,
 		"places": [
-			"farm",
-			"port"
+			"farm"
 		],
 		"seasons": [
 			0,
@@ -182,7 +182,8 @@
 		"size": [
 			30,
 			80
-		]
+		],
+		"water": "lac"
 	},
 	"golden_carp": {
 		"name": "Carpe dorée",
@@ -190,8 +191,7 @@
 		"sell": 500,
 		"places": [
 			"village",
-			"forest",
-			"port"
+			"forest"
 		],
 		"seasons": [
 			1
@@ -207,6 +207,393 @@
 		"size": [
 			40,
 			60
-		]
+		],
+		"water": "lac"
+	},
+	"tench": {
+		"name": "Tanche",
+		"icon": 128,
+		"sell": 45,
+		"places": [
+			"farm",
+			"village"
+		],
+		"seasons": [
+			1,
+			2
+		],
+		"hours": [
+			6,
+			22
+		],
+		"weather": "any",
+		"difficulty": 25,
+		"behavior": "calm",
+		"weight": 8,
+		"size": [
+			20,
+			45
+		],
+		"water": "lac"
+	},
+	"bream": {
+		"name": "Brème",
+		"icon": 129,
+		"sell": 35,
+		"places": [
+			"farm",
+			"village",
+			"forest"
+		],
+		"seasons": [
+			0,
+			1,
+			2,
+			3
+		],
+		"hours": [
+			6,
+			26
+		],
+		"weather": "any",
+		"difficulty": 20,
+		"behavior": "calm",
+		"weight": 9,
+		"size": [
+			25,
+			50
+		],
+		"water": "lac"
+	},
+	"zander": {
+		"name": "Sandre",
+		"icon": 130,
+		"sell": 95,
+		"places": [
+			"village",
+			"forest"
+		],
+		"seasons": [
+			2,
+			3
+		],
+		"hours": [
+			16,
+			26
+		],
+		"weather": "any",
+		"difficulty": 60,
+		"behavior": "dart",
+		"weight": 4,
+		"size": [
+			35,
+			80
+		],
+		"water": "lac"
+	},
+	"sturgeon": {
+		"name": "Esturgeon",
+		"icon": 131,
+		"sell": 320,
+		"places": [
+			"forest"
+		],
+		"seasons": [
+			1,
+			2
+		],
+		"hours": [
+			6,
+			12
+		],
+		"weather": "any",
+		"difficulty": 85,
+		"behavior": "sink",
+		"weight": 1,
+		"size": [
+			90,
+			180
+		],
+		"water": "lac"
+	},
+	"crayfish": {
+		"name": "Écrevisse",
+		"icon": 132,
+		"sell": 60,
+		"places": [
+			"farm",
+			"forest"
+		],
+		"seasons": [
+			0,
+			1
+		],
+		"hours": [
+			19,
+			26
+		],
+		"weather": "any",
+		"difficulty": 35,
+		"behavior": "sink",
+		"weight": 5,
+		"size": [
+			8,
+			15
+		],
+		"water": "lac"
+	},
+	"sardine": {
+		"name": "Sardine",
+		"icon": 133,
+		"sell": 25,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			0,
+			1,
+			2,
+			3
+		],
+		"hours": [
+			6,
+			26
+		],
+		"weather": "any",
+		"difficulty": 15,
+		"behavior": "dart",
+		"weight": 12,
+		"size": [
+			12,
+			22
+		],
+		"water": "mer"
+	},
+	"mackerel": {
+		"name": "Maquereau",
+		"icon": 134,
+		"sell": 45,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			0,
+			1
+		],
+		"hours": [
+			6,
+			20
+		],
+		"weather": "any",
+		"difficulty": 35,
+		"behavior": "dart",
+		"weight": 8,
+		"size": [
+			25,
+			45
+		],
+		"water": "mer"
+	},
+	"seabass": {
+		"name": "Bar",
+		"icon": 135,
+		"sell": 80,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			0,
+			1,
+			2,
+			3
+		],
+		"hours": [
+			6,
+			26
+		],
+		"weather": "any",
+		"difficulty": 50,
+		"behavior": "dart",
+		"weight": 5,
+		"size": [
+			35,
+			80
+		],
+		"water": "mer"
+	},
+	"seabream": {
+		"name": "Dorade",
+		"icon": 136,
+		"sell": 75,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			1,
+			2
+		],
+		"hours": [
+			8,
+			20
+		],
+		"weather": "sunny",
+		"difficulty": 45,
+		"behavior": "calm",
+		"weight": 5,
+		"size": [
+			25,
+			50
+		],
+		"water": "mer"
+	},
+	"red_mullet": {
+		"name": "Rouget",
+		"icon": 137,
+		"sell": 60,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			1
+		],
+		"hours": [
+			6,
+			19
+		],
+		"weather": "any",
+		"difficulty": 40,
+		"behavior": "calm",
+		"weight": 6,
+		"size": [
+			15,
+			30
+		],
+		"water": "mer"
+	},
+	"sole": {
+		"name": "Sole",
+		"icon": 138,
+		"sell": 90,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			0,
+			2,
+			3
+		],
+		"hours": [
+			6,
+			26
+		],
+		"weather": "any",
+		"difficulty": 55,
+		"behavior": "sink",
+		"weight": 4,
+		"size": [
+			25,
+			45
+		],
+		"water": "mer"
+	},
+	"tuna": {
+		"name": "Thon",
+		"icon": 139,
+		"sell": 190,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			1
+		],
+		"hours": [
+			6,
+			14
+		],
+		"weather": "sunny",
+		"difficulty": 80,
+		"behavior": "dart",
+		"weight": 2,
+		"size": [
+			80,
+			200
+		],
+		"water": "mer"
+	},
+	"squid": {
+		"name": "Calmar",
+		"icon": 140,
+		"sell": 85,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			2,
+			3
+		],
+		"hours": [
+			18,
+			26
+		],
+		"weather": "any",
+		"difficulty": 50,
+		"behavior": "sink",
+		"weight": 4,
+		"size": [
+			20,
+			60
+		],
+		"water": "mer"
+	},
+	"conger": {
+		"name": "Congre",
+		"icon": 141,
+		"sell": 110,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			0,
+			1,
+			2,
+			3
+		],
+		"hours": [
+			18,
+			26
+		],
+		"weather": "rain",
+		"difficulty": 65,
+		"behavior": "sink",
+		"weight": 3,
+		"size": [
+			60,
+			200
+		],
+		"water": "mer"
+	},
+	"swordfish": {
+		"name": "Espadon",
+		"icon": 142,
+		"sell": 450,
+		"places": [
+			"port"
+		],
+		"seasons": [
+			1
+		],
+		"hours": [
+			10,
+			16
+		],
+		"weather": "sunny",
+		"difficulty": 92,
+		"behavior": "dart",
+		"weight": 1,
+		"size": [
+			150,
+			300
+		],
+		"water": "mer"
 	}
 }

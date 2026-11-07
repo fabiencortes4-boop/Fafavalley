@@ -126,14 +126,21 @@ func _on_minigame_finished(success: bool) -> void:
 		var fish := GameData.fish(_fish_id)
 		var sizes: Array = fish.get("size", [10, 30])
 		var size := randi_range(int(sizes[0]), int(sizes[1]))
-		if not Inventory.can_add(_fish_id):
+		# Qualité : un gros poisson, une prise parfaite et la compétence de pêche
+		var span := maxf(1.0, float(sizes[1]) - float(sizes[0]))
+		var big := (float(size) - float(sizes[0])) / span
+		var bonus := clampf(big * 0.6 + (0.4 if FishingMinigame.last_perfect else 0.0), 0.0, 1.0)
+		var caught_id := GameData.with_quality(_fish_id, GameData.roll_quality(Skills.level("fishing"), bonus))
+		if not Inventory.can_add(caught_id):
 			EventBus.toast("Inventaire plein : le poisson retourne à l'eau.")
 		else:
-			Inventory.add_item(_fish_id, 1)
+			Inventory.add_item(caught_id, 1)
 			var result := FishLog.record(_fish_id, size)
 			Skills.add_xp("fishing", 8 + int(fish.get("difficulty", 30)) / 6)
 			Story.bump("fish")
-			var text := "Tu as pêché : %s (%d cm) !" % [fish.name, size]
+			var text := "Tu as pêché : %s (%d cm) !" % [GameData.item_name(caught_id), size]
+			if FishingMinigame.last_perfect:
+				text = "Prise parfaite ! " + text
 			if result == "new":
 				text += " Nouvelle espèce !"
 			elif result == "record":
@@ -142,7 +149,7 @@ func _on_minigame_finished(success: bool) -> void:
 			Sfx.play("catch")
 			Settings.vibrate(60)
 			caught.emit(_fish_id)
-			Fx.item_pop(map.get("_entities"), _bobber_base, GameData.item_icon(_fish_id), map.player)
+			Fx.item_pop(map.get("_entities"), _bobber_base, GameData.item_icon(caught_id), map.player)
 	else:
 		Sfx.play("escape")
 		escaped.emit()

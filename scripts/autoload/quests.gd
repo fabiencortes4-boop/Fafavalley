@@ -8,7 +8,9 @@ signal changed
 const MAX_ACTIVE := 3
 const OFFERS_PER_DAY := 3
 
-var active: Array = []  # [{"npc", "item", "qty", "gold", "points", "days_left", "text"}]
+var active: Array = []  # [{"npc", "item", "qty", "quality", "gold", "points", "days_left", "text"}]
+## Qualité minimale demandée (0 normale, 1 argent, 2 or) : plus rare, mieux payée.
+const QUALITY_REWARD := [1.0, 1.6, 2.4]
 var taken_today: Dictionary = {}  # index d'offre -> true
 var completed: int = 0
 
@@ -51,7 +53,7 @@ func _pool() -> Array:
 				if GameData.items[id].get("seasons", [TimeManager.season]).has(float(TimeManager.season)) or not item.has("seasons"):
 					pool.append([id, 1, 3])
 			"fish":
-				if id in ["roach", "carp", "perch", "trout"]:
+				if id in ["roach", "carp", "perch", "trout", "bream", "sardine", "mackerel"]:
 					pool.append([id, 1, 2])
 	pool.append(["wood", 20, 40])
 	pool.append(["stone", 15, 30])
@@ -77,10 +79,20 @@ func offers() -> Array:
 		var item := str(pick[0])
 		var value := maxi(10, int(GameData.item(item).get("sell", 10)))
 		var reasons: Array = REASONS.get(npc, ["me rendre service"])
+		# Certaines demandes exigent une qualité (argent ou or) : moins
+		# d'objets, mais bien mieux récompensés.
+		var quality := 0
+		if GameData.has_quality(item):
+			var r := rng.randf()
+			quality = 2 if r < 0.15 else (1 if r < 0.45 else 0)
+			if quality > 0:
+				qty = maxi(1, qty - quality)
 		var what := "%d %s" % [qty, GameData.item_name(item).to_lower()]
+		if quality > 0:
+			what += " de qualité %s (ou mieux)" % GameData.QUALITY_NAMES[quality]
 		out.append({
-			"npc": npc, "item": item, "qty": qty,
-			"gold": int(value * qty * 1.3 + 40), "points": 120,
+			"npc": npc, "item": item, "qty": qty, "quality": quality,
+			"gold": int((value * qty * 1.3 + 40) * QUALITY_REWARD[quality]), "points": 120 + 40 * quality,
 			"days_left": 3,
 			"text": LINES[rng.randi() % LINES.size()] % [what, reasons[rng.randi() % reasons.size()]],
 		})
@@ -105,15 +117,20 @@ func accept(index: int) -> bool:
 func deliverable(npc_id: String) -> int:
 	for i in active.size():
 		var q: Dictionary = active[i]
-		if q.npc == npc_id and Inventory.count_of(str(q.item)) >= int(q.qty):
+		if q.npc == npc_id and have(q) >= int(q.qty):
 			return i
 	return -1
+
+
+## Combien d'objets conviennent (bonne qualité) dans le sac.
+func have(q: Dictionary) -> int:
+	return Inventory.count_min_quality(str(q.item), int(q.get("quality", 0)))
 
 
 ## Livre la demande : retire les objets, donne la récompense.
 func deliver(index: int) -> Dictionary:
 	var q: Dictionary = active[index]
-	Inventory.remove_item(str(q.item), int(q.qty))
+	Inventory.remove_min_quality(str(q.item), int(q.qty), int(q.get("quality", 0)))
 	Inventory.add_gold(int(q.gold))
 	Relations.add_points(str(q.npc), int(q.points))
 	active.remove_at(index)

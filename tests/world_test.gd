@@ -42,7 +42,10 @@ func _ready() -> void:
 	else:
 		npc = found[0]
 	_check(Quests.deliverable(str(q.npc)) == -1, "sans les objets, rien à livrer")
-	Inventory.add_item(str(q.item), int(q.qty))
+	if int(q.get("quality", 0)) > 0:
+		Inventory.add_item(str(q.item), int(q.qty))
+		_check(Quests.deliverable(str(q.npc)) == -1, "qualité exigée : des objets normaux ne suffisent pas")
+	Inventory.add_item(GameData.with_quality(str(q.item), int(q.get("quality", 0))), int(q.qty))
 	var gold := Inventory.gold
 	var points := int(Relations.points.get(q.npc, 0))
 	v.talk_to_npc(npc)

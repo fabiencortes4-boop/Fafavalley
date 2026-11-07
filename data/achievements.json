@@ -85,7 +85,7 @@
 		"name": "Carnet complet",
 		"text": "Attraper toutes les espèces de poisson",
 		"stat": "fish_species",
-		"goal": 8,
+		"goal": 23,
 		"icon": "golden_carp",
 		"gold": 1000
 	},

@@ -148,6 +148,13 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
   vers le sac et petits tremblements d'écran sur les gros coups.
+- **Qualité** des récoltes, fruits, fleurs, cueillettes, poissons et produits d'élevage :
+  normale, ★ argent, ★ or, ★ cristal (étoile sur l'icône). Elle dépend de la compétence,
+  de l'engrais, de l'âge de l'arbre, du bonheur de l'animal, de la taille du poisson et
+  d'une prise parfaite. Vente x1,25 / x1,5 / x2, plats plus nourrissants, cadeaux plus
+  appréciés. Les demandes du tableau peuvent exiger une qualité minimale (mieux payées).
+- **Pontons et bateaux** : planches disjointes, pieux, cordes, échelles et bouées ;
+  barque de pêche à voile, canot à rames et petit bateau à cabine qui tanguent.
 - **Village et port aménagés** : routes pavées avec bordures de pierre, grande place de
   Valfleur dallée en rosace autour de la fontaine (bancs tournés vers elle, arbres en bac),
   lampadaires en fonte qui s'allument le soir, au port : quai avec bornes d'amarrage,
@@ -202,8 +209,9 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - **Pêche** : canne vendue à l'épicerie (250 or). Face à l'eau, lancer avec Action,
   attendre le « ! » (le téléphone vibre), ferrer, puis mini-jeu : appuyer pour pousser
   le filet à droite, relâcher pour le laisser revenir, garder le poisson dedans.
-  8 espèces selon l'étang, la saison, l'heure et la météo ; tailles et records dans
-  Menu → Carnet de pêche. Les poissons se vendent et s'offrent.
+  23 espèces : 13 d'eau douce (étangs, lac de la forêt) et 10 de mer (au port : sardine,
+  bar, dorade, thon, calmar, espadon...), selon la saison, l'heure et la météo ; tailles
+  et records dans Menu → Carnet de pêche (sections lac et mer). Les poissons se vendent et s'offrent.
 - **Mine** (entrée au nord-est du village) : au premier passage, le coffre de Firmin donne
   une pioche et une épée rouillée. Niveaux générés au hasard (30 au total) : rochers à
   casser (pierre, charbon, cuivre, fer, or, gemmes selon la profondeur), échelle cachée
@@ -294,6 +302,7 @@ godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
+godot --headless res://tests/quality_test.tscn   # qualité, demandes exigeantes, poissons de lac et de mer
 godot --headless res://tests/decor_test.tscn     # place, bancs et chaises (repos), infos des graines
 godot --headless res://tests/collections_test.tscn # album, paliers, succès, sauvegarde
 godot --headless res://tests/story_test.tscn      # histoire : chapitres, voies, déblocages, lettres

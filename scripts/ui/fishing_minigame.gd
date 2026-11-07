@@ -7,6 +7,11 @@ extends Control
 
 signal finished(success: bool)
 
+## La dernière prise était-elle « parfaite » (le poisson presque toujours
+## dans le filet) ? Elle améliore la qualité du poisson.
+static var last_perfect: bool = false
+var _time_outside: float = 0.0
+
 const TRACK_SIZE := Vector2(260, 30)
 const BAR_HEIGHT := 8.0
 const NET_ACCEL := 2.4
@@ -74,6 +79,8 @@ func _process(delta: float) -> void:
 		progress += 0.5 * delta
 	else:
 		progress -= lerpf(0.12, 0.3, difficulty) * delta
+		if _elapsed > GRACE_TIME:
+			_time_outside += delta
 	if progress >= 1.0:
 		_end(true)
 	elif progress <= 0.0:
@@ -107,6 +114,7 @@ func _move_fish(delta: float) -> void:
 
 func _end(success: bool) -> void:
 	_done = true
+	last_perfect = success and _time_outside < 0.4
 	finished.emit(success)
 
 

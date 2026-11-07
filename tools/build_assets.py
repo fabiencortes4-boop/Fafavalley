@@ -387,7 +387,15 @@ def draw_fish(rx, ry, body, belly, fin, pattern):
         if pattern == "rainbow" and y == cy:
             px[x, y] = (242, 132, 150, 255)
         if pattern == "scales" and (x + y) % 2 == 0 and y < cy:
-            px[x, y] = (170, 120, 60, 255)
+            px[x, y] = tuple(max(0, c - 40) for c in body) + (255,)
+        if pattern == "waves" and y < cy and (x + (y * 2)) % 4 == 0:
+            px[x, y] = (30, 60, 60, 255)
+        if pattern == "plates" and y == cy - ry + 1 and x % 2 == 0:
+            px[x, y] = (225, 228, 232, 255)
+        if pattern == "gold_band" and x == cx + rx - 2 and y < cy:
+            px[x, y] = (240, 190, 60, 255)
+        if pattern == "speckle" and (x * 7 + y * 3) % 5 == 0:
+            px[x, y] = tuple(max(0, c - 50) for c in body) + (255,)
     if pattern == "shine":
         px[cx - 1, cy - 2] = (255, 255, 255, 255)
         px[cx, cy - 2] = (255, 250, 220, 255)
@@ -403,6 +411,94 @@ def draw_fish(rx, ry, body, belly, fin, pattern):
     # oeil
     px[cx + rx - 1, cy - 1] = OUTLINE
     return img
+
+
+# Poissons ajoutés (icônes 128+) : lac puis mer
+FISH_MORE = [
+    ("tench", 5, 3, (96, 118, 62), (178, 176, 96), (72, 92, 50), "scales"),
+    ("bream", 5, 4, (172, 160, 128), (224, 218, 192), (122, 110, 90), None),
+    ("zander", 6, 2, (128, 150, 128), (222, 226, 212), (98, 118, 108), "stripes"),
+    ("sturgeon", 7, 2, (92, 102, 112), (202, 206, 212), (70, 80, 90), "plates"),
+    ("crayfish", None, None, None, None, None, None),
+    ("sardine", 5, 2, (112, 152, 204), (232, 240, 250), (90, 122, 172), "spots"),
+    ("mackerel", 5, 2, (62, 132, 124), (232, 240, 240), (52, 102, 100), "waves"),
+    ("seabass", 5, 3, (150, 166, 178), (236, 240, 246), (118, 130, 142), None),
+    ("seabream", 4, 4, (176, 186, 198), (242, 242, 244), (150, 160, 175), "gold_band"),
+    ("red_mullet", 5, 3, (232, 102, 92), (252, 202, 172), (200, 72, 62), None),
+    ("sole", 6, 3, (172, 142, 102), (196, 168, 126), (140, 112, 80), "speckle"),
+    ("tuna", 6, 4, (42, 62, 112), (202, 212, 228), (242, 202, 62), None),
+    ("squid", None, None, None, None, None, None),
+    ("conger", 7, 1, (72, 78, 88), (152, 156, 166), (60, 66, 76), None),
+    ("swordfish", 4, 3, (70, 82, 150), (210, 218, 236), (60, 70, 130), "sword"),
+]
+
+
+def draw_crayfish():
+    """Écrevisse : carapace rouge-brun, pinces, antennes."""
+    img = new_img(16, 16)
+    px = img.load()
+    body, dark = (196, 86, 56), (140, 54, 38)
+    for x in range(4, 13):
+        for y in range(7, 10):
+            px[x, y] = body + (255,)
+    for x in range(3, 6):  # queue
+        px[x, 6], px[x, 10] = dark + (255,), dark + (255,)
+    for (x, y) in ((12, 5), (13, 4), (14, 4), (13, 6), (12, 11), (13, 12), (14, 12), (13, 10)):  # pinces
+        px[x, y] = body + (255,)
+    for (x, y) in ((14, 3), (15, 2), (14, 13), (15, 14)):
+        px[x, y] = dark + (255,)
+    for x in (6, 8, 10):  # pattes
+        px[x, 11], px[x, 5] = dark + (255,), dark + (255,)
+    for x in range(5, 12, 2):
+        px[x, 8] = dark + (255,)
+    px[12, 7] = OUTLINE
+    return outline_img(img)
+
+
+def draw_squid():
+    """Calmar : manteau pointu, tentacules."""
+    img = new_img(16, 16)
+    px = img.load()
+    body, light = (226, 160, 172), (246, 206, 214)
+    for y in range(2, 10):
+        half = 1 + (y - 2) // 2
+        for x in range(8 - half, 8 + half + 1):
+            px[x, y] = (light if x == 8 - half + 1 else body) + (255,)
+    for k, x in enumerate((5, 7, 9, 11)):
+        for y in range(10, 14 + (k % 2)):
+            px[x if y < 12 else x + (1 if k > 1 else -1), y] = body + (255,)
+    px[7, 7], px[9, 7] = OUTLINE, OUTLINE
+    return outline_img(img)
+
+
+def outline_img(img):
+    px = img.load()
+    solid = {(x, y) for y in range(16) for x in range(16) if px[x, y][3] > 0 and px[x, y] != OUTLINE}
+    for (x, y) in list(solid):
+        for (nx, ny) in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < 16 and 0 <= ny < 16 and (nx, ny) not in solid and px[nx, ny][3] == 0:
+                px[nx, ny] = OUTLINE
+    return img
+
+
+def more_fish_icons():
+    out = []
+    for (fid, rx, ry, body, belly, fin, pattern) in FISH_MORE:
+        if fid == "crayfish":
+            out.append(draw_crayfish())
+        elif fid == "squid":
+            out.append(draw_squid())
+        else:
+            img = draw_fish(rx, ry, body, belly, fin, pattern)
+            if pattern == "sword":
+                # Rostre de l'espadon : une longue épée devant la tête
+                px = img.load()
+                for x in range(9 + rx, 16):
+                    px[x, 8] = (190, 196, 214, 255)
+                    px[x, 7] = OUTLINE if px[x, 7][3] == 0 else px[x, 7]
+                    px[x, 9] = OUTLINE if px[x, 9][3] == 0 else px[x, 9]
+            out.append(img)
+    return out
 
 
 def draw_rod():
@@ -561,6 +657,8 @@ def extend_icons(sheet):
     extra += [draw_bouquet(), draw_pendant()]
     # 127 soupe du marin
     extra += [draw_bowl((235, 225, 200), (240, 140, 90))]
+    # 128-142 : poissons ajoutés (lac, puis mer)
+    extra += more_fish_icons()
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

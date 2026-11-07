@@ -63,6 +63,7 @@ func talk(id: String) -> String:
 ## Goût d'un habitant pour un objet : loved, liked, neutral ou disliked.
 func taste(id: String, item_id: String) -> String:
 	var data := GameData.npc(id)
+	item_id = GameData.base_id(item_id)  # la qualité ne change pas les goûts
 	for key: String in ["loves", "likes", "dislikes"]:
 		if item_id in data.get(key, []):
 			return {"loves": "loved", "likes": "liked", "dislikes": "disliked"}[key]
@@ -78,7 +79,11 @@ func give_gift(id: String, item_id: String) -> Dictionary:
 	gifted_today[id] = true
 	met[id] = true
 	var birthday := HeartEvents.is_birthday(id)
-	add_points(id, GIFT_POINTS[t] * (HeartEvents.BIRTHDAY_FACTOR if birthday and GIFT_POINTS[t] > 0 else 1))
+	# Un beau cadeau (argent, or, cristal) fait encore plus plaisir
+	var points: int = GIFT_POINTS[t] * (HeartEvents.BIRTHDAY_FACTOR if birthday and GIFT_POINTS[t] > 0 else 1)
+	if points > 0:
+		points = int(points * (1.0 + 0.1 * GameData.quality_of(item_id)))
+	add_points(id, points)
 	if birthday:
 		return {"accepted": true, "taste": t, "text": "Pour mon anniversaire ? Oh, tu y as pensé ! " + str(lines.get("gift_" + t, "Merci."))}
 	Story.bump("gifts")

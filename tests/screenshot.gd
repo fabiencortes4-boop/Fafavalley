@@ -199,6 +199,12 @@ func _ready() -> void:
 				Relations.met[who] = true
 				Relations.add_points(who, 600)
 				EventBus.heart_scene_requested.emit(who, HeartEvents.pending(who))
+		if "--quality" in args:
+			for id: String in ["carrot", "carrot@1", "tomato@2", "roach@3", "egg@2", "sardine@1", "daffodil@2"]:
+				Inventory.add_item(id, 3)
+			Inventory.select(5)
+		if "--bag" in args:
+			main.get("_hud").open_bag()
 		if "--album" in args or "--achievements" in args:
 			for id: String in ["carrot", "potato", "tomato", "melon", "pumpkin", "strawberry", "leek", "berries", "roach", "egg", "milk", "omelette", "coal", "copper_ore"]:
 				Inventory.add_item(id, 1)

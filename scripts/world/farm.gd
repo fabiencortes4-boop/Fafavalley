@@ -326,6 +326,8 @@ func _shake_tree(cell: Vector2i) -> void:
 		EventBus.toast("Pas de fruits aujourd'hui. Un fruit par jour en %s." % ["printemps", "été", "automne", "hiver"][int(info.season)])
 		return
 	var got := FarmState.shake_tree(cell)
+	var maturity := clampf((float(t.age) - float(info.grow_days)) / 84.0, 0.0, 1.0)
+	got[0] = GameData.with_quality(got[0], GameData.roll_quality(Skills.level("farming"), maturity))
 	var left := Inventory.add_item(got[0], int(got[1]))
 	if left > 0:
 		t.fruits = left
@@ -613,10 +615,13 @@ func _harvest(cell: Vector2i) -> void:
 		EventBus.toast("Inventaire plein !")
 		return
 	_deferring = true
+	# Qualité : compétence d'agriculture, et l'engrais aide beaucoup
+	var fertilized := FarmState.is_fertilized(cell)
 	var got := FarmState.harvest(cell)
 	if got == "":
 		_deferring = false
 	if got != "":
+		got = GameData.with_quality(got, GameData.roll_quality(Skills.level("farming"), 0.5 if fertilized else 0.0))
 		var count := 2 if Skills.roll("farming", 5.0) and Inventory.can_add(got, 2) else 1
 		Inventory.add_item(got, count)
 		Skills.add_xp("farming", maxi(3, int(GameData.item(got).get("sell", 30)) / 8))

@@ -465,7 +465,8 @@ func talk_to_npc(npc: Npc) -> void:
 	if qi >= 0:
 		var q := Quests.deliver(qi)
 		Sfx.play("coins")
-		EventBus.dialogue_requested.emit(id, "Oh, %d %s ! C'est exactement ce qu'il me fallait. Merci mille fois ! (+%d or)" % [int(q.qty), GameData.item_name(str(q.item)).to_lower(), int(q.gold)])
+		var praise := " Et quelle qualité !" if int(q.get("quality", 0)) > 0 else ""
+		EventBus.dialogue_requested.emit(id, "Oh, %d %s ! C'est exactement ce qu'il me fallait.%s Merci mille fois ! (+%d or)" % [int(q.qty), GameData.item_name(str(q.item)).to_lower(), praise, int(q.gold)])
 		return
 	var slot0: Variant = Inventory.get_selected()
 	if slot0 != null and GameData.item(slot0.id).get("type") == "gift_special":
@@ -665,6 +666,7 @@ func _pick_forage(cell: Vector2i) -> void:
 			EventBus.toast("Inventaire plein !")
 		return
 	var count := 2 if Skills.roll("foraging", 6.0) else 1
+	id = GameData.with_quality(id, GameData.roll_quality(Skills.level("foraging")))
 	Inventory.add_item(id, count)
 	Skills.add_xp("foraging", 7)
 	sprite.queue_free()

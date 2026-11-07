@@ -1281,5 +1281,125 @@
 			100,
 			50
 		]
+	},
+	"tench": {
+		"name": "Tanche",
+		"type": "fish",
+		"icon": 128,
+		"stack": 99,
+		"sell": 45,
+		"edible": [25, 12]
+	},
+	"bream": {
+		"name": "Brème",
+		"type": "fish",
+		"icon": 129,
+		"stack": 99,
+		"sell": 35,
+		"edible": [22, 10]
+	},
+	"zander": {
+		"name": "Sandre",
+		"type": "fish",
+		"icon": 130,
+		"stack": 99,
+		"sell": 95,
+		"edible": [35, 18]
+	},
+	"sturgeon": {
+		"name": "Esturgeon",
+		"type": "fish",
+		"icon": 131,
+		"stack": 99,
+		"sell": 320,
+		"edible": [50, 30]
+	},
+	"crayfish": {
+		"name": "Écrevisse",
+		"type": "fish",
+		"icon": 132,
+		"stack": 99,
+		"sell": 60,
+		"edible": [20, 10]
+	},
+	"sardine": {
+		"name": "Sardine",
+		"type": "fish",
+		"icon": 133,
+		"stack": 99,
+		"sell": 25,
+		"edible": [18, 8]
+	},
+	"mackerel": {
+		"name": "Maquereau",
+		"type": "fish",
+		"icon": 134,
+		"stack": 99,
+		"sell": 45,
+		"edible": [25, 12]
+	},
+	"seabass": {
+		"name": "Bar",
+		"type": "fish",
+		"icon": 135,
+		"stack": 99,
+		"sell": 80,
+		"edible": [32, 16]
+	},
+	"seabream": {
+		"name": "Dorade",
+		"type": "fish",
+		"icon": 136,
+		"stack": 99,
+		"sell": 75,
+		"edible": [30, 15]
+	},
+	"red_mullet": {
+		"name": "Rouget",
+		"type": "fish",
+		"icon": 137,
+		"stack": 99,
+		"sell": 60,
+		"edible": [25, 12]
+	},
+	"sole": {
+		"name": "Sole",
+		"type": "fish",
+		"icon": 138,
+		"stack": 99,
+		"sell": 90,
+		"edible": [30, 15]
+	},
+	"tuna": {
+		"name": "Thon",
+		"type": "fish",
+		"icon": 139,
+		"stack": 99,
+		"sell": 190,
+		"edible": [60, 30]
+	},
+	"squid": {
+		"name": "Calmar",
+		"type": "fish",
+		"icon": 140,
+		"stack": 99,
+		"sell": 85,
+		"edible": [30, 15]
+	},
+	"conger": {
+		"name": "Congre",
+		"type": "fish",
+		"icon": 141,
+		"stack": 99,
+		"sell": 110,
+		"edible": [35, 18]
+	},
+	"swordfish": {
+		"name": "Espadon",
+		"type": "fish",
+		"icon": 142,
+		"stack": 99,
+		"sell": 450,
+		"edible": [70, 35]
 	}
 }
