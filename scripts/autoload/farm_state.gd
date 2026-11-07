@@ -30,9 +30,9 @@ var trees: Dictionary = {}
 var tree_data: Dictionary = {}  # data/fruit_trees.json
 const MAX_FRUITS := 3
 ## Nature : sillon vide et sec -> mauvaises herbes ; culture oubliée -> fanée
-const NEGLECT_NIGHTS := 2
-const WITHER_NIGHTS := 4
-const WEED_SPREAD := 0.12  # chance par nuit qu'une herbe gagne une case voisine
+const NEGLECT_NIGHTS := 3  # sillon vide et sec -> herbes
+const WITHER_NIGHTS := 6  # culture sans eau -> fanée (puis herbes : 9 nuits en tout)
+const WEED_SPREAD := 0.08  # chance par nuit qu'une herbe gagne une case voisine
 const MAX_DEBRIS := 160
 const GREENHOUSE_PLOT_RECT := Rect2i(3, 20, 8, 6)
 var last_night: Dictionary = {}  # ce que la nature a fait cette nuit

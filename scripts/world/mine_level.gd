@@ -211,16 +211,17 @@ func _largest_region(wall: Array) -> Array[Vector2i]:
 ## Type de rocher selon la profondeur.
 func _rock_type() -> String:
 	var r := _rng.randf()
-	if r < 0.04 + level * 0.002:
+	# Minerais assez rares : la plupart des rochers ne sont que de la pierre
+	if r < 0.025 + level * 0.0015:
 		return "gem"
 	r = _rng.randf()
-	if level >= 20 and r < 0.18:
+	if level >= 20 and r < 0.11:
 		return "gold"
-	if level >= 10 and r < 0.3:
+	if level >= 10 and r < 0.19:
 		return "iron"
-	if level < 20 and r < 0.42:
+	if level < 20 and r < 0.27:
 		return "copper"
-	if r < 0.55:
+	if r < 0.38:
 		return "coal"
 	return "pebbles" if _rng.randf() < 0.3 else "stone"
 

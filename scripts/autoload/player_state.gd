@@ -1,7 +1,7 @@
 extends Node
 ## État persistant du joueur (énergie, eau de l'arrosoir, position).
 
-const MAX_ENERGY := 100
+const MAX_ENERGY := 110  # +10 % d'endurance
 const MAX_WATER := 30
 const MAX_HEALTH := 100
 

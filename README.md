@@ -57,11 +57,13 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
-- **La nature reprend ses droits** : un sillon labouré laissé vide et sec 2 nuits se
-  couvre de mauvaises herbes ; une culture oubliée 4 nuits sans eau fane (puis les herbes
-  prennent sa place) ; les mauvaises herbes se propagent aux cases voisines, et branches
+- **La nature reprend ses droits** : un sillon labouré laissé vide et sec 3 nuits se
+  couvre de mauvaises herbes ; une culture oubliée 6 nuits sans eau fane, et les herbes
+  prennent sa place 3 nuits plus tard (9 nuits en tout) ; les mauvaises herbes se propagent aux cases voisines, et branches
   et pierres réapparaissent dans les coins abandonnés. Dans la serre, la terre redevient
   simplement nue. Bilan au réveil.
+- Eau texturée (vaguelettes, reflets), bateaux en planches avec voile ; minerais plus
+  rares dans la mine ; personnage 10 % plus endurant (110 points d'énergie).
 - **Port du Héron** (à l'est du village, par l'avenue) : 4 nouveaux villageois (Marius le
   tavernier, Nina la gardienne du phare, Basile le marchand, Céleste la musicienne), la
   **taverne** où les habitants se retrouvent chaque soir de 20h à 23h30 (musique,

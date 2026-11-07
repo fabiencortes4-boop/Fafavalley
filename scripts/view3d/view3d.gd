@@ -353,10 +353,20 @@ func _build_ground() -> void:
 		var wmi := MeshInstance3D.new()
 		wmi.mesh = water.commit()
 		_water_mat = StandardMaterial3D.new()
-		_water_mat.albedo_color = Color(0.36, 0.66, 0.9, 0.78) if TimeManager.season != 3 else Color(0.78, 0.9, 0.98, 0.92)
+		_water_mat.albedo_color = Color(0.36, 0.66, 0.9, 0.82) if TimeManager.season != 3 else Color(0.78, 0.9, 0.98, 0.92)
 		_water_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		_water_mat.roughness = 0.15
 		_water_mat.metallic_specular = 0.8
+		# Texture d'eau : vaguelettes et reflets clairs, qui défilent doucement
+		_water_mat.albedo_texture = _water_texture()
+		_water_mat.uv1_triplanar = true
+		_water_mat.uv1_world_triplanar = true
+		_water_mat.uv1_scale = Vector3(0.18, 0.18, 0.18)
+		_water_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		if Settings.quality > 0:
+			_water_mat.normal_enabled = true
+			_water_mat.normal_texture = _water_texture(true)
+			_water_mat.normal_scale = 0.6
 		wmi.material_override = _water_mat
 		wmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_static.add_child(wmi)
@@ -397,6 +407,63 @@ func _quad4(st: SurfaceTool, a: Vector3, b: Vector3, c00: Color, c10: Color, c11
 	for pair: Array in [[p1, c00], [p2, c10], [p3, c11], [p1, c00], [p3, c11], [p4, c01]]:
 		st.set_color(pair[1])
 		st.add_vertex(pair[0])
+
+
+static var _water_tex: Dictionary = {}
+
+
+## Texture d'eau sans raccord : bruit doux (couleur) ou carte de relief.
+func _water_texture(normal: bool = false) -> Texture2D:
+	if _water_tex.has(normal):
+		return _water_tex[normal]
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_CELLULAR if not normal else FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = 0.035 if not normal else 0.05
+	noise.cellular_return_type = FastNoiseLite.RETURN_DISTANCE
+	var tex := NoiseTexture2D.new()
+	tex.width = 128
+	tex.height = 128
+	tex.seamless = true
+	tex.noise = noise
+	tex.generate_mipmaps = true
+	if normal:
+		tex.as_normal_map = true
+		tex.bump_strength = 6.0
+	else:
+		# Clair sur les crêtes des vaguelettes, blanc-bleu presque partout
+		var ramp := Gradient.new()
+		ramp.set_color(0, Color(0.82, 0.92, 1.0))
+		ramp.set_color(1, Color(1, 1, 1))
+		ramp.add_point(0.75, Color(0.9, 0.97, 1.0))
+		tex.color_ramp = ramp
+	_water_tex[normal] = tex
+	return tex
+
+
+static var _plank_tex: ImageTexture
+
+
+## Matériau en planches de bois (bateaux) : lignes de planches, nœuds, teinte.
+func _plank_material(color: Color) -> StandardMaterial3D:
+	if _plank_tex == null:
+		var img := Image.create(32, 32, false, Image.FORMAT_RGB8)
+		for y in 32:
+			for x in 32:
+				var board := y / 6
+				var shade := 0.92 + 0.08 * sin(float(x) * 0.7 + board * 2.3) + (0.05 if board % 2 == 0 else 0.0)
+				if y % 6 == 0:
+					shade = 0.62  # joint entre deux planches
+				if (x + board * 11) % 29 == 0 and y % 6 == 3:
+					shade = 0.7  # nœud du bois
+				img.set_pixel(x, y, Color(shade, shade, shade))
+		_plank_tex = ImageTexture.create_from_image(img)
+	var m := StandardMaterial3D.new()
+	m.albedo_color = color
+	m.albedo_texture = _plank_tex
+	m.uv1_triplanar = true
+	m.uv1_scale = Vector3(2.5, 2.5, 2.5)
+	m.roughness = 0.9
+	return m
 
 
 func _quad(st: SurfaceTool, a: Vector3, b: Vector3, color: Color) -> void:
@@ -1077,18 +1144,36 @@ func _build_gardens() -> void:
 func _boat(c: Vector3, rot: float, h: int) -> void:
 	var boat := Node3D.new()
 	var hull_color: Color = [Color(0.75, 0.3, 0.25), Color(0.3, 0.5, 0.7), Color(0.95, 0.92, 0.85)][h % 3]
+	# Coque peinte en planches, pont en bois, voile de toile
+	var hull_mat := _plank_material(hull_color)
+	var deck_mat := _plank_material(Color(0.62, 0.43, 0.27))
+	var sail_mat := _flat_material(Color(0.95, 0.93, 0.85))
 	for part: Array in [
-		[Vector3(1.7, 0.22, 0.6), Vector3(0, -0.02, 0), hull_color],
-		[Vector3(1.5, 0.06, 0.48), Vector3(0, 0.1, 0), Color(0.58, 0.4, 0.25)],
-		[Vector3(0.12, 0.26, 0.5), Vector3(0.8, 0.06, 0), hull_color.darkened(0.2)],
-		[Vector3(0.12, 0.2, 0.44), Vector3(-0.8, 0.05, 0), hull_color.darkened(0.2)],
-		[Vector3(0.3, 0.06, 0.5), Vector3(0.1, 0.16, 0), Color(0.5, 0.33, 0.2)],
-		[Vector3(0.06, 1.1, 0.06), Vector3(-0.2, 0.65, 0), Color(0.45, 0.3, 0.18)],
-		[Vector3(0.7, 0.1, 0.1), Vector3(0.1, 0.4, 0), Color(0.95, 0.93, 0.85)],
+		[Vector3(1.7, 0.22, 0.6), Vector3(0, -0.02, 0), hull_mat],
+		[Vector3(1.5, 0.06, 0.48), Vector3(0, 0.1, 0), deck_mat],
+		[Vector3(0.12, 0.26, 0.5), Vector3(0.8, 0.06, 0), hull_mat],
+		[Vector3(0.12, 0.2, 0.44), Vector3(-0.8, 0.05, 0), hull_mat],
+		[Vector3(0.3, 0.06, 0.5), Vector3(0.1, 0.16, 0), deck_mat],
+		[Vector3(0.06, 1.1, 0.06), Vector3(-0.2, 0.65, 0), _flat_material(Color(0.45, 0.3, 0.18))],
+		[Vector3(0.7, 0.1, 0.1), Vector3(0.1, 0.4, 0), sail_mat],
+		[Vector3(1.72, 0.04, 0.62), Vector3(0, 0.07, 0), _flat_material(Color(0.95, 0.93, 0.88))],  # liseré
 	]:
-		var b := _box(part[0], part[2])
+		var b := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = part[0]
+		bm.material = part[2]
+		b.mesh = bm
 		b.position = part[1]
 		boat.add_child(b)
+	# Voile hissée : un triangle de toile
+	var sail := MeshInstance3D.new()
+	var prism := PrismMesh.new()
+	prism.size = Vector3(0.7, 0.8, 0.02)
+	prism.left_to_right = 0.0
+	prism.material = sail_mat
+	sail.mesh = prism
+	sail.position = Vector3(0.15, 0.85, 0)
+	boat.add_child(sail)
 	_put(boat, c + Vector3(0, -0.12, 0), rot)
 	# Il tangue doucement
 	var tw := boat.create_tween().set_loops()

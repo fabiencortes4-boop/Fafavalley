@@ -17,9 +17,10 @@ func _ready() -> void:
 	var a := Vector2i(14, 16)
 	FarmState.till(a)
 	FarmState.advance_day(0, false)
-	_check(FarmState.is_tilled(a), "une nuit sans soin : la terre labourée tient encore")
 	FarmState.advance_day(0, false)
-	_check(not FarmState.is_tilled(a) and FarmState.debris.get(a, {}).get("type") == "weed", "deux nuits vide et sec : une mauvaise herbe s'y installe")
+	_check(FarmState.is_tilled(a), "deux nuits sans soin : la terre labourée tient encore")
+	FarmState.advance_day(0, false)
+	_check(not FarmState.is_tilled(a) and FarmState.debris.get(a, {}).get("type") == "weed", "trois nuits vide et sec : une mauvaise herbe s'y installe")
 	_check(int(FarmState.last_night.weeds) >= 1, "le matin, on sait ce que la nature a repris")
 	# Sillon vide mais arrosé : il tient
 	var b := Vector2i(16, 16)
@@ -32,14 +33,16 @@ func _ready() -> void:
 	var c := Vector2i(18, 16)
 	FarmState.till(c)
 	FarmState.plant(c, "cabbage")
-	for i in 3:
+	for i in 5:
 		FarmState.advance_day(0, false)
-	_check(FarmState.get_crop(c) == "cabbage", "3 nuits sans eau : la culture tient encore")
+	_check(FarmState.get_crop(c) == "cabbage", "5 nuits sans eau : la culture tient encore")
 	FarmState.advance_day(0, false)
-	_check(FarmState.is_tilled(c) and FarmState.get_crop(c) == "", "4 nuits sans eau : la culture fane")
+	_check(FarmState.is_tilled(c) and FarmState.get_crop(c) == "", "6 nuits sans eau : la culture fane")
 	FarmState.advance_day(0, false)
 	FarmState.advance_day(0, false)
-	_check(FarmState.debris.has(c), "puis la mauvaise herbe envahit le sillon abandonné")
+	_check(not FarmState.debris.has(c), "8 nuits : le sillon est vide, pas encore envahi")
+	FarmState.advance_day(0, false)
+	_check(FarmState.debris.has(c), "9 nuits : la mauvaise herbe envahit le sillon abandonné")
 	# Culture arrosée de temps en temps : elle survit
 	var d := Vector2i(20, 16)
 	FarmState.till(d)

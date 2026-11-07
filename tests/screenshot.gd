@@ -151,7 +151,7 @@ func _ready() -> void:
 					FarmState.till(Vector2i(x, y))
 					if x % 2 == 0:
 						FarmState.plant(Vector2i(x, y), "cabbage")
-			for i in 6:
+			for i in 9:
 				FarmState.advance_day(0, false)
 			main.call("_switch_to", "farm")
 			await get_tree().process_frame
