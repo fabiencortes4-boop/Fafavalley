@@ -7,7 +7,7 @@ extends WorldMap
 ## U coopérative, L ranch, H maison d'Odette, A maison de Lina,
 ## J cabane de Jules, M mine, O fontaine. Décor : N enclume, n lanterne,
 ## s étal du marché, v jardinière fleurie, q banc, g haie, u tonneaux,
-## y meule de foin, w puits, c bac à fleurs de la place. Animaux : C poule, V vache, I cochon, d chien, e chat.
+## y meule de foin, w puits, c bac à fleurs de la place, x arbre en bac. Animaux : C poule, V vache, I cochon, d chien, e chat.
 
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
@@ -16,37 +16,37 @@ const MAP := [
 	"TT........................................................TT",
 	"TT........R.........R.........==........o...........R....TTT",
 	"TT............................==..........................TT",
-	"TTT...........U...u...........==.............L............TT",
+	"TTT...........U...u..........n==.............L............TT",
 	"TT............................==..................FFFFFFFTTT",
 	"TT...........k.....k..........==.......................y..TT",
 	"TT..b...........==......R.....==......b.......==.h...C...TTT",
-	"TT..............==............==..............==....V..I..TT",
-	"TTT.....'.......==.........m..==....,.........==.........TTT",
+	"TT.............n==............==n.............==....V..I..TT",
+	"TTT.....'.......==.........m..==....,........n==.........TTT",
 	"TTT.............==....,.......==..............==...C..V..TTT",
 	"TTT.............==............==..............==.h.......TTT",
-	"TT...Y.....hK...==............==..Z.......'...==...y.....TTT",
-	"TTT.u...........==......E.....==..............==..FFFFFFF.TT",
-	"TT.......N......==............==..............==..........TT",
-	"TTT...==.....==.==............==..............==.........TTT",
+	"TT...Y.....hK...==n..........n==..Z.......'...==...y.....TTT",
+	"TTT.u...........==......E.....==..............==n.FFFFFFF.TT",
+	"TT.......N......==n..x........==......x.......==..........TT",
+	"TTTx..==.....==.==............==..............==.........TTT",
 	"TTTQn.==.v..n==.==v.n..v..==n.==.P.==..v.v..n.==..v.n..vb.TT",
 	"============================================================",
 	"============================================================",
-	"TT..n..v..==n...v...n...v.q.n.==..q.n...v...n...v...n...v.TT",
-	"TT.,.....,==.........ss.==============.ss................TTT",
+	"TT..n..v..==n.x.v...n...v.q.n.==..q.n...v.x.n...v...n.x.v.TT",
+	"TT.,.....,==.........ss.n============n.ss................TTT",
 	"TT.gggggg.==.ggggg.,....==============......,.....,.......TT",
-	"TTT..H....==..A.........===.....d..===ggggg.............,TTT",
-	"TTT,......==.......b....===.v....v.===.J..................TT",
-	"TT........==..........,.===...O....===.........q....q.R..TTT",
-	"TTT...======............===........===.....f..............TT",
-	"TT....===========.......===.v....v.===..==.....~~~~~~~~..TTT",
-	"TTT.......=======.......===...qq...===..==....~~~~~~~~~~..TT",
-	"TTT.e.....==,........'..==============..==...~~~~~~~~~~~.TTT",
-	"TT........==....b....w..==============..==.,.~~~~~~~~~~~.TTT",
+	"TTT..H...n==..A.........==x========x==ggggg.............,TTT",
+	"TTT,......==.......b....==============.J..................TT",
+	"TT........==.....d....,x====q=O==q====.........q....q.R..TTT",
+	"TTT...======............====q====q====.....f..............TT",
+	"TT....===========.......==x========x==x.==.....~~~~~~~~..TTT",
+	"TTT.......=======.......======qq======..==....~~~~~~~~~~..TT",
+	"TTT.e.....==,........'..==============.n==...~~~~~~~~~~~.TTT",
+	"TT........==n...b....w..n============n..==.,.~~~~~~~~~~~.TTT",
 	"TTT..b....==............................==...~~~~~~~~~~~.TTT",
-	"TT........============......,...........=====~~~~~~~~~~~.TTT",
+	"TT.......n============......,...........=====~~~~~~~~~~~.TTT",
 	"TT......R.============..................=====~~~~~~~~~~~..TT",
-	"TT........==......,......,.....b.............~~~~~~~~~~~.TTT",
-	"TTT...b...==..FFFFFFF.....R.........f.R......~~~~~~~~~~~..TT",
+	"TT........==......,......,.....b...........n.~~~~~~~~~~~.TTT",
+	"TTT...b...==n.FFFFFFF.....R.........f.R......~~~~~~~~~~~..TT",
 	"TT....,...==.......................,....b.....~~~~~~~~~~..TT",
 	"TTT.......................................................TT",
 	"TTTTT....T.TTTT.....T..T.T.....TT.'TTTT....T...TTT...T.TTTTT",
@@ -126,9 +126,11 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_add_sign(cell, "Panneau", "<- Vers la ferme")
 		"N":
 			_interactables[cell] = "forge"
-		"n", "s", "v", "q", "g", "u", "y", "w", "c":
+		"n", "s", "v", "q", "g", "u", "y", "w", "c", "x":
 			_blocked[cell] = true
 			_add_static_block(cell)
+			if ch == "q":
+				add_seat(cell, bench_facing(cell))
 		_:
 			if CRITTERS.has(ch):
 				var critter := Critter.new()
@@ -136,6 +138,22 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 				critter.frame = int(CRITTERS[ch][1])
 				critter.position = cell_center(cell)
 				_entities.add_child(critter)
+
+
+## La place de Valfleur (dallée), autour de la fontaine
+const PLAZA := Rect2i(24, 22, 14, 10)
+const FOUNTAIN_CENTER := Vector2(31.0, 27.0)
+
+
+## Sens d'un banc : sur la place, il regarde la fontaine ; ailleurs, il
+## tourne le dos aux maisons (vers le bas) ou longe le chemin (vers la droite).
+static func bench_facing(cell: Vector2i) -> Vector2i:
+	if PLAZA.has_point(cell):
+		var d := FOUNTAIN_CENTER - (Vector2(cell) + Vector2(0.5, 0.5))
+		if absf(d.x) >= absf(d.y):
+			return Vector2i.RIGHT if d.x > 0 else Vector2i.LEFT
+		return Vector2i.DOWN if d.y > 0 else Vector2i.UP
+	return Vector2i.DOWN if cell.y < 25 or cell.y == 29 else Vector2i.RIGHT
 
 
 func _after_build() -> void:

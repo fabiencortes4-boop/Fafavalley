@@ -22,6 +22,8 @@ const GESTURES := {
 
 var facing: Vector2i = Vector2i.DOWN
 var locked: bool = false  # immobile (pêche...)
+## Assis sur un banc ou une chaise (direction du regard dans facing)
+var seated: bool = false
 var step_sound: String = "step"
 
 var _knockback: Vector2 = Vector2.ZERO
@@ -84,6 +86,12 @@ static func _shadow_texture() -> ImageTexture:
 
 
 func _physics_process(delta: float) -> void:
+	if seated:
+		# Assis : on ne bouge pas (et on ne heurte pas le banc sur lequel on est)
+		velocity = Vector2.ZERO
+		_animate_idle(delta)
+		_store_position()
+		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if locked or _gesture_time > 0.0:
 		dir = Vector2.ZERO
@@ -137,6 +145,23 @@ func _animate_idle(delta: float) -> void:
 func _store_position() -> void:
 	PlayerState.position = position
 	PlayerState.has_position = true
+
+
+## S'asseoir à cette position, en regardant dans cette direction.
+func sit(at: Vector2, look: Vector2i) -> void:
+	seated = true
+	position = at
+	facing = look
+	if facing.x != 0:
+		_sprite.flip_h = facing.x < 0
+	_store_position()
+
+
+## Se lever et faire un pas pour quitter le siège.
+func stand(at: Vector2) -> void:
+	seated = false
+	position = at
+	_store_position()
 
 
 func face_towards(offset: Vector2i) -> void:

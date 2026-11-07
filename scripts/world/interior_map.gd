@@ -116,11 +116,11 @@ const LAYOUTS := {
 			"##############",
 			"#bb_o___K_bbb#",
 			"#CCCCCC______#",
-			"#____________#",
+			"#_cc_____cc__#",
 			"#_tt_o_o_tt__#",
-			"#_o_____o__o_#",
+			"#_o___cco__o_#",
 			"#_____tt___E_#",
-			"#p___o_o___o_#",
+			"#p___oco___o_#",
 			"#____________#",
 			"######D#######",
 		],
@@ -272,6 +272,16 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_add_sign(cell, "Un lit", "Ce n'est pas ton lit. Mieux vaut ne pas s'y allonger !")
 		"S":
 			_add_sign(cell, "Étagère", "Des sacs de graines, des bocaux, des outils bien rangés.")
+		"c":
+			add_seat(cell, chair_facing(cell))
+
+
+## Une chaise regarde la table voisine (sinon, la salle).
+func chair_facing(cell: Vector2i) -> Vector2i:
+	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if _ground_chars.get(cell + d, "") == "t":
+			return d
+	return Vector2i.DOWN
 
 
 func _after_build() -> void:

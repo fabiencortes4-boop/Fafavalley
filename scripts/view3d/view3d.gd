@@ -288,7 +288,7 @@ func _build_ground() -> void:
 		if ch == "~":
 			continue
 		var col: Color
-		match ch:
+		match _base_char(cell, chars):
 			"=":
 				col = Color(0.86, 0.69, 0.47)
 			"c":
@@ -335,6 +335,8 @@ func _build_ground() -> void:
 	mat.roughness = 1.0
 	ground.material_override = mat
 	_static.add_child(ground)
+	if map is Village or map is PortMap:
+		_build_paving(chars)
 	# Eau : plan transparent légèrement sous le sol
 	var water := SurfaceTool.new()
 	water.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -380,6 +382,29 @@ func _outskirts() -> Array[Vector2i]:
 				if x < 0 or y < 0 or x >= size.x or y >= size.y:
 					_outskirt_cache.append(Vector2i(x, y))
 	return _outskirt_cache
+
+
+## Sol sous un objet de décor (lampadaire, banc...) : sable, route ou herbe,
+## comme la plupart de ses voisins.
+const DECOR_CHARS := "nqxirapvucwgys"
+
+
+func _base_char(cell: Vector2i, chars: Dictionary) -> String:
+	var ch: String = chars.get(cell, ".")
+	if not DECOR_CHARS.contains(ch) or ch == "":
+		return ch
+	var votes := {}
+	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		var n: String = chars.get(cell + d, ".")
+		if n in [":", "=", "#"]:
+			votes[n] = int(votes.get(n, 0)) + 1
+	var best := "."
+	var most := 1  # au moins deux voisins pour changer de sol
+	for k: String in votes:
+		if int(votes[k]) > most:
+			most = int(votes[k])
+			best = k
+	return best
 
 
 ## Une route qui sort de la carte se prolonge tout droit dans le décor.
@@ -542,7 +567,50 @@ func _build_props() -> void:
 			"P", "Q":
 				_place(batch, "nature", "sign", c, 2.2, 0.0)
 			"n":
-				_village_lantern(cell)
+				if map is Village or map is PortMap:
+					_street_lamp(cell)
+				else:
+					_village_lantern(cell)
+			"x":
+				# Arbre d'ornement dans un bac de bois
+				_put(_box(Vector3(0.7, 0.4, 0.7), Color(0.5, 0.33, 0.2)), c + Vector3(0, 0.2, 0))
+				_put(_box(Vector3(0.6, 0.04, 0.6), Color(0.33, 0.24, 0.16)), c + Vector3(0, 0.41, 0))
+				_place(batch, "nature", "tree_default" if TimeManager.season != 2 else "tree_default_fall", c + Vector3(0, 0.4, 0), 0.9, rot)
+			"i":
+				# Borne d'amarrage, avec un bout de corde
+				_put(_box(Vector3(0.22, 0.4, 0.22), Color(0.2, 0.2, 0.23)), c + Vector3(0, 0.2, 0))
+				_put(_box(Vector3(0.3, 0.06, 0.3), Color(0.2, 0.2, 0.23)), c + Vector3(0, 0.42, 0))
+				_put(_box(Vector3(0.26, 0.05, 0.26), Color(0.78, 0.68, 0.45)), c + Vector3(0, 0.3, 0))
+			"r":
+				# Filets qui sèchent sur des perches, caisses de poissons
+				for k in 2:
+					_put(_box(Vector3(0.05, 0.9, 0.05), Color(0.45, 0.32, 0.2)), c + Vector3(-0.38 + k * 0.76, 0.45, -0.2))
+				var net := _box(Vector3(0.76, 0.6, 0.02), Color(0.35, 0.45, 0.42, 0.85))
+				_put(net, c + Vector3(0, 0.55, -0.2))
+				_put(_fitted("survival", "box", 0.38), c + Vector3(-0.2, 0, 0.2))
+				_put(_fitted("survival", "fish", 0.3), c + Vector3(-0.2, 0.32, 0.2), 0.4)
+				_put(_fitted("survival", "box", 0.34), c + Vector3(0.22, 0, 0.18), 0.3)
+			"a":
+				# Vieille ancre posée sur le quai
+				var iron := Color(0.24, 0.24, 0.27)
+				_put(_box(Vector3(0.08, 0.8, 0.08), iron), c + Vector3(0, 0.45, 0), 0.3)
+				_put(_box(Vector3(0.36, 0.06, 0.06), iron), c + Vector3(0, 0.75, 0), 0.3)
+				_put(_box(Vector3(0.6, 0.08, 0.08), iron), c + Vector3(0, 0.08, 0), 0.3)
+				_put(_box(Vector3(0.08, 0.2, 0.08), iron), c + Vector3(0.26, 0.15, 0.08), 0.3)
+				_put(_box(Vector3(0.08, 0.2, 0.08), iron), c + Vector3(-0.26, 0.15, -0.08), 0.3)
+			"p":
+				# Étal du poissonnier : tréteaux, glace, poissons, auvent rayé
+				_put(_box(Vector3(0.95, 0.08, 0.6), Color(0.55, 0.38, 0.24)), c + Vector3(0, 0.55, 0))
+				_put(_box(Vector3(0.88, 0.05, 0.52), Color(0.86, 0.93, 0.97)), c + Vector3(0, 0.61, 0))
+				for k in 4:
+					_put(_box(Vector3(0.06, 0.55, 0.06), Color(0.45, 0.3, 0.18)), c + Vector3(-0.4 + (k % 2) * 0.8, 0.27, -0.25 + (k / 2) * 0.5))
+				for k in 3:
+					_put(_fitted("survival", "fish", 0.28), c + Vector3(-0.28 + k * 0.28, 0.65, 0.02), 0.2 * k)
+				for k in 2:
+					_put(_box(Vector3(0.05, 1.3, 0.05), Color(0.45, 0.3, 0.18)), c + Vector3(-0.45 + k * 0.9, 0.65, -0.3))
+				var awning := _box(Vector3(1.0, 0.04, 0.55), Color(0.2, 0.45, 0.75))
+				_put(awning, c + Vector3(0, 1.3, -0.08))
+				_put(_box(Vector3(1.0, 0.045, 0.18), Color(0.95, 0.95, 0.92)), c + Vector3(0, 1.31, -0.08))
 			"v":
 				# Jardinière fleurie
 				_put(_box(Vector3(0.85, 0.32, 0.6), Color(0.55, 0.36, 0.22)), c + Vector3(0, 0.16, 0))
@@ -554,7 +622,9 @@ func _build_props() -> void:
 				_put(_fitted("nature", "flower_redA", 0.45), c + Vector3(-0.12, 0.45, 0))
 				_put(_fitted("nature", "flower_yellowB", 0.45), c + Vector3(0.12, 0.45, 0.05))
 			"q":
-				_bench(c, 0.0 if cell.y < 25 or cell.y == 29 else PI / 2.0)
+				# Le banc regarde dans le sens où l'on s'y assoit
+				var look: Vector2i = map.seats.get(cell, Vector2i.DOWN)
+				_bench(c, atan2(float(look.x), float(look.y)))
 			"g":
 				_put(_fitted("town", "hedge", 1.0), c)
 			"u":
@@ -645,6 +715,7 @@ func _build_props() -> void:
 		elif r == 7:
 			_place(batch, "nature", "plant_bushLarge", c, 2.2, 0.0)
 	batch.build(_static)
+	_finish_lamps()
 	_wall_batch = Models.Batch.new()
 	_build_buildings(chars)
 	_wall_batch.build(_static)
@@ -903,6 +974,164 @@ func _festival(center: Vector3) -> void:
 	jet.initial_velocity_max = 2.6
 	jet.gravity = Vector3(0, -6, 0)
 	_put(jet, center + Vector3(0, 1.0, 0))
+
+
+# ------------------------------------------------------------ pavés et lampadaires
+## Routes pavées (village et port), dallage en rosace sur la place de
+## Valfleur et bordures de pierre (textures : tools/build_paving.py).
+func _build_paving(chars: Dictionary) -> void:
+	var plaza := Village.PLAZA if map is Village else Rect2i()
+	var road := SurfaceTool.new()
+	road.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var square := SurfaceTool.new()
+	square.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var curbs := SurfaceTool.new()
+	curbs.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var paved := {}
+	for cell: Vector2i in chars:
+		if plaza.has_point(cell) or chars[cell] == "=" or _base_char(cell, chars) == "=":
+			paved[cell] = true
+	for cell: Vector2i in _outskirts():
+		if _outskirt_road(cell):
+			paved[cell] = true
+	var y := 0.012
+	for cell: Vector2i in paved:
+		var a := Vector3(cell.x, y, cell.y)
+		if plaza.has_point(cell):
+			var u0 := Vector2(cell - plaza.position) / Vector2(plaza.size)
+			var u1 := Vector2(cell - plaza.position + Vector2i.ONE) / Vector2(plaza.size)
+			_uv_quad(square, a, u0, u1, false)
+		else:
+			# Une des 4 variantes ; rangées de pavés dans le sens de la route
+			var v := _hash(cell) % 4
+			var vertical := paved.has(cell + Vector2i.UP) and paved.has(cell + Vector2i.DOWN) and not (paved.has(cell + Vector2i.LEFT) and paved.has(cell + Vector2i.RIGHT))
+			_uv_quad(road, a, Vector2(v * 0.25, 0), Vector2(v * 0.25 + 0.25, 1), vertical)
+		# Bordures : une pierre basse le long des côtés qui donnent sur l'herbe
+		if plaza.has_point(cell) and not (cell.x == plaza.position.x or cell.y == plaza.position.y or cell.x == plaza.end.x - 1 or cell.y == plaza.end.y - 1):
+			continue
+		for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			var n := cell + d
+			if paved.has(n) or not chars.has(n) or chars[n] == "~" or chars[n] == "#":
+				continue
+			var center := Vector3(cell.x + 0.5 + d.x * 0.47, 0.03, cell.y + 0.5 + d.y * 0.47)
+			var size := Vector3(1.0 if d.x == 0 else 0.07, 0.06, 0.07 if d.x == 0 else 1.0)
+			_st_box(curbs, center, size, Color(0.66, 0.63, 0.58))
+	for pair: Array in [[road, "res://assets/sprites/paving_road.png"], [square, "res://assets/sprites/paving_plaza.png"]]:
+		var st: SurfaceTool = pair[0]
+		st.generate_normals()
+		var mesh := st.commit()
+		if mesh.get_surface_count() == 0:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.albedo_texture = load(pair[1])
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+		mat.roughness = 1.0
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_static.add_child(mi)
+	curbs.generate_normals()
+	var curb_mesh := curbs.commit()
+	if curb_mesh.get_surface_count() > 0:
+		var cm := MeshInstance3D.new()
+		cm.mesh = curb_mesh
+		var cmat := StandardMaterial3D.new()
+		cmat.vertex_color_use_as_albedo = true
+		cmat.vertex_color_is_srgb = true
+		cmat.roughness = 1.0
+		cm.material_override = cmat
+		_static.add_child(cm)
+
+
+## Carré horizontal texturé (UV de u0 à u1, éventuellement tourné d'un quart).
+func _uv_quad(st: SurfaceTool, a: Vector3, u0: Vector2, u1: Vector2, turned: bool) -> void:
+	var p := [a, a + Vector3(1, 0, 0), a + Vector3(1, 0, 1), a + Vector3(0, 0, 1)]
+	var uv := [u0, Vector2(u1.x, u0.y), u1, Vector2(u0.x, u1.y)]
+	if turned:
+		uv = [uv[1], uv[2], uv[3], uv[0]]
+	for i: int in [0, 1, 2, 0, 2, 3]:
+		st.set_uv(uv[i])
+		st.set_normal(Vector3.UP)
+		st.add_vertex(p[i])
+
+
+## Lampadaire : socle, fût de fonte, crosse et lanterne vitrée qui s'allume
+## le soir. Les parties fixes de tous les lampadaires forment un seul maillage.
+var _lamp_st: SurfaceTool
+var _lamp_glow_st: SurfaceTool
+var _lamp_count: int = 0
+
+
+func _street_lamp(cell: Vector2i) -> void:
+	if _lamp_st == null:
+		_lamp_st = SurfaceTool.new()
+		_lamp_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		_lamp_glow_st = SurfaceTool.new()
+		_lamp_glow_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var c := _cell3d(cell)
+	var iron := Color(0.16, 0.17, 0.2)
+	_st_box(_lamp_st, c + Vector3(0, 0.1, 0), Vector3(0.26, 0.2, 0.26), iron)
+	_st_box(_lamp_st, c + Vector3(0, 0.24, 0), Vector3(0.16, 0.08, 0.16), iron)
+	_st_box(_lamp_st, c + Vector3(0, 1.1, 0), Vector3(0.07, 1.7, 0.07), iron)
+	_st_box(_lamp_st, c + Vector3(0, 1.98, 0), Vector3(0.12, 0.06, 0.12), iron)
+	# Lanterne : cage, toit, vitres lumineuses
+	var top := c + Vector3(0, 2.18, 0)
+	_st_box(_lamp_st, top + Vector3(0, -0.15, 0), Vector3(0.26, 0.04, 0.26), iron)
+	_st_box(_lamp_st, top + Vector3(0, 0.16, 0), Vector3(0.3, 0.05, 0.3), iron)
+	_st_box(_lamp_st, top + Vector3(0, 0.22, 0), Vector3(0.16, 0.07, 0.16), iron)
+	for k in 4:
+		var corner := Vector3(0.11 if k % 2 == 0 else -0.11, 0, 0.11 if k < 2 else -0.11)
+		_st_box(_lamp_st, top + corner, Vector3(0.03, 0.3, 0.03), iron)
+	_st_box(_lamp_glow_st, top, Vector3(0.2, 0.26, 0.2), Color(1.0, 0.86, 0.5))
+	_lamp_count += 1
+	# Lumière : toutes en qualité élevée, une sur deux en normale, aucune en économie
+	if Settings.quality == 0 or (Settings.quality == 1 and _lamp_count % 2 == 0):
+		return
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.8, 0.5)
+	light.omni_range = 4.0
+	light.light_energy = 1.4
+	light.position = top + Vector3(0, -0.1, 0)
+	light.visible = false
+	_static.add_child(light)
+	_lanterns.append(light)
+
+
+func _finish_lamps() -> void:
+	if _lamp_st == null:
+		return
+	_lamp_st.generate_normals()
+	var posts := MeshInstance3D.new()
+	posts.mesh = _lamp_st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.6
+	posts.material_override = mat
+	_static.add_child(posts)
+	var glow := MeshInstance3D.new()
+	glow.mesh = _lamp_glow_st.commit()
+	var gmat := StandardMaterial3D.new()
+	gmat.albedo_color = Color(1.0, 0.88, 0.55)
+	gmat.emission_enabled = true
+	gmat.emission = Color(1.0, 0.75, 0.35)
+	gmat.emission_energy_multiplier = 2.2
+	glow.material_override = gmat
+	_static.add_child(glow)
+	# Le jour, les vitres restent jaune pâle (éteintes) ; le soir elles brillent
+	var off := MeshInstance3D.new()
+	off.mesh = glow.mesh
+	off.material_override = _flat_material(Color(0.86, 0.84, 0.7))
+	_static.add_child(off)
+	_lantern_glows.append(glow)
+	_lamp_off = off
+	_lamp_st = null
+	_lamp_glow_st = null
+	_lamp_count = 0
+
+
+var _lamp_off: MeshInstance3D
 
 
 ## Banc de parc en bois (assise, dossier, pieds en fer).
@@ -1632,7 +1861,9 @@ func _build_home() -> void:
 			"c":
 				var chair := _fitted("dungeon", "chair", 0.7)
 				Models.tint(chair, Color(0.95, 1.35, 1.0))  # chaises peintes en vert
-				_put(chair, c, PI if cell.y == 3 else 0.0)
+				# Tournée vers la table, comme la personne qui s'y assoit
+				var look: Vector2i = map.seats.get(cell, Vector2i.DOWN)
+				_put(chair, c, atan2(float(look.x), float(look.y)) + PI)
 			"x":
 				var chest := _fitted("survival", "chest", 0.65)
 				Models.tint(chest, Color(0.75, 0.85, 1.15))
@@ -2133,6 +2364,11 @@ func _crop_model(crop: String, stage: int) -> Node3D:
 
 
 # ------------------------------------------------------------ joueur
+## Personnage assis : hauteur des hanches et recul vers le dossier
+const SEAT_HEIGHT := 0.0
+const SEAT_BACK := 0.12
+
+
 func _build_player() -> void:
 	_player3d = _model("blocky", "character-a", CHARACTER_SCALE)
 	add_child(_player3d)
@@ -2204,6 +2440,15 @@ func _sync_player(delta: float) -> void:
 	var f := Vector2(p.facing)
 	var target := atan2(f.x, f.y)
 	_player3d.rotation.y = lerp_angle(_player3d.rotation.y, target, minf(1.0, delta * 14.0))
+	if p.seated:
+		# Assis sur le banc ou la chaise
+		_player3d.rotation.y = target
+		_player3d.position += Vector3(0, SEAT_HEIGHT, 0) - Vector3(f.x, 0, f.y) * SEAT_BACK
+		if _tool3d != null:
+			_tool3d.visible = false
+		if _player_anim.current_animation != "sit":
+			_player_anim.play("sit", 0.2)
+		return
 	if not p.busy():
 		if _tool3d != null:
 			_tool3d.visible = false
@@ -2461,6 +2706,8 @@ func _update_light(_h: int, _m: int) -> void:
 		l.visible = lit
 	for g in _lantern_glows:
 		g.visible = lit
+	if _lamp_off != null and is_instance_valid(_lamp_off):
+		_lamp_off.visible = not lit
 	var rain := TimeManager.is_raining() or TimeManager.is_snowing()
 	_sun.light_energy = lerpf(0.85, 0.1, night) * (0.6 if rain else 1.0)
 	_sun.light_color = Color(1.0, 0.96, 0.88).lerp(Color(0.55, 0.6, 1.0), night)

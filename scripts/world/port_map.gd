@@ -5,34 +5,35 @@ extends WorldMap
 ## maison de Céleste, le phare de Nina sur la pointe, pontons et bateaux.
 ##
 ## Plan : B taverne, C comptoir, H maison de Céleste, L phare, # ponton,
-## : sable, W bateau amarré, n lanterne, q banc, u tonneaux, v jardinière.
+## : sable, W bateau amarré, n lampadaire, q banc, u tonneaux, v jardinière,
+## x arbre en bac, i borne d'amarrage, r filets et caisses, a ancre, p étal du poissonnier.
 
 const MAP := [
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 	"TT..........................::~~~~~~~~~~~~~~~~",
 	"TT....b.................b...::~~~~~:o......o~~",
-	"TT.R...........,............::~~~~~:...L....~~",
+	"TT.R...........,............n:~~~~~:...L....~~",
 	"TT.......R........,.........::~~~~~:........~~",
 	"TT.....,...............=====::#####:........~~",
 	"TT........................==::~~~~~:..n.....~~",
-	"TT..........B.......C.....==::~~~~~:.......o~~",
+	"TT..........B.......C.....==:i~~~~~:.......o~~",
 	"TT..b............u......u.==::~~~~~~::::::::~~",
-	"TT...............u.v.....,==::~~~~~~~~~~~~~~~~",
-	"TT.,.......v.........==...==::~~~~~~~~~~~~~~~~",
+	"TT...............u.v.....,==q:~~~~~~~~~~~~~~~~",
+	"TT.,.x.....v.........==..p==:i~~~~~~~~~~~~~~~~",
 	"TT........q...==..q..==...==:u~~WW~~~~~~~~~~~~",
-	"TTQn.......n..==..n..==..n==::~~~~~~~~~~~~~~~~",
+	"TTQn..x....n..==..n..==x.n==n:~~~~~~~~~~~~~~~~",
 	"============================#########~~~~~~~~~",
 	"============================#####u###~~~~~~~~~",
 	"TT..q..==.n.....==.qn...q.P.::~~~~~~~~~~~~~~~~",
-	"TT.....==.......==....,.....::~~~WW~~~~~~~~~~~",
-	"TT..H..==....R..==..........::~~~~~~~~~~~~~~~~",
-	"TT.....==..,....==..b.......::~~~~~~~~~~~~~~~~",
-	"TT.v...==v......==........,.::~~~~~~~~~~~~~~~~",
+	"TT.....==......x==....,.....:i~~~WW~~~~~~~~~~~",
+	"TT..H..==....R..==..........q:~~~~~~~~~~~~~~~~",
+	"TT.....==..,....==..b....a..::~~~~~~~~~~~~~~~~",
+	"TT.v...==v......==........,.:i~~~~~~~~~~~~~~~~",
 	"TT..........n...==......n...::~~~~~~~~~~~~~~~~",
-	"TT........b.....==u.........::~~~~~~~~~~~~~~~~",
-	"TT:::R::::::::::##::::::::::::~~~~~~~~~~~~~~~~",
-	"TT::::::::::::::##::::::::::::~~~~~~~~~~~~~~~~",
+	"TT.r......b.....==u......r..n:~~~~~~~~~~~~~~~~",
+	"TT:::Rn::::::n::##:::n::::::::~~~~~~~~~~~~~~~~",
+	"TT::q:::::q:::::##:r::::q:::::~~~~~~~~~~~~~~~~",
 	"~~~~~~~~~~~~~~~~##~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
 	"~~~~~~~~~~~~~~~~##~W~~~~~~~~~~~~~~~~~~~~~~~~~~",
 	"~~~~~~~~~~~~~~~~##~W~~~~~~~~~~~~~~~~~~~~~~~~~~",
@@ -87,12 +88,23 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 		_interactables[door] = "door:" + str(b[0])
 		return
 	match ch:
-		"n", "q", "u", "v", "W":
+		"n", "q", "u", "v", "W", "x", "i", "r", "a", "p":
 			block_cell(cell)
+			if ch == "q":
+				add_seat(cell, bench_facing(cell))
 		"Q":
 			_add_sign(cell, "Panneau", "<- Valfleur  |  Port du Héron ->")
 		"P":
 			_add_sign(cell, "Le port du Héron", "Taverne du Héron : de 16h à minuit, musique tous les soirs. Comptoir de Basile : de 9h à 17h. Le phare est éteint depuis dix ans.")
+
+
+## Un banc regarde la mer si elle est tout près ; sinon il regarde la route.
+func bench_facing(cell: Vector2i) -> Vector2i:
+	for dist in range(1, 3):
+		for d: Vector2i in [Vector2i.DOWN, Vector2i.RIGHT, Vector2i.UP, Vector2i.LEFT]:
+			if _ground_chars.get(cell + d * dist, "") == "~":
+				return d
+	return Vector2i.DOWN if cell.y < 14 else Vector2i.UP
 
 
 func _after_build() -> void:

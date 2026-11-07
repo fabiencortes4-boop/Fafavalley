@@ -311,8 +311,58 @@ func is_walkable(cell: Vector2i) -> bool:
 	return not (tile.x + tile.y * WorldTiles.COLUMNS) in WorldTiles.SOLID
 
 
+# ------------------------------------------------------------ bancs et chaises
+## Sièges : case -> direction du regard de la personne assise.
+var seats: Dictionary = {}
+var _stand_cell: Vector2i = Vector2i.ZERO
+var _rest_timer: float = 0.0
+## Le repos assis rend 1 point d'énergie toutes les REST_PERIOD secondes,
+## jusqu'à REST_CAP de l'énergie maximale (ça ne remplace pas une nuit).
+const REST_PERIOD := 3.0
+const REST_CAP := 0.8
+
+
+func add_seat(cell: Vector2i, look: Vector2i) -> void:
+	seats[cell] = look
+	_interactables[cell] = "seat"
+
+
+func sit_down(cell: Vector2i) -> void:
+	if player.busy() or player.seated or not seats.has(cell):
+		return
+	_stand_cell = player_cell()
+	_rest_timer = 0.0
+	player.sit(cell_center(cell) + Vector2(0, -4), seats[cell])
+	Sfx.play("cloth")
+	if PlayerState.energy < int(PlayerState.MAX_ENERGY * REST_CAP):
+		EventBus.toast("Tu t'assois un moment : l'énergie remonte doucement.")
+	else:
+		EventBus.toast("Tu t'assois un moment. Quel calme !")
+
+
+func stand_up() -> void:
+	if not player.seated:
+		return
+	player.stand(cell_center(_stand_cell))
+	Sfx.play("cloth", -4.0)
+
+
+func _rest(delta: float) -> void:
+	# Bouger le joystick (ou les flèches) relève le joueur
+	if Input.get_vector("move_left", "move_right", "move_up", "move_down").length() > 0.4:
+		stand_up()
+		return
+	_rest_timer += delta
+	if _rest_timer >= REST_PERIOD:
+		_rest_timer = 0.0
+		if PlayerState.energy < int(PlayerState.MAX_ENERGY * REST_CAP):
+			PlayerState.heal(1, 0)
+
+
 # ------------------------------------------------------------ boucle
 func _process(_delta: float) -> void:
+	if player.seated:
+		_rest(_delta)
 	_target_cell = player_cell() + player.facing
 	_cursor.position = Vector2(_target_cell * TILE)
 	_cursor.visible = not fishing.busy()
@@ -332,7 +382,7 @@ const KIND_HINTS := {
 	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
 	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
 	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
-	"board": "Demandes", "gate": "Voir", "log_gate": "Voir",
+	"board": "Demandes", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir",
 }
 const TOOL_HINTS := {
 	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",
@@ -344,6 +394,8 @@ const TOOL_HINTS := {
 func action_hint(cell: Vector2i) -> String:
 	if fishing.busy():
 		return "Ferrer !" if fishing.state == Fishing.State.BITE else "Pêche..."
+	if player.seated:
+		return "Se lever"
 	if _forage_sprites.has(cell):
 		return "Cueillir"
 	if _spouse_at(cell):
@@ -506,6 +558,9 @@ func act_on(cell: Vector2i) -> void:
 	if fishing.busy():
 		fishing.on_action()
 		return
+	if player.seated:
+		stand_up()
+		return
 	if _spouse_at(cell):
 		talk_to_npc(_spouse_npc)
 		return
@@ -516,6 +571,8 @@ func act_on(cell: Vector2i) -> void:
 	if kind == "sign":
 		var s: Array = _signs[cell]
 		EventBus.message_requested.emit(s[0], s[1])
+	elif kind == "seat":
+		sit_down(cell)
 	elif kind != "":
 		_interact(kind, cell)
 	elif _holding_tool() == "fishing_rod":

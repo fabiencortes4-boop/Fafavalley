@@ -960,8 +960,25 @@ func _item_row(id: String) -> HBoxContainer:
 	var locked: bool = is_bag and Inventory.capacity < int(item.capacity) - Inventory.HOTBAR
 	var price := Shops.price(_current_shop, id)
 	var row := _shop_row(GameData.item_icon(id), "%s - %d or%s" % [item.name, price, "" if in_season else " (hors saison)"])
+	# Graines : temps de pousse jusqu'à la récolte, repousse, prix de vente
+	var details := _seed_details(item)
+	if details != "":
+		var label: Label = row.get_child(1)
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override("separation", 0)
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.remove_child(label)
+		col.add_child(label)
+		var sub := Label.new()
+		sub.text = details
+		sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sub.add_theme_font_size_override("font_size", maxi(8, Settings.font_size() - 2))
+		sub.add_theme_color_override("font_color", Color(0.85, 0.95, 0.75))
+		col.add_child(sub)
+		row.add_child(col)
+		row.move_child(col, 1)
 	var buy := Button.new()
-	buy.text = "Acquis" if owned else "Acheter"
+	buy.text = "Acquis" if owned else ("Acheter x1" if int(item.get("stack", 99)) > 1 and not is_bag and item.get("type") != "tool" else "Acheter")
 	buy.disabled = not in_season or owned or locked or Inventory.gold < price
 	buy.pressed.connect(_buy.bind(id))
 	row.add_child(buy)
@@ -973,6 +990,37 @@ func _item_row(id: String) -> HBoxContainer:
 		five.pressed.connect(_buy.bind(id, 5))
 		row.add_child(five)
 	return row
+
+
+## Ligne d'information d'une graine ou d'un jeune arbre : jours avant la
+## récolte, repousse, saisons, prix de vente de la récolte.
+func _seed_details(item: Dictionary) -> String:
+	const SEASON_NAMES := ["printemps", "été", "automne", "hiver"]
+	if item.get("type") == "seed" and item.has("crop"):
+		var crop := GameData.crop(str(item.crop))
+		if crop.is_empty():
+			return ""
+		var days := 0
+		for d: Variant in crop.get("stage_days", []):
+			days += int(d)
+		var text := "Récolte en %d jours" % days
+		var regrow := int(crop.get("regrow", 0))
+		if regrow > 0:
+			text += ", puis tous les %d jours" % regrow
+		var seasons: Array = []
+		for s: Variant in crop.get("seasons", []):
+			seasons.append(SEASON_NAMES[int(s) % 4])
+		if not seasons.is_empty():
+			text += "  -  " + ", ".join(seasons)
+		var harvest := GameData.item(str(crop.get("harvest", "")))
+		if harvest.has("sell"):
+			text += "  -  vente %d or" % int(harvest.sell)
+		return text
+	if item.get("type") == "sapling":
+		var tree: Dictionary = FarmState.tree_data.get(str(item.get("tree", "")), {})
+		if not tree.is_empty():
+			return "Adulte en %d jours, puis un fruit par jour en %s" % [int(tree.get("grow_days", 0)), SEASON_NAMES[int(tree.get("season", 0)) % 4]]
+	return ""
 
 
 ## Grandes icônes (rendus 3D des animaux) : réduites à la taille d'une ligne.

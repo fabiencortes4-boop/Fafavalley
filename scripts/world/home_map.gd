@@ -57,6 +57,13 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_add_sign(cell, "Vieux coffre", "Le coffre de Firmin. Il est vide... à part une vieille photo de la ferme, toute fleurie.")
 		"p":
 			_add_sign(cell, "Cheminée", "Un bon feu crépite. Il fait bon chez soi.")
+		"c":
+			# Chaise : elle regarde la table voisine
+			var look := Vector2i.DOWN
+			for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+				if _ground_chars.get(cell + d, "") == "t":
+					look = d
+			add_seat(cell, look)
 
 
 func _after_build() -> void:

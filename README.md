@@ -148,6 +148,16 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
   vers le sac et petits tremblements d'écran sur les gros coups.
+- **Village et port aménagés** : routes pavées avec bordures de pierre, grande place de
+  Valfleur dallée en rosace autour de la fontaine (bancs tournés vers elle, arbres en bac),
+  lampadaires en fonte qui s'allument le soir, au port : quai avec bornes d'amarrage,
+  étal du poissonnier, filets qui sèchent, vieille ancre, bancs face à la mer
+  (textures : `tools/build_paving.py`).
+- **S'asseoir** sur un banc (village, port) ou une chaise (taverne, maisons, chez soi) :
+  Action pour s'asseoir, bouger ou Action pour se lever. Le repos rend un peu d'énergie
+  (jusqu'à 80 % : ça ne remplace pas une nuit).
+- **Boutique** : chaque graine indique son temps de pousse jusqu'à la récolte, sa repousse,
+  ses saisons et le prix de vente ; boutons « Acheter x1 » et « x5 ».
 - **Habitants cohérents** : chaque habitant porte une tenue liée à son métier (tablier de
   cuir du forgeron, ciré jaune du pêcheur, costume du maire, vareuse du tavernier...),
   générée par `tools/build_npc_textures.py`. Portraits des dialogues et petits sprites 2D
@@ -284,6 +294,7 @@ godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
+godot --headless res://tests/decor_test.tscn     # place, bancs et chaises (repos), infos des graines
 godot --headless res://tests/collections_test.tscn # album, paliers, succès, sauvegarde
 godot --headless res://tests/story_test.tscn      # histoire : chapitres, voies, déblocages, lettres
 godot --headless res://tests/animals_test.tscn    # maison, construction, achat d'animaux, foin, œufs, traite, boutiques

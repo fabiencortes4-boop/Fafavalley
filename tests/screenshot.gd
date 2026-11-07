@@ -88,6 +88,10 @@ func _ready() -> void:
 				var xy := a.trim_prefix("--at=").split(",")
 				var m: WorldMap = main.call("current_map")
 				m.player.position = m.cell_center(Vector2i(int(xy[0]), int(xy[1])))
+			if a.begins_with("--sit="):
+				var sxy := a.trim_prefix("--sit=").split(",")
+				var sm: WorldMap = main.call("current_map")
+				sm.sit_down(Vector2i(int(sxy[0]), int(sxy[1])))
 			if a.begins_with("--shopid="):
 				main.get("_hud").open_shop(a.trim_prefix("--shopid="))
 		if "--pause" in args:
@@ -164,6 +168,15 @@ func _ready() -> void:
 			TimeManager.minutes = 21 * 60
 			main.call("_switch_to", "in:taverne")
 			await get_tree().process_frame
+		if "--port" in args or "--tavern" in args:
+			for a in args:
+				var m2: WorldMap = main.call("current_map")
+				if a.begins_with("--at="):
+					var xy2 := a.trim_prefix("--at=").split(",")
+					m2.player.position = m2.cell_center(Vector2i(int(xy2[0]), int(xy2[1])))
+				if a.begins_with("--sit="):
+					var s2 := a.trim_prefix("--sit=").split(",")
+					m2.sit_down(Vector2i(int(s2[0]), int(s2[1])))
 		if "--forest" in args:
 			main.call("_switch_to", "forest")
 			await get_tree().process_frame
