@@ -218,6 +218,7 @@ func act_on(cell: Vector2i) -> void:
 		player.play_use()
 		if Animals.pet(index):
 			Sfx.play("harvest")
+			Settings.vibrate(18)
 			Fx.burst(_entities, animal.position + Vector2(0, -10), [Color(1, 0.45, 0.55), Color(1, 0.75, 0.8)], 8, 35.0)
 			EventBus.toast("Tu caresses %s. Ça lui fait plaisir !" % a.name)
 		else:
@@ -329,6 +330,7 @@ func _shake_tree(cell: Vector2i) -> void:
 	if left > 0:
 		t.fruits = left
 	Sfx.play("harvest")
+	Settings.vibrate(18)
 	shake(1.5, 0.12)
 	Fx.burst(_entities, cell_center(cell) + Vector2(0, -14), [Color(0.4, 0.75, 0.3), Color(0.3, 0.6, 0.25)], 12, 50.0)
 	Skills.add_xp("farming", 4 * int(got[1]))
@@ -453,6 +455,7 @@ func _hit_debris(cell: Vector2i, tool: String, energy: int) -> bool:
 				Fx.burst(_entities, at, Fx.WOOD, 8 if not broken else 18, 60.0)
 				if broken and type == "stump":
 					Sfx.play("tree_fall")
+					Settings.vibrate(60)
 					shake(3.0, 0.25)
 					Fx.puff(_entities, cell_center(cell), Color(0.9, 0.85, 0.75, 0.9), 2.0)
 			"stone":
@@ -460,6 +463,7 @@ func _hit_debris(cell: Vector2i, tool: String, energy: int) -> bool:
 				Fx.burst(_entities, at, Fx.STONE, 10, 60.0)
 				if broken:
 					Sfx.play("rock_break")
+					Settings.vibrate(30)
 					shake(2.0, 0.15)
 		for id: String in drops:
 			_drop(id, cell_center(cell))
@@ -620,6 +624,7 @@ func _harvest(cell: Vector2i) -> void:
 		EventBus.toast("+%d %s" % [count, GameData.item_name(got)])
 		_gesture("bend", cell, func() -> void:
 			Sfx.play("harvest")
+			Settings.vibrate(18)
 			Fx.burst(_entities, _cell_fx_point(cell), Fx.GRASS, 10, 50.0)
 			for i in count:
 				Fx.item_pop(_entities, _cell_fx_point(cell), GameData.item_icon(got), player)

@@ -406,7 +406,10 @@ func _refresh_hotbar() -> void:
 	# Un gain ponctuel (pas un sac entier qui change au chargement)
 	if pops.size() <= 2 and _last_selected != -1:
 		for icon: Control in pops:
-			_pop_icon(icon)
+			if _modal == null and icon.texture != null:
+				_fly_to_slot(icon)
+			else:
+				_pop_icon(icon)
 	# Case choisie : petit « pop » et un son
 	if Inventory.selected != _last_selected:
 		if _last_selected != -1:
@@ -427,6 +430,36 @@ func _pop_icon(icon: Control) -> void:
 	icon.scale = Vector2(1.45, 1.45)
 	var tw := icon.create_tween()
 	tw.tween_property(icon, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## L'objet gagné s'envole du personnage (au centre de l'écran) vers sa case,
+## en arc, puis la case rebondit à son arrivée.
+func _fly_to_slot(icon: TextureRect) -> void:
+	var fly := TextureRect.new()
+	fly.texture = icon.texture
+	fly.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fly.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	fly.size = Vector2(16, 16)
+	fly.pivot_offset = Vector2(8, 8)
+	fly.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fly.z_index = 40
+	fly.modulate.a = 0.0
+	_root.add_child(fly)
+	var vp := get_viewport().get_visible_rect().size
+	var start := vp / 2.0 + Vector2(-8, -26)
+	var target := icon.get_global_rect().get_center() - fly.size / 2.0
+	fly.position = start
+	var tw := fly.create_tween()
+	tw.tween_interval(0.3)  # le temps que l'objet saute du sol vers le joueur
+	tw.tween_property(fly, "modulate:a", 1.0, 0.05)
+	tw.tween_method(func(t: float) -> void:
+		var p := start.lerp(target, t)
+		p.y -= sin(t * PI) * 30.0
+		fly.position = p
+		fly.scale = Vector2.ONE * lerpf(1.3, 0.9, t), 0.0, 1.0, 0.42).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tw.tween_callback(func() -> void:
+		fly.queue_free()
+		_pop_icon(icon))
 
 
 # ------------------------------------------------------------ or animé
@@ -491,8 +524,16 @@ func _next_banner() -> void:
 	_banner = null
 	if _banner_queue.is_empty():
 		return
+	if _modal != null:
+		# Un menu est ouvert : la bannière attend sa fermeture
+		_banner = PanelContainer.new()  # réserve la place dans la file
+		get_tree().create_timer(0.4, true).timeout.connect(func() -> void:
+			_banner.free()
+			_next_banner())
+		return
 	var b: Array = _banner_queue.pop_front()
 	var panel := PanelContainer.new()
+	panel.set_meta("data", b)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.z_index = 90
 	_banner = panel
@@ -655,6 +696,12 @@ func is_over_ui(event: InputEvent) -> bool:
 
 # ------------------------------------------------------------ fenêtres
 func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
+	# Une bannière en cours est remise en file : elle reviendra après le menu
+	if _banner != null and _banner.is_inside_tree() and _banner.has_meta("data"):
+		_banner_queue.push_front(_banner.get_meta("data"))
+		_banner.queue_free()
+		_banner = null
+		_next_banner.call_deferred()
 	if _modal == null:
 		Sfx.play("open")
 	_closing_silently = true
@@ -2158,6 +2205,7 @@ func open_collections(category: String = "") -> void:
 		var b := _add_button(tabs, "%s %d/%d" % [c.name, Collections.count(cid), Collections.items_of(cid).size()],
 			open_collections.bind(cid))
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.custom_minimum_size = Vector2(112, 0)
 		if cid == _album_category:
 			b.add_theme_color_override("font_color", UiTheme.ACCENT)
 			b.add_theme_color_override("font_hover_color", UiTheme.ACCENT)

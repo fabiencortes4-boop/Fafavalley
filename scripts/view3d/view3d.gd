@@ -2405,6 +2405,26 @@ func _update_camera(snap: bool = false, delta: float = 0.016) -> void:
 	camera.look_at(_cam_target, Vector3.UP)
 
 
+## Secousse de la caméra 3D (coups, arbres qui tombent, rochers...).
+var _shake_tween: Tween
+
+
+func shake(strength: float = 2.0, duration: float = 0.15) -> void:
+	if camera == null:
+		return
+	if _shake_tween != null:
+		_shake_tween.kill()
+	_shake_tween = create_tween()
+	var amp := strength * 0.03
+	var steps := maxi(2, int(duration / 0.03))
+	for i in steps:
+		var k := 1.0 - float(i) / steps
+		_shake_tween.tween_property(camera, "h_offset", randf_range(-1, 1) * amp * k, 0.03)
+		_shake_tween.parallel().tween_property(camera, "v_offset", randf_range(-1, 1) * amp * k, 0.03)
+	_shake_tween.tween_property(camera, "h_offset", 0.0, 0.03)
+	_shake_tween.parallel().tween_property(camera, "v_offset", 0.0, 0.03)
+
+
 func _build_cursor() -> void:
 	_cursor = MeshInstance3D.new()
 	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)

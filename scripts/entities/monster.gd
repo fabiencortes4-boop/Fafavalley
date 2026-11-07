@@ -110,6 +110,12 @@ func hit(amount: int, from: Vector2, knockback: float) -> void:
 	_hop_velocity = Vector2.ZERO
 	_knockback = (position - from).normalized() * knockback
 	_sprite.modulate = Color(3, 3, 3)
+	# Du poids au coup : arrêt sur image, vibration ; plus fort s'il l'achève
+	var lethal := hp <= 0
+	Fx.hitstop(self, 0.09 if lethal else 0.045)
+	Settings.vibrate(45 if lethal else 20)
+	if lethal:
+		EventBus.camera_shake.emit(2.5, 0.15)
 	var tween := create_tween()
 	tween.tween_property(_sprite, "modulate", Color.WHITE, 0.15)
 	if hp <= 0:

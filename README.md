@@ -148,6 +148,18 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
   vers le sac et petits tremblements d'écran sur les gros coups.
+- **Album de collections** (Menu → Album) : chaque objet obtenu pour la première fois
+  s'inscrit dans 6 collections (récoltes, cueillette, poissons, élevage, cuisine, mine),
+  silhouettes pour ce qui reste à trouver ; or en récompense à la moitié et à la totalité.
+- **28 succès** (Menu → Succès) avec barre de progression et or en récompense : récoltes,
+  fortune, pêche, profondeur de la mine, amitiés, mariage, histoire, album...
+- **Game feel** : bannières animées avec étincelles et petite fanfare, compteur d'or qui
+  défile (« +120 » qui s'envole), objets récoltés qui volent jusqu'à leur case, arrêt sur
+  image et secousse de caméra 3D sur les coups, vibrations du téléphone (récolte, rochers,
+  coups, prise ; réglables), jauge d'énergie qui clignote quand on est fatigué.
+- **Équilibrage** : `python3 tools/balance_report.py` donne l'or par case et par jour de
+  chaque culture ; les prix suivent une courbe cohérente (cultures rapides et sûres
+  autour de 5, cultures longues ou à repousse jusqu'à 11-12).
 - Personnage vivant : ombre, démarche souple, respiration, poussière et bruits de pas.
 - Bruitages pour chaque action, l'interface, la pêche, la mine et les monstres
   (Menu → Son pour couper).
@@ -215,6 +227,8 @@ scripts/
     player_state.gd   #   énergie, eau, position
     relations.gd      #   amitié, discussions, cadeaux
     fish_log.gd       #   carnet de pêche
+    collections.gd    #   album de collections et paliers
+    achievements.gd   #   succès (data/achievements.json)
     crafting.gd       #   recettes, fabrication, améliorations
     save_manager.gd   #   sauvegarde JSON dans user://
     game_flow.gd      #   nouvelle partie, fin de journée
@@ -263,6 +277,7 @@ godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
+godot --headless res://tests/collections_test.tscn # album, paliers, succès, sauvegarde
 godot --headless res://tests/story_test.tscn      # histoire : chapitres, voies, déblocages, lettres
 godot --headless res://tests/animals_test.tscn    # maison, construction, achat d'animaux, foin, œufs, traite, boutiques
 godot --headless res://tests/crafting_test.tscn   # arroseurs, engrais, cuisine, forge

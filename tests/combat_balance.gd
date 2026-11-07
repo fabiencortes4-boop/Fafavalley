@@ -65,7 +65,7 @@ func _fight(mine: MineLevel) -> Array:
 			var c := mine.player_cell() + Vector2i(dx, dy)
 			if absi(dx) + absi(dy) >= 3 and mine.is_walkable(c) and not mine.get("_rock_data").has(c):
 				free_cells.append(c)
-	while t < MAX_TIME and not died[0]:
+	while t < MAX_TIME and not died[0] and is_instance_valid(mine) and mine.is_inside_tree():
 		var monsters := get_tree().get_nodes_in_group("monsters").filter(func(m: Node) -> bool: return is_instance_valid(m) and m.hp > 0 and not m in waiting)
 		if monsters.is_empty():
 			if waiting.is_empty():

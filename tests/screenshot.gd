@@ -186,6 +186,17 @@ func _ready() -> void:
 				Relations.met[who] = true
 				Relations.add_points(who, 600)
 				EventBus.heart_scene_requested.emit(who, HeartEvents.pending(who))
+		if "--album" in args or "--achievements" in args:
+			for id: String in ["carrot", "potato", "tomato", "melon", "pumpkin", "strawberry", "leek", "berries", "roach", "egg", "milk", "omelette", "coal", "copper_ore"]:
+				Inventory.add_item(id, 1)
+			Story.bump("harvest", 60)
+			Achievements.check()
+		if "--album" in args:
+			main.get("_hud").open_collections("crops")
+		if "--achievements" in args:
+			main.get("_hud").open_achievements()
+		if "--banner" in args:
+			Inventory.add_item("melon", 1)
 		if "--journal" in args:
 			main.get("_hud").open_story()
 		if "--recipes" in args:

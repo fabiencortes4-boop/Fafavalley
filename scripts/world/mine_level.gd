@@ -432,6 +432,7 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 		if broken:
 			_rocks.erase_cell(cell)
 			Sfx.play("rock_break")
+			Settings.vibrate(30)
 			shake(2.0, 0.15)
 			for id: String in drops:
 				_drop(id, cell_center(cell))

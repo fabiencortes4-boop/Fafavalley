@@ -112,3 +112,22 @@ static func item_pop(parent: Node, from: Vector2, texture: Texture2D, target: No
 			s.position = peak.lerp(target.position + Vector2(0, -10), k)
 		s.scale = Vector2.ONE * lerpf(1.25, 0.4, k), 0.0, 1.0, 0.22)
 	tw.tween_callback(s.queue_free)
+
+
+## Arrêt sur image (« hit-stop ») : le temps ralentit presque à l'arrêt une
+## fraction de seconde pour donner du poids aux coups. Ignoré en test.
+static var _stops: int = 0
+
+
+static func hitstop(node: Node, duration: float = 0.05, scale: float = 0.05) -> void:
+	if DisplayServer.get_name() == "headless" or node == null or not node.is_inside_tree():
+		return
+	if _stops == 0 and Engine.time_scale != 1.0:
+		return  # le temps est déjà modifié (captures d'écran, ralenti)
+	var tree := node.get_tree()
+	_stops += 1
+	Engine.time_scale = scale
+	await tree.create_timer(duration, true, false, true).timeout
+	_stops -= 1
+	if _stops == 0:
+		Engine.time_scale = 1.0

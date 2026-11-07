@@ -279,6 +279,8 @@ func _place_player() -> void:
 
 ## Petit tremblement de caméra (gros coups, chute d'arbre, blessure).
 func shake(strength: float = 2.0, duration: float = 0.15) -> void:
+	if View3D.current != null:
+		View3D.current.shake(strength, duration)
 	if _camera == null:
 		return
 	var tw := create_tween()
@@ -612,6 +614,7 @@ func _pick_forage(cell: Vector2i) -> void:
 	_forage_sprites.erase(cell)
 	player.play_use()
 	Sfx.play("harvest")
+	Settings.vibrate(18)
 	Fx.burst(_entities, cell_center(cell) + Vector2(0, -4), Fx.GRASS, 6, 40.0)
 	Fx.item_pop(_entities, cell_center(cell) + Vector2(0, -6), GameData.item_icon(id), player)
 	EventBus.toast("+%d %s" % [count, GameData.item_name(id)])

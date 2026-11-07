@@ -13,9 +13,9 @@ const CATEGORIES := [
 	{"id": "crops", "name": "Récoltes", "types": ["crop"], "reward": [300, 1500]},
 	{"id": "forage", "name": "Cueillette", "types": ["forage"], "reward": [150, 600]},
 	{"id": "fish", "name": "Poissons", "types": ["fish"], "reward": [200, 1000]},
-	{"id": "animal", "name": "Produits de la ferme", "types": ["animal"], "reward": [150, 700]},
+	{"id": "animal", "name": "Élevage", "types": ["animal"], "reward": [150, 700]},
 	{"id": "cooking", "name": "Cuisine", "types": ["food"], "reward": [250, 1200]},
-	{"id": "mine", "name": "Trésors de la mine", "types": ["loot"], "ids": MINERALS, "reward": [250, 1200]},
+	{"id": "mine", "name": "Mine", "types": ["loot"], "ids": MINERALS, "reward": [250, 1200]},
 ]
 
 var found: Dictionary = {}  # id d'objet -> true
