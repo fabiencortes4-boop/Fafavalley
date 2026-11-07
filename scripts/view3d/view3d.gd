@@ -138,6 +138,7 @@ func _build_environment() -> void:
 	add_child(_sun)
 	camera = Camera3D.new()
 	camera.fov = 38.0
+	camera.far = 48.0  # au-delà, rien n'est visible : moins à dessiner
 	camera.current = true
 	add_child(camera)
 	if _is_mine:
@@ -266,14 +267,14 @@ func _build_ground() -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var chars: Dictionary = map.get("_ground_chars")
+	# Couleur de chaque case de terre ferme (carte et décor autour)
+	var land := {}
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
-		var h := 0.0
+		if ch == "~":
+			continue
 		var col: Color
 		match ch:
-			"~":
-				h = -0.28
-				col = Color(0.55, 0.47, 0.33)
 			"=":
 				col = Color(0.86, 0.69, 0.47)
 			"c":
@@ -281,19 +282,32 @@ func _build_ground() -> void:
 			_:
 				col = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
 		var v := (float(_hash(cell) % 100) / 100.0 - 0.5) * 0.04
-		col = col.lightened(v) if v > 0 else col.darkened(-v)
-		_quad(st, Vector3(cell.x, h, cell.y), Vector3(cell.x + 1, h, cell.y + 1), col)
+		land[cell] = col.lightened(v) if v > 0 else col.darkened(-v)
+	for cell: Vector2i in _outskirts():
+		land[cell] = Color(0.86, 0.69, 0.47) if _outskirt_road(cell) else (colors.grass if _hash(cell) % 3 != 0 else colors.grass2)
+	# Sol lisse : chaque coin prend la moyenne des cases qui le touchent
+	var corner := func(x: int, y: int) -> Color:
+		var sum := Color(0, 0, 0, 0)
+		var n := 0
+		for c: Vector2i in [Vector2i(x - 1, y - 1), Vector2i(x, y - 1), Vector2i(x - 1, y), Vector2i(x, y)]:
+			if land.has(c):
+				sum += land[c]
+				n += 1
+		return sum / float(maxi(n, 1))
+	for cell: Vector2i in land:
+		_quad4(st, Vector3(cell.x, 0, cell.y), Vector3(cell.x + 1, 0, cell.y + 1),
+			corner.call(cell.x, cell.y), corner.call(cell.x + 1, cell.y), corner.call(cell.x + 1, cell.y + 1), corner.call(cell.x, cell.y + 1))
+	for cell: Vector2i in chars:
+		var ch: String = chars[cell]
+		if ch != "~":
+			continue
+		var h := -0.28
+		_quad(st, Vector3(cell.x, h, cell.y), Vector3(cell.x + 1, h, cell.y + 1), Color(0.55, 0.47, 0.33))
 		# Berges de l'eau : parois verticales
 		if ch == "~":
 			for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 				if chars.get(cell + d, "~") != "~":
 					_bank(st, cell, d, h, Color(0.52, 0.40, 0.27))
-	# Au-delà des bords : le monde continue (plus de vide bleu)
-	for cell: Vector2i in _outskirts():
-		var road := _outskirt_road(cell)
-		var col: Color = Color(0.86, 0.69, 0.47) if road else (colors.grass if _hash(cell) % 3 != 0 else colors.grass2)
-		col = col.darkened(0.04 * float(_hash(cell) % 3))
-		_quad(st, Vector3(cell.x, 0, cell.y), Vector3(cell.x + 1, 0, cell.y + 1), col)
 	st.generate_normals()
 	var ground := MeshInstance3D.new()
 	ground.mesh = st.commit()
@@ -325,7 +339,7 @@ func _build_ground() -> void:
 		_static.add_child(wmi)
 
 
-const OUTSKIRT := 14  # cases de décor au-delà des bords de la carte
+const OUTSKIRT := 10  # cases de décor au-delà des bords de la carte
 var _outskirt_cache: Array[Vector2i] = []
 
 
@@ -349,6 +363,17 @@ func _outskirt_road(cell: Vector2i) -> bool:
 		return false  # dans la carte, ou dans un coin
 	var edge := Vector2i(clampi(cell.x, 0, size.x - 1), clampi(cell.y, 0, size.y - 1))
 	return map.get("_ground_chars").get(edge, "") == "="
+
+
+## Carré horizontal avec une couleur par coin (dégradés doux).
+func _quad4(st: SurfaceTool, a: Vector3, b: Vector3, c00: Color, c10: Color, c11: Color, c01: Color) -> void:
+	var p1 := Vector3(a.x, a.y, a.z)
+	var p2 := Vector3(b.x, a.y, a.z)
+	var p3 := Vector3(b.x, a.y, b.z)
+	var p4 := Vector3(a.x, a.y, b.z)
+	for pair: Array in [[p1, c00], [p2, c10], [p3, c11], [p1, c00], [p3, c11], [p4, c01]]:
+		st.set_color(pair[1])
+		st.add_vertex(pair[0])
 
 
 func _quad(st: SurfaceTool, a: Vector3, b: Vector3, color: Color) -> void:
@@ -515,13 +540,20 @@ func _build_props() -> void:
 			if r < 2:
 				_place(batch, "nature", "plant_bushLarge", c, 2.0, float(r))
 			continue
-		if r < 7:
+		# Dense près du bord, clairsemé plus loin (moins de triangles)
+		var size: Vector2i = map.get("_map_size")
+		var dist := maxi(maxi(-cell.x, cell.x - size.x + 1), maxi(-cell.y, cell.y - size.y + 1))
+		var dense := 7 if dist <= 3 else (3 if Settings.quality >= 2 else 2)
+		if r < dense:
 			var jitter := Vector3(float(_hash(cell + Vector2i(3, 1)) % 40) / 100.0 - 0.2, 0, float(_hash(cell + Vector2i(1, 3)) % 40) / 100.0 - 0.2)
 			_place(batch, "nature", _tree_model(cell), c + jitter, 1.6 + float(_hash(cell) % 40) / 100.0, float(_hash(cell) % 628) / 100.0)
 		elif r == 7:
 			_place(batch, "nature", "plant_bushLarge", c, 2.2, 0.0)
 	batch.build(_static)
+	_wall_batch = Models.Batch.new()
 	_build_buildings(chars)
+	_wall_batch.build(_static)
+	_wall_batch = null
 	if map is Village:
 		_build_event_decor()
 
@@ -625,7 +657,8 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 	var chimney := _model("town", "chimney", 1.0)
 	chimney.position = Vector3(x0 + w - 0.7, 2.3, z0 + 0.8)
 	root.add_child(chimney)
-	root.add_child(_smoke(chimney.position + Vector3(0, 0.9, 0)))
+	if Settings.quality > 0:
+		root.add_child(_smoke(chimney.position + Vector3(0, 0.9, 0)))
 
 
 ## Fumée de cheminée : quelques bouffées grises qui montent et s'effacent.
@@ -935,6 +968,8 @@ func _village_lantern(cell: Vector2i) -> void:
 	glow.visible = false
 	_static.add_child(glow)
 	_lantern_glows.append(glow)
+	if Settings.quality == 0:
+		return  # économie : la lanterne brille, sans éclairer autour
 	var light := OmniLight3D.new()
 	light.light_color = Color(1.0, 0.78, 0.45)
 	light.omni_range = 3.2
@@ -989,7 +1024,13 @@ func _farm_plot(id: String) -> void:
 	_put(_fitted("nature", "sign", 0.6), _cell3d(cell + Vector2i(door, size.y - 1)))
 
 
+var _wall_batch: Models.Batch  # murs des maisons, dessinés en lot
+
+
 func _wall(parent: Node3D, model: String, at: Vector3, rot: float) -> void:
+	if _wall_batch != null:
+		_wall_batch.add(Models.path("town", model), Transform3D(Basis(Vector3.UP, rot), at))
+		return
 	var n := _model("town", model, 1.0)
 	n.position = at
 	n.rotation.y = rot
@@ -1781,9 +1822,11 @@ func _update_proxy(node: Node2D, proxy: Node3D) -> void:
 		var walking := Vector2(moved.x, moved.z).length() > 0.002
 		if walking:
 			proxy.rotation.y = lerp_angle(proxy.rotation.y, atan2(moved.x, moved.z), 0.25)
-		var anims := proxy.find_children("*", "AnimationPlayer", true, false)
-		if not anims.is_empty():
-			var ap := anims[0] as AnimationPlayer
+		if not proxy.has_meta("ap"):
+			var found := proxy.find_children("*", "AnimationPlayer", true, false)
+			proxy.set_meta("ap", found[0] if not found.is_empty() else null)
+		var ap := proxy.get_meta("ap") as AnimationPlayer
+		if ap != null:
 			var want := "walk" if walking else ("static" if node is Critter else "idle")
 			if ap.current_animation != want and ap.has_animation(want):
 				ap.play(want, 0.2)
@@ -1938,7 +1981,7 @@ func _update_weather() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	drop.material = mat
 	_weather.mesh = drop
-	_weather.amount = 400 if kind == "rain" else 220
+	_weather.amount = int((400 if kind == "rain" else 220) * [0.35, 0.65, 1.0][Settings.quality])
 	_weather.lifetime = 0.9 if kind == "rain" else 5.0
 	_weather.preprocess = 3.0
 	_weather.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX

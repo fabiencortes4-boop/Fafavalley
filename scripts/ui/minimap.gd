@@ -68,8 +68,14 @@ func cell_size() -> float:
 	return (size.x - 4) / float(_map_size.x)
 
 
-func _process(_delta: float) -> void:
-	if world != null and is_instance_valid(world):
+var _redraw_timer: float = 0.0
+
+
+func _process(delta: float) -> void:
+	# Redessinée 6 fois par seconde : bien assez pour une mini-carte
+	_redraw_timer -= delta
+	if _redraw_timer <= 0.0 and world != null and is_instance_valid(world):
+		_redraw_timer = 0.16
 		queue_redraw()
 
 

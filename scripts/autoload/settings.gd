@@ -17,6 +17,10 @@ var music: bool = true
 const TEXT_SIZES := [9, 11, 13]
 const TEXT_NAMES := ["normal", "grand", "très grand"]
 var text_size: int = 1
+## Qualité graphique : 0 économie (petits téléphones), 1 normale, 2 élevée.
+## Par défaut : normale sur téléphone, élevée sur ordinateur.
+const QUALITY_NAMES := ["économie", "normale", "élevée"]
+var quality: int = -1
 
 
 func _ready() -> void:
@@ -28,8 +32,12 @@ func _ready() -> void:
 		view_3d = bool(cfg.get_value("affichage", "vue_3d", true))
 		music = bool(cfg.get_value("son", "musique", true))
 		text_size = clampi(int(cfg.get_value("affichage", "texte", 1)), 0, TEXT_SIZES.size() - 1)
+		quality = int(cfg.get_value("affichage", "qualite", -1))
+	if quality < 0 or quality > 2:
+		quality = auto_quality()
 	if not zoom in ZOOM_LEVELS:
 		zoom = DEFAULT_ZOOM
+	apply_quality.call_deferred()
 
 
 func cycle_zoom() -> void:
@@ -49,6 +57,32 @@ func toggle_sound() -> void:
 	sound = not sound
 	_save()
 	changed.emit()
+
+
+## Qualité conseillée pour cet appareil.
+static func auto_quality() -> int:
+	if OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios"):
+		return 1
+	return 2
+
+
+func cycle_quality() -> void:
+	quality = (quality + 2) % 3  # élevée -> normale -> économie -> élevée
+	_save()
+	apply_quality()
+	changed.emit()
+	view_changed.emit()  # la vue 3D se reconstruit avec la nouvelle qualité
+
+
+## Applique la qualité : images par seconde (batterie), résolution 3D,
+## lissage des bords.
+func apply_quality() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	Engine.max_fps = [30, 30, 60][quality]
+	var vp := get_viewport()
+	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][quality]
+	vp.scaling_3d_scale = [0.65, 0.85, 1.0][quality]
 
 
 func toggle_music() -> void:
@@ -74,4 +108,5 @@ func _save() -> void:
 	cfg.set_value("affichage", "vue_3d", view_3d)
 	cfg.set_value("son", "musique", music)
 	cfg.set_value("affichage", "texte", text_size)
+	cfg.set_value("affichage", "qualite", quality)
 	cfg.save(PATH)

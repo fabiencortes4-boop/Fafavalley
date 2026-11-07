@@ -464,6 +464,8 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 	_joystick.visible = false
 	_action_button.visible = false
 	get_tree().paused = true
+	if DisplayServer.get_name() != "headless":
+		Engine.max_fps = 20  # menu ouvert : on économise la batterie
 	_modal = Control.new()
 	_modal.size = get_viewport().get_visible_rect().size
 	_root.add_child(_modal)
@@ -520,6 +522,7 @@ func close_modal() -> void:
 		_dialog_tween = null
 	_modal.queue_free()
 	_modal = null
+	Settings.apply_quality()
 	_dialog_label = null
 	_modal_closed_at = Time.get_ticks_msec()
 	_joystick.visible = true
@@ -579,6 +582,9 @@ func open_settings() -> void:
 		open_settings())
 	_add_button(box, "Texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
 		Settings.cycle_text_size()
+		open_settings())
+	_add_button(box, "Qualité : %s" % Settings.QUALITY_NAMES[Settings.quality], func() -> void:
+		Settings.cycle_quality()
 		open_settings())
 	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
 		Settings.toggle_sound()
@@ -981,6 +987,8 @@ func _open_dialog(title: String, portrait: Texture2D, text: String, hearts: int)
 	_joystick.visible = false
 	_action_button.visible = false
 	get_tree().paused = true
+	if DisplayServer.get_name() != "headless":
+		Engine.max_fps = 20  # menu ouvert : on économise la batterie
 	_modal = Control.new()
 	_modal.size = get_viewport().get_visible_rect().size
 	_modal.gui_input.connect(_on_dialog_input)
@@ -1687,12 +1695,17 @@ func _build_tutorial() -> void:
 	_refresh_tutorial()
 
 
+var _hint_timer: float = 0.0
+
+
 func _process(_delta: float) -> void:
 	# Le bandeau du tutoriel s'efface derrière les fenêtres et dialogues
 	if _tutorial_panel != null:
 		_tutorial_panel.visible = Tutorial.active() and _modal == null
-	# Étiquette du bouton Action
-	if _hint_panel != null:
+	# Étiquette du bouton Action (10 fois par seconde)
+	_hint_timer -= _delta
+	if _hint_panel != null and _hint_timer <= 0.0:
+		_hint_timer = 0.1
 		var text := ""
 		if _modal == null and _world != null and is_instance_valid(_world):
 			text = _world.action_hint(_world.get("_target_cell"))

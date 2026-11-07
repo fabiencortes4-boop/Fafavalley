@@ -57,6 +57,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Optimisé pour téléphone** : décor 3D découpé en morceaux (seul ce que voit la caméra
+  est dessiné : 13 fois moins de triangles au village), murs des maisons regroupés,
+  30 images/s sur téléphone et 20 dans les menus (batterie), mini-carte et aides
+  rafraîchies moins souvent. Réglage **Qualité** (économie, normale, élevée), choisi
+  automatiquement selon l'appareil. Banc d'essai : `tools/benchmark.tscn`.
+- **Rendu plus lisse** : textures filtrées, bords adoucis (anticrénelage), sol en dégradés.
 - **24 cultures** réparties sur les 4 saisons (hiver compris) : carotte, navet, maïs, tomate,
   chou, blé, radis, pomme de terre, fraise, ail, chou-fleur, haricot vert, panais, oignon,
   melon, poivron, myrtille, tournesol, aubergine, citrouille, betterave, canneberge,

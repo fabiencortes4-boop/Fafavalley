@@ -11,17 +11,20 @@ static var _parts: Dictionary = {}
 static var _fixed: Dictionary = {}  # matériau d'origine -> matériau corrigé
 
 
-## Certains modèles Kenney (Nature Kit) sont exportés en « métal pur » : sans
-## reflets autour, leurs faces à l'ombre deviennent noires. On les rend mats.
+## Corrige les matériaux Kenney : certains (Nature Kit) sont exportés en
+## « métal pur » (faces à l'ombre noires) : on les rend mats. Et toutes les
+## textures sont lissées (filtrage linéaire au lieu de pixels nets).
 static func fix_material(mat: Material) -> Material:
-	if not (mat is StandardMaterial3D) or (mat as StandardMaterial3D).metallic == 0.0:
+	if not (mat is StandardMaterial3D):
 		return mat
 	var key := mat.get_instance_id()
 	if not _fixed.has(key):
 		var m := (mat as StandardMaterial3D).duplicate() as StandardMaterial3D
-		m.metallic = 0.0
-		m.roughness = 1.0
-		m.metallic_specular = 0.2
+		if m.metallic != 0.0:
+			m.metallic = 0.0
+			m.roughness = 1.0
+			m.metallic_specular = 0.2
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		_fixed[key] = m
 	return _fixed[key]
 
@@ -90,17 +93,22 @@ static func tint(node: Node, color: Color) -> void:
 
 
 ## Regroupe des placements statiques par modèle, puis crée les MultiMesh.
+## Découpés en morceaux de CHUNK cases : ce qui est hors de l'écran n'est
+## pas dessiné (indispensable sur téléphone).
 class Batch:
-	var _items: Dictionary = {}  # chemin -> Array[Transform3D]
+	const CHUNK := 8.0
+	var _items: Dictionary = {}  # [chemin, morceau] -> Array[Transform3D]
 
 	func add(model_path: String, t: Transform3D) -> void:
-		if not _items.has(model_path):
-			_items[model_path] = []
-		_items[model_path].append(t)
+		var key := [model_path, floori(t.origin.x / CHUNK), floori(t.origin.z / CHUNK)]
+		if not _items.has(key):
+			_items[key] = []
+		_items[key].append(t)
 
 	func build(parent: Node3D) -> void:
-		for model_path: String in _items:
-			var transforms: Array = _items[model_path]
+		for key: Array in _items:
+			var model_path: String = key[0]
+			var transforms: Array = _items[key]
 			for part: Array in Models.parts(model_path):
 				var mm := MultiMesh.new()
 				mm.transform_format = MultiMesh.TRANSFORM_3D
