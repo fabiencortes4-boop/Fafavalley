@@ -60,5 +60,56 @@
 			6
 		],
 		"buildings": true
+	},
+	"tavern": {
+		"name": "Taverne du Héron",
+		"owner": "marius",
+		"open": [
+			16,
+			24
+		],
+		"closed_days": [],
+		"items": [
+			"vegetable_soup",
+			"grilled_fish",
+			"salad",
+			"omelette",
+			"fish_stew"
+		],
+		"prices": {
+			"vegetable_soup": 140,
+			"grilled_fish": 200,
+			"salad": 160,
+			"omelette": 320,
+			"fish_stew": 420
+		}
+	},
+	"comptoir": {
+		"name": "Comptoir de Basile",
+		"owner": "basile",
+		"open": [
+			9,
+			17
+		],
+		"closed_days": [
+			6
+		],
+		"items": [
+			"seed_melon",
+			"seed_grape",
+			"seed_cranberry",
+			"sapling_orange",
+			"sapling_peach",
+			"quartz",
+			"coal",
+			"iron_ore",
+			"bouquet"
+		],
+		"prices": {
+			"quartz": 150,
+			"coal": 60,
+			"iron_ore": 220,
+			"bouquet": 250
+		}
 	}
 }

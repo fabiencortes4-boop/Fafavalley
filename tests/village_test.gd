@@ -97,10 +97,10 @@ func _ready() -> void:
 	await _frames(3)
 	v = _main.call("current_map")
 	# Le soir, tout le monde rentre
-	TimeManager.minutes = 22 * 60
-	TimeManager.time_changed.emit(22, 0)
+	TimeManager.minutes = 23 * 60 + 45
+	TimeManager.time_changed.emit(23, 45)
 	await get_tree().create_timer(22.0).timeout
-	_check(v.npcs.all(func(n: Npc) -> bool: return n.is_inside()), "à 22h, les habitants sont rentrés")
+	_check(v.npcs.all(func(n: Npc) -> bool: return n.is_inside()), "à 23h45, les habitants sont rentrés")
 	# S'évanouir au village -> réveil à la maison
 	GameFlow.end_day(true)
 	await get_tree().process_frame

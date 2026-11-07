@@ -5,7 +5,8 @@
 		"sell": 30,
 		"places": [
 			"farm",
-			"village"
+			"village",
+			"port"
 		],
 		"seasons": [
 			0,
@@ -33,7 +34,8 @@
 		"places": [
 			"farm",
 			"village",
-			"forest"
+			"forest",
+			"port"
 		],
 		"seasons": [
 			0,
@@ -59,7 +61,8 @@
 		"sell": 75,
 		"places": [
 			"farm",
-			"forest"
+			"forest",
+			"port"
 		],
 		"seasons": [
 			1,
@@ -84,7 +87,8 @@
 		"sell": 150,
 		"places": [
 			"village",
-			"forest"
+			"forest",
+			"port"
 		],
 		"seasons": [
 			2,
@@ -109,7 +113,8 @@
 		"sell": 120,
 		"places": [
 			"farm",
-			"village"
+			"village",
+			"port"
 		],
 		"seasons": [
 			0,
@@ -159,7 +164,8 @@
 		"icon": 21,
 		"sell": 160,
 		"places": [
-			"farm"
+			"farm",
+			"port"
 		],
 		"seasons": [
 			0,
@@ -184,7 +190,8 @@
 		"sell": 500,
 		"places": [
 			"village",
-			"forest"
+			"forest",
+			"port"
 		],
 		"seasons": [
 			1

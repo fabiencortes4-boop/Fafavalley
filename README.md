@@ -57,6 +57,16 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Port du Héron** (à l'est du village, par l'avenue) : 4 nouveaux villageois (Marius le
+  tavernier, Nina la gardienne du phare, Basile le marchand, Céleste la musicienne), la
+  **taverne** où les habitants se retrouvent chaque soir de 20h à 23h30 (musique,
+  plats chez Marius), le comptoir de Basile (graines rares, minerais), pontons de pêche,
+  bateaux, phare. **Chapitre « Le phare du Héron »** : aider Nina et Marius à rallumer le
+  phare, éteint depuis le départ de Firmin (récompense, recette de la soupe du marin).
+- **Animations de pêche et de combat en 3D** : canne, fil, bouchon lancé en arc, ronds
+  dans l'eau, poisson qui jaillit ; arc du coup d'épée, chiffres de dégâts, monstres qui
+  sursautent et disparaissent, joueur qui clignote quand il est touché.
+- **Mine** : un escalier peut apparaître sous n'importe quel rocher cassé.
 - **Maisons à l'échelle** du personnage (plain-pied) et plus soignées : soubassement en
   pierre, toit de tuiles avec faîtage et avant-toit, jardinières fleuries sous les
   fenêtres, marche, paillasson, lanterne. **Jardins des villageois** : massifs fleuris
@@ -239,6 +249,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/port_test.tscn       # port, taverne du soir, chapitre du phare
 godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mariage
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées

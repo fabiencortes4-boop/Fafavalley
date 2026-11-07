@@ -38,7 +38,11 @@
 				]
 			},
 			{
-				"time": "19:30",
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -134,6 +138,10 @@
 			},
 			{
 				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -326,7 +334,11 @@
 				]
 			},
 			{
-				"time": "21:00",
+				"time": "20:30",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -421,6 +433,10 @@
 			},
 			{
 				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -512,7 +528,11 @@
 				]
 			},
 			{
-				"time": "18:30",
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -598,7 +618,11 @@
 				]
 			},
 			{
-				"time": "19:00",
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -689,7 +713,11 @@
 				]
 			},
 			{
-				"time": "19:00",
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -876,7 +904,11 @@
 				]
 			},
 			{
-				"time": "19:30",
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
 				"home": true
 			}
 		],
@@ -923,6 +955,348 @@
 		"birthday": [
 			2,
 			27
+		]
+	},
+	"marius": {
+		"name": "Marius",
+		"title": "le tavernier",
+		"sprite": 10,
+		"home": "taverne",
+		"shop": "tavern",
+		"map": "port",
+		"loves": [
+			"grilled_fish",
+			"pumpkin_soup"
+		],
+		"likes": [
+			"potato",
+			"onion",
+			"garlic",
+			"carp"
+		],
+		"dislikes": [
+			"slime"
+		],
+		"schedule": [
+			{
+				"time": "09:00",
+				"cell": [
+					27,
+					16
+				]
+			},
+			{
+				"time": "12:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Bienvenue au port du Héron, étranger ! Marius, tavernier. Ma taverne ouvre à seize heures, et le soir, tout Valfleur vient y chanter.",
+			"stranger": [
+				"La mer était calme ce matin. Bon signe.",
+				"Tu as goûté ma soupe de poisson ? Ça réchauffe le cœur."
+			],
+			"friend": [
+				"Assieds-toi, assieds-toi ! La première tournée est pour moi.",
+				"Firmin s'asseyait toujours à cette table, près de la cheminée."
+			],
+			"close": [
+				"Tu es de la famille, maintenant. Ici, on t'attend chaque soir."
+			],
+			"spring": [
+				"Le printemps, c'est la saison des sardines !"
+			],
+			"summer": [
+				"Les touristes ne viennent plus, mais les marins si."
+			],
+			"autumn": [
+				"L'automne, les tempêtes... et les meilleures histoires."
+			],
+			"winter": [
+				"L'hiver, la taverne est le seul endroit chaud du port."
+			],
+			"rain": [
+				"Par ce temps, la taverne va être pleine !"
+			],
+			"again": [
+				"Encore toi ? Tu veux un autre verre de jus de pomme ?"
+			],
+			"gift_loved": "Ça, c'est un cadeau de roi ! Ce soir, c'est la maison qui régale.",
+			"gift_liked": "Merci ! Ça ira dans la marmite.",
+			"gift_neutral": "Tiens, merci bien.",
+			"gift_disliked": "Hum... je le donnerai aux mouettes.",
+			"gift_again": "Un cadeau par jour, sinon je vais rougir !"
+		},
+		"birthday": [
+			1,
+			18
+		]
+	},
+	"nina": {
+		"name": "Nina",
+		"title": "la gardienne du phare",
+		"sprite": 11,
+		"home": "phare",
+		"map": "port",
+		"loves": [
+			"quartz",
+			"golden_carp",
+			"blueberry"
+		],
+		"likes": [
+			"trout",
+			"pike",
+			"cherry"
+		],
+		"dislikes": [
+			"fiber"
+		],
+		"schedule": [
+			{
+				"time": "07:00",
+				"cell": [
+					37,
+					6
+				]
+			},
+			{
+				"time": "12:00",
+				"cell": [
+					31,
+					14
+				]
+			},
+			{
+				"time": "17:00",
+				"cell": [
+					40,
+					7
+				]
+			},
+			{
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Salut. Nina. Je garde le phare... enfin, ce qu'il en reste. Il ne s'est plus allumé depuis dix ans.",
+			"stranger": [
+				"Le vent tourne. Les bateaux vont rentrer.",
+				"Tu entends les mouettes ? Elles annoncent la pluie."
+			],
+			"friend": [
+				"Mon grand-père allumait le phare chaque soir. Je voudrais tant le rallumer.",
+				"Parfois, je monte en haut juste pour regarder la mer."
+			],
+			"close": [
+				"Tu es la première personne à qui je montre la salle de la lanterne."
+			],
+			"spring": [
+				"Le printemps ramène les bateaux de pêche."
+			],
+			"summer": [
+				"En été, la mer est d'un bleu incroyable."
+			],
+			"autumn": [
+				"Les tempêtes d'automne secouent tout le phare."
+			],
+			"winter": [
+				"L'hiver, la mer gèle presque. Presque."
+			],
+			"rain": [
+				"La pluie fait chanter les tuiles du phare."
+			],
+			"again": [
+				"On s'est déjà parlé aujourd'hui. Tu veux encore m'aider ?"
+			],
+			"gift_loved": "C'est exactement ce qu'il me fallait ! Tu me connais bien.",
+			"gift_liked": "Oh, merci. C'est gentil.",
+			"gift_neutral": "Merci.",
+			"gift_disliked": "Euh... je ne saurais pas quoi en faire.",
+			"gift_again": "Garde-le pour demain."
+		},
+		"birthday": [
+			2,
+			4
+		]
+	},
+	"basile": {
+		"name": "Basile",
+		"title": "le marchand du port",
+		"sprite": 12,
+		"home": "comptoir",
+		"shop": "comptoir",
+		"map": "port",
+		"loves": [
+			"truffle",
+			"emerald"
+		],
+		"likes": [
+			"iron_ore",
+			"gold_ore",
+			"melon",
+			"grape"
+		],
+		"dislikes": [
+			"stone"
+		],
+		"schedule": [
+			{
+				"time": "08:00",
+				"cell": [
+					25,
+					12
+				]
+			},
+			{
+				"time": "09:00",
+				"home": true
+			},
+			{
+				"time": "18:00",
+				"cell": [
+					16,
+					24
+				]
+			},
+			{
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Basile, marchand ! Graines rares, minerais, objets venus d'ailleurs : tout arrive par bateau à mon comptoir.",
+			"stranger": [
+				"Les affaires reprennent doucement.",
+				"Un bateau doit arriver de la côte cette semaine."
+			],
+			"friend": [
+				"Pour toi, je fais toujours un petit prix.",
+				"Firmin ? Il m'a acheté une barque, il y a longtemps. Je me demande ce qu'il en a fait."
+			],
+			"close": [
+				"Tu es mon meilleur client. Et mon ami."
+			],
+			"spring": [
+				"Les graines de printemps se vendent comme des petits pains !"
+			],
+			"summer": [
+				"L'été, j'importe des melons du sud."
+			],
+			"autumn": [
+				"En automne, je reçois des raisins magnifiques."
+			],
+			"winter": [
+				"L'hiver, plus aucun bateau. Je fais mes comptes."
+			],
+			"rain": [
+				"La pluie ? Parfait pour vendre des parapluies. Si j'en avais."
+			],
+			"again": [
+				"Revenez demain, la marchandise sera fraîche !"
+			],
+			"gift_loved": "Ça vaut une fortune ! Tu es trop généreux·se.",
+			"gift_liked": "Belle marchandise, merci.",
+			"gift_neutral": "Merci, merci.",
+			"gift_disliked": "Je ne pourrai même pas revendre ça...",
+			"gift_again": "Un cadeau par jour, c'est la règle du port."
+		},
+		"birthday": [
+			3,
+			12
+		]
+	},
+	"celeste": {
+		"name": "Céleste",
+		"title": "la musicienne",
+		"sprite": 13,
+		"home": "celeste",
+		"map": "port",
+		"loves": [
+			"sunflower",
+			"poppy",
+			"strawberry"
+		],
+		"likes": [
+			"daffodil",
+			"berry_jam",
+			"peach"
+		],
+		"dislikes": [
+			"coal"
+		],
+		"schedule": [
+			{
+				"time": "10:00",
+				"cell": [
+					12,
+					17
+				]
+			},
+			{
+				"time": "14:00",
+				"cell": [
+					20,
+					22
+				]
+			},
+			{
+				"time": "19:30",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Oh, bonjour ! Céleste. Je joue de la guitare à la taverne, tous les soirs. Tu viendras m'écouter ?",
+			"stranger": [
+				"Je cherche une mélodie qui ressemble à la mer.",
+				"La plage est mon studio préféré."
+			],
+			"friend": [
+				"J'ai écrit une chanson sur Valfleur. Elle parle d'une fontaine qui chante.",
+				"Ta ferme m'inspire. Peut-être une chanson sur les tournesols ?"
+			],
+			"close": [
+				"Ce soir, je jouerai ta chanson préférée. Rien que pour toi."
+			],
+			"spring": [
+				"Le printemps a le son des oiseaux."
+			],
+			"summer": [
+				"L'été, je joue sur la plage jusqu'à minuit."
+			],
+			"autumn": [
+				"L'automne, mes chansons deviennent mélancoliques."
+			],
+			"winter": [
+				"L'hiver, la taverne est mon refuge."
+			],
+			"rain": [
+				"La pluie fait un rythme parfait. Écoute..."
+			],
+			"again": [
+				"On se voit ce soir à la taverne ?"
+			],
+			"gift_loved": "Oh ! C'est magnifique ! Je vais écrire une chanson là-dessus.",
+			"gift_liked": "Merci, c'est adorable.",
+			"gift_neutral": "Merci beaucoup.",
+			"gift_disliked": "Ah... ce n'est pas très musical, ça.",
+			"gift_again": "Tu es trop gentil·le, un par jour suffit !"
+		},
+		"birthday": [
+			0,
+			25
 		]
 	}
 }

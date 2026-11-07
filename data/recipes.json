@@ -164,5 +164,15 @@
 			"amethyst": 1,
 			"gold_ore": 2
 		}
+	},
+	"fish_stew": {
+		"station": "craft",
+		"category": "Cuisine",
+		"unlock": "port",
+		"ingredients": {
+			"carp": 1,
+			"potato": 1,
+			"onion": 1
+		}
 	}
 }

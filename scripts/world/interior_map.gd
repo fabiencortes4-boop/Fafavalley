@@ -110,6 +110,55 @@ const LAYOUTS := {
 			"####D######",
 		],
 	},
+	"taverne": {
+		"name": "Taverne du Héron", "floor": "dark", "wall": "wood", "map": "port", "open": [16, 24],
+		"rows": [
+			"##############",
+			"#bb_o___K_bbb#",
+			"#CCCCCC______#",
+			"#____________#",
+			"#_tt_o_o_tt__#",
+			"#_o_____o__o_#",
+			"#_____tt___E_#",
+			"#p___o_o___o_#",
+			"#____________#",
+			"######D#######",
+		],
+	},
+	"comptoir": {
+		"name": "Comptoir de Basile", "floor": "light", "wall": "green", "map": "port",
+		"rows": [
+			"###########",
+			"#SSS_x_SSS#",
+			"#____o____#",
+			"#_CCCCC___#",
+			"#_______bb#",
+			"#P_rr___bb#",
+			"####D######",
+		],
+	},
+	"celeste": {
+		"name": "Chez Céleste", "floor": "light", "wall": "blue", "map": "port", "open": [8, 20],
+		"rows": [
+			"##########",
+			"#B__K__P_#",
+			"#________#",
+			"#_o_rrr__#",
+			"#E__rrr__#",
+			"#P______p#",
+			"####D#####",
+		],
+	},
+	"phare": {
+		"name": "Le phare", "floor": "stone", "wall": "stone", "map": "port", "open": [8, 20],
+		"rows": [
+			"########",
+			"#K_o__B#",
+			"#______#",
+			"#_b__x_#",
+			"###D####",
+		],
+	},
 	"jules": {
 		"name": "Cabane de Jules", "floor": "dark", "wall": "wood", "open": [8, 20],
 		"rows": [
@@ -132,13 +181,17 @@ const READINGS := {
 	"gaston": ["Carnet de forge", "« Firmin m'a commandé des étais pour la mine, juste avant de partir. Il disait que l'eau chantait encore derrière la roche. »"],
 	"ranch": ["Livre d'élevage", "Une poule heureuse pond de plus gros œufs. Une vache brossée chaque jour donne le meilleur lait. Le foin, toujours le foin !"],
 	"odette": ["Album photo", "Une photo jaunie : la place de Valfleur couverte de fleurs, Firmin et Odette qui dansent devant la fontaine."],
+	"taverne": ["Le livre d'or de la taverne", "« Marius, ta soupe guérit tout, même le mal de mer. - Firmin » L'écriture date de dix ans. Juste en dessous : « Je reviendrai quand le phare brillera. »"],
+	"celeste": ["Partitions", "« La chanson de la fontaine » - le dernier couplet est encore blanc."],
+	"phare": ["Journal du gardien", "Mille deux cent quarante-trois bateaux guidés. La dernière ligne : « Ce soir, la lanterne s'éteint. Plus d'huile, plus de lentille. Que quelqu'un la rallume un jour. »"],
 	"lina": ["Journal de Lina", "« Un jour je peindrai la fontaine qui coule. Grand-mère dit qu'au printemps, l'eau sentait la violette. »"],
 }
 
 var building: String = "store"
 var floor_style: String = "light"
 var wall_style: String = "cream"
-var exit_front: Vector2i  # case devant la porte, au village
+var exit_front: Vector2i  # case devant la porte, au village (ou au port)
+var exit_map: String = "village"
 var residents: Array[Npc] = []
 var _spots: Array[Vector2i] = []
 
@@ -149,7 +202,8 @@ func setup(id: String) -> void:
 	var layout: Dictionary = LAYOUTS.get(id, LAYOUTS["store"])
 	floor_style = str(layout.get("floor", "light"))
 	wall_style = str(layout.get("wall", "cream"))
-	exit_front = Village.door_front(id)
+	exit_front = PortMap.door_front(id) if layout.get("map", "village") == "port" else Village.door_front(id)
+	exit_map = str(layout.get("map", "village"))
 
 
 func _map_rows() -> Array:
@@ -162,7 +216,7 @@ func display_name() -> String:
 
 ## Boutique tenue dans ce bâtiment ("" si aucune).
 static func shop_of(id: String) -> String:
-	return str(Village.SHOP_DOORS.get(id, ""))
+	return str(Village.SHOP_DOORS.merged({"taverne": "tavern", "comptoir": "comptoir"}).get(id, ""))
 
 
 ## Peut-on entrer ? Boutique : à ses horaires. Autres : horaires d'ouverture.
@@ -234,7 +288,20 @@ func _place_player() -> void:
 ## commerçant pendant ses heures d'ouverture.
 func _spawn_residents() -> void:
 	var spot := 0
-	for id: String in GameData.npcs:
+	var ids: Array = GameData.npcs.keys()
+	if building == "taverne":
+		# Le tavernier d'abord (derrière le comptoir), puis les clients du soir
+		ids.erase("marius")
+		ids.push_front("marius")
+	for id: String in ids:
+		if building == "taverne" and id != "marius" and id != Marriage.spouse and Npc.place_at(id, TimeManager.minutes) == "tavern" and not Events.gathering_now():
+			var guest := Npc.new()
+			guest.id = id
+			guest.position = cell_center(_spots[spot] if spot < _spots.size() else _spawn_cell + Vector2i(spot % 5, -3))
+			spot += 1
+			_entities.add_child(guest)
+			residents.append(guest)
+			continue
 		var data := GameData.npc(id)
 		var lives_here := str(data.get("home", "")) == building
 		if not lives_here or id == Marriage.spouse or not Npc.is_home_at(id, TimeManager.minutes):
@@ -285,7 +352,7 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 	match kind:
 		"exit":
 			Sfx.play("door")
-			EventBus.map_change_requested.emit("village", exit_front)
+			EventBus.map_change_requested.emit(exit_map, exit_front)
 		"forge":
 			EventBus.forge_requested.emit()
 		"counter":
@@ -302,9 +369,26 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 func _warp_for(cell: Vector2i) -> Dictionary:
 	if _interactables.get(cell, "") == "exit":
 		Sfx.play("door")
-		return {"map": "village", "cell": exit_front}
+		return {"map": exit_map, "cell": exit_front}
 	return {}
 
 
 func _update_tint(_hour: int, _minute: int) -> void:
 	_tint.color = Color(1.0, 0.95, 0.88)
+
+
+const TAVERN_LINES := ["Santé !", "Encore une chanson, Céleste !", "Marius, la même chose !", "Ha ha ha !", "À la tienne !", "Quelle journée...", "Tu as vu la mer, ce soir ?"]
+var _chatter: float = 3.0
+
+
+func _process(delta: float) -> void:
+	super(delta)
+	# Ambiance de la taverne : on trinque, on chante
+	if building != "taverne" or residents.size() < 2:
+		return
+	_chatter -= delta
+	if _chatter <= 0.0:
+		_chatter = randf_range(3.0, 6.0)
+		var who: Npc = residents[randi() % residents.size()]
+		var line: String = "La la la... (Céleste joue de la guitare)" if who.id == "celeste" else TAVERN_LINES[randi() % TAVERN_LINES.size()]
+		EventBus.npc_bubble.emit(who.id, line)

@@ -63,6 +63,8 @@ func is_unlocked(chapter_id: String) -> bool:
 
 
 func chapter_title(chapter_id: String) -> String:
+	if chapter_id == "port":
+		return "Le phare du Héron (au port)"
 	for i in chapters.size():
 		if str(chapters[i].id) == chapter_id:
 			return "Chapitre %d : %s" % [i + 1, chapters[i].title]

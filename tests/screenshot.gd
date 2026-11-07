@@ -144,6 +144,15 @@ func _ready() -> void:
 				FarmState.water(cell)
 				k += 1
 			main.call("current_map").call("_refresh_all")
+		if "--lit" in args:
+			PlayerState.flags["story_port"] = true
+		if "--port" in args:
+			main.call("_switch_to", "port")
+			await get_tree().process_frame
+		if "--tavern" in args:
+			TimeManager.minutes = 21 * 60
+			main.call("_switch_to", "in:taverne")
+			await get_tree().process_frame
 		if "--forest" in args:
 			main.call("_switch_to", "forest")
 			await get_tree().process_frame

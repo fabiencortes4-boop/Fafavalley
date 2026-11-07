@@ -40,7 +40,10 @@ var _lanterns: Array[OmniLight3D] = []  # lanternes du village, allumées le soi
 var _lantern_glows: Array[MeshInstance3D] = []
 
 const NPC_MODELS := ["character-b", "character-c", "character-d", "character-e", "character-f",
-	"character-g", "character-h", "character-i", "character-j", "character-k"]
+	"character-g", "character-h", "character-i", "character-j", "character-k",
+	"character-l", "character-c", "character-e", "character-g"]
+## Gens du port : variantes teintées pour les distinguer
+const NPC_TINTS := {11: Color(0.75, 0.9, 1.25), 12: Color(0.85, 1.15, 0.85), 13: Color(1.15, 0.85, 1.2)}
 ## Animaux (Cube Pets) : espèce -> [modèle, hauteur à l'écran en cases]
 const PET_MODELS := {
 	"chicken": ["animal-chick", 0.42], "bunny": ["animal-bunny", 0.45], "cat": ["animal-cat", 0.45],
@@ -295,6 +298,10 @@ func _build_ground() -> void:
 				col = Color(0.86, 0.69, 0.47)
 			"c":
 				col = Color(0.72, 0.70, 0.66)
+			":":
+				col = Color(0.93, 0.85, 0.62)  # sable
+			"#":
+				col = Color(0.55, 0.38, 0.23) if (cell.x + cell.y) % 2 == 0 else Color(0.6, 0.42, 0.26)  # planches
 			_:
 				col = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
 		var v := (float(_hash(cell) % 100) / 100.0 - 0.5) * 0.04
@@ -496,6 +503,16 @@ func _build_props() -> void:
 				_put(_box(Vector3(0.6, 0.3, 0.6), Color(0.95, 0.85, 0.5)), c + Vector3(0, 0.68, 0))
 			"w":
 				_well(c)
+			"W":
+				# Bateau amarré : sur la première case, orienté vers la seconde
+				if chars.get(cell + Vector2i.LEFT, "") != "W" and chars.get(cell + Vector2i.UP, "") != "W":
+					var along_x: bool = chars.get(cell + Vector2i.RIGHT, "") == "W"
+					_boat(c + (Vector3(0.5, 0, 0) if along_x else Vector3(0, 0, 0.5)), 0.0 if along_x else PI / 2.0, _hash(cell))
+			"#":
+				# Pontons : poteaux aux bords qui donnent sur l'eau
+				for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+					if chars.get(cell + d, "") == "~" and _hash(cell + d) % 2 == 0:
+						_put(_box(Vector3(0.1, 0.6, 0.1), Color(0.4, 0.27, 0.16)), c + Vector3(d.x, 0, d.y) * 0.45 + Vector3(0, 0.05, 0))
 			"L":
 				# Tronc qui barre le chemin de la forêt (tant qu'il n'est pas dégagé)
 				if not PlayerState.flags.has("story_ch1") and chars.get(cell + Vector2i.LEFT, "") != "L":
@@ -596,6 +613,31 @@ func _build_buildings(chars: Dictionary) -> void:
 					_mail_alert = _billboard(load("res://assets/sprites/ui_alert.png"), 0.04)
 					_mail_alert.position = box.position + Vector3(0, 0.6, 0)
 					_static.add_child(_mail_alert)
+		elif map is PortMap and PortMap.BUILDINGS.has(ch):
+			var pb: Array = PortMap.BUILDINGS[ch]
+			var psize: Vector2i = pb[1]
+			var pfront := _cell3d(cell + Vector2i(0, psize.y))
+			match str(pb[0]):
+				"taverne":
+					_house(cell, psize, pb[3], "wall-wood", Color(0.6, 0.22, 0.18))
+					_put(_fitted("survival", "barrel", 0.5), pfront + Vector3(-0.4, 0, -0.35))
+					_put(_fitted("survival", "barrel", 0.5), pfront + Vector3(psize.x - 0.6, 0, -0.35))
+					_put(_box(Vector3(1.4, 0.36, 0.06), Color(0.45, 0.3, 0.18)), pfront + Vector3(pb[3], 1.5, -0.42))
+					var sign := Label3D.new()
+					sign.text = "TAVERNE"
+					sign.font = UiTheme.font()
+					sign.font_size = 56
+					sign.pixel_size = 0.0045
+					sign.modulate = Color(1, 0.85, 0.45)
+					_put(sign, pfront + Vector3(pb[3], 1.5, -0.38))
+				"comptoir":
+					_house(cell, psize, pb[3], "wall", Color(0.25, 0.55, 0.6))
+					_put(_fitted("survival", "box", 0.45), pfront + Vector3(psize.x - 0.4, 0, -0.35))
+					_put(_fitted("survival", "box-open", 0.4), pfront + Vector3(-0.4, 0, -0.35))
+				"celeste":
+					_house(cell, psize, pb[3], "wall-wood", Color(0.55, 0.35, 0.65))
+				"phare":
+					_lighthouse(Vector3(cell.x + 1.0, 0, cell.y + 1.0))
 		elif map is Village and Village.BUILDINGS.has(ch):
 			var b: Array = Village.BUILDINGS[ch]
 			var size: Vector2i = b[1]
@@ -1029,6 +1071,101 @@ func _build_gardens() -> void:
 	mi.material_override = mat
 	_static.add_child(mi)
 	batch.build(_static)
+
+
+## Bateau de pêche : coque en bois, banc, mât et voile roulée.
+func _boat(c: Vector3, rot: float, h: int) -> void:
+	var boat := Node3D.new()
+	var hull_color: Color = [Color(0.75, 0.3, 0.25), Color(0.3, 0.5, 0.7), Color(0.95, 0.92, 0.85)][h % 3]
+	for part: Array in [
+		[Vector3(1.7, 0.22, 0.6), Vector3(0, -0.02, 0), hull_color],
+		[Vector3(1.5, 0.06, 0.48), Vector3(0, 0.1, 0), Color(0.58, 0.4, 0.25)],
+		[Vector3(0.12, 0.26, 0.5), Vector3(0.8, 0.06, 0), hull_color.darkened(0.2)],
+		[Vector3(0.12, 0.2, 0.44), Vector3(-0.8, 0.05, 0), hull_color.darkened(0.2)],
+		[Vector3(0.3, 0.06, 0.5), Vector3(0.1, 0.16, 0), Color(0.5, 0.33, 0.2)],
+		[Vector3(0.06, 1.1, 0.06), Vector3(-0.2, 0.65, 0), Color(0.45, 0.3, 0.18)],
+		[Vector3(0.7, 0.1, 0.1), Vector3(0.1, 0.4, 0), Color(0.95, 0.93, 0.85)],
+	]:
+		var b := _box(part[0], part[2])
+		b.position = part[1]
+		boat.add_child(b)
+	_put(boat, c + Vector3(0, -0.12, 0), rot)
+	# Il tangue doucement
+	var tw := boat.create_tween().set_loops()
+	tw.tween_property(boat, "rotation:z", 0.05, 1.6).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(boat, "rotation:z", -0.05, 1.6).set_trans(Tween.TRANS_SINE)
+
+
+## Phare rayé rouge et blanc, sur son rocher ; allumé la nuit une fois réparé.
+func _lighthouse(c: Vector3) -> void:
+	_put(_box(Vector3(2.0, 0.3, 2.0), Color(0.55, 0.53, 0.5)), c + Vector3(0, 0.15, 0))
+	for k in 6:
+		var ring := MeshInstance3D.new()
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.72 - k * 0.04
+		cyl.bottom_radius = 0.76 - k * 0.04
+		cyl.height = 0.6
+		cyl.material = _flat_material(Color(0.85, 0.2, 0.18) if k % 2 == 0 else Color(0.96, 0.95, 0.92))
+		ring.mesh = cyl
+		_put(ring, c + Vector3(0, 0.6 + k * 0.6, 0))
+	var door := _box(Vector3(0.36, 0.55, 0.05), Color(0.35, 0.22, 0.14))
+	_put(door, c + Vector3(-0.3, 0.55, 0.72))
+	# Salle de la lanterne : vitrée, toit conique
+	var top := 0.3 + 6 * 0.6
+	_put(_box(Vector3(1.0, 0.08, 1.0), Color(0.3, 0.3, 0.32)), c + Vector3(0, top, 0))
+	var glass := MeshInstance3D.new()
+	var gc := CylinderMesh.new()
+	gc.top_radius = 0.42
+	gc.bottom_radius = 0.42
+	gc.height = 0.6
+	var lit := PortStory.lighthouse_lit()
+	var gm := StandardMaterial3D.new()
+	gm.albedo_color = Color(1, 0.95, 0.7, 0.9) if lit else Color(0.6, 0.75, 0.85, 0.5)
+	gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	if lit:
+		gm.emission_enabled = true
+		gm.emission = Color(1, 0.85, 0.4)
+		gm.emission_energy_multiplier = 2.0
+	gc.material = gm
+	glass.mesh = gc
+	_put(glass, c + Vector3(0, top + 0.34, 0))
+	var roof := MeshInstance3D.new()
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.0
+	cone.bottom_radius = 0.55
+	cone.height = 0.45
+	cone.material = _flat_material(Color(0.25, 0.25, 0.28))
+	roof.mesh = cone
+	_put(roof, c + Vector3(0, top + 0.86, 0))
+	if not lit:
+		return
+	var light := OmniLight3D.new()
+	light.light_color = Color(1, 0.9, 0.6)
+	light.omni_range = 6.0
+	light.light_energy = 1.5
+	_put(light, c + Vector3(0, top + 0.4, 0))
+	# Faisceau qui tourne au-dessus de la mer
+	var beam := MeshInstance3D.new()
+	var bc := CylinderMesh.new()
+	bc.top_radius = 0.05
+	bc.bottom_radius = 0.9
+	bc.height = 7.0
+	var bm := StandardMaterial3D.new()
+	bm.albedo_color = Color(1, 0.95, 0.7, 0.18)
+	bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bm.cull_mode = BaseMaterial3D.CULL_DISABLED
+	bc.material = bm
+	beam.mesh = bc
+	var pivot := Node3D.new()
+	_put(pivot, c + Vector3(0, top + 0.34, 0))
+	beam.rotation.z = PI / 2.0
+	beam.position = Vector3(3.5, 0, 0)
+	pivot.add_child(beam)
+	_lighthouse_beam = pivot
+
+
+var _lighthouse_beam: Node3D
 
 
 ## Puits en pierre avec son petit toit.
@@ -1480,6 +1617,12 @@ func _build_home() -> void:
 				_put(_box(Vector3(0.9, 0.6, 0.9), Color(0.9, 0.78, 0.4)), c + Vector3(0, 0.3, 0))
 			"A":
 				_put(_fitted("pets", "animal-chick", 0.4), c, PI / 6.0)
+			"E":
+				# Petite scène de musique : estrade et guitare
+				_put(_box(Vector3(0.95, 0.15, 0.95), Color(0.5, 0.32, 0.2)), c + Vector3(0, 0.07, 0))
+				var guitar := _box(Vector3(0.18, 0.45, 0.08), Color(0.8, 0.5, 0.25))
+				guitar.rotation.z = 0.4
+				_put(guitar, c + Vector3(0.2, 0.4, -0.2))
 			"F":
 				_put(_fitted("survival", "barrel", 0.55), c)
 				_put(_fitted("survival", "fish", 0.4), c + Vector3(0, 0.55, 0))
@@ -2020,6 +2163,8 @@ func _make_proxy(node: Node) -> Node3D:
 		var index := int(GameData.npc((node as Npc).id).get("sprite", 0)) % NPC_MODELS.size()
 		# Théo est un enfant : plus petit
 		var npc := _model("blocky", NPC_MODELS[index], CHARACTER_SCALE * (0.75 if (node as Npc).id == "theo" else 1.0))
+		if NPC_TINTS.has(index):
+			Models.tint(npc, NPC_TINTS[index])
 		npc.add_child(_blob(1.6))
 		npc.set_meta("npc_id", (node as Npc).id)
 		return npc
@@ -2150,6 +2295,10 @@ func _process(delta: float) -> void:
 	_bite_alert.position = _player3d.position + Vector3(0, 1.45, 0)
 	if _water_mat != null:
 		_water_mat.uv1_offset.x += delta * 0.02
+	if _lighthouse_beam != null:
+		_lighthouse_beam.rotation.y += delta * 0.8
+		var hour := TimeManager.minutes / 60
+		_lighthouse_beam.visible = hour >= 19 or hour < 6
 	_update_camera(false, delta)
 	if _weather != null:
 		_weather.position = _cam_target + Vector3(0, 6, 0)

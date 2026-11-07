@@ -427,6 +427,10 @@ func talk_to_npc(npc: Npc) -> void:
 			Relations.add_points(id, Relations.TALK_POINTS)
 		EventBus.dialogue_requested.emit(id, Marriage.spouse_line())
 		return
+	var port_line := PortStory.try_talk(id)
+	if port_line != "":
+		EventBus.dialogue_requested.emit(id, port_line)
+		return
 	var scene := HeartEvents.pending(id)
 	if not scene.is_empty():
 		EventBus.heart_scene_requested.emit(id, scene)
@@ -439,6 +443,21 @@ func talk_to_npc(npc: Npc) -> void:
 		EventBus.dialogue_requested.emit(id, result.text)
 	else:
 		EventBus.dialogue_requested.emit(id, Relations.talk(id))
+
+
+# ------------------------------------------------------------ habitants (cartes avec des passants)
+## Chemin pour un habitant (village, port). Sans navigation : aucun chemin.
+func find_path(_from: Vector2i, _to: Vector2i) -> Array[Vector2i]:
+	return []
+
+
+func gather_cell(place: Vector2i, _index: int) -> Vector2i:
+	return place
+
+
+## Case où les habitants partent pour la taverne ((-1, -1) : ils disparaissent).
+func tavern_cell() -> Vector2i:
+	return Vector2i(-1, -1)
 
 
 func _is_farmland() -> bool:

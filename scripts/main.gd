@@ -113,6 +113,8 @@ func _load_map(map_id: String) -> void:
 		_world = HomeMap.new()
 	elif map_id == "forest":
 		_world = ForestMap.new()
+	elif map_id == "port":
+		_world = PortMap.new()
 	elif map_id.begins_with("in:"):
 		var inside := InteriorMap.new()
 		inside.setup(map_id.trim_prefix("in:"))
@@ -179,6 +181,8 @@ func _announce(map_id: String, previous: String) -> void:
 	var seasons := ["Printemps", "Été", "Automne", "Hiver"]
 	if map_id == "home":
 		_hud.title_card("Chez toi", "La maison de Firmin", Color(1, 0.82, 0.6))
+	elif map_id == "port" and not previous.begins_with("in:"):
+		_hud.title_card("Port du Héron", "À l'est de Valfleur", Color(0.6, 0.85, 1.0))
 	elif map_id == "forest":
 		_hud.title_card("Forêt de la source", "Au nord de la ferme", Color(0.6, 0.95, 0.7))
 	elif map_id == "farm":

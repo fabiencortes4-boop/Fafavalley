@@ -1270,5 +1270,16 @@
 		"stack": 1,
 		"sell": 500,
 		"description": "Forgé par Gaston. Offert à 10 cœurs : une demande en mariage."
+	},
+	"fish_stew": {
+		"name": "Soupe du marin",
+		"type": "food",
+		"icon": 127,
+		"stack": 99,
+		"sell": 380,
+		"edible": [
+			100,
+			50
+		]
 	}
 }

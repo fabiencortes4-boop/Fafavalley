@@ -1863,6 +1863,19 @@ func open_story() -> void:
 			row.add_child(count)
 		var reward := _add_label(list, "Récompense : " + str(c.get("unlock_text", "")))
 		reward.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+	# Le chapitre du port
+	var port_title := _add_label(list, "Au port : %s" % PortStory.data.get("title", ""))
+	port_title.add_theme_color_override("font_color", UiTheme.ACCENT)
+	if PortStory.finished():
+		_add_label(list, "Terminé ! Le phare brille de nouveau chaque nuit.")
+	else:
+		if PortStory.step == 0:
+			_add_label(list, str(PortStory.data.get("intro", "")))
+		_add_label(list, "Étape %d/%d : %s" % [PortStory.step + 1, PortStory.steps().size(), PortStory.current().get("text", "")])
+		var prog := PortStory.progress_text()
+		if prog != "":
+			var pl := _add_label(list, prog)
+			pl.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
 	for i in Story.chapter:
 		var past := _add_label(list, "Terminé : %d. %s" % [i + 1, Story.chapters[i].title])
 		past.add_theme_color_override("font_color", Color(0.6, 0.75, 0.6))
@@ -1874,6 +1887,8 @@ func _on_story_advanced(chapter_id: String, path_label: String) -> void:
 	for c: Dictionary in Story.chapters:
 		if str(c.id) == chapter_id:
 			done = c
+	if chapter_id == "port":
+		done = {"title": "Le phare du Héron", "unlock_text": "Soupe du marin ; le phare brille chaque nuit"}
 	title_card("Chapitre terminé !", str(done.get("title", "")), UiTheme.ACCENT)
 	show_toast("%s - nouvelle lettre dans ta boîte !" % path_label)
 	if done.has("unlock_text"):

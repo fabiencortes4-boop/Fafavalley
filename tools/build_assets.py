@@ -143,6 +143,25 @@ def new_crops():
     return [(cid, c["art"]) for cid, c in data.items() if "art" in c]
 
 
+def recolor_clothes(img, hue, sat):
+    """Change la couleur des vêtements et cheveux, sans toucher à la peau."""
+    import colorsys
+    out = img.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if not a:
+                continue
+            h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            skin = 0.0 <= h <= 0.14 and l > 0.5 and s > 0.2
+            if l < 0.18 or skin or s < 0.15:
+                continue
+            nr, ng, nb = colorsys.hls_to_rgb(hue / 360, l, sat)
+            px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
+    return out
+
+
 def recolor_hue(img, art):
     """Change la teinte des fruits (ou de toute la plante) d'une culture."""
     import colorsys
@@ -244,7 +263,14 @@ def village():
     compose(DUNGEON, [[108, 120, 122, 123, 124, 110, 121]]).save(os.path.join(OUT, "monsters.png"))
     # Habitants, dans l'ordre des "sprite" de data/npcs.json
     # + Mathis, Margot, Léon, Théo, Jules
-    compose(DUNGEON, [[99, 86, 100, 85, 111, 87, 88, 98, 112, 84]]).save(os.path.join(OUT, "npcs.png"))
+    sheet = compose(DUNGEON, [[99, 86, 100, 85, 111, 87, 88, 98, 112, 84]])
+    # + gens du port, recolorés (cheveux, vêtements) : Marius, Nina, Basile, Céleste
+    port = [(98, 15, 0.45), (99, 200, 0.7), (88, 140, 0.45), (99, 300, 0.6)]
+    out = Image.new("RGBA", (sheet.width + T * len(port), T), (0, 0, 0, 0))
+    out.alpha_composite(sheet, (0, 0))
+    for k, (base, hue, sat) in enumerate(port):
+        out.alpha_composite(recolor_clothes(tile(DUNGEON, base), hue, sat), (sheet.width + k * T, 0))
+    out.save(os.path.join(OUT, "npcs.png"))
 
 
 # Minerais visibles sur les rochers : (couleur claire, couleur sombre)
@@ -540,6 +566,8 @@ def extend_icons(sheet):
         extra += [draw_sapling(color), draw_fruit(color, cherry=(color == (212, 42, 60)))]
     # 125 bouquet, 126 pendentif de la source (mariage)
     extra += [draw_bouquet(), draw_pendant()]
+    # 127 soupe du marin
+    extra += [draw_bowl((235, 225, 200), (240, 140, 90))]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

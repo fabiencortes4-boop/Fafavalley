@@ -594,5 +594,109 @@
 				]
 			}
 		}
+	],
+	"marius": [
+		{
+			"hearts": 2,
+			"title": "La table de Firmin",
+			"lines": [
+				"Marius essuie une table près de la cheminée, plus soigneusement que les autres.",
+				"C'était sa table. Personne ne s'y assoit depuis qu'il est parti. Sauf toi, maintenant, si tu veux.",
+				"Il disait que Valfleur renaîtrait le jour où quelqu'un aimerait sa ferme autant que lui."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"Je prendrai soin de sa ferme.",
+						120,
+						"Je le sais. Ça se voit à tes mains pleines de terre."
+					],
+					[
+						"Il reviendra peut-être.",
+						80,
+						"Peut-être... J'ai gardé sa chope, au cas où."
+					]
+				]
+			}
+		}
+	],
+	"nina": [
+		{
+			"hearts": 2,
+			"title": "Le carnet du gardien",
+			"lines": [
+				"Nina feuillette un carnet aux pages jaunies, en haut du phare.",
+				"Le journal de mon grand-père. Chaque nuit, il notait les bateaux qu'il avait guidés. Mille deux cent quarante-trois.",
+				"J'aimerais écrire le mille deux cent quarante-quatrième."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"Tu l'écriras, j'en suis sûr·e.",
+						120,
+						"Avec ton aide... oui. Je crois que oui."
+					],
+					[
+						"C'est beaucoup de bateaux.",
+						40,
+						"Hm. Oui. C'est surtout beaucoup de nuits."
+					]
+				]
+			}
+		}
+	],
+	"basile": [
+		{
+			"hearts": 2,
+			"title": "Le trésor de Basile",
+			"lines": [
+				"Basile ouvre un coffret de velours caché sous son comptoir.",
+				"Une perle de la mer du sud. Ma première affaire, il y a trente ans. Je ne l'ai jamais revendue.",
+				"Un marchand qui garde quelque chose... c'est qu'il y tient vraiment."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"Elle est magnifique. Garde-la.",
+						120,
+						"Tu as raison. Certaines choses n'ont pas de prix."
+					],
+					[
+						"Combien tu en veux ?",
+						20,
+						"Ha ! Elle n'est pas à vendre, petit filou."
+					]
+				]
+			}
+		}
+	],
+	"celeste": [
+		{
+			"hearts": 2,
+			"title": "La chanson de la fontaine",
+			"lines": [
+				"Céleste accorde sa guitare sur la plage, au coucher du soleil.",
+				"J'ai fini la chanson de la fontaine. Mais il manque le dernier couplet... celui où l'eau revient.",
+				"Je l'écrirai le jour où je l'entendrai chanter pour de vrai."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"Joue-moi le début.",
+						120,
+						"(Elle joue. La mélodie ressemble au bruit de l'eau.) ...Tu as aimé ?"
+					],
+					[
+						"Ça risque d'être long.",
+						30,
+						"La musique sait attendre."
+					]
+				]
+			}
+		}
 	]
 }

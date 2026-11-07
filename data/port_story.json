@@ -1,0 +1,48 @@
+{
+	"title": "Le phare du Héron",
+	"intro": "Au port du Héron, à l'est du village, le phare est éteint depuis dix ans. Marius, le tavernier, a connu Firmin mieux que personne.",
+	"steps": [
+		{
+			"npc": "marius",
+			"text": "Rendre visite à Marius, à la taverne du port (ouverte à partir de 16h).",
+			"need": {},
+			"say": "Tu es la nouvelle personne de la ferme de Firmin ? Assieds-toi. Firmin était mon meilleur ami. Le soir où le phare s'est éteint, il est parti en barque vers la côte... Il avait promis de revenir quand le phare brillerait de nouveau. Va voir Nina, au phare : elle a besoin d'aide."
+		},
+		{
+			"npc": "nina",
+			"text": "Apporter 40 bois à Nina pour réparer l'escalier du phare.",
+			"need": {
+				"wood": 40
+			},
+			"say": "Du bois ! L'escalier du phare va enfin tenir. Maintenant, il faut une lentille pour la lanterne : du quartz et du cuivre, ça se trouve à la mine."
+		},
+		{
+			"npc": "nina",
+			"text": "Apporter 3 quartz et 5 minerais de cuivre à Nina pour la lentille.",
+			"need": {
+				"quartz": 3,
+				"copper_ore": 5
+			},
+			"say": "Une lentille toute neuve ! Il manque l'huile de la lampe. Marius en fabrique avec du poisson... Pêche pour lui, au bout du ponton."
+		},
+		{
+			"npc": "marius",
+			"text": "Pêcher 5 poissons et parler à Marius.",
+			"need": {},
+			"stat": [
+				"fish",
+				5
+			],
+			"say": "Cinq beaux poissons ! J'en fais de l'huile, et je t'apprends ma soupe du marin au passage. Ce soir, après vingt heures, on allume le phare. Rejoins Nina au pied de la tour."
+		},
+		{
+			"npc": "nina",
+			"text": "Après 20h, rejoindre Nina au pied du phare pour l'allumer.",
+			"need": {},
+			"night": true,
+			"say": "Tu es là ! On y va... Trois, deux, un... Regarde ! Le phare brille sur toute la mer ! Mon grand-père serait fier. Et Firmin... s'il navigue quelque part, il verra la lumière."
+		}
+	],
+	"reward_gold": 2000,
+	"reward_text": "Le phare brille de nouveau chaque nuit. Recette débloquée : soupe du marin."
+}

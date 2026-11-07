@@ -33,13 +33,15 @@ func track_for(map_id: String) -> String:
 	var hour := TimeManager.minutes / 60
 	if map_id.begins_with("mine:"):
 		return "mine"
+	if map_id == "in:taverne" and hour >= 18:
+		return "festival"  # musique et chansons à la taverne le soir
 	if map_id == "home" or map_id.begins_with("in:"):
 		return "home"
 	if map_id == "village" and Events.gathering_now():
 		return "festival"
 	if hour >= 20 or hour < 5:
 		return "night"
-	return "village" if map_id == "village" else "farm"
+	return "village" if map_id in ["village", "port"] else "farm"
 
 
 func _refresh() -> void:

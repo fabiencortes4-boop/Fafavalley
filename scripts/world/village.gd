@@ -29,8 +29,8 @@ const MAP := [
 	"TT.......N......==............==..............==..........TT",
 	"TTT...==.....==.==............==..............==.........TTT",
 	"TTTQn.==.v..n==.==v.n..v..==n.==.P.==..v.v..n.==..v.n..vb.TT",
-	"==========================================================TT",
-	"==========================================================TT",
+	"============================================================",
+	"============================================================",
 	"TT..n..v..==n...v...n...v.q.n.==..q.n...v...n...v...n...v.TT",
 	"TT.,.....,==.........ss.==============.ss................TTT",
 	"TT.gggggg.==.ggggg.,....==============......,.....,.......TT",
@@ -147,8 +147,8 @@ func _after_build() -> void:
 		_interactables[Events.BOOTH] = "booth"
 	_build_navigation()
 	for id: String in GameData.npcs:
-		if id == Marriage.spouse:
-			continue  # vit désormais à la ferme
+		if id == Marriage.spouse or GameData.npc(id).get("map", "") == "port":
+			continue  # vit à la ferme, ou au port
 		var npc := Npc.new()
 		npc.id = id
 		npc.village = self
@@ -223,6 +223,11 @@ static func gardens() -> Array:
 					continue  # on laisse le passage devant les portes
 				_gardens.append([cell, c[1], id])
 	return _gardens
+## Le soir, les habitants partent à la taverne par la route du port, à l'est.
+func tavern_cell() -> Vector2i:
+	return Vector2i(_map_size.x - 1, 19)
+
+
 static func door_front(id: String) -> Vector2i:
 	for ch: String in BUILDINGS:
 		var b: Array = BUILDINGS[ch]
@@ -320,6 +325,8 @@ func _process(delta: float) -> void:
 
 
 func _warp_for(cell: Vector2i) -> Dictionary:
+	if cell.x >= _map_size.x - 1:
+		return {"map": "port", "cell": Vector2i(1, clampi(cell.y, 19, 20) - 5)}
 	if cell.x <= 0:
 		return {"map": "farm", "cell": Vector2i(37, clampi(cell.y, 19, 20) - 10)}
 	return {}

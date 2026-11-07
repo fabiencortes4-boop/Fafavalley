@@ -32,7 +32,15 @@ func _ready() -> void:
 	_check(offers.size() == 3 and offers == Quests.offers(), "3 demandes par jour, les mêmes toute la journée")
 	_check(Quests.accept(0) and not Quests.accept(0), "on accepte une demande (une seule fois)")
 	var q: Dictionary = Quests.active[0]
-	var npc: Npc = v.npcs.filter(func(n: Npc) -> bool: return n.id == q.npc)[0]
+	var found := v.npcs.filter(func(n: Npc) -> bool: return n.id == q.npc)
+	var npc: Npc
+	if found.is_empty():
+		# Demande d'un habitant du port : on le fait venir pour le test
+		npc = Npc.new()
+		npc.id = str(q.npc)
+		v.get("_entities").add_child(npc)
+	else:
+		npc = found[0]
 	_check(Quests.deliverable(str(q.npc)) == -1, "sans les objets, rien à livrer")
 	Inventory.add_item(str(q.item), int(q.qty))
 	var gold := Inventory.gold

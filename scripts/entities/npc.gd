@@ -6,7 +6,7 @@ extends Node2D
 const SPEED := 30.0
 
 var id: String = ""
-var village: Village
+var village: WorldMap  # carte où l'habitant se déplace (village, port), ou null
 var home_cell: Vector2i  # case devant la porte de sa maison
 
 var _schedule: Array = []  # [{"minutes": int, "cell": Vector2i, "home": bool}]
@@ -42,6 +42,7 @@ func _ready() -> void:
 			"minutes": int(parts[0]) * 60 + int(parts[1]),
 			"cell": Vector2i(int(cell[0]), int(cell[1])),
 			"home": bool(entry.get("home", false)),
+			"place": str(entry.get("place", "")),  # "tavern" : soirée à la taverne
 		})
 	if village != null:  # dans un intérieur, l'habitant ne bouge pas
 		sync_to_time()
@@ -60,6 +61,8 @@ func _event_spot() -> Vector2i:
 	var p := Events.place_for(id)
 	if p.is_empty() or village == null:
 		return Vector2i(-1, -1)
+	if not village is Village:
+		return Vector2i(-1, -1)  # les fêtes ont lieu sur la place du village
 	return village.gather_cell(p.place, int(p.index))
 
 
@@ -85,6 +88,16 @@ static func is_home_at(npc_id: String, minutes: int) -> bool:
 	return home
 
 
+## Lieu de sortie de l'habitant à cette heure ("tavern"...), "" sinon.
+static func place_at(npc_id: String, minutes: int) -> String:
+	var place := ""
+	for entry: Dictionary in GameData.npc(npc_id).get("schedule", []):
+		var parts := str(entry.get("time", "06:00")).split(":")
+		if int(parts[0]) * 60 + int(parts[1]) <= minutes:
+			place = str(entry.get("place", ""))
+	return place
+
+
 func _entry_at(minutes: int) -> int:
 	var index := -1
 	for i in _schedule.size():
@@ -105,7 +118,7 @@ func sync_to_time() -> void:
 		position = village.cell_center(gather)
 		_set_inside(false)
 		return
-	if _working or _entry_index < 0 or _schedule[_entry_index].home:
+	if _working or _entry_index < 0 or _schedule[_entry_index].home or _schedule[_entry_index].place != "":
 		position = village.cell_center(home_cell)
 		_set_inside(true)
 	else:
@@ -140,6 +153,17 @@ func on_time_changed() -> void:
 		return
 	_entry_index = index
 	var entry: Dictionary = _schedule[index]
+	if entry.place != "":
+		# Soirée à la taverne : on part vers le port (ou sa porte) et on disparaît
+		var target: Vector2i = village.tavern_cell()
+		if target == Vector2i(-1, -1):
+			_set_inside(true)
+		else:
+			if _inside:
+				position = village.cell_center(home_cell)
+				_set_inside(false)
+			_walk_to(target, true)
+		return
 	if _inside:
 		if entry.home:
 			return
