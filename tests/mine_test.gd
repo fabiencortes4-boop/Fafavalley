@@ -40,13 +40,31 @@ func _ready() -> void:
 	_check(PlayerState.energy < energy_before, "piocher fatigue")
 	_check(mine.get("_ladder_found"), "l'échelle apparaît sous le rocher")
 	await _frames(40)  # laisser les objets tomber puis être attirés
-	mine.player.position = mine.cell_center(ladder)
+	# Ramasser les débris à côté de l'escalier, puis marcher dessus
+	var free_next := ladder
+	for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		if mine.is_walkable(ladder + d):
+			free_next = ladder + d
+			break
+	mine.player.position = mine.cell_center(free_next)
 	await get_tree().create_timer(1.0).timeout
 	_check(Inventory.count_of("stone") + Inventory.count_of("coal") + Inventory.count_of("copper_ore") + Inventory.count_of("quartz") > 0, "les débris sont ramassés")
-	mine.act_on(ladder)
+	mine.player.position = mine.cell_center(ladder)
+	await get_tree().physics_frame
 	await _frames(3)
 	mine = _main.call("current_map")
-	_check(mine.level == 2, "l'échelle mène au niveau 2")
+	_check(mine.level == 2, "marcher sur l'escalier mène au niveau 2")
+	# Remonter : on arrive à côté de l'escalier qui descend du niveau 1
+	mine.player.position = mine.cell_center(mine.up_cell())
+	await get_tree().physics_frame
+	await _frames(3)
+	var up: MineLevel = _main.call("current_map")
+	_check(up.level == 1 and up.get("_ladder_found"), "l'escalier qui monte ramène au niveau 1, escalier du bas dégagé")
+	_check(up.player_cell().distance_to(up.get("_ladder_cell")) <= 1.0, "on arrive au pied de l'escalier qui descend")
+	up.player.position = up.cell_center(up.get("_ladder_cell"))
+	await get_tree().physics_frame
+	await _frames(3)
+	mine = _main.call("current_map")
 	# Même jour, même niveau : génération reproductible
 	var a: Array = mine.call("_map_rows").duplicate()
 	var again := MineLevel.new()
@@ -104,6 +122,25 @@ func _ready() -> void:
 	EventBus.elevator_requested.connect(func(l: Array) -> void: levels[0] = l)
 	(_main.call("current_map") as Village).act_on(Vector2i(30, 3))
 	_check(levels[0] == [1, 5, 10], "l'ascenseur propose les paliers atteints (%s)" % [levels[0]])
+	# Ascenseur installé au niveau 5, coffre d'arme au niveau 15
+	EventBus.map_change_requested.emit("mine:5", Vector2i.ZERO)
+	await _frames(3)
+	var five: MineLevel = _main.call("current_map")
+	_check(five.elevator_cell != Vector2i(-1, -1) and five.get("_interactables").get(five.elevator_cell) == "elevator", "un ascenseur est installé au niveau 5")
+	levels[0] = []
+	five.act_on(five.elevator_cell)
+	_check(levels[0].has(5), "l'ascenseur de la mine propose les étages")
+	hud.close_modal()
+	EventBus.map_change_requested.emit("mine:15", Vector2i.ZERO)
+	await _frames(3)
+	var deep: MineLevel = _main.call("current_map")
+	_check(deep.treasure_cell != Vector2i(-1, -1), "un coffre attend au niveau 15")
+	deep.act_on(deep.treasure_cell)
+	_check(Inventory.count_of("steel_sword") == 1 and deep.treasure_opened(), "le coffre donne la lame d'acier")
+	hud.close_modal()
+	deep.act_on(deep.treasure_cell)
+	_check(Inventory.count_of("steel_sword") == 1, "un coffre ne s'ouvre qu'une fois")
+	_check(MineLevel.TREASURES.has(30), "un autre coffre au niveau 30")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
 

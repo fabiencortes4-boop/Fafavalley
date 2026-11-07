@@ -2,8 +2,10 @@ class_name MineLevel
 extends WorldMap
 ## Un niveau de la mine, généré au hasard (grotte par automate cellulaire).
 ## Le même jour, un niveau a toujours la même forme. Rochers à casser à la
-## pioche (minerais selon la profondeur), une échelle cachée sous l'un
-## d'eux, monstres plus nombreux et plus forts en descendant.
+## pioche (minerais selon la profondeur), un escalier qui descend caché sous
+## l'un d'eux, monstres plus nombreux et plus forts en descendant.
+## On change d'étage en marchant sur les escaliers. Tous les 5 étages, un
+## ascenseur ; tous les 15 étages, un coffre avec une meilleure arme.
 
 const WIDTH := 40  # 640 px : plus large que les écrans les plus allongés
 const HEIGHT := 24
@@ -21,8 +23,11 @@ const ROCKS := {
 	"gold": [WorldTiles.MINE_ROCK_GOLD, 4, [["gold_ore", 1, 2, 1.0]]],
 	"gem": [WorldTiles.MINE_ROCK_GEM, 3, []],
 }
-## Trésors des paliers : niveau -> arme
-const TREASURES := {10: "iron_sword", 20: "war_axe"}
+## Coffres des paliers (tous les 15 étages) : niveau -> arme
+const TREASURES := {15: "steel_sword", 30: "firmin_blade"}
+
+## On arrive par l'escalier du dessous (en remontant) : apparaître à côté.
+static var arrive_from_below: bool = false
 
 var level: int = 1
 
@@ -34,6 +39,10 @@ var _ladder_cell: Vector2i = Vector2i(-1, -1)
 var _ladder_found: bool = false
 var _monster_cells: Array[Vector2i] = []
 var _light: PointLight2D
+var _up_cell: Vector2i
+var elevator_cell: Vector2i = Vector2i(-1, -1)
+var treasure_cell: Vector2i = Vector2i(-1, -1)
+var _from_below: bool = false
 
 
 func setup(depth: int) -> void:
@@ -72,12 +81,21 @@ func _generate() -> void:
 			up = c
 			break
 	_spawn_cell = up + Vector2i.DOWN
+	_up_cell = up
+	# Ascenseur (tous les 5 étages) et coffre (tous les 15) près de l'arrivée
+	var reserved := {up: true, _spawn_cell: true}
+	if level % ELEVATOR_STEP == 0:
+		elevator_cell = _free_near(_spawn_cell, floor_set, reserved)
+		reserved[elevator_cell] = true
+	if TREASURES.has(level):
+		treasure_cell = _free_near(_spawn_cell, floor_set, reserved)
+		reserved[treasure_cell] = true
 	# Rochers et monstres
 	var rock_cells: Array[Vector2i] = []
 	var density := 0.2 + level * 0.004
 	for c in region:
 		var d: Vector2i = c - _spawn_cell
-		if c == up or absi(d.x) + absi(d.y) <= 2:
+		if reserved.has(c) or absi(d.x) + absi(d.y) <= 2:
 			continue
 		if _rng.randf() < density:
 			_rock_data[c] = {"type": _rock_type(), "hp": 0}
@@ -86,6 +104,17 @@ func _generate() -> void:
 		_rock_data[c].hp = ROCKS[_rock_data[c].type][1]
 	if level < MAX_LEVEL and not rock_cells.is_empty():
 		_ladder_cell = rock_cells[_rng.randi() % rock_cells.size()]
+	# En remontant : l'escalier qui descend est déjà dégagé, on arrive à côté
+	_from_below = arrive_from_below and _ladder_cell != Vector2i(-1, -1)
+	arrive_from_below = false
+	if _from_below:
+		for dy in range(-1, 2):
+			for dx in range(-1, 2):
+				_rock_data.erase(_ladder_cell + Vector2i(dx, dy))
+		for d: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP]:
+			if floor_set.has(_ladder_cell + d) and not reserved.has(_ladder_cell + d):
+				_spawn_cell = _ladder_cell + d
+				break
 	var count := mini(2 + level / 3, 10)
 	for i in 300:
 		if _monster_cells.size() >= count:
@@ -101,6 +130,30 @@ func _generate() -> void:
 			var c := Vector2i(x, y)
 			row += "U" if c == up else ("_" if floor_set.has(c) else "#")
 		_rows.append(row)
+
+
+## Case libre (sol) proche d'une case, à 2-4 pas, hors cases réservées.
+func _free_near(center: Vector2i, floor_set: Dictionary, reserved: Dictionary) -> Vector2i:
+	for radius in range(2, 6):
+		for dy in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				var c := center + Vector2i(dx, dy)
+				if absi(dx) + absi(dy) != radius or reserved.has(c) or not floor_set.has(c):
+					continue
+				# Il faut pouvoir s'en approcher : un voisin libre
+				for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.DOWN]:
+					if floor_set.has(c + d) and not reserved.has(c + d):
+						return c
+	return center + Vector2i.RIGHT
+
+
+## Niveaux accessibles par l'ascenseur : 1 puis tous les 5 étages atteints.
+static func elevator_levels() -> Array:
+	var deepest := int(PlayerState.flags.get("mine_deepest", 1))
+	var levels: Array = [1]
+	for l in range(ELEVATOR_STEP, deepest + 1, ELEVATOR_STEP):
+		levels.append(l)
+	return levels
 
 
 func _cave() -> Array:
@@ -202,6 +255,14 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 		_interactables[cell] = "ladder_up"
 
 
+func up_cell() -> Vector2i:
+	return _up_cell
+
+
+func treasure_opened() -> bool:
+	return PlayerState.flags.has("treasure_%d" % level)
+
+
 func _after_build() -> void:
 	_rocks = TileMapLayer.new()
 	_rocks.tile_set = _ground.tile_set
@@ -211,6 +272,14 @@ func _after_build() -> void:
 		_rocks.set_cell(c, 0, WorldTiles.coords(ROCKS[_rock_data[c].type][0]))
 	if level < MAX_LEVEL and _ladder_cell == Vector2i(-1, -1):
 		_reveal_ladder(_monster_cells[0] if not _monster_cells.is_empty() else _spawn_cell + Vector2i.RIGHT)
+	if _from_below:
+		_reveal_ladder(_ladder_cell, true)
+	if elevator_cell != Vector2i(-1, -1):
+		_blocked[elevator_cell] = true
+		_interactables[elevator_cell] = "elevator"
+	if treasure_cell != Vector2i(-1, -1):
+		_blocked[treasure_cell] = true
+		_interactables[treasure_cell] = "treasure"
 	for c in _monster_cells:
 		_spawn_monster(c)
 	# Éclairage : plus on descend, plus il fait sombre (la lanterne éclaire).
@@ -230,17 +299,15 @@ func _after_build() -> void:
 	_light.energy = 0.9
 	_light.position = Vector2(0, -8)
 	player.add_child(_light)
-	# Trésor des paliers
-	if TREASURES.has(level) and not PlayerState.flags.has("treasure_%d" % level):
-		PlayerState.flags["treasure_%d" % level] = true
-		_drop(TREASURES[level], cell_center(_spawn_cell) + Vector2(16, 0))
-		EventBus.message_requested.emit("Un coffre oublié !", "Quelqu'un a laissé une arme ici, il y a bien longtemps. Elle est à toi maintenant.")
 	if level == MAX_LEVEL:
-		EventBus.toast("Le fond de la mine... Il n'y a plus d'échelle.")
+		EventBus.toast("Le fond de la mine... L'escalier s'arrête ici.")
 	else:
 		EventBus.toast(display_name())
 	var deepest := int(PlayerState.flags.get("mine_deepest", 1))
 	PlayerState.flags["mine_deepest"] = maxi(deepest, level)
+	if level % ELEVATOR_STEP == 0 and not PlayerState.flags.has("elevator_%d" % level):
+		PlayerState.flags["elevator_%d" % level] = true
+		EventBus.message_requested.emit("Ascenseur débloqué !", "Un vieil ascenseur de mineur, toujours en état. Tu peux maintenant revenir directement au niveau %d depuis l'entrée de la mine." % level)
 
 
 func _place_player() -> void:
@@ -285,10 +352,62 @@ func _monster_kind() -> String:
 func _interact(kind: String, _cell: Vector2i) -> void:
 	match kind:
 		"ladder_up":
-			EventBus.map_change_requested.emit("village", VILLAGE_EXIT)
+			_go_up()
 		"ladder_down":
-			Sfx.play("step_stone")
-			EventBus.map_change_requested.emit("mine:%d" % (level + 1), Vector2i.ZERO)
+			_go_down()
+		"elevator":
+			Sfx.play("door")
+			EventBus.elevator_requested.emit(elevator_levels())
+		"treasure":
+			_open_treasure()
+
+
+## Marcher sur un escalier = changer d'étage.
+func _warp_for(cell: Vector2i) -> Dictionary:
+	if cell == _up_cell:
+		_go_up()
+	elif _ladder_found and cell == _ladder_cell:
+		_go_down()
+	return {}
+
+
+var _leaving: bool = false
+
+
+func _go_up() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	Sfx.play("step_stone")
+	if level == 1:
+		EventBus.map_change_requested.emit("village", VILLAGE_EXIT)
+	else:
+		arrive_from_below = true
+		EventBus.map_change_requested.emit("mine:%d" % (level - 1), Vector2i.ZERO)
+
+
+func _go_down() -> void:
+	if _leaving or level >= MAX_LEVEL:
+		return
+	_leaving = true
+	Sfx.play("step_stone")
+	EventBus.map_change_requested.emit("mine:%d" % (level + 1), Vector2i.ZERO)
+
+
+func _open_treasure() -> void:
+	var weapon: String = TREASURES.get(level, "")
+	if weapon == "" or treasure_opened():
+		EventBus.toast("Le coffre est vide.")
+		return
+	if not Inventory.can_add(weapon):
+		EventBus.toast("Libère une place dans ton sac d'abord.")
+		return
+	PlayerState.flags["treasure_%d" % level] = true
+	Inventory.add_item(weapon, 1)
+	Sfx.play("levelup")
+	Fx.burst(_entities, cell_center(treasure_cell) + Vector2(0, -8), [Color(1, 0.9, 0.4), Color(1, 1, 0.8)], 20, 60.0)
+	var item := GameData.item(weapon)
+	EventBus.message_requested.emit("Un coffre ancien !", "Dedans : %s ! %s (dégâts %d-%d)" % [item.name, item.get("description", ""), int(item.damage[0]), int(item.damage[1])])
 
 
 func _use_pickaxe(cell: Vector2i, energy: int) -> void:
@@ -349,7 +468,7 @@ func _reveal_ladder(cell: Vector2i, show_now: bool = true) -> void:
 	if show_now:
 		_ground.set_cell(cell, 0, WorldTiles.coords(WorldTiles.LADDER_DOWN))
 	_interactables[cell] = "ladder_down"
-	EventBus.toast("Une échelle vers le niveau %d !" % (level + 1))
+	EventBus.toast("Un escalier descend vers le niveau %d !" % (level + 1))
 
 
 func _on_monster_died(monster: Monster) -> void:

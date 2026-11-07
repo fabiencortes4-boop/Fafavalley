@@ -57,6 +57,14 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **Mine** : une vraie entrée au village (colline rocheuse, galerie, charpente, rails,
+  wagonnet, lanternes). On change d'étage en **marchant sur les escaliers** : ceux qui
+  descendent s'enfoncent dans le sol (cachés sous un rocher), ceux qui montent sortent
+  du sol. Un **ascenseur** est installé tous les 5 étages (il débloque l'arrêt), et un
+  **coffre** tous les 15 étages donne une meilleure arme (lame d'acier, épée de Firmin).
+- **Ergonomie** : le bouton Action annonce ce qu'il va faire (Labourer, Parler, Entrer,
+  Récolter, Descendre...) ; chaque fenêtre a une croix et se ferme en touchant à côté ;
+  menu pause simplifié avec un écran Réglages ; achat par 5 dans les boutiques.
 - **Musique d'ambiance** originale (composée par `tools/build_music.py`) : ferme, village,
   mine, intérieurs, fêtes et nuit, avec fondu enchaîné (Menu → Musique pour couper).
 - **Tutoriel guidé** pour les nouvelles parties : une consigne à la fois (marcher, courrier,

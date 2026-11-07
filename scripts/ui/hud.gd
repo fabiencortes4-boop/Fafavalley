@@ -39,6 +39,8 @@ var _slot_labels: Array[Label] = []
 var _joystick: VirtualJoystick
 var _action_button: TouchScreenButton
 var _action_icon: Sprite2D
+var _hint_panel: PanelContainer
+var _hint_label: Label
 var _toast: Label
 var _toast_tween: Tween
 var _modal: Control
@@ -267,6 +269,16 @@ func _build_action_button() -> void:
 	_action_icon.position = Vector2(8, 8)
 	_action_icon.scale = Vector2.ONE * (2.0 / ACTION_SCALE)
 	_action_button.add_child(_action_icon)
+	# Ce que fera le bouton (« Labourer », « Parler », « Entrer »...)
+	_hint_panel = PanelContainer.new()
+	_hint_panel.add_theme_stylebox_override("panel", UiTheme.box("ui_button", 5, 3))
+	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_hint_panel)
+	_hint_label = Label.new()
+	_hint_label.add_theme_color_override("font_color", UiTheme.TEXT_DARK)
+	_hint_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint_panel.add_child(_hint_label)
 
 
 func _build_toast() -> void:
@@ -307,10 +319,11 @@ func _layout() -> void:
 	_gold_panel.position = Vector2(_top_panel.position.x, _top_panel.position.y + _top_panel.size.y + 2)
 
 	if _tutorial_panel != null:
-		_tutorial_panel.size = Vector2(minf(300, vp.x - 140), 0)
+		var tw := minf(360, vp.x - 120)
+		_tutorial_panel.size = Vector2(tw, 0)
 		_tutorial_panel.reset_size()
 		var tsize := _tutorial_panel.get_combined_minimum_size()
-		_tutorial_panel.size = Vector2(minf(300, vp.x - 140), tsize.y)
+		_tutorial_panel.size = Vector2(tw, tsize.y)
 		_tutorial_panel.position = Vector2((vp.x - _tutorial_panel.size.x) / 2.0, _hotbar.position.y - _tutorial_panel.size.y - 4)
 	_toast.position = Vector2(0, 44)
 	_toast.size = Vector2(vp.x, 16)
@@ -462,12 +475,33 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 	box.custom_minimum_size = Vector2(220, 0)
 	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
+	var title_row := HBoxContainer.new()
+	box.add_child(title_row)
+	var left_pad := Control.new()
+	left_pad.custom_minimum_size = Vector2(24, 0)
+	title_row.add_child(left_pad)
 	var heading := Label.new()
 	heading.text = title
 	heading.add_theme_font_size_override("font_size", 16)
 	heading.add_theme_color_override("font_color", UiTheme.ACCENT)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(heading)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(heading)
+	if closable:
+		# Croix de fermeture, et toucher en dehors de la fenêtre pour la fermer
+		var x := Button.new()
+		x.text = "X"
+		x.custom_minimum_size = Vector2(24, 22)
+		x.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		x.pressed.connect(close_modal)
+		title_row.add_child(x)
+		center.gui_input.connect(func(event: InputEvent) -> void:
+			if event is InputEventMouseButton and event.pressed and not panel.get_global_rect().has_point(event.global_position):
+				close_modal())
+	else:
+		var right_pad := Control.new()
+		right_pad.custom_minimum_size = Vector2(24, 0)
+		title_row.add_child(right_pad)
 	return box
 
 
@@ -508,45 +542,63 @@ func _add_label(box: Container, text: String) -> Label:
 
 func open_pause_menu() -> void:
 	var outer := _open_modal("Pause")
-	# Deux colonnes : tout tient sur l'écran d'un téléphone en paysage
-	var box := GridContainer.new()
-	box.columns = 3
-	box.add_theme_constant_override("h_separation", 6)
-	box.add_theme_constant_override("v_separation", 4)
-	outer.add_child(box)
+	# Trois colonnes : tout tient sur l'écran d'un téléphone en paysage
+	var box := _menu_grid(outer)
 	_add_button(box, "Reprendre", close_modal)
-	_add_button(box, "Zoom : x%s" % str(Settings.zoom), func() -> void:
-		Settings.cycle_zoom()
-		open_pause_menu())
-	_add_button(box, "Vue : %s" % ("3D" if Settings.view_3d else "2D"), func() -> void:
-		Settings.toggle_view()
-		open_pause_menu())
-	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
-		Settings.toggle_sound()
-		open_pause_menu())
-	_add_button(box, "Musique : %s" % ("oui" if Settings.music else "non"), func() -> void:
-		Settings.toggle_music()
-		open_pause_menu())
-	_add_button(box, "Texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
-		Settings.cycle_text_size()
-		open_pause_menu())
-	_add_button(box, "Tutoriel", func() -> void:
-		Tutorial.restart()
-		close_modal())
+	_add_button(box, "Sac", open_bag)
 	_add_button(box, "Histoire", open_story)
 	_add_button(box, "Fabrication", open_crafting.bind("craft"))
 	_add_button(box, "Compétences", open_skills)
 	_add_button(box, "Habitants", open_relations)
 	_add_button(box, "Carnet de pêche", open_fish_log)
+	_add_button(box, "Réglages", open_settings)
 	_add_button(box, "Sauvegarder", func() -> void:
 		SaveManager.save_game()
 		show_toast("Partie sauvegardée"))
-	for b in box.get_children():
-		b.custom_minimum_size = Vector2(120, 24)
+	_size_menu(box)
 	if not OS.has_feature("web"):  # on ne « quitte » pas une page web
-		_add_button(box, "Sauvegarder et quitter", func() -> void:
+		_add_button(outer, "Sauvegarder et quitter", func() -> void:
 			SaveManager.save_game()
 			get_tree().quit())
+
+
+func open_settings() -> void:
+	var outer := _open_modal("Réglages")
+	var box := _menu_grid(outer)
+	_add_button(box, "Zoom : x%s" % str(Settings.zoom), func() -> void:
+		Settings.cycle_zoom()
+		open_settings())
+	_add_button(box, "Vue : %s" % ("3D" if Settings.view_3d else "2D"), func() -> void:
+		Settings.toggle_view()
+		open_settings())
+	_add_button(box, "Texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
+		Settings.cycle_text_size()
+		open_settings())
+	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
+		Settings.toggle_sound()
+		open_settings())
+	_add_button(box, "Musique : %s" % ("oui" if Settings.music else "non"), func() -> void:
+		Settings.toggle_music()
+		open_settings())
+	_add_button(box, "Revoir le tutoriel", func() -> void:
+		Tutorial.restart()
+		close_modal())
+	_size_menu(box)
+	_add_button(outer, "Retour", open_pause_menu)
+
+
+func _menu_grid(outer: Container) -> GridContainer:
+	var box := GridContainer.new()
+	box.columns = 3
+	box.add_theme_constant_override("h_separation", 6)
+	box.add_theme_constant_override("v_separation", 6)
+	outer.add_child(box)
+	return box
+
+
+func _size_menu(box: GridContainer) -> void:
+	for b in box.get_children():
+		b.custom_minimum_size = Vector2(124, 28)
 
 
 func ask_sleep() -> void:
@@ -648,6 +700,13 @@ func _item_row(id: String) -> HBoxContainer:
 	buy.disabled = not in_season or owned or locked or Inventory.gold < price
 	buy.pressed.connect(_buy.bind(id))
 	row.add_child(buy)
+	# Achat par 5 pour ce qui s'empile (graines, foin...)
+	if int(item.get("stack", 99)) > 1 and not is_bag and item.get("type") != "tool":
+		var five := Button.new()
+		five.text = "x5"
+		five.disabled = not in_season or Inventory.gold < price * 5
+		five.pressed.connect(_buy.bind(id, 5))
+		row.add_child(five)
 	return row
 
 
@@ -719,7 +778,7 @@ func _building_row(id: String) -> VBoxContainer:
 	return col
 
 
-func _buy(id: String) -> void:
+func _buy(id: String, qty: int = 1) -> void:
 	var item := GameData.item(id)
 	var price := Shops.price(_current_shop, id)
 	if item.get("type") == "backpack":
@@ -733,13 +792,13 @@ func _buy(id: String) -> void:
 			show_toast("Ton sac a maintenant %d places !" % Inventory.capacity)
 			open_shop(_current_shop)
 		return
-	if not Inventory.can_add(id):
+	if not Inventory.can_add(id, qty):
 		show_toast("Inventaire plein !")
 		return
-	if Inventory.spend_gold(price):
+	if Inventory.spend_gold(price * qty):
 		Sfx.play("coins")
-		Inventory.add_item(id, 1)
-		show_toast("+1 %s" % GameData.item_name(id))
+		Inventory.add_item(id, qty)
+		show_toast("+%d %s" % [qty, GameData.item_name(id)])
 		open_shop(_current_shop)  # reconstruit la liste (or et boutons à jour)
 
 
@@ -890,7 +949,11 @@ func _on_zone_entered(name: String) -> void:
 	tw.tween_property(_zone_label, "modulate:a", 0.0, 0.6)
 
 
+var _world: WorldMap
+
+
 func set_world(world: WorldMap) -> void:
+	_world = world
 	_minimap.setup(world)
 	_layout()
 
@@ -1104,14 +1167,25 @@ func ask_eat(item_id: String) -> void:
 
 func open_elevator(levels: Array) -> void:
 	var box := _open_modal("Ascenseur de la mine")
-	_add_label(box, "Descendre jusqu'au niveau :")
+	var here := (_world as MineLevel).level if _world is MineLevel else 0
+	_add_label(box, "Un nouvel arrêt tous les 5 étages atteints. Où aller ?")
 	var grid := GridContainer.new()
 	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
 	box.add_child(grid)
 	for level: int in levels:
-		_add_button(grid, str(level), func() -> void:
+		var b := _add_button(grid, "Niveau %d" % level, func() -> void:
 			close_modal()
+			Sfx.play("door")
 			EventBus.map_change_requested.emit("mine:%d" % level, Vector2i.ZERO))
+		b.custom_minimum_size = Vector2(70, 26)
+		b.disabled = level == here
+	if here > 0:
+		_add_button(box, "Remonter au village", func() -> void:
+			close_modal()
+			Sfx.play("door")
+			EventBus.map_change_requested.emit("village", MineLevel.VILLAGE_EXIT))
 	_add_button(box, "Annuler", close_modal)
 
 
@@ -1412,7 +1486,7 @@ func _build_tutorial() -> void:
 	_tutorial_label = Label.new()
 	_tutorial_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_tutorial_label.custom_minimum_size = Vector2(180, 0)
+	_tutorial_label.custom_minimum_size = Vector2(220, 0)
 	row.add_child(_tutorial_label)
 	var skip := Button.new()
 	skip.text = "Passer"
@@ -1427,13 +1501,27 @@ func _process(_delta: float) -> void:
 	# Le bandeau du tutoriel s'efface derrière les fenêtres et dialogues
 	if _tutorial_panel != null:
 		_tutorial_panel.visible = Tutorial.active() and _modal == null
+	# Étiquette du bouton Action
+	if _hint_panel != null:
+		var text := ""
+		if _modal == null and _world != null and is_instance_valid(_world):
+			text = _world.action_hint(_world.get("_target_cell"))
+		_hint_panel.visible = text != ""
+		if text != _hint_label.text:
+			_hint_label.text = text
+			_hint_panel.reset_size()
+		var ps := _hint_panel.get_combined_minimum_size()
+		var vp := get_viewport().get_visible_rect().size
+		# À gauche du bouton Action, à mi-hauteur : ne cache pas les jauges
+		_hint_panel.position = Vector2(_action_button.position.x - ps.x - 4, _action_button.position.y + (ACTION_SIZE - ps.y) / 2.0)
 
 
 func _refresh_tutorial() -> void:
 	_tutorial_panel.visible = Tutorial.active()
 	if not Tutorial.active():
 		return
-	_tutorial_label.text = "Tutoriel %d/%d - %s" % [Tutorial.step + 1, Tutorial.STEPS.size(), Tutorial.text()]
+	_tutorial_label.text = "%d/%d  %s" % [Tutorial.step + 1, Tutorial.STEPS.size(), Tutorial.text()]
+	_tutorial_label.add_theme_font_size_override("font_size", maxi(9, Settings.font_size() - 1))
 	# Petite animation pour attirer l'œil sur la nouvelle consigne
 	_tutorial_panel.scale = Vector2(1.06, 1.06)
 	_tutorial_panel.pivot_offset = _tutorial_panel.size / 2.0

@@ -752,5 +752,33 @@
 			30
 		],
 		"desc": "Affiné à la ferme, comme le faisait Firmin."
+	},
+	"steel_sword": {
+		"name": "Lame d'acier",
+		"type": "weapon",
+		"icon": 76,
+		"stack": 1,
+		"damage": [
+			17,
+			24
+		],
+		"cooldown": 0.32,
+		"knockback": 140,
+		"sell": 400,
+		"description": "Trouvée au niveau 15 de la mine. Légère et tranchante."
+	},
+	"firmin_blade": {
+		"name": "Épée de Firmin",
+		"type": "weapon",
+		"icon": 77,
+		"stack": 1,
+		"damage": [
+			28,
+			38
+		],
+		"cooldown": 0.3,
+		"knockback": 170,
+		"sell": 1000,
+		"description": "L'épée du vieux fermier, cachée au fond de la mine. Elle brille encore."
 	}
 }

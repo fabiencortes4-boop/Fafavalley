@@ -465,6 +465,8 @@ def extend_icons(sheet):
               draw_bowl((253, 214, 83), (78, 151, 76))]
     # 74-75 : confiture de baies, fromage (débloqués par l'histoire)
     extra += [draw_jar((150, 40, 90), (195, 75, 120)), draw_cheese()]
+    # 76-77 : lame d'acier (coffre du niveau 15), épée de Firmin (niveau 30)
+    extra += [tint_metal(tile(DUNGEON, 106), (120, 190, 255)), tint_metal(tile(DUNGEON, 106), (255, 205, 80))]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):
@@ -536,6 +538,19 @@ def draw_bowl(soup, garnish):
             if px[x, y][3] > 0 and y > 11:
                 px[x, y] = (192, 203, 220, 255)
     return outlined(img)
+
+
+def tint_metal(img, color):
+    """Teinte les pixels gris (le métal) d'une couleur, en gardant la lumière."""
+    out = img.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a and max(r, g, b) - min(r, g, b) < 40 and max(r, g, b) > 60:
+                k = (r + g + b) / 3 / 255
+                px[x, y] = (min(255, int(color[0] * k * 1.25)), min(255, int(color[1] * k * 1.25)), min(255, int(color[2] * k * 1.25)), a)
+    return out
 
 
 def draw_jar(jam, light):

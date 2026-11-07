@@ -79,6 +79,21 @@ func _ready() -> void:
 	while Settings.text_size != 1:
 		Settings.cycle_text_size()
 	_check(Settings.font_size() > UiTheme.FONT_SIZE, "texte plus grand par défaut (%d au lieu de %d)" % [Settings.font_size(), UiTheme.FONT_SIZE])
+	# ---- Ergonomie : aide du bouton Action, réglages, achat par 5, croix
+	var f: WorldMap = _main.call("current_map")
+	Inventory.select(0)
+	_check(f.action_hint(Vector2i(20, 16)) == "Labourer", "le bouton Action annonce « Labourer » avec la houe")
+	_check(f.action_hint(Vector2i(10, 6)) == "Expédier", "et « Expédier » devant le coffre d'expédition")
+	hud.open_settings()
+	_check(hud.get("_modal") != null, "les réglages ont leur propre fenêtre")
+	hud.close_modal()
+	Inventory.gold = 1000
+	var seeds := Inventory.count_of("seed_carrot")
+	hud.open_shop("store")
+	hud.call("_buy", "seed_carrot", 5)
+	_check(Inventory.count_of("seed_carrot") == seeds + 5, "on achète les graines par 5")
+	_check(hud.get("_modal").find_children("*", "Button", true, false).any(func(b: Button) -> bool: return b.text == "X"), "chaque fenêtre a une croix pour fermer")
+	hud.close_modal()
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
 

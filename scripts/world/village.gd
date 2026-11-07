@@ -103,6 +103,14 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 	if BUILDINGS.has(ch):
 		var b: Array = BUILDINGS[ch]
 		var door := _add_building(cell, b[1], b[2], b[3])
+		if b[0] == "mine":
+			# La colline rocheuse autour de l'entrée de la mine
+			for dx in range(-2, 5):
+				for dy in range(0, 2):
+					var c: Vector2i = cell + Vector2i(dx, dy)
+					if not _blocked.has(c) and (dx < 0 or dx >= 3):
+						_blocked[c] = true
+						_add_static_block(c)
 		if b[3] >= 0:
 			_doors[b[0]] = door
 			_interactables[door] = "door:" + b[0]
@@ -272,6 +280,14 @@ func _on_day_started(day: int, season: int, year: int) -> void:
 
 
 # ------------------------------------------------------------ interactions
+func action_hint(cell: Vector2i) -> String:
+	if not fishing.busy() and npc_at(cell) != null:
+		var slot: Variant = Inventory.get_selected()
+		var gift: bool = slot != null and GameData.item(slot.id).get("type") in ["crop", "fish"]
+		return "Offrir" if gift else "Parler"
+	return super(cell)
+
+
 func npc_at(cell: Vector2i) -> Npc:
 	var center := cell_center(cell)
 	for npc in npcs:
@@ -334,10 +350,7 @@ func _enter_mine() -> void:
 		Inventory.add_item("rusty_sword", 1)
 		EventBus.message_requested.emit("Un vieux coffre", "Devant la mine, un coffre poussiéreux. Une étiquette : « Pour qui veut descendre. Prends soin de toi. - Firmin ». Dedans : une pioche et une épée rouillée.")
 		return
-	var deepest := int(PlayerState.flags.get("mine_deepest", 1))
-	var levels: Array = [1]
-	for l in range(MineLevel.ELEVATOR_STEP, deepest + 1, MineLevel.ELEVATOR_STEP):
-		levels.append(l)
+	var levels: Array = MineLevel.elevator_levels()
 	if levels.size() == 1:
 		EventBus.map_change_requested.emit("mine:1", Vector2i.ZERO)
 	else:

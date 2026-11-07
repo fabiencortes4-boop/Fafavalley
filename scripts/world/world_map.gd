@@ -312,6 +312,64 @@ func _physics_process(_delta: float) -> void:
 		EventBus.map_change_requested.emit(warp.map, warp.cell)
 
 
+# ------------------------------------------------------------ aide du bouton Action
+const KIND_HINTS := {
+	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
+	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
+	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
+}
+const TOOL_HINTS := {
+	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",
+	"fishing_rod": "Pêcher", "brush": "Brosser", "milk_pail": "Traire",
+}
+
+
+## Ce que fera le bouton Action sur la case visée (affiché près du bouton).
+func action_hint(cell: Vector2i) -> String:
+	if fishing.busy():
+		return "Ferrer !" if fishing.state == Fishing.State.BITE else "Pêche..."
+	if _forage_sprites.has(cell):
+		return "Cueillir"
+	var kind: String = _interactables.get(cell, "")
+	if kind != "":
+		if kind.begins_with("door:"):
+			return "Entrer"
+		if kind.begins_with("animals:"):
+			return "Soigner"
+		if kind.begins_with("plot:") or kind.begins_with("construction:"):
+			return "Voir"
+		return KIND_HINTS.get(kind, "Interagir")
+	return _tool_hint(cell)
+
+
+func _tool_hint(_cell: Vector2i) -> String:
+	var slot: Variant = Inventory.get_selected()
+	if slot == null:
+		return ""
+	var item := GameData.item(slot.id)
+	var type := str(item.get("type", ""))
+	var tool := str(item.get("tool", ""))
+	# Houe, arrosoir, graines... ne servent qu'à la ferme
+	if not _is_farmland() and (type in ["seed", "placeable", "fertilizer"] or tool in ["hoe", "watering_can", "scythe", "axe", "brush", "milk_pail"]):
+		return ""
+	match type:
+		"tool":
+			return TOOL_HINTS.get(tool, "Utiliser")
+		"weapon":
+			return "Attaquer"
+		"seed":
+			return "Semer"
+		"placeable":
+			return "Poser"
+		"fertilizer":
+			return "Engrais"
+	return "Manger" if item.has("edible") else ""
+
+
+func _is_farmland() -> bool:
+	return false
+
+
 func player_cell() -> Vector2i:
 	return Vector2i((player.position / TILE).floor())
 

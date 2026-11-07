@@ -247,6 +247,14 @@ func _spawn_residents() -> void:
 		residents.append(npc)
 
 
+func action_hint(cell: Vector2i) -> String:
+	if not fishing.busy() and npc_at(cell) != null:
+		var slot: Variant = Inventory.get_selected()
+		var gift: bool = slot != null and GameData.item(slot.id).get("type") in ["crop", "fish"]
+		return "Offrir" if gift else "Parler"
+	return super(cell)
+
+
 func npc_at(cell: Vector2i) -> Npc:
 	var center := cell_center(cell)
 	for npc in residents:

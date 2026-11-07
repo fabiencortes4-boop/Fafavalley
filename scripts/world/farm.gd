@@ -264,6 +264,21 @@ func _spawn_animals() -> void:
 		_entities.add_child(critter)
 
 
+func _is_farmland() -> bool:
+	return true
+
+
+func action_hint(cell: Vector2i) -> String:
+	if not fishing.busy():
+		if _animal_at(cell) != null:
+			return "Caresser"
+		if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe":
+			return "Ouvrir"
+		if FarmState.is_mature(cell):
+			return "Récolter"
+	return super(cell)
+
+
 func _animal_at(cell: Vector2i) -> Node2D:
 	var center := cell_center(cell)
 	for child in _entities.get_children():

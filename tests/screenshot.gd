@@ -16,6 +16,14 @@ func _ready() -> void:
 			FarmState.debris.clear()
 			main.call("current_map").call("_refresh_all")
 		_setup_demo()
+		if "--notuto" in args:
+			Tutorial.skip()
+		for a in args:
+			if a.begins_with("--zoom="):
+				Settings.zoom = float(a.trim_prefix("--zoom="))
+				Settings.changed.emit()
+		if "--settings" in args:
+			main.get("_hud").open_settings()
 		for a in args:
 			if a.begins_with("--day="):
 				TimeManager.day = int(a.trim_prefix("--day="))
@@ -116,6 +124,15 @@ func _ready() -> void:
 				m.player.facing = Vector2i.RIGHT
 				m.player.swing(GameData.item_icon("rusty_sword"), 2.0)
 				main.get("_hud").close_modal()
+				if "--reveal" in args:
+					# Escalier qui descend dégagé, joueur posté à côté
+					var lad: Vector2i = m.get("_ladder_cell")
+					m.get("_rock_data").erase(lad)
+					m.call("_reveal_ladder", lad)
+					for d: Vector2i in [Vector2i(0, 2), Vector2i(-2, 0), Vector2i(2, 0), Vector2i(0, -2), Vector2i(1, 1)]:
+						if m.is_walkable(lad + d):
+							m.player.position = m.cell_center(lad + d)
+							break
 		if "--craft" in args or "--forge" in args:
 			for pair in [["copper_ore", 6], ["iron_ore", 3], ["slime", 2], ["coal", 3], ["carrot", 2], ["turnip", 1], ["cabbage", 1], ["pickaxe", 1]]:
 				Inventory.add_item(pair[0], pair[1])

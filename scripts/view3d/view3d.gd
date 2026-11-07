@@ -552,12 +552,7 @@ func _build_buildings(chars: Dictionary) -> void:
 					if PlayerState.flags.has("story_ch5"):
 						_festival(Vector3(cell.x + 1.0, 0, cell.y + 1.0))
 				"mine":
-					for dx in 3:
-						var rock := _model("nature", "cliff_block_rock" if dx != 1 else "cliff_cave_rock", 1.0)
-						rock.scale = Vector3(1, 1.6, 1) if dx != 1 else Vector3(1, 1.6, 6)
-						rock.position = Vector3(cell.x + dx + 0.5, 0, cell.y + 1.5 - (0.0 if dx != 1 else 0.33 * 6 - 0.33))
-						rock.rotation.y = PI if dx == 1 else 0.0
-						_static.add_child(rock)
+					_mine_entrance(cell, b[3])
 		if map is Farm and (ch == "K" or ch == "J"):
 			_farm_plot("coop" if ch == "K" else "barn")
 		if ch == "N":
@@ -674,6 +669,87 @@ func _bench(c: Vector3, rot: float) -> void:
 		b.position = part[1]
 		bench.add_child(b)
 	_put(bench, c, rot)
+
+
+## Entrée de la mine : colline rocheuse, galerie, charpente, rails, wagonnet.
+func _mine_entrance(cell: Vector2i, door_col: int) -> void:
+	var door_x := float(cell.x + door_col) + 0.5
+	var face_z := float(cell.y) + 1.75  # façade rocheuse
+	# Colline : blocs de falaise en gradins derrière l'entrée
+	for row in 3:
+		for dx in range(-3 - row, 4 + row):
+			var x := door_x + dx
+			var z := face_z - 0.6 - row * 0.9
+			var h := 1.9 + row * 0.7 + float(_hash(Vector2i(dx, row)) % 5) * 0.12
+			var rock := _box(Vector3(1.02, h, 1.0), Color(0.52, 0.5, 0.48).darkened(0.05 * row + 0.03 * float(_hash(Vector2i(row, dx)) % 3)))
+			_put(rock, Vector3(x, h / 2.0, z))
+	for side: float in [-2.6, 2.6]:
+		_put(_fitted("nature", "rock_largeA", 1.4), Vector3(door_x + side, 0, face_z - 0.2), side)
+		_put(_fitted("nature", "rock_smallA", 0.6), Vector3(door_x + side * 0.75, 0, face_z + 0.4), side * 2.0)
+	# Galerie sombre
+	_put(_box(Vector3(1.5, 1.55, 0.3), Color(0.03, 0.025, 0.02)), Vector3(door_x, 0.78, face_z + 0.02))
+	# Charpente en bois : montants, linteau, contrefiches
+	var wood := Color(0.48, 0.31, 0.18)
+	for side: float in [-0.82, 0.82]:
+		_put(_box(Vector3(0.16, 1.85, 0.16), wood), Vector3(door_x + side, 0.92, face_z + 0.22))
+		var brace := _box(Vector3(0.1, 0.5, 0.1), wood)
+		_put(brace, Vector3(door_x + side * 0.72, 1.62, face_z + 0.22))
+		brace.rotation.z = 0.7 if side < 0 else -0.7
+	_put(_box(Vector3(2.0, 0.2, 0.22), wood.darkened(0.1)), Vector3(door_x, 1.9, face_z + 0.22))
+	# Panneau « MINE »
+	_put(_box(Vector3(1.1, 0.34, 0.06), Color(0.62, 0.44, 0.26)), Vector3(door_x, 2.2, face_z + 0.3))
+	var label := Label3D.new()
+	label.text = "MINE"
+	label.font = UiTheme.font()
+	label.font_size = 64
+	label.pixel_size = 0.005
+	label.modulate = Color(0.22, 0.13, 0.08)
+	label.outline_size = 0
+	_put(label, Vector3(door_x, 2.2, face_z + 0.34))
+	# Lanternes de part et d'autre
+	for side: float in [-1.0, 1.0]:
+		var bulb := MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.08
+		sphere.height = 0.16
+		var m := StandardMaterial3D.new()
+		m.albedo_color = Color(1, 0.8, 0.45)
+		m.emission_enabled = true
+		m.emission = Color(1, 0.7, 0.3)
+		m.emission_energy_multiplier = 2.5
+		sphere.material = m
+		bulb.mesh = sphere
+		_put(bulb, Vector3(door_x + side, 1.45, face_z + 0.35))
+		var light := OmniLight3D.new()
+		light.light_color = Color(1.0, 0.75, 0.4)
+		light.omni_range = 2.6
+		light.light_energy = 1.0
+		_put(light, Vector3(door_x + side, 1.5, face_z + 0.6))
+	# Rails qui sortent de la galerie
+	var iron := Color(0.35, 0.33, 0.33)
+	for rail: float in [-0.22, 0.22]:
+		_put(_box(Vector3(0.05, 0.05, 2.4), iron), Vector3(door_x + rail, 0.04, face_z + 1.15))
+	for k in 7:
+		_put(_box(Vector3(0.65, 0.04, 0.1), wood), Vector3(door_x, 0.02, face_z + 0.15 + k * 0.33))
+	# Wagonnet chargé de minerai, à côté de l'entrée
+	var cart := Vector3(door_x + 1.75, 0, face_z + 0.75)
+	_put(_box(Vector3(0.6, 0.4, 0.45), Color(0.4, 0.3, 0.22)), cart + Vector3(0, 0.32, 0))
+	for wx: float in [-0.2, 0.2]:
+		for wz: float in [-0.24, 0.24]:
+			var wheel := MeshInstance3D.new()
+			var cyl := CylinderMesh.new()
+			cyl.top_radius = 0.1
+			cyl.bottom_radius = 0.1
+			cyl.height = 0.05
+			cyl.material = _flat_material(iron)
+			wheel.mesh = cyl
+			wheel.rotation.x = PI / 2.0
+			_put(wheel, cart + Vector3(wx, 0.1, wz))
+	for k in 4:
+		var ore := _fitted("nature", "rock_smallA", 0.22)
+		Models.tint(ore, [Color(1, 0.65, 0.45), Color(0.4, 0.38, 0.42), Color(0.7, 0.78, 0.95), Color(1, 0.88, 0.45)][k])
+		_put(ore, cart + Vector3(-0.15 + (k % 2) * 0.3, 0.55, -0.1 + (k / 2) * 0.2))
+	_put(_fitted("survival", "tool-pickaxe", 0.5), Vector3(door_x - 1.5, 0.05, face_z + 0.6), 0.6).rotation.z = PI / 2.0
 
 
 ## Puits en pierre avec son petit toit.
@@ -1079,10 +1155,170 @@ func _build_mine() -> void:
 			if open:
 				_place(batch, "dungeon", "wall", c, 1.0, 0.0)
 		else:
-			_place(batch, "dungeon", "floor-detail" if _hash(cell) % 7 == 0 else "floor", c, 1.0, 0.0)
+			# Le sol de l'escalier qui descend est à part : on l'enlève quand on le trouve
+			if cell == map.get("_ladder_cell"):
+				_ladder_floor = _model("dungeon", "floor", 1.0)
+				_put(_ladder_floor, c)
+			elif ch != "U":
+				_place(batch, "dungeon", "floor-detail" if _hash(cell) % 7 == 0 else "floor", c, 1.0, 0.0)
 			if ch == "U":
-				_place(batch, "dungeon", "stairs", c, 1.0, PI)
+				_stairs_up(cell)
 	batch.build(_static)
+	var mine := map as MineLevel
+	if mine.elevator_cell != Vector2i(-1, -1):
+		_elevator(_cell3d(mine.elevator_cell))
+	if mine.treasure_cell != Vector2i(-1, -1):
+		_build_treasure()
+
+
+var _ladder_floor: Node3D
+var _treasure: Node3D
+var _treasure_open: bool = false
+var _stair_arrows: Array = []  # [flèche, hauteur]
+
+const STONE_STEP := Color(0.56, 0.52, 0.5)
+
+
+## Escalier qui sort du sol vers le haut (on marche dessus pour remonter),
+## éclairé par la lumière du dessus.
+func _stairs_up(cell: Vector2i) -> void:
+	var c := _cell3d(cell)
+	# Les marches montent vers le mur (le haut de l'écran)
+	for k in 5:
+		var h := 0.14 * (k + 1)
+		var step := _box(Vector3(0.9, h, 0.2), STONE_STEP.darkened(0.04 * k))
+		_put(step, c + Vector3(0, h / 2.0, 0.4 - k * 0.2))
+	for side: float in [-0.48, 0.48]:
+		_put(_box(Vector3(0.06, 0.8, 1.0), Color(0.4, 0.36, 0.33)), c + Vector3(side, 0.4, 0))
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.95, 0.8) if (map as MineLevel).level == 1 else Color(0.8, 0.85, 1.0)
+	light.omni_range = 3.0
+	light.light_energy = 1.4
+	_put(light, c + Vector3(0, 1.4, -0.3))
+	_stair_arrows.append([_put(_arrow(true), c + Vector3(0, 1.3, 0)), 1.3])
+
+
+## Puits d'escalier qui s'enfonce dans le sol (révélé sous un rocher).
+func _stairs_down(cell: Vector2i) -> void:
+	if _ladder_floor != null:
+		_ladder_floor.queue_free()
+		_ladder_floor = null
+	var c := _cell3d(cell)
+	var dark := Color(0.08, 0.07, 0.07)
+	# Parois du puits
+	for wall: Array in [[Vector3(0.96, 1.2, 0.04), Vector3(0, -0.6, -0.48)], [Vector3(0.96, 1.2, 0.04), Vector3(0, -0.6, 0.48)],
+			[Vector3(0.04, 1.2, 0.96), Vector3(-0.48, -0.6, 0)], [Vector3(0.04, 1.2, 0.96), Vector3(0.48, -0.6, 0)]]:
+		_put(_box(wall[0], Color(0.3, 0.27, 0.25)), c + wall[1])
+	# Marches qui descendent vers le fond
+	for k in 5:
+		var top := -0.12 * (k + 1)
+		_put(_box(Vector3(0.88, 0.12, 0.19), STONE_STEP.darkened(0.12 * (k + 1))), c + Vector3(0, top - 0.06, 0.38 - k * 0.19))
+	_put(_box(Vector3(0.9, 0.05, 0.9), dark), c + Vector3(0, -1.2, 0))
+	# Rebord en bois autour du trou
+	for edge: Array in [[Vector3(1.0, 0.08, 0.08), Vector3(0, 0.04, -0.5)], [Vector3(1.0, 0.08, 0.08), Vector3(0, 0.04, 0.5)],
+			[Vector3(0.08, 0.08, 1.0), Vector3(-0.5, 0.04, 0)], [Vector3(0.08, 0.08, 1.0), Vector3(0.5, 0.04, 0)]]:
+		_put(_box(edge[0], Color(0.5, 0.33, 0.2)), c + edge[1])
+	_stair_arrows.append([_put(_arrow(false), c + Vector3(0, 1.0, 0)), 1.0])
+
+
+## Flèche lumineuse qui flotte au-dessus d'un escalier (haut ou bas).
+func _arrow(up: bool) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.0 if up else 0.16
+	cone.bottom_radius = 0.16 if up else 0.0
+	cone.height = 0.28
+	cone.radial_segments = 4
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.85, 0.3)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.75, 0.2)
+	mat.emission_energy_multiplier = 1.5
+	cone.material = mat
+	mi.mesh = cone
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
+
+## Ascenseur de mineur : plateforme, montants en fer, poulie et lampe.
+func _elevator(c: Vector3) -> void:
+	var iron := Color(0.3, 0.3, 0.33)
+	var wood := Color(0.55, 0.36, 0.22)
+	_put(_box(Vector3(0.95, 0.1, 0.95), wood), c + Vector3(0, 0.05, 0))
+	for corner: Vector2 in [Vector2(-0.44, -0.44), Vector2(0.44, -0.44), Vector2(-0.44, 0.44), Vector2(0.44, 0.44)]:
+		_put(_box(Vector3(0.07, 2.4, 0.07), iron), c + Vector3(corner.x, 1.2, corner.y))
+	for z: float in [-0.44, 0.44]:
+		_put(_box(Vector3(0.95, 0.08, 0.08), iron), c + Vector3(0, 2.4, z))
+		_put(_box(Vector3(0.95, 0.05, 0.05), iron), c + Vector3(0, 0.7, z))
+	var wheel := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.3
+	cyl.bottom_radius = 0.3
+	cyl.height = 0.08
+	cyl.material = _flat_material(Color(0.6, 0.45, 0.25))
+	wheel.mesh = cyl
+	wheel.rotation.x = PI / 2.0
+	_put(wheel, c + Vector3(0, 2.55, 0))
+	_put(_box(Vector3(0.02, 2.1, 0.02), Color(0.7, 0.6, 0.4)), c + Vector3(0, 1.5, 0))  # câble
+	var bulb := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.08
+	sphere.height = 0.16
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(1, 0.85, 0.5)
+	m.emission_enabled = true
+	m.emission = Color(1, 0.75, 0.35)
+	m.emission_energy_multiplier = 2.5
+	sphere.material = m
+	bulb.mesh = sphere
+	_put(bulb, c + Vector3(0.44, 2.0, 0.5))
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.8, 0.5)
+	light.omni_range = 3.5
+	light.light_energy = 1.2
+	_put(light, c + Vector3(0.3, 1.8, 0.6))
+
+
+## Coffre des paliers : il scintille tant qu'il n'est pas ouvert.
+func _build_treasure() -> void:
+	var mine := map as MineLevel
+	if _treasure != null:
+		_treasure.queue_free()
+	_treasure = Node3D.new()
+	_treasure.position = _cell3d(mine.treasure_cell)
+	add_child(_treasure)
+	_treasure_open = mine.treasure_opened()
+	var chest := _fitted("survival", "box-open" if _treasure_open else "chest", 0.75)
+	if not _treasure_open:
+		Models.tint(chest, Color(1.15, 1.0, 0.7))
+	_treasure.add_child(chest)
+	if _treasure_open:
+		return
+	var glow := OmniLight3D.new()
+	glow.light_color = Color(1.0, 0.85, 0.4)
+	glow.omni_range = 2.5
+	glow.light_energy = 1.5
+	glow.position.y = 0.8
+	_treasure.add_child(glow)
+	var sparkle := CPUParticles3D.new()
+	var dot := SphereMesh.new()
+	dot.radius = 0.03
+	dot.height = 0.06
+	var sm := StandardMaterial3D.new()
+	sm.albedo_color = Color(1, 0.9, 0.5)
+	sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dot.material = sm
+	sparkle.mesh = dot
+	sparkle.amount = 14
+	sparkle.lifetime = 1.4
+	sparkle.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	sparkle.emission_box_extents = Vector3(0.35, 0.2, 0.35)
+	sparkle.direction = Vector3.UP
+	sparkle.initial_velocity_min = 0.3
+	sparkle.initial_velocity_max = 0.6
+	sparkle.gravity = Vector3.ZERO
+	sparkle.position.y = 0.5
+	_treasure.add_child(sparkle)
 
 
 func _sync_rocks() -> void:
@@ -1111,9 +1347,17 @@ func _sync_rocks() -> void:
 	var ladder: Vector2i = map.get("_ladder_cell")
 	if map.get("_ladder_found") and not _rocks.has(ladder) and not has_meta("ladder"):
 		set_meta("ladder", true)
-		var hole := _model("dungeon", "stairs", 1.0)
-		hole.position = _cell3d(ladder) + Vector3(0, -0.85, 0)
-		add_child(hole)
+		_stairs_down(ladder)
+	# Coffre ouvert : on change son modèle
+	if _treasure != null and (map as MineLevel).treasure_opened() != _treasure_open:
+		_build_treasure()
+	# Les flèches des escaliers flottent doucement
+	var bob := sin(Time.get_ticks_msec() / 300.0) * 0.08
+	for entry: Array in _stair_arrows:
+		var arrow: Node3D = entry[0]
+		if is_instance_valid(arrow):
+			arrow.position.y = float(entry[1]) + bob
+			arrow.rotation.y += 0.03
 
 
 # ------------------------------------------------------------ ferme : cases vivantes
