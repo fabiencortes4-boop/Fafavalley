@@ -307,10 +307,19 @@ func _spawn_residents() -> void:
 		if building == "taverne" and id != "marius" and id != Marriage.spouse and Npc.place_at(id, TimeManager.minutes) == "tavern" and not Events.gathering_now():
 			var guest := Npc.new()
 			guest.id = id
-			guest.position = cell_center(_spots[spot] if spot < _spots.size() else _spawn_cell + Vector2i(spot % 5, -3))
-			spot += 1
 			_entities.add_child(guest)
 			residents.append(guest)
+			# Une chaise libre autour d'une table, sinon debout au comptoir
+			var chair := Vector2i(-1, -1)
+			for c: Vector2i in seats:
+				if not Npc.taken_seats.has(c):
+					chair = c
+					break
+			if chair != Vector2i(-1, -1):
+				guest.sit_on(chair, seats[chair], cell_center(chair) + Vector2(0, -4))
+			else:
+				guest.position = cell_center(_spots[spot] if spot < _spots.size() else _spawn_cell + Vector2i(spot % 5, -3))
+				spot += 1
 			continue
 		var data := GameData.npc(id)
 		var lives_here := str(data.get("home", "")) == building

@@ -91,6 +91,10 @@ func _ready() -> void:
 	Collections.discovered.connect(_on_discovered)
 	Collections.milestone.connect(_on_milestone)
 	Achievements.unlocked.connect(_on_achievement)
+	EventBus.legendary_fish.connect(func(id: String) -> void:
+		title_card("Poisson légendaire !", GameData.fish(id).get("name", id), Color(1, 0.8, 0.3))
+		Sfx.play("achievement")
+		Settings.vibrate(120))
 	EventBus.energy_changed.connect(_on_energy_changed)
 	EventBus.health_changed.connect(func(v: int, m: int) -> void:
 		_health_bar.max_value = m
@@ -2150,8 +2154,17 @@ func open_booth() -> void:
 				var result := Events.enter_contest(id)
 				if result.is_empty():
 					return
-				Sfx.play("levelup")
-				show_message(str(result.title), "Le jury goûte, soupèse, admire... %s ! Tu gagnes %d or, et tout le village t'applaudit." % [result.title, int(result.gold)]))
+				Sfx.play("levelup" if int(result.rank) == 1 else "coins")
+				var lines: Array = []
+				for i in result.table.size():
+					var e: Dictionary = result.table[i]
+					var who := "Toi" if e.npc == "" else str(GameData.npc(str(e.npc)).name)
+					lines.append("%d. %s - %s : %d points" % [i + 1, who, e.entry, int(e.score)])
+				var verdict := "Le jury goûte, soupèse, admire... " + ("et te décerne le premier prix !" if int(result.rank) == 1 else "%s pour toi !" % str(result.title).to_lower())
+				show_message(str(result.title), "%s\n\n%s\n\nTu gagnes %d or.%s" % [verdict, "\n".join(lines), int(result.gold),
+					"" if GameData.quality_of(id) > 0 else " (Astuce : le jury adore les produits de qualité ★.)"]))
+			var preview := _add_label(box, "Note estimée du jury : %d points. Concurrents : %s." % [Events.contest_score(id), ", ".join(Events.rivals().map(func(e: Dictionary) -> String: return "%s (%s)" % [GameData.npc(str(e.npc)).name, e.entry]))])
+			preview.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
 	elif activity == "dance":
 		_add_label(box, "Qui veux-tu inviter à danser ?")
 		var row := HFlowContainer.new()

@@ -14,7 +14,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	var hud: Hud = _main.get("_hud")
 	_check(Collections.total_found() == 0, "nouvelle partie : l'album est vide (outils et graines n'y comptent pas)")
-	_check(Collections.items_of("fish").size() == GameData.fishes.size(), "tous les poissons sont dans l'album")
+	_check(GameData.fishes.keys().all(func(f: String) -> bool: return Collections.items_of("fish").has(f)), "tous les poissons sont dans l'album")
 	_check(Collections.items_of("mine").has("emerald") and Collections.items_of("mine").has("slime"), "minerais et butin dans « Trésors de la mine »")
 	var seen := [""]
 	Collections.discovered.connect(func(id: String, _c: String) -> void: seen[0] = id)

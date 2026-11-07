@@ -164,6 +164,10 @@ func _ready() -> void:
 		if "--port" in args:
 			main.call("_switch_to", "port")
 			await get_tree().process_frame
+		if "--sea" in args:
+			TimeManager.minutes = 11 * 60
+			main.call("_switch_to", "sea")
+			await get_tree().process_frame
 		if "--tavern" in args:
 			TimeManager.minutes = 21 * 60
 			main.call("_switch_to", "in:taverne")

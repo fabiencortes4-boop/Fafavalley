@@ -19,6 +19,13 @@ var _inside: bool = false
 var _entry_index: int = -2
 var _bob: float = 0.0
 var _working: bool = false  # commerçant dans sa boutique pendant les heures d'ouverture
+## Assis sur un banc ou une chaise (vue 3D : pose assise, regard)
+var seated: bool = false
+var seat_facing: Vector2i = Vector2i.DOWN
+var _seat_cell: Vector2i = Vector2i(-1, -1)
+var _stand_cell: Vector2i = Vector2i(-1, -1)
+## Sièges occupés par des habitants (case -> habitant), toutes cartes
+static var taken_seats: Dictionary = {}
 
 
 func _ready() -> void:
@@ -176,6 +183,7 @@ var _gather_target: Vector2i = Vector2i(-1, -1)
 
 
 func _walk_to(target: Vector2i, going_home: bool) -> void:
+	stand_up()
 	if _inside:
 		if going_home:
 			return
@@ -214,6 +222,41 @@ func _arrive() -> void:
 	_path_index = 0
 	if _going_home:
 		_set_inside(true)
+		return
+	# Un banc libre juste à côté ? On s'y assoit un moment.
+	if village != null:
+		for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			var c := cell() + d
+			if village.seats.has(c) and not taken_seats.has(c) and village.player_cell() != c:
+				sit_on(c, village.seats[c], village.cell_center(c) + Vector2(0, -4))
+				break
+
+
+## S'asseoir sur ce siège (position du siège, regard).
+func sit_on(seat: Vector2i, look: Vector2i, at: Vector2) -> void:
+	_stand_cell = cell()
+	_seat_cell = seat
+	taken_seats[seat] = id
+	seated = true
+	seat_facing = look
+	position = at
+	if look.x != 0:
+		_sprite.flip_h = look.x < 0
+
+
+func stand_up() -> void:
+	if not seated:
+		return
+	seated = false
+	taken_seats.erase(_seat_cell)
+	if village != null and _stand_cell != Vector2i(-1, -1):
+		position = village.cell_center(_stand_cell)
+	_seat_cell = Vector2i(-1, -1)
+
+
+func _exit_tree() -> void:
+	if seated:
+		taken_seats.erase(_seat_cell)
 
 
 func _set_inside(value: bool) -> void:

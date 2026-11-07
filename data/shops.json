@@ -103,7 +103,9 @@
 			"quartz",
 			"coal",
 			"iron_ore",
-			"bouquet"
+			"bouquet",
+			"bait",
+			"crab_pot"
 		],
 		"prices": {
 			"quartz": 150,

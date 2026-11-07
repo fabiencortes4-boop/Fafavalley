@@ -47,9 +47,17 @@ func _ready() -> void:
 		if mine.is_walkable(ladder + d):
 			free_next = ladder + d
 			break
+	# Le rocher peut ne rien lâcher (les minerais sont rares) : on vérifie
+	# que les débris présents sont bien ramassés
+	var debris: Array = mine.get("_entities").get_children().filter(func(n: Node) -> bool: return n is Pickup)
 	mine.player.position = mine.cell_center(free_next)
+	for p: Node in debris:
+		if is_instance_valid(p):
+			(p as Node2D).position = mine.player.position  # l'aimant fait le reste
 	await get_tree().create_timer(1.0).timeout
-	_check(Inventory.count_of("stone") + Inventory.count_of("coal") + Inventory.count_of("copper_ore") + Inventory.count_of("quartz") > 0, "les débris sont ramassés")
+	var left: int = mine.get("_entities").get_children().filter(func(n: Node) -> bool: return n is Pickup).size()
+	_check(left == 0 and (debris.is_empty() or Inventory.count_of("stone") + Inventory.count_of("coal") + Inventory.count_of("copper_ore") + Inventory.count_of("quartz") + Inventory.count_of("iron_ore") > 0), "les débris sont ramassés (%d)" % debris.size())
+	mine.player.position = mine.cell_center(free_next)
 	mine.player.position = mine.cell_center(ladder)
 	await get_tree().physics_frame
 	await _frames(3)

@@ -85,9 +85,18 @@
 		"name": "Carnet complet",
 		"text": "Attraper toutes les espèces de poisson",
 		"stat": "fish_species",
-		"goal": 23,
+		"goal": 27,
 		"icon": "golden_carp",
 		"gold": 1000
+	},
+	{
+		"id": "legends",
+		"name": "Pêcheur de légendes",
+		"text": "Pêcher les 4 poissons légendaires",
+		"stat": "legends",
+		"goal": 4,
+		"icon": "spring_pike",
+		"gold": 3000
 	},
 	{
 		"id": "mine_10",
@@ -247,7 +256,7 @@
 		"name": "Album complet",
 		"text": "Compléter toutes les collections",
 		"stat": "collection_full",
-		"goal": 6,
+		"goal": 7,
 		"icon": "truffle",
 		"gold": 3000
 	}

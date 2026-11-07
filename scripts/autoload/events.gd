@@ -123,21 +123,55 @@ func mark_done(id: String) -> void:
 	changed.emit()
 
 
-## Concours : on présente un objet, le prix dépend de sa valeur.
+## Concours : le jury note l'objet présenté (valeur, et surtout qualité),
+## face aux objets de trois habitants. Le classement donne le prix.
+const RIVALS := [
+	["odette", "ses tournesols géants"], ["leon", "son plus beau fromage"],
+	["jules", "une perche magnifique"], ["margot", "une citrouille énorme"],
+	["rosalie", "un panier de fraises"], ["mathis", "un nichoir sculpté"],
+]
+const RANK_PRIZES := [[1000, "Premier prix"], [400, "Deuxième prix"], [150, "Troisième prix"], [60, "Prix de participation"]]
+
+
+## Note du jury pour un objet (sur 100 environ).
+static func contest_score(item_id: String) -> int:
+	var value := float(GameData.item(item_id).get("sell", 0))
+	var quality := GameData.quality_of(item_id)
+	return int(round(sqrt(maxf(value, 0.0)) * 3.0 * (1.0 + 0.2 * quality) + quality * 6))
+
+
+## Les concurrents de cette année (les mêmes toute la journée).
+func rivals() -> Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["concours", TimeManager.year, TimeManager.season])
+	var pool := RIVALS.duplicate()
+	var out: Array = []
+	for i in 3:
+		var pick: Array = pool.pop_at(rng.randi() % pool.size())
+		var score := rng.randi_range(28, 46) + 6 * (TimeManager.year - 1) + (3 - i) * 4
+		out.append({"npc": pick[0], "entry": pick[1], "score": score})
+	return out
+
+
 func enter_contest(item_id: String) -> Dictionary:
 	var f := festival_today()
 	if f.is_empty() or is_done(str(f.id)):
 		return {}
-	var value := int(GameData.item(item_id).get("sell", 0))
-	for p: Array in prizes:
-		if value >= int(p[0]):
-			Inventory.remove_item(item_id, 1)
-			Inventory.add_gold(int(p[1]))
-			mark_done(str(f.id))
-			for id: String in GameData.npcs:
-				Relations.add_points(id, 20)
-			return {"title": str(p[2]), "gold": int(p[1]), "value": value}
-	return {}
+	var mine := contest_score(item_id)
+	var table: Array = rivals()
+	table.append({"npc": "", "entry": GameData.item_name(item_id), "score": mine})
+	table.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return int(x.score) > int(y.score) or (int(x.score) == int(y.score) and x.npc == ""))
+	var rank := 0
+	for i in table.size():
+		if table[i].npc == "":
+			rank = i
+	var prize: Array = RANK_PRIZES[rank]
+	Inventory.remove_item(item_id, 1)
+	Inventory.add_gold(int(prize[0]))
+	mark_done(str(f.id))
+	for id: String in GameData.npcs:
+		Relations.add_points(id, 20 if rank > 0 else 40)
+	return {"title": str(prize[1]), "gold": int(prize[0]), "rank": rank + 1, "score": mine, "table": table}
 
 
 ## Danse de la Nuit des lanternes avec un habitant.

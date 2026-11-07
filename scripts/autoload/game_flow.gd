@@ -32,6 +32,7 @@ func new_game() -> void:
 	Marriage.reset()
 	PortStory.reset()
 	Collections.reset()
+	Machines.reset()
 	Achievements.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])
@@ -66,6 +67,7 @@ func end_day(passed_out: bool = false) -> void:
 	Relations.new_day()
 	Quests.new_day()
 	Forage.new_day()
+	Machines.new_day()
 	var ranch := Animals.new_day(TimeManager.season)
 	Marriage.new_day()
 	report["animals"] = ranch

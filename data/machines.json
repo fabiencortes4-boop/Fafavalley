@@ -1,0 +1,69 @@
+{
+	"_comment": "Machines de transformation : ce qu'elles acceptent (catégorie ou objet) -> [produit, jours]. La qualité de l'ingrédient passe au produit.",
+	"fruits": [
+		"strawberry",
+		"melon",
+		"blueberry",
+		"grape",
+		"cranberry",
+		"cherry",
+		"peach",
+		"orange",
+		"apple",
+		"berries"
+	],
+	"machines": {
+		"preserves_jar": {
+			"name": "Bocal à conserves",
+			"accepts": {
+				"fruit": [
+					"jam",
+					2
+				],
+				"vegetable": [
+					"pickles",
+					2
+				]
+			}
+		},
+		"fruit_press": {
+			"name": "Pressoir",
+			"accepts": {
+				"fruit": [
+					"juice",
+					3
+				],
+				"vegetable": [
+					"veg_juice",
+					2
+				]
+			}
+		},
+		"smoker": {
+			"name": "Fumoir",
+			"accepts": {
+				"fish": [
+					"smoked_fish",
+					1
+				]
+			}
+		},
+		"cheese_press": {
+			"name": "Presse à fromage",
+			"accepts": {
+				"milk": [
+					"cheese",
+					1
+				],
+				"egg": [
+					"mayonnaise",
+					1
+				],
+				"big_egg": [
+					"mayonnaise",
+					1
+				]
+			}
+		}
+	}
+}

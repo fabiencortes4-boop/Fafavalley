@@ -115,6 +115,8 @@ func _load_map(map_id: String) -> void:
 		_world = ForestMap.new()
 	elif map_id == "port":
 		_world = PortMap.new()
+	elif map_id == "sea":
+		_world = SeaMap.new()
 	elif map_id.begins_with("in:"):
 		var inside := InteriorMap.new()
 		inside.setup(map_id.trim_prefix("in:"))
@@ -185,6 +187,8 @@ func _announce(map_id: String, previous: String) -> void:
 		_hud.title_card("Port du Héron", "À l'est de Valfleur", Color(0.6, 0.85, 1.0))
 	elif map_id == "forest":
 		_hud.title_card("Forêt de la source", "Au nord de la ferme", Color(0.6, 0.95, 0.7))
+	elif map_id == "sea":
+		_hud.title_card("Au large", "Thons, espadons... et peut-être une légende", Color(0.5, 0.75, 1.0))
 	elif map_id == "farm":
 		_hud.title_card("La ferme", "%s, jour %d" % [seasons[TimeManager.season % 4], TimeManager.day], Color(0.75, 1, 0.65))
 	elif map_id == "village" and not previous.begins_with("in:"):

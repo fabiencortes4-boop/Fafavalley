@@ -100,5 +100,70 @@
 				500
 			]
 		]
+	},
+	"legends_hint": {
+		"from": "Jules, le pêcheur",
+		"when": {
+			"flag": "legends_hint"
+		},
+		"text": "Tu pêches bien, maintenant. Alors je vais te confier un secret : quatre poissons de légende vivent dans nos eaux. La Carpe ancienne, dans l'étang de ta ferme, au printemps et en été. Le Silure géant, dans l'étang du village, les soirs de pluie. Le Brochet de la source, au lac de la forêt, les matins d'automne et d'hiver. Et Marius jure qu'un Grand requin bleu rôde au large, l'été, par beau temps... Il faut une sacrée main pour les ferrer. Tiens, des appâts.",
+		"items": [
+			[
+				"bait",
+				20
+			]
+		]
+	},
+	"legend_ancient_carp": {
+		"from": "Jules, le pêcheur",
+		"when": {
+			"flag": "legend_ancient_carp"
+		},
+		"text": "La Carpe ancienne ! Firmin l'a cherchée toute sa vie. Je n'en reviens pas. Voilà de quoi fêter ça.",
+		"items": [
+			[
+				"gold",
+				1500
+			]
+		]
+	},
+	"legend_giant_catfish": {
+		"from": "Jules, le pêcheur",
+		"when": {
+			"flag": "legend_giant_catfish"
+		},
+		"text": "Le Silure géant de l'étang ! On en parlera encore dans cent ans à la taverne.",
+		"items": [
+			[
+				"gold",
+				1500
+			]
+		]
+	},
+	"legend_spring_pike": {
+		"from": "Odette, la jardinière",
+		"when": {
+			"flag": "legend_spring_pike"
+		},
+		"text": "Jules m'a raconté pour le Brochet de la source. Mon défunt mari disait qu'il gardait l'eau de la source. Prends ceci, mon trésor.",
+		"items": [
+			[
+				"gold",
+				2000
+			]
+		]
+	},
+	"legend_blue_shark": {
+		"from": "Marius, le tavernier",
+		"when": {
+			"flag": "legend_blue_shark"
+		},
+		"text": "Le Grand requin bleu ! Toute la taverne a trinqué à ta santé. Ta prochaine soupe est offerte... et voici une petite récompense.",
+		"items": [
+			[
+				"gold",
+				3000
+			]
+		]
 	}
 }

@@ -27,6 +27,7 @@ var _bobber_base: Vector2
 var _timer: float = 0.0
 var _time: float = 0.0
 var _fish_id: String = ""
+var _baited: bool = false
 
 
 func _ready() -> void:
@@ -69,6 +70,11 @@ func try_cast(energy: int) -> bool:
 	_fish_id = GameData.pick_fish(map.map_id)
 	state = State.WAITING
 	_timer = randf_range(WAIT_MIN, WAIT_MAX)
+	# Un appât dans le sac : il est utilisé, le poisson mord bien plus vite
+	_baited = Inventory.count_of("bait") > 0
+	if _baited:
+		Inventory.remove_item("bait", 1)
+		_timer *= 0.5
 	map.player.locked = true
 	map.player.play_tool("cast", GameData.item_icon("fishing_rod"))
 	Sfx.play("cast")
@@ -129,7 +135,7 @@ func _on_minigame_finished(success: bool) -> void:
 		# Qualité : un gros poisson, une prise parfaite et la compétence de pêche
 		var span := maxf(1.0, float(sizes[1]) - float(sizes[0]))
 		var big := (float(size) - float(sizes[0])) / span
-		var bonus := clampf(big * 0.6 + (0.4 if FishingMinigame.last_perfect else 0.0), 0.0, 1.0)
+		var bonus := clampf(big * 0.6 + (0.4 if FishingMinigame.last_perfect else 0.0) + (0.15 if _baited else 0.0), 0.0, 1.0)
 		var caught_id := GameData.with_quality(_fish_id, GameData.roll_quality(Skills.level("fishing"), bonus))
 		if not Inventory.can_add(caught_id):
 			EventBus.toast("Inventaire plein : le poisson retourne à l'eau.")
@@ -137,11 +143,20 @@ func _on_minigame_finished(success: bool) -> void:
 			Inventory.add_item(caught_id, 1)
 			var result := FishLog.record(_fish_id, size)
 			Skills.add_xp("fishing", 8 + int(fish.get("difficulty", 30)) / 6)
+			# Bon pêcheur : Jules confie le secret des poissons légendaires
+			if Skills.level("fishing") >= 3 and not PlayerState.flags.has("legends_hint"):
+				PlayerState.flags["legends_hint"] = true
+				Mail.check()
 			Story.bump("fish")
 			var text := "Tu as pêché : %s (%d cm) !" % [GameData.item_name(caught_id), size]
 			if FishingMinigame.last_perfect:
 				text = "Prise parfaite ! " + text
-			if result == "new":
+			if fish.get("legendary", false):
+				text = "Poisson légendaire ! " + text
+				PlayerState.flags["legend_" + _fish_id] = true
+				Mail.check()
+				EventBus.legendary_fish.emit(_fish_id)
+			elif result == "new":
 				text += " Nouvelle espèce !"
 			elif result == "record":
 				text += " Nouveau record !"

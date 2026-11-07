@@ -37,6 +37,7 @@ func save_game() -> void:
 		"marriage": Marriage.to_dict(),
 		"port_story": PortStory.to_dict(),
 		"collections": Collections.to_dict(),
+		"machines": Machines.to_dict(),
 		"achievements": Achievements.to_dict(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -79,6 +80,7 @@ func load_game() -> bool:
 		for id: String in FishLog.caught:
 			Collections.discover(id)
 	Achievements.from_dict(data.get("achievements", {}))
+	Machines.from_dict(data.get("machines", {}))
 	HeartEvents.from_dict(data.get("hearts_seen", {}))
 	Marriage.from_dict(data.get("marriage", {}))
 	PortStory.from_dict(data.get("port_story", {}))

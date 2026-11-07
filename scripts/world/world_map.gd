@@ -127,6 +127,7 @@ func _ready() -> void:
 	_update_tint(0, 0)
 	_update_weather()
 	_spawn_forage()
+	_refresh_pots()
 
 
 static func _get_tileset() -> TileSet:
@@ -330,6 +331,9 @@ func add_seat(cell: Vector2i, look: Vector2i) -> void:
 func sit_down(cell: Vector2i) -> void:
 	if player.busy() or player.seated or not seats.has(cell):
 		return
+	if Npc.taken_seats.has(cell):
+		EventBus.toast("%s est déjà assis·e là." % GameData.npc(str(Npc.taken_seats[cell])).get("name", "Quelqu'un"))
+		return
 	_stand_cell = player_cell()
 	_rest_timer = 0.0
 	player.sit(cell_center(cell) + Vector2(0, -4), seats[cell])
@@ -382,7 +386,7 @@ const KIND_HINTS := {
 	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
 	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
 	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
-	"board": "Demandes", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir",
+	"board": "Demandes", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "boat": "En mer",
 }
 const TOOL_HINTS := {
 	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",
@@ -396,6 +400,10 @@ func action_hint(cell: Vector2i) -> String:
 		return "Ferrer !" if fishing.state == Fishing.State.BITE else "Pêche..."
 	if player.seated:
 		return "Se lever"
+	if Machines.has_pot(map_id, cell):
+		return "Reprendre" if _holding_tool() == "pickaxe" else ("Vider" if Machines.pot_catch(map_id, cell) != "" else "Casier")
+	if _holding_type() == "crab_pot" and is_water(cell):
+		return "Poser"
 	if _forage_sprites.has(cell):
 		return "Cueillir"
 	if _spouse_at(cell):
@@ -568,6 +576,12 @@ func act_on(cell: Vector2i) -> void:
 	if _forage_sprites.has(cell):
 		_pick_forage(cell)
 		return
+	if Machines.has_pot(map_id, cell):
+		_use_pot(cell)
+		return
+	if _holding_type() == "crab_pot" and is_water(cell):
+		_place_pot(cell)
+		return
 	var kind: String = _interactables.get(cell, "")
 	if kind == "sign":
 		var s: Array = _signs[cell]
@@ -641,6 +655,80 @@ func _forage_cells() -> Array:
 		if str(_ground_chars[cell]) in FORAGE_GROUND and is_walkable(cell) and not _interactables.has(cell):
 			out.append(cell)
 	return out
+
+
+# ------------------------------------------------------------ casiers
+var _pot_sprites: Array[Node] = []
+
+
+func _place_pot(cell: Vector2i) -> void:
+	if not map_id in Machines.POT_MAPS:
+		EventBus.toast("Pas de casier ici : pose-le dans un étang ou au port.")
+		return
+	Machines.place_pot(map_id, cell)
+	Inventory.remove_from_slot(Inventory.selected, 1)
+	player.face_towards(cell - player_cell())
+	player.play_use()
+	Sfx.play("splash")
+	Fx.burst(_entities, cell_center(cell), [Color(0.8, 0.9, 1.0), Color(1, 1, 1)], 8, 40.0)
+	EventBus.toast("Casier posé : reviens demain voir ce qu'il a attrapé.")
+	_refresh_pots()
+
+
+func _use_pot(cell: Vector2i) -> void:
+	player.face_towards(cell - player_cell())
+	if _holding_tool() == "pickaxe":
+		if Machines.pot_catch(map_id, cell) != "" and Machines.collect_pot(map_id, cell) == "":
+			EventBus.toast("Inventaire plein !")
+			return
+		if Inventory.add_item("crab_pot", 1) > 0:
+			EventBus.toast("Inventaire plein !")
+			return
+		Machines.take_pot(map_id, cell)
+		player.play_use()
+		Sfx.play("splash")
+		_refresh_pots()
+		return
+	var got := Machines.collect_pot(map_id, cell)
+	if got == "":
+		if Machines.pot_catch(map_id, cell) != "":
+			EventBus.toast("Inventaire plein !")
+		else:
+			EventBus.toast("Le casier est vide pour l'instant. Reviens demain ! (La pioche permet de le reprendre.)")
+		return
+	player.play_use()
+	Sfx.play("splash")
+	Settings.vibrate(25)
+	Fx.item_pop(_entities, cell_center(cell), GameData.item_icon(got), player)
+	EventBus.toast("+1 %s" % GameData.item_name(got))
+	_refresh_pots()
+
+
+## Flotteurs des casiers (et la prise qui attend au-dessus).
+func _refresh_pots() -> void:
+	for s in _pot_sprites:
+		if is_instance_valid(s):
+			s.queue_free()
+	_pot_sprites.clear()
+	for cell: Vector2i in Machines.pots_on(map_id):
+		var buoy := Sprite2D.new()
+		buoy.texture = GameData.item_icon("crab_pot")
+		buoy.position = cell_center(cell)
+		buoy.offset = Vector2(0, -6)
+		buoy.set_meta("item_id", "crab_pot")
+		_entities.add_child(buoy)
+		_pot_sprites.append(buoy)
+		var got := Machines.pot_catch(map_id, cell)
+		if got != "":
+			var catch := Sprite2D.new()
+			catch.texture = GameData.item_icon(got)
+			catch.position = cell_center(cell) + Vector2(0, -1)
+			catch.offset = Vector2(0, -16)
+			catch.scale = Vector2(0.7, 0.7)
+			catch.set_meta("item_id", got)
+			catch.set_meta("pot_catch", true)
+			_entities.add_child(catch)
+			_pot_sprites.append(catch)
 
 
 func _spawn_forage() -> void:

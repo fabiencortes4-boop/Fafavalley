@@ -73,8 +73,9 @@ func _sprites() -> void:
 	var cam: Camera3D = vp.get_meta("cam")
 	var count := GameData.npcs.size()
 	var sheet := Image.create(16 * count, 16, false, Image.FORMAT_RGBA8)
-	for id: String in GameData.npcs:
-		var model := npc_model(id)
+	# Le joueur d'abord (son propre fichier), puis les habitants
+	for id: String in ["__player"] + GameData.npcs.keys():
+		var model := Models.instance(Models.path("blocky", "character-a")) if id == "__player" else npc_model(id)
 		vp.add_child(model)
 		model.rotation_degrees.y = 15
 		var box := _aabb(model)
@@ -91,9 +92,12 @@ func _sprites() -> void:
 			for x in 16:
 				var c := img.get_pixel(x, y)
 				img.set_pixel(x, y, Color(c.r / maxf(c.a, 0.01), c.g / maxf(c.a, 0.01), c.b / maxf(c.a, 0.01), 1.0) if c.a > 0.45 else Color(0, 0, 0, 0))
+		model.free()
+		if id == "__player":
+			img.save_png("res://assets/sprites/player.png")
+			continue
 		var index := int(GameData.npc(id).get("sprite", 0))
 		sheet.blit_rect(img, Rect2i(0, 0, 16, 16), Vector2i(index * 16, 0))
-		model.free()
 	sheet.save_png("res://assets/sprites/npcs.png")
 	print("sprites 2D : ", count)
 

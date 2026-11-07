@@ -148,6 +148,18 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
   vers le sac et petits tremblements d'écran sur les gros coups.
+- **Transformation** (à fabriquer, à poser à la ferme) : bocal à conserves (confitures,
+  conserves), pressoir (jus), fumoir (poisson fumé), presse à fromage (fromage, mayonnaise).
+  Le produit garde la qualité et le nom de l'ingrédient (« Confiture de melon ★ or »),
+  son prix dépend de l'ingrédient. Les plats cuisinés prennent la qualité des ingrédients.
+- **Concours de la fête** : un jury note l'objet présenté (valeur et surtout qualité) face
+  à trois habitants ; classement et prix selon le rang.
+- **Pêche** : appâts (le poisson mord deux fois plus vite, prises plus belles), casiers
+  posés dans l'eau (crabes, crevettes, moules, huîtres au port ; écrevisses aux étangs),
+  sortie en mer avec la barque de Basile (« Au large » : thon, espadon), et 4 poissons
+  légendaires (un seul exemplaire chacun, lettre de Jules pour les trouver).
+- **Vie du monde** : les habitants s'assoient sur les bancs et aux tables de la taverne ;
+  mouettes au port, canards sur les étangs, papillons au printemps et en été.
 - **Qualité** des récoltes, fruits, fleurs, cueillettes, poissons et produits d'élevage :
   normale, ★ argent, ★ or, ★ cristal (étoile sur l'icône). Elle dépend de la compétence,
   de l'engrais, de l'âge de l'arbre, du bonheur de l'animal, de la taille du poisson et
@@ -302,6 +314,7 @@ godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
+godot --headless res://tests/crafts_test.tscn    # machines, plats de qualité, concours, appâts, casiers, mer, légendaires
 godot --headless res://tests/quality_test.tscn   # qualité, demandes exigeantes, poissons de lac et de mer
 godot --headless res://tests/decor_test.tscn     # place, bancs et chaises (repos), infos des graines
 godot --headless res://tests/collections_test.tscn # album, paliers, succès, sauvegarde

@@ -235,7 +235,7 @@ def icons():
 
 # --------------------------------------------------------------- objets
 def objects():
-    tile(FARM, 109).save(os.path.join(OUT, "player.png"))
+    # player.png : rendu depuis le modèle 3D (tools/render_characters.gd --portraits)
     compose(TOWN, [[52, 53, 54], [64, 65, 66], [84, 86, 75]]).save(os.path.join(OUT, "house.png"))
     compose(FARM, [[93, 94, 95], [105, 106, 107], [117, 118, 119], [129, 130, 131],
                    [90, 91, 92], [126, 127, 128]]).save(os.path.join(OUT, "barn.png"))
@@ -501,6 +501,114 @@ def more_fish_icons():
     return out
 
 
+def draw_bottle(juice, light):
+    """Bouteille de jus : verre, liquide coloré, bouchon de liège."""
+    img = new_img(16, 16)
+    px = img.load()
+    for y in range(7, 15):
+        for x in range(5, 11):
+            px[x, y] = (juice if y > 8 else (220, 236, 240)) + (255,)
+    for y in range(3, 7):
+        for x in range(7, 9):
+            px[x, y] = (220, 236, 240, 255)
+    px[7, 2], px[8, 2] = (170, 120, 70, 255), (170, 120, 70, 255)
+    for y in range(9, 14):
+        px[6, y] = light + (255,)
+    for x in range(5, 11):
+        px[x, 11] = (245, 230, 190, 255)
+    return outlined(img)
+
+
+def draw_machine(kind):
+    """Icônes des machines de transformation."""
+    img = new_img(16, 16)
+    px = img.load()
+    def rect(x0, y0, x1, y1, c):
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                px[x, y] = c + (255,)
+    if kind == "jar":  # grand bocal de verre sur un socle
+        rect(3, 13, 13, 15, (150, 100, 60))
+        rect(4, 4, 12, 13, (200, 225, 235))
+        rect(5, 7, 11, 12, (200, 90, 110))
+        rect(4, 2, 12, 4, (120, 80, 50))
+        rect(5, 5, 6, 12, (240, 250, 255))
+    elif kind == "press":  # tonneau cerclé et sa vis
+        rect(3, 5, 13, 15, (160, 104, 62))
+        for y in (7, 12):
+            rect(3, y, 13, y + 1, (90, 90, 96))
+        rect(7, 1, 9, 5, (110, 110, 118))
+        rect(4, 1, 12, 2, (110, 110, 118))
+    elif kind == "smoker":  # petit four de briques et cheminée
+        rect(2, 6, 14, 15, (170, 80, 60))
+        for y in (8, 11, 14):
+            rect(2, y, 14, y + 1, (130, 60, 46))
+        rect(5, 9, 11, 13, (40, 30, 30))
+        rect(10, 1, 13, 6, (120, 60, 46))
+        px[11, 0] = (200, 200, 200, 255)
+    elif kind == "cheese":  # presse en bois, meule jaune
+        rect(2, 13, 14, 15, (140, 92, 56))
+        rect(3, 2, 5, 13, (140, 92, 56))
+        rect(11, 2, 13, 13, (140, 92, 56))
+        rect(3, 2, 13, 4, (120, 78, 46))
+        rect(5, 9, 11, 13, (250, 210, 90))
+        rect(7, 4, 9, 9, (110, 110, 118))
+    return outlined(img)
+
+
+def draw_sea_life(kind):
+    """Crabe, crevette, moule, huître, appât, casier."""
+    img = new_img(16, 16)
+    px = img.load()
+    def put(pts, c):
+        for (x, y) in pts:
+            px[x, y] = c + (255,)
+    if kind == "crab":
+        body = [(x, y) for x in range(4, 12) for y in range(7, 11)]
+        put(body, (214, 84, 60))
+        put([(x, 7) for x in range(5, 11)], (240, 120, 90))
+        put([(2, 5), (3, 5), (2, 6), (3, 7), (12, 7), (13, 5), (14, 5), (14, 6)], (214, 84, 60))
+        put([(4, 11), (6, 12), (9, 12), (11, 11), (3, 10), (12, 10)], (170, 60, 44))
+        put([(6, 6), (9, 6)], (40, 30, 30))
+    elif kind == "shrimp":
+        pts = [(4 + i, 9 - int(2.5 * (1 - ((i - 4) / 4.0) ** 2))) for i in range(9)]
+        for (x, y) in pts:
+            put([(x, y), (x, y + 1)], (240, 140, 110))
+        put([(12, 6), (13, 5), (14, 4)], (200, 100, 80))
+        put([(3, 9), (2, 10), (3, 11)], (220, 120, 90))
+    elif kind == "mussel":
+        for y in range(4, 13):
+            w = 2 + (y - 4) // 2
+            put([(x, y) for x in range(8 - w // 2, 8 + w)], (40, 44, 70))
+        put([(8, y) for y in range(5, 12)], (90, 100, 140))
+    elif kind == "oyster":
+        for y in range(5, 12):
+            put([(x, y) for x in range(3, 13) if (x - 8) ** 2 / 25 + (y - 8) ** 2 / 9 <= 1], (190, 180, 160))
+        put([(x, 8) for x in range(5, 11)], (230, 225, 210))
+        put([(8, 8)], (250, 250, 255))
+    elif kind == "bait":
+        put([(x, y) for x in range(4, 12) for y in range(8, 14)], (150, 110, 70))
+        put([(x, 7) for x in range(4, 12)], (120, 85, 55))
+        put([(6, 6), (7, 5), (8, 5), (9, 6), (10, 5)], (220, 120, 130))
+    elif kind == "pot":
+        put([(x, y) for x in range(3, 13) for y in range(6, 13) if (x + y) % 2 == 0], (170, 130, 80))
+        put([(x, 6) for x in range(3, 13)] + [(x, 12) for x in range(3, 13)], (130, 95, 60))
+        put([(3, y) for y in range(6, 13)] + [(12, y) for y in range(6, 13)], (130, 95, 60))
+        put([(8, 3), (8, 4), (8, 5)], (230, 220, 190))
+        put([(7, 2), (8, 2), (9, 2)], (220, 60, 50))
+    return outlined(img)
+
+
+def legendary(img):
+    """Contour doré des poissons légendaires."""
+    px = img.load()
+    for y in range(16):
+        for x in range(16):
+            if px[x, y] == OUTLINE:
+                px[x, y] = (232, 176, 40, 255)
+    return img
+
+
 def draw_rod():
     img = new_img(16, 16)
     px = img.load()
@@ -659,6 +767,22 @@ def extend_icons(sheet):
     extra += [draw_bowl((235, 225, 200), (240, 140, 90))]
     # 128-142 : poissons ajoutés (lac, puis mer)
     extra += more_fish_icons()
+    # 143-147 : produits artisanaux (cornichons, jus de fruits, jus de légumes,
+    # poisson fumé, mayonnaise)
+    extra += [draw_jar((110, 150, 60), (150, 190, 90)), draw_bottle((235, 120, 70), (250, 170, 120)),
+              draw_bottle((120, 170, 70), (160, 210, 110)),
+              draw_fish(5, 3, (150, 96, 56), (196, 140, 86), (110, 70, 40), "stripes"),
+              draw_jar((248, 240, 210), (255, 252, 240))]
+    # 148-151 : machines (bocal, pressoir, fumoir, presse à fromage)
+    extra += [draw_machine(k) for k in ("jar", "press", "smoker", "cheese")]
+    # 152-157 : crabe, crevette, moule, huître, appât, casier
+    extra += [draw_sea_life(k) for k in ("crab", "shrimp", "mussel", "oyster", "bait", "pot")]
+    # 158-161 : poissons légendaires (carpe ancienne, silure géant, brochet de
+    # la source, grand requin bleu)
+    extra += [legendary(draw_fish(5, 4, (150, 110, 60), (230, 190, 120), (120, 80, 40), "scales")),
+              legendary(draw_fish(6, 3, (60, 64, 76), (130, 134, 146), (50, 54, 66), "whiskers")),
+              legendary(draw_fish(6, 2, (90, 170, 150), (210, 240, 220), (60, 140, 120), "spots")),
+              legendary(draw_fish(6, 3, (60, 100, 170), (220, 228, 240), (40, 80, 150), None))]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

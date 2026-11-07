@@ -16,6 +16,7 @@ const CATEGORIES := [
 	{"id": "animal", "name": "Élevage", "types": ["animal"], "reward": [150, 700]},
 	{"id": "cooking", "name": "Cuisine", "types": ["food"], "reward": [250, 1200]},
 	{"id": "mine", "name": "Mine", "types": ["loot"], "ids": MINERALS, "reward": [250, 1200]},
+	{"id": "artisan", "name": "Artisanat", "types": ["artisan"], "reward": [200, 800]},
 ]
 
 var found: Dictionary = {}  # id d'objet -> true
@@ -74,6 +75,7 @@ func category(category_id: String) -> Dictionary:
 
 ## Inscrit un objet dans l'album. Renvoie true s'il est nouveau.
 func discover(id: String) -> bool:
+	id = GameData.base_id(id).get_slice(":", 0)  # « jam:melon@2 » -> « jam »
 	var cat := category_of(id)
 	if cat == "" or found.has(id):
 		return false

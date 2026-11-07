@@ -174,5 +174,43 @@
 			"potato": 1,
 			"onion": 1
 		}
+	},
+	"preserves_jar": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"wood": 30,
+			"coal": 2,
+			"fiber": 10
+		}
+	},
+	"smoker": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"stone": 30,
+			"wood": 15,
+			"coal": 4
+		}
+	},
+	"fruit_press": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"wood": 40,
+			"copper_ore": 3,
+			"stone": 10
+		},
+		"unlock": "ch1"
+	},
+	"cheese_press": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"wood": 25,
+			"stone": 20,
+			"copper_ore": 2
+		},
+		"unlock": "ch4"
 	}
 }

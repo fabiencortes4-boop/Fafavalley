@@ -103,6 +103,7 @@ func setup(world: WorldMap) -> void:
 	if map is Farm:
 		_refresh_farm_all()
 		map.visual_changed.connect(_refresh_farm_cell)
+		Machines.changed.connect(_refresh_farm_cell)
 		map.visual_reset.connect(_refresh_farm_all)
 	TimeManager.time_changed.connect(_update_light)
 	TimeManager.day_started.connect(_on_day_started)
@@ -238,7 +239,38 @@ func _box(size: Vector3, color: Color) -> MeshInstance3D:
 	box.size = size
 	box.material = _flat_material(color)
 	mi.mesh = box
+	mi.set_meta("box", [size, color])
 	return mi
+
+
+## Pendant la construction du décor, les boîtes fixes et opaques posées
+## avec _put() sont fusionnées en un seul maillage (bien moins d'objets à
+## dessiner sur téléphone).
+var _merge_st: SurfaceTool
+
+
+func _merge_begin() -> void:
+	_merge_st = SurfaceTool.new()
+	_merge_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+
+func _merge_end() -> void:
+	if _merge_st == null:
+		return
+	var st := _merge_st
+	_merge_st = null
+	st.generate_normals()
+	var mesh := st.commit()
+	if mesh.get_surface_count() == 0:
+		return
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.9
+	mi.material_override = mat
+	_static.add_child(mi)
 
 
 ## Modèle mis à l'échelle pour que sa plus grande dimension fasse `size` cases.
@@ -251,8 +283,32 @@ func _fitted(pack: String, model: String, size: float) -> Node3D:
 func _put(node: Node3D, at: Vector3, rot: float = 0.0) -> Node3D:
 	node.position = at
 	node.rotation.y = rot
+	if _merge_st != null and node.has_meta("box") and node.get_child_count() == 0:
+		var spec: Array = node.get_meta("box")
+		var color: Color = spec[1]
+		if color.a >= 1.0:
+			_st_box_rotated(_merge_st, at, rot, spec[0], color)
+			node.free()
+			return null
 	_static.add_child(node)
 	return node
+
+
+## Boîte ajoutée à un maillage, tournée autour de la verticale.
+func _st_box_rotated(st: SurfaceTool, center: Vector3, rot: float, size: Vector3, color: Color) -> void:
+	if is_zero_approx(rot):
+		_st_box(st, center, size, color)
+		return
+	var tmp := SurfaceTool.new()
+	tmp.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_st_box(tmp, Vector3.ZERO, size, color)
+	var arrays := tmp.commit_to_arrays()
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var cols: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var basis := Basis(Vector3.UP, rot)
+	for i in verts.size():
+		st.set_color(cols[i])
+		st.add_vertex(center + basis * verts[i])
 
 
 ## Écran -> case visée (rayon de la caméra contre le sol).
@@ -280,7 +336,7 @@ func _build_ground() -> void:
 	var colors := _season_colors()
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var chars: Dictionary = map.get("_ground_chars")
+	var chars := _ground_chars_ext()
 	# Couleur de chaque case de terre ferme (carte et décor autour)
 	var land := {}
 	for cell: Vector2i in chars:
@@ -301,7 +357,7 @@ func _build_ground() -> void:
 				col = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
 		var v := (float(_hash(cell) % 100) / 100.0 - 0.5) * 0.04
 		land[cell] = col.lightened(v) if v > 0 else col.darkened(-v)
-	for cell: Vector2i in _outskirts():
+	for cell: Vector2i in ([] as Array[Vector2i] if map is SeaMap else _outskirts()):
 		land[cell] = Color(0.86, 0.69, 0.47) if _outskirt_road(cell) else (colors.grass if _hash(cell) % 3 != 0 else colors.grass2)
 	# Sol lisse : chaque coin prend la moyenne des cases qui le touchent
 	var corner := func(x: int, y: int) -> Color:
@@ -382,6 +438,78 @@ func _outskirts() -> Array[Vector2i]:
 				if x < 0 or y < 0 or x >= size.x or y >= size.y:
 					_outskirt_cache.append(Vector2i(x, y))
 	return _outskirt_cache
+
+
+## Cases de la carte ; au large, la mer s'étend aussi tout autour.
+func _ground_chars_ext() -> Dictionary:
+	var chars: Dictionary = map.get("_ground_chars")
+	if not map is SeaMap:
+		return chars
+	var out := chars.duplicate()
+	for cell: Vector2i in _outskirts():
+		out[cell] = "~"
+	return out
+
+
+## Barque de Basile, au large : grande coque sous le pont, mât, voile, barre.
+func _sea_boat() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hull_st := SurfaceTool.new()
+	hull_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_hull(hull_st, 10.5, 2.0, Color(0.2, 0.4, 0.62), Color(0.95, 0.94, 0.9))
+	hull_st.generate_normals()
+	var hull := MeshInstance3D.new()
+	hull.mesh = hull_st.commit()
+	# Coque plus haute : le bordé dépasse du pont, la quille plonge
+	hull.scale = Vector3(1, 2.4, 1)
+	hull.position.y = 0.0
+	var dark := Color(0.36, 0.24, 0.15)
+	_st_box(st, Vector3(1.2, 1.8, 0), Vector3(0.14, 3.4, 0.14), dark)
+	_st_box(st, Vector3(-0.2, 0.7, 0), Vector3(2.8, 0.08, 0.08), dark)
+	# Barre (roue) à la poupe
+	for k in 8:
+		var ang := k * TAU / 8.0
+		_st_box(st, Vector3(-4.0, 0.85 + sin(ang) * 0.28, cos(ang) * 0.28), Vector3(0.06, 0.06, 0.06), Color(0.55, 0.38, 0.22))
+		_st_box(st, Vector3(-4.0, 0.85 + sin(ang) * 0.14, cos(ang) * 0.14), Vector3(0.03, 0.03, 0.03), Color(0.55, 0.38, 0.22))
+	_st_box(st, Vector3(-4.0, 0.85, 0), Vector3(0.1, 0.12, 0.12), dark)
+	_st_box(st, Vector3(-4.0, 0.5, 0), Vector3(0.12, 0.7, 0.12), dark)
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mi.material_override = mat
+	var boat := Node3D.new()
+	boat.add_child(mi)
+	var hmat := StandardMaterial3D.new()
+	hmat.vertex_color_use_as_albedo = true
+	hmat.vertex_color_is_srgb = true
+	hull.material_override = hmat
+	boat.add_child(hull)
+	# Grande voile
+	var sail := MeshInstance3D.new()
+	var sst := SurfaceTool.new()
+	sst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for tri: Array in [[Vector3(1.15, 0.75, 0), Vector3(-1.5, 0.75, 0), Vector3(1.15, 3.4, 0)]]:
+		for order: Array in [[0, 1, 2], [2, 1, 0]]:
+			for i: int in order:
+				sst.set_color(Color(0.93, 0.88, 0.76))
+				sst.add_vertex(tri[i] + Vector3(0, 0, 0.12 if i == 1 else 0.0))
+	sst.generate_normals()
+	sail.mesh = sst.commit()
+	var smat := StandardMaterial3D.new()
+	smat.vertex_color_use_as_albedo = true
+	smat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	sail.material_override = smat
+	boat.add_child(sail)
+	# Le pont (cases #) est au-dessus : la coque le porte
+	boat.position = Vector3(15.5, -0.15, 10.5)
+	_static.add_child(boat)
+	var tw := boat.create_tween().set_loops()
+	tw.tween_property(boat, "rotation:x", 0.02, 2.2).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(boat, "rotation:x", -0.02, 2.2).set_trans(Tween.TRANS_SINE)
 
 
 ## Sol sous un objet de décor (lampadaire, banc...) : sable, route ou herbe,
@@ -533,6 +661,7 @@ func _tree_model(cell: Vector2i) -> String:
 
 
 func _build_props() -> void:
+	_merge_begin()
 	var batch := Models.Batch.new()
 	var chars: Dictionary = map.get("_ground_chars")
 	for cell: Vector2i in chars:
@@ -691,7 +820,9 @@ func _build_props() -> void:
 				if TimeManager.season != 3 and _hash(cell) % 9 == 0:
 					_place(batch, "nature", "grass", c, 1.4, rot)
 	# Forêt dense autour de la carte, en laissant la route dégagée
-	for cell: Vector2i in _outskirts():
+	if map is SeaMap:
+		_sea_boat()
+	for cell: Vector2i in ([] as Array[Vector2i] if map is SeaMap else _outskirts()):
 		if _outskirt_road(cell):
 			continue
 		var near_road := false
@@ -714,8 +845,10 @@ func _build_props() -> void:
 		elif r == 7:
 			_place(batch, "nature", "plant_bushLarge", c, 2.2, 0.0)
 	batch.build(_static)
+	_build_wildlife(chars)
 	_finish_lamps()
 	_finish_docks()
+	_merge_end()
 	_wall_batch = Models.Batch.new()
 	_build_buildings(chars)
 	_wall_batch.build(_static)
@@ -1136,19 +1269,16 @@ var _lamp_off: MeshInstance3D
 
 ## Banc de parc en bois (assise, dossier, pieds en fer).
 func _bench(c: Vector3, rot: float) -> void:
-	var bench := Node3D.new()
 	var wood := Color(0.62, 0.4, 0.24)
 	var iron := Color(0.25, 0.25, 0.28)
+	var basis := Basis(Vector3.UP, rot)
 	for part: Array in [
 		[Vector3(0.9, 0.06, 0.32), Vector3(0, 0.3, 0), wood],
 		[Vector3(0.9, 0.22, 0.05), Vector3(0, 0.5, -0.15), wood],
 		[Vector3(0.06, 0.3, 0.3), Vector3(-0.38, 0.15, 0), iron],
 		[Vector3(0.06, 0.3, 0.3), Vector3(0.38, 0.15, 0), iron],
 	]:
-		var b := _box(part[0], part[2])
-		b.position = part[1]
-		bench.add_child(b)
-	_put(bench, c, rot)
+		_put(_box(part[0], part[2]), c + basis * part[1], rot)
 
 
 ## Entrée de la mine : colline rocheuse, galerie, charpente, rails, wagonnet.
@@ -1504,6 +1634,193 @@ func _tri_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, 
 	_tri(st, a, c, d, color)
 
 
+# ------------------------------------------------------------ faune d'ambiance
+## Mouettes au port et au large, canards sur les étangs, papillons au
+## printemps et en été : du mouvement, sans logique de jeu (vue 3D seulement).
+var _wildlife: Array = []  # [{node, kind, center, radius, speed, phase, height}]
+
+
+func _build_wildlife(chars: Dictionary) -> void:
+	_wildlife.clear()
+	var count_scale: float = [0.5, 1.0, 1.0][Settings.quality]
+	var size: Vector2i = map.get("_map_size")
+	var center := Vector3(size.x / 2.0, 0, size.y / 2.0)
+	if map is PortMap or map is SeaMap:
+		for i in int(6 * count_scale):
+			var gull := _gull()
+			_static.add_child(gull)
+			var c := (Vector3(32, 0, 12) if map is PortMap else center) + Vector3(randf_range(-6, 6), 0, randf_range(-5, 5))
+			_wildlife.append({"node": gull, "kind": "gull", "center": c, "radius": randf_range(2.0, 5.0), "speed": randf_range(0.25, 0.45) * (1 if i % 2 == 0 else -1), "phase": randf() * TAU, "height": randf_range(2.6, 4.2)})
+	if map is Farm or map is Village or map is ForestMap:
+		# Canards : sur les cases d'eau entourées d'eau (le milieu de l'étang)
+		var spots: Array[Vector2i] = []
+		for cell: Vector2i in chars:
+			if chars[cell] == "~" and chars.get(cell + Vector2i(2, 0), "") == "~" and chars.get(cell + Vector2i(-2, 0), "") == "~" and chars.get(cell + Vector2i(0, 2), "") == "~" and chars.get(cell + Vector2i(0, -2), "") == "~":
+				spots.append(cell)
+		if not spots.is_empty():
+			for i in mini(3, spots.size()):
+				var spot: Vector2i = spots[(i * 7919) % spots.size()]
+				var duck := _duck(i == 0)
+				duck.scale = Vector3.ONE * 2.2
+				_static.add_child(duck)
+				_wildlife.append({"node": duck, "kind": "duck", "center": Vector3(spot.x + 0.5, -0.08, spot.y + 0.5), "radius": randf_range(0.6, 1.2), "speed": randf_range(0.15, 0.3), "phase": randf() * TAU, "height": 0.0})
+		if TimeManager.season in [0, 1]:
+			var colors := [Color(1, 0.85, 0.3), Color(1, 1, 1), Color(0.6, 0.75, 1), Color(1, 0.55, 0.3)]
+			var flowers: Array[Vector2i] = []
+			for cell: Vector2i in chars:
+				if chars[cell] in [",", "v", "f"]:
+					flowers.append(cell)
+			for i in int(8 * count_scale):
+				var at: Vector2i = flowers[(i * 104729) % flowers.size()] if not flowers.is_empty() else Vector2i(size.x / 2, size.y / 2)
+				var fly := _butterfly(colors[i % colors.size()])
+				_static.add_child(fly)
+				_wildlife.append({"node": fly, "kind": "butterfly", "center": Vector3(at.x + 0.5, 0, at.y + 0.5), "radius": randf_range(0.6, 1.6), "speed": randf_range(0.5, 0.9), "phase": randf() * TAU, "height": randf_range(0.5, 1.1)})
+
+
+func _animate_wildlife(delta: float) -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	var night := TimeManager.minutes >= 20 * 60 or TimeManager.minutes < 6 * 60
+	for w: Dictionary in _wildlife:
+		var node: Node3D = w.node
+		if not is_instance_valid(node):
+			continue
+		var kind: String = w.kind
+		# La nuit, papillons et mouettes se cachent
+		node.visible = not (night and kind != "duck")
+		if not node.visible:
+			continue
+		var a: float = w.phase + t * float(w.speed)
+		var r: float = w.radius
+		var c: Vector3 = w.center
+		match kind:
+			"gull":
+				node.position = c + Vector3(cos(a) * r, w.height + sin(t * 0.7 + w.phase) * 0.3, sin(a) * r)
+				node.rotation.y = -a + (PI if w.speed > 0 else 0.0)
+				var flap := sin(t * 9.0 + w.phase) * 0.6
+				node.get_child(1).rotation.z = flap
+				node.get_child(2).rotation.z = -flap
+			"duck":
+				# Tour lent de l'étang, petits coups de tête
+				var wobble := sin(a * 2.3) * 0.25
+				node.position = c + Vector3(cos(a) * (r + wobble), 0, sin(a) * (r + wobble) * 0.7)
+				node.rotation.y = -a + PI
+				node.get_child(1).rotation.x = maxf(0.0, sin(t * 1.3 + w.phase) * 1.2 - 0.6)
+			"butterfly":
+				node.position = c + Vector3(cos(a) * r + sin(a * 2.7) * 0.3, w.height + sin(t * 3.0 + w.phase) * 0.15, sin(a * 1.3) * r)
+				node.rotation.y = -a
+				var f := absf(sin(t * 14.0 + w.phase)) * 1.2
+				node.get_child(0).rotation.z = f
+				node.get_child(1).rotation.z = -f
+
+
+func _gull() -> Node3D:
+	var g := Node3D.new()
+	g.add_child(_box(Vector3(0.12, 0.1, 0.32), Color(0.96, 0.96, 0.95)))
+	for side: float in [-1.0, 1.0]:
+		var pivot := Node3D.new()
+		pivot.position = Vector3(side * 0.05, 0.03, 0)
+		var wing := _box(Vector3(0.34, 0.02, 0.14), Color(0.72, 0.74, 0.78))
+		wing.position = Vector3(side * 0.17, 0, 0)
+		pivot.add_child(wing)
+		g.add_child(pivot)
+	var beak := _box(Vector3(0.04, 0.03, 0.08), Color(1, 0.75, 0.2))
+	beak.position = Vector3(0, 0.02, 0.2)
+	g.get_child(0).add_child(beak)
+	g.scale = Vector3.ONE * 1.2
+	return g
+
+
+func _duck(male: bool) -> Node3D:
+	var d := Node3D.new()
+	var body := _box(Vector3(0.18, 0.12, 0.3), Color(0.55, 0.42, 0.3) if not male else Color(0.62, 0.6, 0.56))
+	body.position.y = 0.06
+	d.add_child(body)
+	var neck := Node3D.new()
+	neck.position = Vector3(0, 0.12, 0.1)
+	var head := _box(Vector3(0.11, 0.11, 0.12), Color(0.15, 0.5, 0.3) if male else Color(0.5, 0.38, 0.27))
+	head.position = Vector3(0, 0.06, 0.03)
+	neck.add_child(head)
+	var beak := _box(Vector3(0.05, 0.03, 0.08), Color(1, 0.7, 0.2))
+	beak.position = Vector3(0, 0.05, 0.12)
+	neck.add_child(beak)
+	d.add_child(neck)
+	return d
+
+
+func _butterfly(color: Color) -> Node3D:
+	var b := Node3D.new()
+	for side: float in [-1.0, 1.0]:
+		var pivot := Node3D.new()
+		var wing := _box(Vector3(0.08, 0.006, 0.07), color)
+		wing.position = Vector3(side * 0.045, 0, 0)
+		pivot.add_child(wing)
+		b.add_child(pivot)
+	return b
+
+
+# ------------------------------------------------------------ machines
+## Machine de transformation (ferme) : petit modèle en boîtes ; en marche,
+## de la fumée ou une lueur ; prête, le produit flotte au-dessus en tournant.
+func _machine_model(cell: Vector2i, id: String) -> Node3D:
+	var root := Node3D.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wood := Color(0.58, 0.4, 0.25)
+	var iron := Color(0.36, 0.37, 0.4)
+	var top := 0.7
+	match id:
+		"preserves_jar":
+			_st_box(st, Vector3(0, 0.06, 0), Vector3(0.6, 0.12, 0.6), wood)
+			_st_box(st, Vector3(0, 0.38, 0), Vector3(0.44, 0.52, 0.44), Color(0.78, 0.88, 0.92))
+			_st_box(st, Vector3(0, 0.33, 0), Vector3(0.38, 0.36, 0.38), Color(0.75, 0.3, 0.38) if Machines.state.has(cell) else Color(0.7, 0.8, 0.85))
+			_st_box(st, Vector3(0, 0.68, 0), Vector3(0.48, 0.08, 0.48), Color(0.45, 0.3, 0.18))
+			_st_box(st, Vector3(0, 0.73, 0), Vector3(0.5, 0.03, 0.5), Color(0.9, 0.3, 0.25))
+			top = 0.8
+		"fruit_press":
+			_st_box(st, Vector3(0, 0.3, 0), Vector3(0.56, 0.6, 0.56), wood)
+			for y: float in [0.12, 0.48]:
+				_st_box(st, Vector3(0, y, 0), Vector3(0.6, 0.05, 0.6), iron)
+			_st_box(st, Vector3(0, 0.8, 0), Vector3(0.07, 0.4, 0.07), iron)
+			_st_box(st, Vector3(0, 0.95, 0), Vector3(0.5, 0.05, 0.05), iron)
+			_st_box(st, Vector3(0.3, 0.1, 0.18), Vector3(0.12, 0.06, 0.12), Color(0.85, 0.5, 0.3))
+			top = 1.05
+		"smoker":
+			_st_box(st, Vector3(0, 0.3, 0), Vector3(0.66, 0.6, 0.56), Color(0.66, 0.32, 0.24))
+			for y: float in [0.18, 0.36, 0.54]:
+				_st_box(st, Vector3(0, y, 0), Vector3(0.67, 0.02, 0.57), Color(0.85, 0.8, 0.72))
+			_st_box(st, Vector3(0, 0.26, 0.285), Vector3(0.3, 0.22, 0.02), Color(0.12, 0.08, 0.06) if not Machines.busy(cell) else Color(0.95, 0.5, 0.15))
+			_st_box(st, Vector3(0.2, 0.8, -0.1), Vector3(0.16, 0.4, 0.16), Color(0.5, 0.25, 0.2))
+			top = 1.1
+			if Machines.busy(cell) and Settings.quality > 0:
+				root.add_child(_smoke(Vector3(0.2, 1.0, -0.1)))
+		"cheese_press":
+			_st_box(st, Vector3(0, 0.05, 0), Vector3(0.66, 0.1, 0.56), wood)
+			for x: float in [-0.27, 0.27]:
+				_st_box(st, Vector3(x, 0.45, 0), Vector3(0.08, 0.8, 0.08), wood)
+			_st_box(st, Vector3(0, 0.84, 0), Vector3(0.66, 0.08, 0.12), wood)
+			_st_box(st, Vector3(0, 0.62, 0), Vector3(0.05, 0.36, 0.05), iron)
+			_st_box(st, Vector3(0, 0.24, 0), Vector3(0.36, 0.26, 0.36), Color(0.96, 0.82, 0.36) if Machines.state.has(cell) else Color(0.8, 0.7, 0.55))
+			top = 1.0
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.85
+	mi.material_override = mat
+	root.add_child(mi)
+	if Machines.ready(cell):
+		# Produit prêt : il flotte et tourne au-dessus de la machine
+		var icon := _billboard(GameData.item_icon(str(Machines.state[cell].output)), 0.035)
+		icon.position.y = top + 0.25
+		root.add_child(icon)
+		var tw := icon.create_tween().set_loops()
+		tw.tween_property(icon, "position:y", top + 0.38, 0.5).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(icon, "position:y", top + 0.25, 0.5).set_trans(Tween.TRANS_SINE)
+	return root
+
+
 # ------------------------------------------------------------ pontons
 ## Pontons : planches disjointes de teintes variées sur des longerons,
 ## pieux qui plongent dans l'eau (bas mouillé et algues), bornes, cordes,
@@ -1660,21 +1977,40 @@ func _lighthouse(c: Vector3) -> void:
 	# Faisceau qui tourne au-dessus de la mer
 	var beam := MeshInstance3D.new()
 	var bc := CylinderMesh.new()
-	bc.top_radius = 0.05
-	bc.bottom_radius = 0.9
-	bc.height = 7.0
+	bc.top_radius = 0.08
+	bc.bottom_radius = 1.4
+	bc.height = 11.0
 	var bm := StandardMaterial3D.new()
-	bm.albedo_color = Color(1, 0.95, 0.7, 0.18)
+	bm.albedo_color = Color(1, 0.92, 0.6, 0.22)
 	bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	bm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	bm.cull_mode = BaseMaterial3D.CULL_DISABLED
+	bm.no_depth_test = false
 	bc.material = bm
 	beam.mesh = bc
 	var pivot := Node3D.new()
 	_put(pivot, c + Vector3(0, top + 0.34, 0))
+	# Le faisceau plonge un peu vers la mer : on le voit balayer l'eau
+	var tilt := Node3D.new()
+	tilt.rotation.z = -0.3
+	pivot.add_child(tilt)
 	beam.rotation.z = PI / 2.0
-	beam.position = Vector3(3.5, 0, 0)
-	pivot.add_child(beam)
+	beam.position = Vector3(5.5, 0, 0)
+	tilt.add_child(beam)
+	# Cœur du faisceau, plus lumineux
+	var core := MeshInstance3D.new()
+	var cc := CylinderMesh.new()
+	cc.top_radius = 0.03
+	cc.bottom_radius = 0.45
+	cc.height = 9.0
+	var cm := bm.duplicate() as StandardMaterial3D
+	cm.albedo_color = Color(1, 0.95, 0.75, 0.3)
+	cc.material = cm
+	core.mesh = cc
+	core.rotation.z = PI / 2.0
+	core.position = Vector3(4.5, 0, 0)
+	tilt.add_child(core)
 	_lighthouse_beam = pivot
 
 
@@ -2435,11 +2771,17 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 			node.add_child(s)
 		"tree":
 			node.add_child(_fruit_tree(cell))
+		var other:
+			if Machines.is_machine(str(other)):
+				node.add_child(_machine_model(cell, str(other)))
 	if FarmState.debris.has(cell):
 		var debris: Node3D
 		match str(FarmState.debris[cell].type):
 			"weed":
-				debris = _model("nature", "grass_leafsLarge", 1.8)
+				# Herbes folles : hautes, d'un vert sombre, bien visibles sur la terre
+				debris = _model("nature", "grass_leafsLarge", 2.5)
+				Models.tint(debris, Color(0.62, 0.85, 0.45))
+				debris.scale.y *= 1.3
 			"twig":
 				debris = _model("nature", "log", 1.0)
 			"stone":
@@ -2737,6 +3079,26 @@ func _make_proxy(node: Node) -> Node3D:
 
 func _item_node(item: String, node: Node) -> Node3D:
 	var holder := Node3D.new()
+	if item == "crab_pot":
+		# Flotteur rouge et blanc du casier, sa corde, la cage sous l'eau
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		_st_box(st, Vector3(0, -0.02, 0), Vector3(0.2, 0.12, 0.2), Color(0.92, 0.25, 0.2))
+		_st_box(st, Vector3(0, 0.07, 0), Vector3(0.16, 0.08, 0.16), Color(0.97, 0.96, 0.92))
+		_st_box(st, Vector3(0, 0.16, 0), Vector3(0.03, 0.12, 0.03), Color(0.3, 0.3, 0.32))
+		_st_box(st, Vector3(0, -0.3, 0), Vector3(0.36, 0.2, 0.3), Color(0.5, 0.38, 0.24))
+		st.generate_normals()
+		var mi := MeshInstance3D.new()
+		mi.mesh = st.commit()
+		var mat := StandardMaterial3D.new()
+		mat.vertex_color_use_as_albedo = true
+		mat.vertex_color_is_srgb = true
+		mi.material_override = mat
+		holder.add_child(mi)
+		var tw := holder.create_tween().set_loops()
+		tw.tween_property(mi, "position:y", 0.03, 1.1).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(mi, "position:y", -0.02, 1.1).set_trans(Tween.TRANS_SINE)
+		return holder
 	if ITEM_MODELS.has(GameData.base_id(item)):
 		var spec: Array = ITEM_MODELS[GameData.base_id(item)]
 		holder.add_child(_model(spec[0], spec[1], spec[2]))
@@ -2761,10 +3123,24 @@ func _update_proxy(node: Node2D, proxy: Node3D) -> void:
 	elif node is Pickup:
 		height = 0.08 + absf(sin(Time.get_ticks_msec() / 250.0)) * 0.08
 		proxy.rotation.y += 0.04
+	elif node.has_meta("pot_catch"):
+		height = 0.35 + absf(sin(Time.get_ticks_msec() / 300.0)) * 0.08
 	var target := _to3d(node.position, height)
 	var moved := target - proxy.position
 	proxy.position = target
 	proxy.visible = node.visible
+	if node is Npc and (node as Npc).seated:
+		# Habitant assis sur un banc ou une chaise
+		var f := Vector2((node as Npc).seat_facing)
+		proxy.rotation.y = atan2(f.x, f.y)
+		proxy.position += Vector3(0, SEAT_HEIGHT, 0) - Vector3(f.x, 0, f.y) * SEAT_BACK
+		if not proxy.has_meta("ap"):
+			var found2 := proxy.find_children("*", "AnimationPlayer", true, false)
+			proxy.set_meta("ap", found2[0] if not found2.is_empty() else false)
+		var sap: Variant = proxy.get_meta("ap")
+		if sap is AnimationPlayer and (sap as AnimationPlayer).current_animation != "sit":
+			(sap as AnimationPlayer).play("sit", 0.2)
+		return
 	if node is Npc or node is Monster or node is Critter:
 		var walking := Vector2(moved.x, moved.z).length() > 0.002
 		if walking:
@@ -2786,6 +3162,8 @@ func _process(delta: float) -> void:
 		return
 	_sync_player(delta)
 	_sync_proxies()
+	if not _wildlife.is_empty():
+		_animate_wildlife(delta)
 	if _is_mine:
 		_sync_rocks()
 		_lantern.position = _player3d.position + Vector3(0, 1.2, 0.3)

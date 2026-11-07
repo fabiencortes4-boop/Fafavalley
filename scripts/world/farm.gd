@@ -227,6 +227,9 @@ func act_on(cell: Vector2i) -> void:
 	if FarmState.objects.get(cell) == "tree" and not fishing.busy():
 		_shake_tree(cell)
 		return
+	if Machines.is_machine(str(FarmState.objects.get(cell, ""))) and _holding_tool() != "pickaxe" and not fishing.busy():
+		_use_machine(cell)
+		return
 	if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe" and not fishing.busy():
 		EventBus.chest_requested.emit(cell)
 		return
@@ -351,6 +354,13 @@ func action_hint(cell: Vector2i) -> String:
 			return "Caresser"
 		if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe":
 			return "Ouvrir"
+		if Machines.is_machine(str(FarmState.objects.get(cell, ""))) and _holding_tool() != "pickaxe":
+			if Machines.ready(cell):
+				return "Récupérer"
+			var slot: Variant = Inventory.get_selected()
+			if not Machines.state.has(cell) and slot != null and not Machines.recipe(str(FarmState.objects[cell]), str(slot.id)).is_empty():
+				return "Déposer"
+			return "Voir"
 		if FarmState.objects.get(cell) == "tree":
 			return "Cueillir" if int(FarmState.trees[cell].fruits) > 0 else "Voir"
 		if FarmState.is_mature(cell):
@@ -511,6 +521,9 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 	if id == "chest" and not FarmState.chest_is_empty(cell):
 		EventBus.toast("Vide le coffre avant de le déplacer.")
 		return
+	if Machines.state.has(cell):
+		EventBus.toast("Attends que la machine ait fini (ou récupère son produit) avant de la déplacer.")
+		return
 	if not Inventory.can_add(id):
 		EventBus.toast("Inventaire plein !")
 		return
@@ -634,6 +647,44 @@ func _harvest(cell: Vector2i) -> void:
 			for i in count:
 				Fx.item_pop(_entities, _cell_fx_point(cell), GameData.item_icon(got), player)
 			get_tree().create_timer(0.5).timeout.connect(func() -> void: Sfx.play("pickup")))
+
+
+## Machine de transformation : récupérer le produit prêt, ou y déposer
+## l'objet tenu en main.
+func _use_machine(cell: Vector2i) -> void:
+	var machine := str(FarmState.objects[cell])
+	var name := str(Machines.data[machine].get("name", machine))
+	player.face_towards(cell - player_cell())
+	if Machines.ready(cell):
+		var out := Machines.collect(cell)
+		if out == "":
+			EventBus.toast("Inventaire plein !")
+			return
+		player.play_use()
+		Sfx.play("harvest")
+		Settings.vibrate(20)
+		Fx.burst(_entities, cell_center(cell) + Vector2(0, -10), [Color(1, 0.95, 0.6), Color(1, 1, 1)], 10, 45.0)
+		Fx.item_pop(_entities, cell_center(cell) + Vector2(0, -8), GameData.item_icon(out), player)
+		EventBus.toast("+1 %s" % GameData.item_name(out))
+		visual_changed.emit(cell)
+		return
+	if Machines.busy(cell):
+		var s: Dictionary = Machines.state[cell]
+		EventBus.toast("%s : %s, prêt dans %d nuit(s)." % [name, GameData.item_name(str(s.output)), int(s.days)])
+		return
+	var slot: Variant = Inventory.get_selected()
+	var r: Array = [] if slot == null else Machines.recipe(machine, str(slot.id))
+	if r.is_empty():
+		var hint: String = {"preserves_jar": "un fruit ou un légume", "fruit_press": "un fruit ou un légume", "smoker": "un poisson", "cheese_press": "du lait ou un œuf"}.get(machine, "un ingrédient")
+		EventBus.toast("%s : prends %s en main, puis touche la machine." % [name, hint])
+		return
+	var nights := Machines.insert(cell, machine, str(slot.id))
+	Inventory.remove_from_slot(Inventory.selected, 1)
+	player.play_use()
+	Sfx.play("craft")
+	Fx.puff(_entities, cell_center(cell) + Vector2(0, -6), Color(0.95, 0.92, 0.85, 0.8), 1.0)
+	EventBus.toast("%s : %s dans %d nuit(s)." % [name, GameData.item_name(str(r[0])), nights])
+	visual_changed.emit(cell)
 
 
 func _ship_selected() -> void:

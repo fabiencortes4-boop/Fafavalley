@@ -139,6 +139,18 @@ func remove_item(id: String, qty: int) -> void:
 		remove_min_quality(id, qty, 0)
 
 
+## Qualités des `qty` objets que prendrait remove_item (les moins bons d'abord).
+func lowest_qualities(base: String, qty: int) -> Array:
+	var out: Array = []
+	for q in 4:
+		var n := mini(_count_exact(GameData.with_quality(base, q)), qty - out.size())
+		for i in n:
+			out.append(q)
+		if out.size() >= qty:
+			break
+	return out
+
+
 ## Retire `qty` objets de qualité au moins `min_quality`, les moins bons d'abord.
 func remove_min_quality(base: String, qty: int, min_quality: int) -> void:
 	for q in range(min_quality, 4):

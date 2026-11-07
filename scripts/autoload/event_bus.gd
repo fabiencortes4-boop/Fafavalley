@@ -41,6 +41,8 @@ signal board_requested
 signal booth_requested
 signal story_advanced(chapter_id: String, path_label: String)
 signal npc_bubble(npc_id: String, text: String)
+## Un poisson légendaire est pêché
+signal legendary_fish(fish_id: String)
 
 
 func toast(text: String) -> void:

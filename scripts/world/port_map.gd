@@ -23,7 +23,7 @@ const MAP := [
 	"TT.,.x.....v.........==..p==:i~~~~~~~~~~~~~~~~",
 	"TT........q...==..q..==...==:u~~WW~~~~~~~~~~~~",
 	"TTQn..x....n..==..n..==x.n==n:~~~~~~~~~~~~~~~~",
-	"============================#########~~~~~~~~~",
+	"============================#########WW~~~~~~~",
 	"============================#####u###~~~~~~~~~",
 	"TT..q..==.n.....==.qn...q.P.::~~~~~~~~~~~~~~~~",
 	"TT.....==......x==....,.....:i~~~WW~~~~~~~~~~~",
@@ -109,6 +109,8 @@ func bench_facing(cell: Vector2i) -> Vector2i:
 
 func _after_build() -> void:
 	_spawn_cell = Vector2i(2, 14)
+	for c: Vector2i in BOAT_CELLS:
+		_interactables[c] = "boat"
 	_place_player()
 	_build_navigation()
 	for id: String in GameData.npcs:
@@ -177,7 +179,16 @@ func action_hint(cell: Vector2i) -> String:
 	return super(cell)
 
 
+## La barque de Basile, au bout de la grande jetée : on la loue pour
+## pêcher au large (de 6h à 18h).
+const BOAT_CELLS := [Vector2i(37, 14), Vector2i(38, 14)]
+const BOAT_PRICE := 200
+
+
 func _interact(kind: String, _cell: Vector2i) -> void:
+	if kind == "boat":
+		_rent_boat()
+		return
 	var building := kind.trim_prefix("door:")
 	if building == "phare" and PortStory.try_place("phare"):
 		return
@@ -190,6 +201,24 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 		EventBus.map_change_requested.emit("in:" + building, Vector2i(door_x, rows.size() - 2))
 	else:
 		EventBus.message_requested.emit(InteriorMap.LAYOUTS[building].name, InteriorMap.closed_text(building))
+
+
+func _rent_boat() -> void:
+	var hour := TimeManager.minutes / 60
+	if hour < 6 or hour >= 18:
+		EventBus.message_requested.emit("La barque de Basile", "« La barque se loue de 6h à 18h. Reviens demain, matelot ! »")
+		return
+	hud.play_scene("La barque de Basile", [["basile", "Envie de pêcher au large ? Thons, espadons... ma barque est à toi pour la journée : %d or. Je te ramène à 20h." % BOAT_PRICE]],
+		{"prompt": "Partir en mer ?", "options": [["Partir (%d or)" % BOAT_PRICE], ["Pas aujourd'hui"]]},
+		func(option: int) -> String:
+			if option != 0:
+				return "Comme tu veux. La mer ne bouge pas !"
+			if not Inventory.spend_gold(BOAT_PRICE):
+				return "Il te manque quelques pièces, matelot."
+			Sfx.play("coins")
+			hud.close_modal()
+			EventBus.map_change_requested.emit("sea", Vector2i(15, 10))
+			return "")
 
 
 func _process(delta: float) -> void:

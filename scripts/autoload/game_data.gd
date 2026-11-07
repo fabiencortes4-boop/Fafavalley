@@ -38,7 +38,7 @@ func _load_json(path: String) -> Dictionary:
 func item(id: String) -> Dictionary:
 	if items.has(id):
 		return items[id]
-	if id.contains("@"):
+	if id.contains("@") or id.contains(":"):
 		return _quality_item(id)
 	return {}
 
@@ -76,9 +76,14 @@ func _quality_item(id: String) -> Dictionary:
 	if _quality_cache.has(id):
 		return _quality_cache[id]
 	var base: Dictionary = items.get(base_id(id), {})
+	if base.is_empty() and base_id(id).contains(":"):
+		base = _artisan_item(base_id(id))
 	if base.is_empty():
 		return {}
 	var q := quality_of(id)
+	if q == 0:
+		_quality_cache[id] = base
+		return base
 	var out := base.duplicate(true)
 	out["quality"] = q
 	out["base"] = base_id(id)
@@ -88,6 +93,26 @@ func _quality_item(id: String) -> Dictionary:
 	if base.has("edible"):
 		var e: Array = base.edible
 		out["edible"] = [int(round(float(e[0]) * (1.0 + 0.2 * q))), int(round(float(e[1]) * (1.0 + 0.2 * q)))]
+	_quality_cache[id] = out
+	return out
+
+
+## Produit artisanal « jam:melon » : modèle « jam » appliqué à l'ingrédient
+## (nom « Confiture de melon », prix selon celui de l'ingrédient).
+func _artisan_item(id: String) -> Dictionary:
+	var tpl: Dictionary = items.get(id.get_slice(":", 0), {})
+	var input_id := id.get_slice(":", 1)
+	var input: Dictionary = items.get(input_id, {})
+	if tpl.is_empty() or input.is_empty():
+		return {}
+	var out := tpl.duplicate(true)
+	var input_name := str(input.get("name", input_id)).to_lower()
+	var name := str(tpl.get("from", "%s")) % input_name
+	for v in ["a", "e", "i", "o", "u", "é", "è", "â", "ê", "î", "ô", "œ"]:
+		name = name.replace("de " + v, "d'" + v)
+	out["name"] = name
+	out["sell"] = int(round(float(input.get("sell", 10)) * float(tpl.get("mult", 2.0)) + float(tpl.get("add", 0))))
+	out["input"] = input_id
 	_quality_cache[id] = out
 	return out
 
@@ -128,6 +153,9 @@ func pick_fish(place: String) -> String:
 		var hours: Array = f.get("hours", [6, 26])
 		var weather := str(f.get("weather", "any"))
 		if not place in f.get("places", []):
+			continue
+		# Légendaire : un seul dans la partie, et il faut être bon pêcheur
+		if f.get("legendary", false) and (FishLog.caught.has(id) or Skills.level("fishing") < int(f.get("min_level", 0))):
 			continue
 		if not float(TimeManager.season) in f.get("seasons", []):
 			continue

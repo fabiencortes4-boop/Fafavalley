@@ -46,6 +46,8 @@ func setup(map: WorldMap) -> void:
 			color = BUILDING
 		if map is MineLevel and ch != "#":
 			color = Color(0.55, 0.48, 0.4)
+		if (map is PortMap or map is SeaMap) and ch == "#":
+			color = Color(0.62, 0.44, 0.27)  # pontons et pont de la barque
 		img.set_pixel(cell.x, cell.y, color)
 	_texture = ImageTexture.create_from_image(img)
 	big = false

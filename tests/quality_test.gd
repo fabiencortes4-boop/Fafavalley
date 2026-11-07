@@ -85,7 +85,7 @@ func _ready() -> void:
 	for f: Dictionary in GameData.fishes.values():
 		if f.get("water") == "mer":
 			sea += 1
-			_check(f.places == ["port"], "%s : poisson de mer, pêché au port" % f.name) if f.places != ["port"] else null
+			_check(false, "%s : poisson de mer, pêché au port ou au large" % f.name) if not f.places.all(func(p: String) -> bool: return p in ["port", "sea"]) else null
 		else:
 			lake += 1
 			_check(not "port" in f.places, "%s : poisson d'eau douce" % f.name) if "port" in f.places else null

@@ -44,6 +44,12 @@ func value(stat: String) -> int:
 			return 1 if Marriage.spouse != "" else 0
 		"fish_species":
 			return FishLog.caught.size()
+		"legends":
+			var n := 0
+			for id: String in GameData.fishes:
+				if GameData.fish(id).get("legendary", false) and FishLog.caught.has(id):
+					n += 1
+			return n
 		"collection":
 			return Collections.total_found()
 		"collection_full":

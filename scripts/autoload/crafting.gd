@@ -54,19 +54,34 @@ func can_craft(id: String) -> bool:
 	return r.has("upgrade") or Inventory.can_add(id, int(r.get("count", 1)))
 
 
+## Qualité du dernier plat cuisiné (pour l'afficher)
+var last_quality: int = 0
+
+
 func craft(id: String) -> bool:
 	if not can_craft(id):
 		return false
 	var r: Dictionary = recipes[id]
 	var ingredients: Dictionary = r.get("ingredients", {})
+	# Cuisine : un plat prend la qualité moyenne de ses ingrédients (on
+	# utilise toujours d'abord les moins bons)
+	var cooking: bool = r.get("category", "") == "Cuisine"
+	var quality_sum := 0
+	var quality_count := 0
 	for item: String in ingredients:
+		if cooking and GameData.has_quality(item):
+			for q in Inventory.lowest_qualities(item, int(ingredients[item])):
+				quality_sum += q
+				quality_count += 1
 		Inventory.remove_item(item, int(ingredients[item]))
+	var dish_quality := quality_sum / quality_count if quality_count > 0 else 0
 	if int(r.get("gold", 0)) > 0:
 		Inventory.spend_gold(int(r.gold))
 	if r.has("upgrade"):
 		Inventory.replace_item(str(r.upgrade), id)
 	else:
-		Inventory.add_item(id, int(r.get("count", 1)))
+		Inventory.add_item(GameData.with_quality(id, dish_quality) if cooking else id, int(r.get("count", 1)))
+	last_quality = dish_quality if cooking else 0
 	if r.get("category", "") == "Cuisine":
 		Story.bump("cooked")
 	return true

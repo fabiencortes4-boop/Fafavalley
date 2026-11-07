@@ -347,7 +347,8 @@
 		"icon": 133,
 		"sell": 25,
 		"places": [
-			"port"
+			"port",
+			"sea"
 		],
 		"seasons": [
 			0,
@@ -374,7 +375,8 @@
 		"icon": 134,
 		"sell": 45,
 		"places": [
-			"port"
+			"port",
+			"sea"
 		],
 		"seasons": [
 			0,
@@ -399,7 +401,8 @@
 		"icon": 135,
 		"sell": 80,
 		"places": [
-			"port"
+			"port",
+			"sea"
 		],
 		"seasons": [
 			0,
@@ -426,7 +429,8 @@
 		"icon": 136,
 		"sell": 75,
 		"places": [
-			"port"
+			"port",
+			"sea"
 		],
 		"seasons": [
 			1,
@@ -475,7 +479,8 @@
 		"icon": 138,
 		"sell": 90,
 		"places": [
-			"port"
+			"port",
+			"sea"
 		],
 		"seasons": [
 			0,
@@ -501,7 +506,7 @@
 		"icon": 139,
 		"sell": 190,
 		"places": [
-			"port"
+			"sea"
 		],
 		"seasons": [
 			1
@@ -513,7 +518,7 @@
 		"weather": "sunny",
 		"difficulty": 80,
 		"behavior": "dart",
-		"weight": 2,
+		"weight": 4,
 		"size": [
 			80,
 			200
@@ -525,7 +530,8 @@
 		"icon": 140,
 		"sell": 85,
 		"places": [
-			"port"
+			"port",
+			"sea"
 		],
 		"seasons": [
 			2,
@@ -550,7 +556,8 @@
 		"icon": 141,
 		"sell": 110,
 		"places": [
-			"port"
+			"port",
+			"sea"
 		],
 		"seasons": [
 			0,
@@ -577,7 +584,7 @@
 		"icon": 142,
 		"sell": 450,
 		"places": [
-			"port"
+			"sea"
 		],
 		"seasons": [
 			1
@@ -589,11 +596,119 @@
 		"weather": "sunny",
 		"difficulty": 92,
 		"behavior": "dart",
-		"weight": 1,
+		"weight": 2,
 		"size": [
 			150,
 			300
 		],
 		"water": "mer"
+	},
+	"ancient_carp": {
+		"name": "Carpe ancienne",
+		"icon": 158,
+		"sell": 1000,
+		"places": [
+			"farm"
+		],
+		"seasons": [
+			0,
+			1
+		],
+		"hours": [
+			6,
+			20
+		],
+		"weather": "any",
+		"difficulty": 85,
+		"behavior": "calm",
+		"weight": 3,
+		"size": [
+			90,
+			140
+		],
+		"water": "lac",
+		"legendary": true,
+		"min_level": 3
+	},
+	"giant_catfish": {
+		"name": "Silure géant",
+		"icon": 159,
+		"sell": 1200,
+		"places": [
+			"village"
+		],
+		"seasons": [
+			0,
+			1,
+			2
+		],
+		"hours": [
+			19,
+			26
+		],
+		"weather": "rain",
+		"difficulty": 90,
+		"behavior": "sink",
+		"weight": 3,
+		"size": [
+			150,
+			250
+		],
+		"water": "lac",
+		"legendary": true,
+		"min_level": 4
+	},
+	"spring_pike": {
+		"name": "Brochet de la source",
+		"icon": 160,
+		"sell": 1500,
+		"places": [
+			"forest"
+		],
+		"seasons": [
+			2,
+			3
+		],
+		"hours": [
+			6,
+			11
+		],
+		"weather": "any",
+		"difficulty": 94,
+		"behavior": "dart",
+		"weight": 3,
+		"size": [
+			120,
+			160
+		],
+		"water": "lac",
+		"legendary": true,
+		"min_level": 5
+	},
+	"blue_shark": {
+		"name": "Grand requin bleu",
+		"icon": 161,
+		"sell": 2000,
+		"places": [
+			"sea"
+		],
+		"seasons": [
+			1
+		],
+		"hours": [
+			10,
+			18
+		],
+		"weather": "sunny",
+		"difficulty": 97,
+		"behavior": "dart",
+		"weight": 3,
+		"size": [
+			250,
+			400
+		],
+		"water": "mer",
+		"legendary": true,
+		"min_level": 6
 	}
 }

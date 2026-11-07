@@ -1401,5 +1401,242 @@
 		"stack": 99,
 		"sell": 450,
 		"edible": [70, 35]
+	},
+	"jam": {
+		"name": "Confiture",
+		"type": "artisan",
+		"icon": 74,
+		"stack": 99,
+		"sell": 100,
+		"from": "Confiture de %s",
+		"mult": 2.0,
+		"add": 40,
+		"edible": [
+			50,
+			15
+		],
+		"description": "Faite maison dans le bocal à conserves."
+	},
+	"pickles": {
+		"name": "Conserve",
+		"type": "artisan",
+		"icon": 143,
+		"stack": 99,
+		"sell": 90,
+		"from": "Bocal de %s",
+		"mult": 2.0,
+		"add": 30,
+		"edible": [
+			40,
+			15
+		],
+		"description": "Des légumes en bocal, pour l'hiver."
+	},
+	"juice": {
+		"name": "Jus de fruits",
+		"type": "artisan",
+		"icon": 144,
+		"stack": 99,
+		"sell": 120,
+		"from": "Jus de %s",
+		"mult": 2.5,
+		"add": 20,
+		"edible": [
+			45,
+			10
+		],
+		"description": "Pressé à la ferme."
+	},
+	"veg_juice": {
+		"name": "Jus de légumes",
+		"type": "artisan",
+		"icon": 145,
+		"stack": 99,
+		"sell": 90,
+		"from": "Jus de %s",
+		"mult": 2.2,
+		"add": 10,
+		"edible": [
+			40,
+			15
+		],
+		"description": "Plein de vitamines."
+	},
+	"smoked_fish": {
+		"name": "Poisson fumé",
+		"type": "artisan",
+		"icon": 146,
+		"stack": 99,
+		"sell": 100,
+		"from": "Poisson fumé (%s)",
+		"mult": 2.0,
+		"add": 20,
+		"edible": [
+			60,
+			25
+		],
+		"description": "Fumé lentement au bois de la forêt."
+	},
+	"mayonnaise": {
+		"name": "Mayonnaise",
+		"type": "artisan",
+		"icon": 147,
+		"stack": 99,
+		"sell": 110,
+		"edible": [
+			30,
+			10
+		],
+		"description": "Battue à la main avec des œufs de la ferme."
+	},
+	"preserves_jar": {
+		"name": "Bocal à conserves",
+		"type": "placeable",
+		"place": "preserves_jar",
+		"icon": 148,
+		"stack": 99,
+		"sell": 100,
+		"description": "Se pose à la ferme. Fruits -> confiture, légumes -> conserve (2 jours). Garde la qualité."
+	},
+	"fruit_press": {
+		"name": "Pressoir",
+		"type": "placeable",
+		"place": "fruit_press",
+		"icon": 149,
+		"stack": 99,
+		"sell": 150,
+		"description": "Se pose à la ferme. Fruits ou légumes -> jus (2 à 3 jours). Garde la qualité."
+	},
+	"smoker": {
+		"name": "Fumoir",
+		"type": "placeable",
+		"place": "smoker",
+		"icon": 150,
+		"stack": 99,
+		"sell": 120,
+		"description": "Se pose à la ferme. Poisson -> poisson fumé (1 jour). Garde la qualité."
+	},
+	"cheese_press": {
+		"name": "Presse à fromage",
+		"type": "placeable",
+		"place": "cheese_press",
+		"icon": 151,
+		"stack": 99,
+		"sell": 150,
+		"description": "Se pose à la ferme. Lait -> fromage, œuf -> mayonnaise (1 jour). Garde la qualité."
+	},
+	"crab": {
+		"name": "Crabe",
+		"type": "fish",
+		"icon": 152,
+		"stack": 99,
+		"sell": 70,
+		"edible": [
+			30,
+			15
+		],
+		"description": "Pris dans un casier, au port."
+	},
+	"shrimp": {
+		"name": "Crevette",
+		"type": "fish",
+		"icon": 153,
+		"stack": 99,
+		"sell": 50,
+		"edible": [
+			20,
+			10
+		],
+		"description": "Pris dans un casier, au port."
+	},
+	"mussel": {
+		"name": "Moule",
+		"type": "fish",
+		"icon": 154,
+		"stack": 99,
+		"sell": 35,
+		"edible": [
+			15,
+			8
+		],
+		"description": "Pris dans un casier, au port."
+	},
+	"oyster": {
+		"name": "Huître",
+		"type": "fish",
+		"icon": 155,
+		"stack": 99,
+		"sell": 80,
+		"edible": [
+			20,
+			15
+		],
+		"description": "Pris dans un casier, au port."
+	},
+	"bait": {
+		"name": "Appât",
+		"type": "bait",
+		"icon": 156,
+		"stack": 99,
+		"buy": 5,
+		"sell": 2,
+		"description": "Dans le sac, il est utilisé à chaque lancer : le poisson mord deux fois plus vite et la prise est souvent plus belle."
+	},
+	"crab_pot": {
+		"name": "Casier",
+		"type": "crab_pot",
+		"icon": 157,
+		"stack": 99,
+		"buy": 1200,
+		"sell": 300,
+		"description": "Pose-le dans l'eau (étang ou port) : chaque nuit, il attrape quelque chose. Le reprendre à la pioche."
+	},
+	"ancient_carp": {
+		"name": "Carpe ancienne",
+		"type": "fish",
+		"icon": 158,
+		"stack": 99,
+		"sell": 1000,
+		"edible": [
+			100,
+			60
+		],
+		"description": "Un poisson légendaire. On n'en pêche qu'un."
+	},
+	"giant_catfish": {
+		"name": "Silure géant",
+		"type": "fish",
+		"icon": 159,
+		"stack": 99,
+		"sell": 1200,
+		"edible": [
+			100,
+			60
+		],
+		"description": "Un poisson légendaire. On n'en pêche qu'un."
+	},
+	"spring_pike": {
+		"name": "Brochet de la source",
+		"type": "fish",
+		"icon": 160,
+		"stack": 99,
+		"sell": 1500,
+		"edible": [
+			100,
+			60
+		],
+		"description": "Un poisson légendaire. On n'en pêche qu'un."
+	},
+	"blue_shark": {
+		"name": "Grand requin bleu",
+		"type": "fish",
+		"icon": 161,
+		"stack": 99,
+		"sell": 2000,
+		"edible": [
+			100,
+			60
+		],
+		"description": "Un poisson légendaire. On n'en pêche qu'un."
 	}
 }
