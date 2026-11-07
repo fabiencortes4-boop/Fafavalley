@@ -97,6 +97,8 @@ static func transfer(from_arr: Array, index: int, to_arr: Array) -> void:
 ## Ajoute des objets ; renvoie la quantité qui n'a pas pu être rangée.
 func add_item(id: String, qty: int = 1) -> int:
 	var left := add_to_slots(slots, id, qty)
+	if left < qty:
+		Collections.discover(id)
 	EventBus.inventory_changed.emit()
 	return left
 

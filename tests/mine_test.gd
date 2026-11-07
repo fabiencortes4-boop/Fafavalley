@@ -111,8 +111,9 @@ func _ready() -> void:
 	hud.close_modal()
 	# Évanouissement
 	PlayerState.flags["mine_deepest"] = 12
-	var gold := Inventory.gold
 	await get_tree().create_timer(1.1).timeout
+	Achievements.check()  # le succès « niveau 10 » rapporte de l'or : avant la mesure
+	var gold := Inventory.gold
 	mine.player.take_damage(999, mine.player.position)
 	await _frames(3)
 	_check(_main.call("current_map") is Village, "évanoui·e : on se réveille au village")

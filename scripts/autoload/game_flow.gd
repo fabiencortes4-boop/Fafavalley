@@ -31,6 +31,8 @@ func new_game() -> void:
 	HeartEvents.reset()
 	Marriage.reset()
 	PortStory.reset()
+	Collections.reset()
+	Achievements.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])
 	Inventory.add_gold(STARTING_GOLD)

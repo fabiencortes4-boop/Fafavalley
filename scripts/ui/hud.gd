@@ -87,7 +87,10 @@ func _ready() -> void:
 	_root.add_child(_fade)
 
 	EventBus.inventory_changed.connect(_refresh_hotbar)
-	EventBus.gold_changed.connect(func(_g: int) -> void: _refresh_status())
+	EventBus.gold_changed.connect(_on_gold_changed)
+	Collections.discovered.connect(_on_discovered)
+	Collections.milestone.connect(_on_milestone)
+	Achievements.unlocked.connect(_on_achievement)
 	EventBus.energy_changed.connect(_on_energy_changed)
 	EventBus.health_changed.connect(func(v: int, m: int) -> void:
 		_health_bar.max_value = m
@@ -256,6 +259,7 @@ func _build_hotbar() -> void:
 		qty.size = Vector2(SLOT_SIZE - 3, 10)
 		slot.add_child(qty)
 		_slots.append(slot)
+		_slot_memory.append("")
 		_slot_icons.append(icon)
 		_slot_labels.append(qty)
 
@@ -344,19 +348,49 @@ func _refresh_status() -> void:
 	_date_label.text = "%s %d - %s" % [TimeManager.weekday(), TimeManager.day, TimeManager.SEASONS[TimeManager.season]]
 	_time_label.text = TimeManager.time_string()
 	_weather_icon.texture = _hud_icon({"rain": 1, "snow": 2}.get(TimeManager.weather, 0))
-	_gold_label.text = "%d" % Inventory.gold
+	if _gold_tween == null or not _gold_tween.is_running():
+		_gold_label.text = "%d" % Inventory.gold
+		_gold_shown = Inventory.gold
 	if _gold_panel != null:
 		_layout()
+
+
+var _energy_low: bool = false
+var _energy_blink: Tween
 
 
 func _on_energy_changed(value: int, max_value: int) -> void:
 	_energy_bar.max_value = max_value
 	_energy_bar.value = value
+	# Fatigue : la jauge clignote sous 20 % et un message prévient une fois
+	var low := value <= max_value / 5
+	if low == _energy_low:
+		return
+	_energy_low = low
+	if _energy_blink != null:
+		_energy_blink.kill()
+		_energy_blink = null
+	_energy_bar.modulate = Color.WHITE
+	if low:
+		_energy_blink = create_tween().set_loops()
+		_energy_blink.tween_property(_energy_bar, "modulate", Color(1.6, 0.6, 0.5), 0.45)
+		_energy_blink.tween_property(_energy_bar, "modulate", Color.WHITE, 0.45)
+		if value > 0 and TimeManager.running:
+			show_toast("Tu te sens fatigué... mange quelque chose ou va dormir.")
 
 
 func _refresh_hotbar() -> void:
+	var pops: Array = []
 	for i in _slots.size():
 		var slot: Variant = Inventory.slots[i]
+		# Un objet arrive dans la case : l'icône rebondit
+		var key := "" if slot == null else "%s:%d" % [slot.id, int(slot.qty)]
+		if i < _slot_memory.size() and key != _slot_memory[i] and slot != null:
+			var before: String = _slot_memory[i]
+			if before == "" or (before.begins_with(str(slot.id) + ":") and int(before.get_slice(":", 1)) < int(slot.qty)):
+				pops.append(_slot_icons[i])
+		if i < _slot_memory.size():
+			_slot_memory[i] = key
 		_slots[i].add_theme_stylebox_override(
 			"panel", _slot_selected_style if i == Inventory.selected else _slot_style
 		)
@@ -369,6 +403,10 @@ func _refresh_hotbar() -> void:
 			# L'eau restante s'affiche sur l'arrosoir.
 			if GameData.item(slot.id).get("tool") == "watering_can":
 				_slot_labels[i].text = str(PlayerState.water)
+	# Un gain ponctuel (pas un sac entier qui change au chargement)
+	if pops.size() <= 2 and _last_selected != -1:
+		for icon: Control in pops:
+			_pop_icon(icon)
 	# Case choisie : petit « pop » et un son
 	if Inventory.selected != _last_selected:
 		if _last_selected != -1:
@@ -379,6 +417,166 @@ func _refresh_hotbar() -> void:
 		_last_selected = Inventory.selected
 	var selected: Variant = Inventory.get_selected()
 	_action_icon.texture = null if selected == null else GameData.item_icon(selected.id)
+
+
+var _slot_memory: Array = []  # « id:quantité » de chaque case, pour repérer les gains
+
+
+func _pop_icon(icon: Control) -> void:
+	icon.pivot_offset = icon.size / 2.0
+	icon.scale = Vector2(1.45, 1.45)
+	var tw := icon.create_tween()
+	tw.tween_property(icon, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+# ------------------------------------------------------------ or animé
+var _gold_shown: int = -1
+var _gold_tween: Tween
+
+
+func _on_gold_changed(amount: int) -> void:
+	if _gold_shown < 0 or _gold_label == null:
+		_gold_shown = amount
+		_refresh_status()
+		return
+	var diff := amount - _gold_shown
+	if diff == 0:
+		return
+	if _gold_tween != null:
+		_gold_tween.kill()
+	_gold_tween = create_tween()
+	var duration := clampf(0.25 + absf(diff) / 2000.0, 0.25, 0.9)
+	_gold_tween.tween_method(func(v: float) -> void:
+		_gold_shown = int(round(v))
+		_gold_label.text = "%d" % _gold_shown, float(_gold_shown), float(amount), duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	# La bourse rebondit et s'éclaire (vert si on gagne, rouge si on dépense)
+	_gold_panel.pivot_offset = _gold_panel.size / 2.0
+	_gold_panel.scale = Vector2(1.15, 1.15) if diff > 0 else Vector2(0.92, 0.92)
+	_gold_panel.modulate = Color(0.75, 1.3, 0.75) if diff > 0 else Color(1.3, 0.7, 0.7)
+	var pop := create_tween().set_parallel()
+	pop.tween_property(_gold_panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop.tween_property(_gold_panel, "modulate", Color.WHITE, 0.5)
+	# « +120 » qui s'envole sous la bourse
+	var fly := Label.new()
+	fly.text = ("+%d" if diff > 0 else "%d") % diff
+	fly.add_theme_color_override("font_color", Color(1, 0.88, 0.35) if diff > 0 else Color(1, 0.5, 0.45))
+	fly.add_theme_constant_override("outline_size", 3)
+	fly.add_theme_color_override("font_outline_color", Color(0.15, 0.08, 0.05))
+	fly.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fly.z_index = 50
+	_root.add_child(fly)
+	fly.position = _gold_panel.position + Vector2(4, _gold_panel.size.y + 2)
+	var ft := fly.create_tween().set_parallel()
+	ft.tween_property(fly, "position:y", fly.position.y + 10, 0.9).set_ease(Tween.EASE_OUT)
+	ft.tween_property(fly, "modulate:a", 0.0, 0.9).set_delay(0.4)
+	ft.chain().tween_callback(fly.queue_free)
+	if diff > 0:
+		Sfx.play("coin", -4.0)
+
+
+# ------------------------------------------------------------ bannières de récompense
+## File de bannières (album, succès, paliers) : une à la fois, en haut de
+## l'écran, avec une icône qui rebondit et une gerbe d'étincelles.
+var _banner_queue: Array = []
+var _banner: PanelContainer
+
+
+func show_banner(icon: Texture2D, title: String, text: String, sound: String = "discover", tint: Color = Color(1, 0.9, 0.5)) -> void:
+	_banner_queue.append([icon, title, text, sound, tint])
+	if _banner == null:
+		_next_banner()
+
+
+func _next_banner() -> void:
+	_banner = null
+	if _banner_queue.is_empty():
+		return
+	var b: Array = _banner_queue.pop_front()
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.z_index = 90
+	_banner = panel
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+	var icon := TextureRect.new()
+	icon.texture = b[0]
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.custom_minimum_size = Vector2(28, 28)
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	row.add_child(icon)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(col)
+	var title := Label.new()
+	title.text = b[1]
+	title.add_theme_color_override("font_color", b[4])
+	col.add_child(title)
+	var text := Label.new()
+	text.text = b[2]
+	text.add_theme_font_size_override("font_size", maxi(8, Settings.font_size() - 1))
+	col.add_child(text)
+	_root.add_child(panel)
+	var vp := get_viewport().get_visible_rect().size
+	var size := panel.get_combined_minimum_size()
+	panel.size = size
+	var target := Vector2((vp.x - size.x) / 2.0, 62)
+	panel.position = Vector2(target.x, -size.y - 4)
+	# Étincelles autour de l'icône
+	var sparks := CPUParticles2D.new()
+	sparks.one_shot = true
+	sparks.amount = 18
+	sparks.lifetime = 0.8
+	sparks.explosiveness = 0.9
+	sparks.spread = 180.0
+	sparks.gravity = Vector2(0, 60)
+	sparks.initial_velocity_min = 30.0
+	sparks.initial_velocity_max = 70.0
+	sparks.scale_amount_min = 1.5
+	sparks.scale_amount_max = 2.5
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1, 1, 0.8, 1))
+	ramp.set_color(1, Color(b[4].r, b[4].g, b[4].b, 0))
+	sparks.color_ramp = ramp
+	sparks.position = Vector2(16, size.y / 2.0)
+	sparks.emitting = false
+	panel.add_child(sparks)
+	Sfx.play(b[3])
+	Settings.vibrate(35)
+	var tw := panel.create_tween()
+	tw.tween_property(panel, "position", target, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func() -> void:
+		sparks.emitting = true
+		icon.pivot_offset = icon.size / 2.0
+		icon.scale = Vector2(1.5, 1.5)
+		icon.create_tween().tween_property(icon, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT))
+	tw.tween_interval(2.4 if b[3] == "achievement" else 1.6)
+	tw.tween_property(panel, "modulate:a", 0.0, 0.35)
+	tw.tween_callback(func() -> void:
+		panel.queue_free()
+		_next_banner())
+
+
+func _on_discovered(id: String, category: String) -> void:
+	var c := Collections.category(category)
+	show_banner(GameData.item_icon(id), "Nouveau dans l'album !",
+		"%s - %s %d/%d" % [GameData.item(id).get("name", id), c.name, Collections.count(category), Collections.items_of(category).size()])
+
+
+func _on_milestone(category: String, full: bool, reward: int) -> void:
+	var c := Collections.category(category)
+	var first: String = Collections.items_of(category)[0]
+	show_banner(GameData.item_icon(first), ("Collection complète : %s !" if full else "Moitié de la collection : %s") % c.name,
+		"Récompense : +%d or" % reward, "achievement", Color(0.6, 1, 0.7))
+
+
+func _on_achievement(id: String) -> void:
+	var a := Achievements.get_achievement(id)
+	var gold := int(a.get("gold", 0))
+	show_banner(GameData.item_icon(str(a.icon)), "Succès : %s" % a.name,
+		str(a.text) + ("  (+%d or)" % gold if gold > 0 else ""), "achievement", Color(1, 0.85, 0.3))
 
 
 func show_toast(text: String) -> void:
@@ -563,6 +761,8 @@ func open_pause_menu() -> void:
 	_add_button(box, "Habitants", open_relations)
 	_add_button(box, "Demandes", open_requests)
 	_add_button(box, "Carnet de pêche", open_fish_log)
+	_add_button(box, "Album", open_collections.bind(""))
+	_add_button(box, "Succès", open_achievements)
 	_add_button(box, "Réglages", open_settings)
 	_add_button(box, "Sauvegarder", func() -> void:
 		SaveManager.save_game()
@@ -594,6 +794,9 @@ func open_settings() -> void:
 		open_settings())
 	_add_button(box, "Musique : %s" % ("oui" if Settings.music else "non"), func() -> void:
 		Settings.toggle_music()
+		open_settings())
+	_add_button(box, "Vibrations : %s" % ("oui" if Settings.vibration else "non"), func() -> void:
+		Settings.toggle_vibration()
 		open_settings())
 	_add_button(box, "Revoir le tutoriel", func() -> void:
 		Tutorial.restart()
@@ -1933,4 +2136,136 @@ func open_skills() -> void:
 		perk.text = Skills.PERKS[skill]
 		perk.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
 		row.add_child(perk)
+	_add_button(box, "Retour", open_pause_menu)
+
+
+# ------------------------------------------------------------ album et succès
+var _album_category: String = "crops"
+
+
+func open_collections(category: String = "") -> void:
+	if category != "":
+		_album_category = category
+	var box := _open_modal("Album  %d / %d" % [Collections.total_found(), Collections.total()])
+	# Onglets : une catégorie par bouton, avec son avancement
+	var tabs := GridContainer.new()
+	tabs.columns = 3
+	tabs.add_theme_constant_override("h_separation", 3)
+	tabs.add_theme_constant_override("v_separation", 3)
+	box.add_child(tabs)
+	for c: Dictionary in Collections.CATEGORIES:
+		var cid: String = c.id
+		var b := _add_button(tabs, "%s %d/%d" % [c.name, Collections.count(cid), Collections.items_of(cid).size()],
+			open_collections.bind(cid))
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if cid == _album_category:
+			b.add_theme_color_override("font_color", UiTheme.ACCENT)
+			b.add_theme_color_override("font_hover_color", UiTheme.ACCENT)
+		elif Collections.rewarded.has(cid + "_full"):
+			b.add_theme_color_override("font_color", Color(0.6, 1, 0.7))
+	var c := Collections.category(_album_category)
+	var ids := Collections.items_of(_album_category)
+	var info := Label.new()
+	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size = Vector2(330, 0)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(340, 92)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var grid := GridContainer.new()
+	grid.columns = 10
+	grid.add_theme_constant_override("h_separation", 3)
+	grid.add_theme_constant_override("v_separation", 3)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER | Control.SIZE_EXPAND
+	scroll.add_child(grid)
+	for id: String in ids:
+		var known := Collections.found.has(id)
+		var cell := Button.new()
+		cell.custom_minimum_size = Vector2(30, 30)
+		cell.icon = GameData.item_icon(id)
+		cell.expand_icon = true
+		cell.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if not known:
+			cell.self_modulate = Color(1, 1, 1, 0.9)
+			cell.add_theme_color_override("icon_normal_color", Color(0, 0, 0, 0.55))
+			cell.add_theme_color_override("icon_hover_color", Color(0, 0, 0, 0.55))
+			cell.add_theme_color_override("icon_pressed_color", Color(0, 0, 0, 0.55))
+			cell.add_theme_color_override("icon_focus_color", Color(0, 0, 0, 0.55))
+		var item := GameData.item(id)
+		cell.pressed.connect(func() -> void:
+			Sfx.play("select")
+			if known:
+				var desc := str(item.get("description", ""))
+				var sell := int(item.get("sell", 0))
+				info.text = "%s%s%s" % [item.get("name", id), (" - vente %d or" % sell) if sell > 0 else "", ("\n" + desc) if desc != "" else ""]
+			else:
+				info.text = "??? - pas encore trouvé")
+		grid.add_child(cell)
+	box.add_child(info)
+	var half := ceili(ids.size() / 2.0)
+	var reward: Array = c.reward
+	info.text = "Touche un objet pour le voir.  Récompenses : %d or à %d objets, %d or pour la collection complète." % [reward[0], half, reward[1]]
+	_add_button(box, "Retour", open_pause_menu)
+
+
+func open_achievements() -> void:
+	var box := _open_modal("Succès  %d / %d" % [Achievements.done.size(), Achievements.list.size()])
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(350, 170)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	_remember_scroll(scroll, "achievements")
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 3)
+	scroll.add_child(list)
+	# Débloqués d'abord ? Non : l'ordre du fichier suit la progression du jeu.
+	for a: Dictionary in Achievements.list:
+		var got := Achievements.done.has(a.id)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		list.add_child(row)
+		var icon := TextureRect.new()
+		icon.texture = GameData.item_icon(str(a.icon))
+		icon.custom_minimum_size = Vector2(20, 20)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.modulate = Color.WHITE if got else Color(0, 0, 0, 0.55)
+		row.add_child(icon)
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override("separation", 0)
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(col)
+		var name := Label.new()
+		name.text = str(a.name)
+		name.add_theme_color_override("font_color", UiTheme.ACCENT if got else Color(0.8, 0.75, 0.68))
+		col.add_child(name)
+		var text := Label.new()
+		var gold := int(a.get("gold", 0))
+		text.text = str(a.text) + ("  -  %d or" % gold if gold > 0 else "")
+		text.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+		text.add_theme_font_size_override("font_size", maxi(8, Settings.font_size() - 1))
+		col.add_child(text)
+		var right := Label.new()
+		right.custom_minimum_size = Vector2(60, 0)
+		right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		if got:
+			right.text = "Obtenu !"
+			right.add_theme_color_override("font_color", Color(0.6, 1, 0.65))
+			row.add_child(right)
+		else:
+			var bar := ProgressBar.new()
+			bar.show_percentage = false
+			bar.custom_minimum_size = Vector2(54, 8)
+			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			bar.value = Achievements.progress(a) * 100.0
+			var holder := VBoxContainer.new()
+			holder.add_theme_constant_override("separation", 0)
+			holder.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_child(holder)
+			right.text = "%d / %d" % [mini(Achievements.value(str(a.stat)), int(a.goal)), int(a.goal)]
+			right.add_theme_font_size_override("font_size", maxi(8, Settings.font_size() - 1))
+			holder.add_child(right)
+			holder.add_child(bar)
 	_add_button(box, "Retour", open_pause_menu)

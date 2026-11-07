@@ -45,6 +45,8 @@ Quests="*res://scripts/autoload/quests.gd"
 HeartEvents="*res://scripts/autoload/heart_events.gd"
 Marriage="*res://scripts/autoload/marriage.gd"
 PortStory="*res://scripts/autoload/port_story.gd"
+Collections="*res://scripts/autoload/collections.gd"
+Achievements="*res://scripts/autoload/achievements.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 

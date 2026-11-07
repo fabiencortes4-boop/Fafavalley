@@ -36,6 +36,8 @@ func save_game() -> void:
 		"hearts_seen": HeartEvents.to_dict(),
 		"marriage": Marriage.to_dict(),
 		"port_story": PortStory.to_dict(),
+		"collections": Collections.to_dict(),
+		"achievements": Achievements.to_dict(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -68,6 +70,15 @@ func load_game() -> bool:
 	Events.from_dict(data.get("events", {}))
 	Tutorial.from_dict(data.get("tutorial", {}))
 	Quests.from_dict(data.get("quests", {}))
+	Collections.from_dict(data.get("collections", {}))
+	if not data.has("collections"):
+		# Ancienne partie : l'album part de ce que le joueur possède déjà
+		for slot: Variant in Inventory.slots:
+			if slot != null:
+				Collections.discover(str(slot.id))
+		for id: String in FishLog.caught:
+			Collections.discover(id)
+	Achievements.from_dict(data.get("achievements", {}))
 	HeartEvents.from_dict(data.get("hearts_seen", {}))
 	Marriage.from_dict(data.get("marriage", {}))
 	PortStory.from_dict(data.get("port_story", {}))

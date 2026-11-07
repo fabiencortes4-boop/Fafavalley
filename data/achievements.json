@@ -1,0 +1,254 @@
+[
+	{
+		"id": "first_harvest",
+		"name": "Premier panier",
+		"text": "Récolter une culture",
+		"stat": "harvest",
+		"goal": 1,
+		"icon": "carrot",
+		"gold": 50
+	},
+	{
+		"id": "harvest_100",
+		"name": "Main verte",
+		"text": "Récolter 100 cultures",
+		"stat": "harvest",
+		"goal": 100,
+		"icon": "tomato",
+		"gold": 300
+	},
+	{
+		"id": "harvest_500",
+		"name": "Grenier plein",
+		"text": "Récolter 500 cultures",
+		"stat": "harvest",
+		"goal": 500,
+		"icon": "pumpkin",
+		"gold": 1000
+	},
+	{
+		"id": "earned_1000",
+		"name": "Premiers sous",
+		"text": "Gagner 1 000 or en expédiant",
+		"stat": "earned",
+		"goal": 1000,
+		"icon": "gold_ore",
+		"gold": 100
+	},
+	{
+		"id": "earned_10000",
+		"name": "Petit pécule",
+		"text": "Gagner 10 000 or en expédiant",
+		"stat": "earned",
+		"goal": 10000,
+		"icon": "gold_ore",
+		"gold": 500
+	},
+	{
+		"id": "earned_50000",
+		"name": "Fortune de Valfleur",
+		"text": "Gagner 50 000 or en expédiant",
+		"stat": "earned",
+		"goal": 50000,
+		"icon": "emerald",
+		"gold": 2000
+	},
+	{
+		"id": "shipped_500",
+		"name": "Grand marchand",
+		"text": "Expédier 500 produits",
+		"stat": "shipped",
+		"goal": 500,
+		"icon": "melon",
+		"gold": 500
+	},
+	{
+		"id": "first_fish",
+		"name": "Ça mord !",
+		"text": "Attraper un poisson",
+		"stat": "fish",
+		"goal": 1,
+		"icon": "roach",
+		"gold": 50
+	},
+	{
+		"id": "fish_50",
+		"name": "Pêcheur aguerri",
+		"text": "Attraper 50 poissons",
+		"stat": "fish",
+		"goal": 50,
+		"icon": "pike",
+		"gold": 400
+	},
+	{
+		"id": "fish_species",
+		"name": "Carnet complet",
+		"text": "Attraper toutes les espèces de poisson",
+		"stat": "fish_species",
+		"goal": 8,
+		"icon": "golden_carp",
+		"gold": 1000
+	},
+	{
+		"id": "mine_10",
+		"name": "Spéléologue",
+		"text": "Atteindre le niveau 10 de la mine",
+		"stat": "mine_depth",
+		"goal": 10,
+		"icon": "copper_ore",
+		"gold": 200
+	},
+	{
+		"id": "mine_30",
+		"name": "Tout au fond",
+		"text": "Atteindre le niveau 30 de la mine",
+		"stat": "mine_depth",
+		"goal": 30,
+		"icon": "amethyst",
+		"gold": 1500
+	},
+	{
+		"id": "monsters_50",
+		"name": "Chasseur de monstres",
+		"text": "Vaincre 50 monstres",
+		"stat": "monsters",
+		"goal": 50,
+		"icon": "slime",
+		"gold": 400
+	},
+	{
+		"id": "ores_100",
+		"name": "Gueule noire",
+		"text": "Extraire 100 minerais",
+		"stat": "ores",
+		"goal": 100,
+		"icon": "iron_ore",
+		"gold": 400
+	},
+	{
+		"id": "cooked_10",
+		"name": "Cordon-bleu",
+		"text": "Cuisiner 10 plats",
+		"stat": "cooked",
+		"goal": 10,
+		"icon": "omelette",
+		"gold": 300
+	},
+	{
+		"id": "products_50",
+		"name": "Fermier modèle",
+		"text": "Récolter 50 produits d'élevage",
+		"stat": "products",
+		"goal": 50,
+		"icon": "milk",
+		"gold": 400
+	},
+	{
+		"id": "buildings_2",
+		"name": "Éleveur",
+		"text": "Faire construire 2 bâtiments",
+		"stat": "buildings",
+		"goal": 2,
+		"icon": "egg",
+		"gold": 300
+	},
+	{
+		"id": "cleared_100",
+		"name": "Coup de propre",
+		"text": "Défricher 100 herbes, branches ou pierres",
+		"stat": "cleared",
+		"goal": 100,
+		"icon": "wood",
+		"gold": 150
+	},
+	{
+		"id": "met_all",
+		"name": "Tout le monde se connaît",
+		"text": "Rencontrer les 14 habitants",
+		"stat": "met",
+		"goal": 14,
+		"icon": "bouquet",
+		"gold": 300
+	},
+	{
+		"id": "gifts_30",
+		"name": "Le cœur sur la main",
+		"text": "Offrir 30 cadeaux",
+		"stat": "gifts",
+		"goal": 30,
+		"icon": "daffodil",
+		"gold": 300
+	},
+	{
+		"id": "hearts_5",
+		"name": "Ami fidèle",
+		"text": "Atteindre 5 cœurs avec un habitant",
+		"stat": "hearts_max",
+		"goal": 5,
+		"icon": "pendant",
+		"gold": 300
+	},
+	{
+		"id": "quests_10",
+		"name": "Toujours prêt à aider",
+		"text": "Répondre à 10 demandes du tableau",
+		"stat": "quests",
+		"goal": 10,
+		"icon": "berries",
+		"gold": 400
+	},
+	{
+		"id": "married",
+		"name": "Pour la vie",
+		"text": "Se marier",
+		"stat": "married",
+		"goal": 1,
+		"icon": "pendant",
+		"gold": 500
+	},
+	{
+		"id": "story",
+		"name": "Valfleur refleurit",
+		"text": "Terminer l'histoire de la vallée",
+		"stat": "chapter",
+		"goal": 5,
+		"icon": "sunflower",
+		"gold": 0
+	},
+	{
+		"id": "lighthouse",
+		"name": "Le phare rallumé",
+		"text": "Terminer l'histoire du port",
+		"stat": "port",
+		"goal": 1,
+		"icon": "quartz",
+		"gold": 0
+	},
+	{
+		"id": "skill_max",
+		"name": "Expert",
+		"text": "Monter une compétence au niveau 10",
+		"stat": "skill_max",
+		"goal": 10,
+		"icon": "steel_sword",
+		"gold": 1000
+	},
+	{
+		"id": "collection_40",
+		"name": "Collectionneur",
+		"text": "Inscrire 40 objets dans l'album",
+		"stat": "collection",
+		"goal": 40,
+		"icon": "mushroom",
+		"gold": 500
+	},
+	{
+		"id": "collection_full",
+		"name": "Album complet",
+		"text": "Compléter toutes les collections",
+		"stat": "collection_full",
+		"goal": 6,
+		"icon": "truffle",
+		"gold": 3000
+	}
+]

@@ -173,6 +173,25 @@ def synth_all():
     save("bite", mix(sweep(300, 900, 0.09) * env(int(RATE * 0.09), 0.001, 30), at(splash * 0.5, 0.06)))
     # Poisson perdu : glissando descendant
     save("escape", sweep(600, 200, 0.4, "tri") * env(int(RATE * 0.4), 0.01, 5))
+    synth_rewards()
+
+
+def synth_rewards():
+    """Sons de récompense : découverte (album) et succès débloqué."""
+    def bell(f, d, decay=6.0):
+        x = t(d)
+        tone = np.sin(2 * np.pi * f * x) + 0.4 * np.sin(2 * np.pi * f * 2.01 * x) + 0.15 * np.sin(2 * np.pi * f * 3.02 * x)
+        return tone * env(len(x), 0.002, decay)
+    # Découverte : trois clochettes montantes + scintillement
+    notes = (1047, 1319, 1568)
+    sparkle = mix(*[at(bell(2093 + 180 * i, 0.12, 30) * 0.25, 0.2 + 0.035 * i) for i in range(5)])
+    save("discover", mix(*[at(bell(f, 0.5, 7), 0.07 * i) for i, f in enumerate(notes)], sparkle), 0.7)
+    # Succès : petite fanfare (do-mi-sol-do, accord final tenu)
+    fan = [at(bell(f, 0.25, 10) * 0.8, 0.11 * i) for i, f in enumerate((523, 659, 784))]
+    chord = mix(bell(1047, 1.1, 3), bell(1319, 1.1, 3) * 0.7, bell(1568, 1.1, 3) * 0.6, bell(523, 1.1, 3) * 0.5)
+    save("achievement", mix(*fan, at(chord, 0.33), at(sparkle, 0.3)), 0.75)
+    # Pièce : tintement bref (compteur d'or)
+    save("coin", mix(bell(1976, 0.12, 28), at(bell(2637, 0.1, 32) * 0.6, 0.03)), 0.5)
 
 
 # --------------------------------------------------------------- sons Kenney

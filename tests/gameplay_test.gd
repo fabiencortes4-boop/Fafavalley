@@ -54,7 +54,8 @@ func _ready() -> void:
 	farm.act_on(Vector2i(10, 6))  # coffre d'expédition
 	GameFlow.end_day(false)
 	farm.hud.close_modal()
-	_check(Inventory.gold == gold_before + 35, "la carotte est vendue la nuit (+35 or)")
+	var price := int(GameData.item("carrot").sell)
+	_check(Inventory.gold == gold_before + price, "la carotte est vendue la nuit (+%d or)" % price)
 	SaveManager.save_game()
 	_check(SaveManager.load_game(), "la sauvegarde se recharge")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)

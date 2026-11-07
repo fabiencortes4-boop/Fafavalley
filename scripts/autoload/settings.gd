@@ -13,6 +13,8 @@ var zoom: float = DEFAULT_ZOOM
 var sound: bool = true
 var view_3d: bool = true
 var music: bool = true
+## Vibrations du téléphone (récolte, coups, récompenses)
+var vibration: bool = true
 ## Taille du texte : index dans TEXT_SIZES (Normal, Grand, Très grand)
 const TEXT_SIZES := [9, 11, 13]
 const TEXT_NAMES := ["normal", "grand", "très grand"]
@@ -31,6 +33,7 @@ func _ready() -> void:
 		sound = bool(cfg.get_value("son", "actif", true))
 		view_3d = bool(cfg.get_value("affichage", "vue_3d", true))
 		music = bool(cfg.get_value("son", "musique", true))
+		vibration = bool(cfg.get_value("son", "vibrations", true))
 		text_size = clampi(int(cfg.get_value("affichage", "texte", 1)), 0, TEXT_SIZES.size() - 1)
 		quality = int(cfg.get_value("affichage", "qualite", -1))
 	if quality < 0 or quality > 2:
@@ -91,6 +94,28 @@ func toggle_music() -> void:
 	changed.emit()
 
 
+func toggle_vibration() -> void:
+	vibration = not vibration
+	_save()
+	changed.emit()
+	vibrate(40)
+
+
+## Petite vibration (téléphone uniquement). Les vibrations rapprochées sont
+## fusionnées pour ne pas « bourdonner ».
+var _last_vibration: int = -1000
+
+
+func vibrate(ms: int) -> void:
+	if not vibration or DisplayServer.get_name() == "headless":
+		return
+	var now := Time.get_ticks_msec()
+	if now - _last_vibration < 60:
+		return
+	_last_vibration = now
+	Input.vibrate_handheld(ms)
+
+
 func cycle_text_size() -> void:
 	text_size = (text_size + 1) % TEXT_SIZES.size()
 	_save()
@@ -107,6 +132,7 @@ func _save() -> void:
 	cfg.set_value("son", "actif", sound)
 	cfg.set_value("affichage", "vue_3d", view_3d)
 	cfg.set_value("son", "musique", music)
+	cfg.set_value("son", "vibrations", vibration)
 	cfg.set_value("affichage", "texte", text_size)
 	cfg.set_value("affichage", "qualite", quality)
 	cfg.save(PATH)

@@ -76,7 +76,7 @@
 		"type": "crop",
 		"icon": 8,
 		"stack": 99,
-		"sell": 35,
+		"sell": 45,
 		"edible": [
 			18,
 			9
@@ -98,7 +98,7 @@
 		"type": "crop",
 		"icon": 10,
 		"stack": 99,
-		"sell": 50,
+		"sell": 60,
 		"edible": [
 			25,
 			12
@@ -131,7 +131,7 @@
 		"type": "crop",
 		"icon": 13,
 		"stack": 99,
-		"sell": 25,
+		"sell": 30,
 		"edible": [
 			12,
 			6
@@ -795,7 +795,7 @@
 		"type": "crop",
 		"icon": 79,
 		"stack": 99,
-		"sell": 30,
+		"sell": 32,
 		"edible": [
 			14,
 			7
@@ -835,7 +835,7 @@
 		"type": "crop",
 		"icon": 83,
 		"stack": 99,
-		"sell": 60,
+		"sell": 50,
 		"edible": [
 			20,
 			10
@@ -915,7 +915,7 @@
 		"type": "crop",
 		"icon": 91,
 		"stack": 99,
-		"sell": 40,
+		"sell": 45,
 		"edible": [
 			16,
 			8
@@ -935,7 +935,7 @@
 		"type": "crop",
 		"icon": 93,
 		"stack": 99,
-		"sell": 55,
+		"sell": 60,
 		"edible": [
 			12,
 			6
@@ -955,7 +955,7 @@
 		"type": "crop",
 		"icon": 95,
 		"stack": 99,
-		"sell": 220,
+		"sell": 190,
 		"edible": [
 			45,
 			22
@@ -975,7 +975,7 @@
 		"type": "crop",
 		"icon": 97,
 		"stack": 99,
-		"sell": 45,
+		"sell": 40,
 		"edible": [
 			14,
 			7
@@ -995,7 +995,7 @@
 		"type": "crop",
 		"icon": 99,
 		"stack": 99,
-		"sell": 50,
+		"sell": 60,
 		"edible": [
 			15,
 			7
@@ -1015,7 +1015,7 @@
 		"type": "crop",
 		"icon": 101,
 		"stack": 99,
-		"sell": 120
+		"sell": 130
 	},
 	"seed_eggplant": {
 		"name": "Graines d'aubergine",
@@ -1051,7 +1051,7 @@
 		"type": "crop",
 		"icon": 105,
 		"stack": 99,
-		"sell": 280,
+		"sell": 250,
 		"edible": [
 			45,
 			22
@@ -1111,7 +1111,7 @@
 		"type": "crop",
 		"icon": 111,
 		"stack": 99,
-		"sell": 70,
+		"sell": 55,
 		"edible": [
 			16,
 			8
