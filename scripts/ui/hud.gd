@@ -121,7 +121,8 @@ func _ready() -> void:
 		elif bday != "":
 			show_toast("C'est l'anniversaire de %s aujourd'hui ! Un cadeau lui ferait plaisir." % GameData.npc(bday).name)
 		elif Marriage.last_help != "":
-			show_toast(Marriage.last_help))
+			show_toast(Marriage.last_help)
+		_nature_report())
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
 			show_toast("%s : %s" % [GameData.npc(npc_id).get("name", ""), text]))
@@ -1746,6 +1747,22 @@ func _refresh_tutorial() -> void:
 	_tutorial_panel.pivot_offset = _tutorial_panel.size / 2.0
 	create_tween().tween_property(_tutorial_panel, "scale", Vector2.ONE, 0.25)
 	_layout.call_deferred()
+
+
+## Au réveil : ce que la nature a repris pendant la nuit.
+func _nature_report() -> void:
+	var n: Dictionary = FarmState.last_night
+	var parts: Array = []
+	if int(n.get("withered", 0)) > 0:
+		parts.append("%d culture(s) fanée(s) faute d'arrosage" % int(n.withered))
+	if int(n.get("weeds", 0)) > 0:
+		parts.append("%d sillon(s) abandonné(s) envahi(s) d'herbes" % int(n.weeds))
+	if int(n.get("spread", 0)) > 2:
+		parts.append("les mauvaises herbes gagnent du terrain")
+	if parts.is_empty():
+		return
+	await get_tree().create_timer(2.5).timeout
+	show_toast("La nature reprend ses droits : " + ", ".join(parts) + ".")
 
 
 # ------------------------------------------------------------ fêtes du village

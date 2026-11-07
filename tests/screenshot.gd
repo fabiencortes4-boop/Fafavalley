@@ -144,6 +144,17 @@ func _ready() -> void:
 				FarmState.water(cell)
 				k += 1
 			main.call("current_map").call("_refresh_all")
+		if "--neglect" in args:
+			# Un champ planté puis oublié 6 nuits
+			for x in range(12, 20):
+				for y in range(15, 18):
+					FarmState.till(Vector2i(x, y))
+					if x % 2 == 0:
+						FarmState.plant(Vector2i(x, y), "cabbage")
+			for i in 6:
+				FarmState.advance_day(0, false)
+			main.call("_switch_to", "farm")
+			await get_tree().process_frame
 		if "--lit" in args:
 			PlayerState.flags["story_port"] = true
 		if "--port" in args:

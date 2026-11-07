@@ -57,6 +57,11 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
   quotidiens, amitié (cœurs), œufs, gros œufs, lait, laine angora, truffes.
   Chaque boutique a ses horaires et ses jours de fermeture.
+- **La nature reprend ses droits** : un sillon labouré laissé vide et sec 2 nuits se
+  couvre de mauvaises herbes ; une culture oubliée 4 nuits sans eau fane (puis les herbes
+  prennent sa place) ; les mauvaises herbes se propagent aux cases voisines, et branches
+  et pierres réapparaissent dans les coins abandonnés. Dans la serre, la terre redevient
+  simplement nue. Bilan au réveil.
 - **Port du Héron** (à l'est du village, par l'avenue) : 4 nouveaux villageois (Marius le
   tavernier, Nina la gardienne du phare, Basile le marchand, Céleste la musicienne), la
   **taverne** où les habitants se retrouvent chaque soir de 20h à 23h30 (musique,
@@ -249,6 +254,7 @@ godot --headless res://tests/gameplay_test.tscn   # labour, semis, arrosage, nui
 godot --headless res://tests/village_test.tscn    # passage au village, habitants, amitié, épicerie
 godot --headless res://tests/fishing_test.tscn    # canne, lancer, touche, mini-jeu, carnet
 godot --headless res://tests/mine_test.tscn       # mine, rochers, échelle, combat, ascenseur
+godot --headless res://tests/nature_test.tscn     # terrain négligé : herbes, cultures fanées, propagation
 godot --headless res://tests/port_test.tscn       # port, taverne du soir, chapitre du phare
 godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mariage
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D

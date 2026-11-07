@@ -29,6 +29,13 @@ const FERTILIZER_EVERY := 3  # une nuit de croissance bonus toutes les 3 nuits a
 var trees: Dictionary = {}
 var tree_data: Dictionary = {}  # data/fruit_trees.json
 const MAX_FRUITS := 3
+## Nature : sillon vide et sec -> mauvaises herbes ; culture oubliée -> fanée
+const NEGLECT_NIGHTS := 2
+const WITHER_NIGHTS := 4
+const WEED_SPREAD := 0.12  # chance par nuit qu'une herbe gagne une case voisine
+const MAX_DEBRIS := 160
+const GREENHOUSE_PLOT_RECT := Rect2i(3, 20, 8, 6)
+var last_night: Dictionary = {}  # ce que la nature a fait cette nuit
 ## La serre (une fois construite) : intérieur cultivable en toute saison
 const GREENHOUSE_PLOT := Vector2i(3, 20)
 const GREENHOUSE_INNER := Rect2i(4, 21, 6, 4)
@@ -211,9 +218,24 @@ func sell_shipping(report: Dictionary) -> int:
 
 ## Simulation d'une nuit : croissance des cultures arrosées, fin de saison.
 func advance_day(new_season: int, raining: bool) -> void:
+	last_night = {"weeds": 0, "withered": 0, "spread": 0, "new": 0, "dried": 0}
+	var reclaimed: Array[Vector2i] = []
 	for cell: Vector2i in tiles:
 		var t: Dictionary = tiles[cell]
 		var sheltered := in_greenhouse(cell)
+		# Terrain négligé : la nature reprend ses droits
+		if t.crop == "":
+			t.neglect = 0 if t.watered else int(t.get("neglect", 0)) + 1
+			if int(t.neglect) >= NEGLECT_NIGHTS:
+				reclaimed.append(cell)
+		else:
+			t.dry = 0 if t.watered else int(t.get("dry", 0)) + 1
+			if not sheltered and int(t.dry) >= WITHER_NIGHTS:
+				t.crop = ""  # oubliée trop longtemps, la culture se fane
+				t.age = 0
+				t.dry = 0
+				t.neglect = 0
+				last_night.withered += 1
 		if t.crop != "":
 			if not sheltered and not GameData.crop_in_season(t.crop, new_season):
 				t.crop = ""  # la culture meurt hors saison (sauf dans la serre)
@@ -226,6 +248,16 @@ func advance_day(new_season: int, raining: bool) -> void:
 						t.fert_progress = 0
 						t.age += 1
 		t.watered = raining and not sheltered  # la pluie n'entre pas dans la serre
+	# Sillons vides et secs depuis plusieurs nuits : les mauvaises herbes s'y
+	# installent (dans la serre, la terre redevient simplement nue).
+	for cell in reclaimed:
+		tiles.erase(cell)
+		if in_greenhouse(cell):
+			last_night.dried += 1
+		else:
+			debris[cell] = {"type": "weed", "hp": int(DEBRIS.weed.hp)}
+			last_night.weeds += 1
+	_wild_growth()
 	# Les arbres grandissent ; adultes, ils donnent un fruit par jour en saison.
 	for cell: Vector2i in trees:
 		var tree: Dictionary = trees[cell]
@@ -237,6 +269,63 @@ func advance_day(new_season: int, raining: bool) -> void:
 		for offset: Vector2i in SPRINKLER_RANGE.get(objects[cell], []):
 			if tiles.has(cell + offset):
 				tiles[cell + offset].watered = true
+
+
+## La nature gagne du terrain sur ce qui n'est pas entretenu : les mauvaises
+## herbes se propagent autour d'elles, et quelques herbes, branches et
+## pierres apparaissent dans les coins laissés à l'abandon.
+func _wild_growth() -> void:
+	var wild := _wild_cells()
+	if wild.is_empty():
+		return
+	# Propagation : chaque herbe peut gagner une case voisine libre
+	var spread: Array[Vector2i] = []
+	for cell: Vector2i in debris:
+		if debris[cell].type != "weed" or randf() >= WEED_SPREAD:
+			continue
+		var d: Vector2i = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN][randi() % 4]
+		if _is_free_wild(cell + d, wild):
+			spread.append(cell + d)
+	for cell in spread:
+		if debris.size() >= MAX_DEBRIS:
+			break
+		debris[cell] = {"type": "weed", "hp": int(DEBRIS.weed.hp)}
+		last_night.spread += 1
+	# Nouvelles pousses, branches tombées, pierres remontées
+	for i in randi_range(1, 3):
+		if debris.size() >= MAX_DEBRIS:
+			break
+		var cell: Vector2i = wild[randi() % wild.size()]
+		if not _is_free_wild(cell, wild):
+			continue
+		var roll := randf()
+		var type := "weed" if roll < 0.6 else ("twig" if roll < 0.85 else "stone")
+		debris[cell] = {"type": type, "hp": int(DEBRIS[type].hp)}
+		last_night.new += 1
+
+
+var _wild_cache: Array = []
+
+
+## Cases d'herbe de la ferme où la nature peut pousser : ni chemins, ni
+## bâtiments, ni abords de la maison.
+func _wild_cells() -> Array:
+	if _wild_cache.is_empty():
+		var footprints := [Rect2i(4, 3, 7, 7), Rect2i(28, 2, 10, 5), GREENHOUSE_PLOT_RECT]
+		for y in Farm.MAP.size():
+			var row := String(Farm.MAP[y])
+			for x in row.length():
+				var cell := Vector2i(x, y)
+				if not row[x] in [".", ",", "'"]:
+					continue
+				if footprints.any(func(r: Rect2i) -> bool: return r.has_point(cell)):
+					continue
+				_wild_cache.append(cell)
+	return _wild_cache
+
+
+func _is_free_wild(cell: Vector2i, wild: Array) -> bool:
+	return cell in wild and not tiles.has(cell) and not objects.has(cell) and not debris.has(cell)
 
 
 func to_dict() -> Dictionary:
@@ -271,6 +360,8 @@ func from_dict(data: Dictionary) -> void:
 			"age": int(t.get("age", 0)),
 			"fert": bool(t.get("fert", false)),
 			"fert_progress": int(t.get("fert_progress", 0)),
+			"neglect": int(t.get("neglect", 0)),
+			"dry": int(t.get("dry", 0)),
 		}
 	var objs: Dictionary = data.get("objects", {})
 	for key: String in objs:

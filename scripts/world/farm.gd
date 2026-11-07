@@ -642,8 +642,6 @@ func _ship_selected() -> void:
 # ------------------------------------------------------------ affichage
 func _on_day_started(day: int, season: int, year: int) -> void:
 	super(day, season, year)
-	if FarmState.debris.size() < DEBRIS_COUNT:
-		_scatter_debris(randi_range(1, 3), true)
 	_refresh_all()
 
 
