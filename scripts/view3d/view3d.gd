@@ -289,6 +289,14 @@ func _fitted(pack: String, model: String, size: float) -> Node3D:
 func _put(node: Node3D, at: Vector3, rot: float = 0.0) -> Node3D:
 	node.position = at
 	node.rotation.y = rot
+	if _merge_st != null and node.has_meta("cyl"):
+		var cs: Array = node.get_meta("cyl")
+		var ax: String = cs[3]
+		if ax != "y" and not is_zero_approx(rot):
+			ax = "z" if ax == "x" else "x"  # couché, tourné d'un quart
+		_st_cyl(_merge_st, at, cs[0], cs[1], cs[2], 10, ax)
+		node.free()
+		return null
 	if _merge_st != null and node.has_meta("box") and node.get_child_count() == 0:
 		var spec: Array = node.get_meta("box")
 		var color: Color = spec[1]
@@ -374,20 +382,47 @@ func _build_ground() -> void:
 				sum += land[c]
 				n += 1
 		return sum / float(maxi(n, 1))
-	for cell: Vector2i in land:
-		_quad4(st, Vector3(cell.x, 0, cell.y), Vector3(cell.x + 1, 0, cell.y + 1),
-			corner.call(cell.x, cell.y), corner.call(cell.x + 1, cell.y), corner.call(cell.x + 1, cell.y + 1), corner.call(cell.x, cell.y + 1))
+	_compute_heights(chars)
+	var mud := Color(0.5, 0.43, 0.3)
+	var wet := Color(0.62, 0.55, 0.38)
+	var cells: Array = land.keys()
 	for cell: Vector2i in chars:
-		var ch: String = chars[cell]
-		if ch != "~" and ch != "W":
+		if chars[cell] == "~" or chars[cell] == "W":
+			cells.append(cell)
+	for cell: Vector2i in cells:
+		if _shore.has(cell):
+			# Près de l'eau : 4 demi-cases au relief lissé (rives arrondies)
+			# Couleurs des 4 coins (comme ailleurs), interpolées dans la case
+			var k00: Color = corner.call(cell.x, cell.y) if land.has(cell) else wet
+			var k10: Color = corner.call(cell.x + 1, cell.y) if land.has(cell) else wet
+			var k11: Color = corner.call(cell.x + 1, cell.y + 1) if land.has(cell) else wet
+			var k01: Color = corner.call(cell.x, cell.y + 1) if land.has(cell) else wet
+			for sub: Vector2 in [Vector2(0, 0), Vector2(0.5, 0), Vector2(0, 0.5), Vector2(0.5, 0.5)]:
+				var o := Vector2(cell) + sub
+				var pts := [o, o + Vector2(0.5, 0), o + Vector2(0.5, 0.5), o + Vector2(0, 0.5)]
+				var shs: Array[float] = []
+				var scs: Array[Color] = []
+				for q: Vector2 in pts:
+					var h := _shore_h(q)
+					shs.append(h)
+					var f := q - Vector2(cell)
+					var base: Color = k00.lerp(k10, f.x).lerp(k01.lerp(k11, f.x), f.y)
+					scs.append(base.lerp(mud if h < -0.13 else wet, clampf(-h * 6.0, 0.0, 1.0)))
+				_quad_hf(st, pts, shs, scs)
 			continue
-		var h := -0.28
-		_quad(st, Vector3(cell.x, h, cell.y), Vector3(cell.x + 1, h, cell.y + 1), Color(0.55, 0.47, 0.33))
-		# Berges de l'eau : parois verticales
-		if ch == "~":
-			for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
-				if not chars.get(cell + d, "~") in ["~", "W"]:
-					_bank(st, cell, d, h, Color(0.52, 0.40, 0.27))
+		var cs: Array[Color] = []
+		var hs: Array[float] = []
+		for k: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]:
+			var x := cell.x + k.x
+			var y := cell.y + k.y
+			var h: float = _corner_h.get(Vector2i(x, y), 0.0)
+			hs.append(h)
+			var col: Color = corner.call(x, y)
+			if not land.has(cell) or h < -0.02:
+				# Berges : terre mouillée, puis fond vaseux sous l'eau
+				col = (col if land.has(cell) else wet).lerp(mud if h < -0.13 else wet, clampf(-h * 5.0, 0.0, 1.0))
+			cs.append(col)
+		_quad_h(st, cell, hs, cs)
 	st.generate_normals()
 	var ground := MeshInstance3D.new()
 	ground.mesh = st.commit()
@@ -404,7 +439,12 @@ func _build_ground() -> void:
 	water.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var has_water := false
 	for cell: Vector2i in chars:
-		if chars[cell] == "~" or chars[cell] == "W":
+		var wet_cell: bool = chars[cell] == "~" or chars[cell] == "W"
+		if not wet_cell:
+			for k: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]:
+				if float(_corner_h.get(cell + k, 0.0)) < -0.1:
+					wet_cell = true
+		if wet_cell:
 			has_water = true
 			_quad(water, Vector3(cell.x, -0.1, cell.y), Vector3(cell.x + 1, -0.1, cell.y + 1), Color.WHITE)
 	if has_water:
@@ -429,6 +469,154 @@ func _build_ground() -> void:
 		wmi.material_override = _water_mat
 		wmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_static.add_child(wmi)
+
+
+## Bords adoucis : touffes d'herbe, fleurs et petits cailloux semés le long
+## des chemins, des places et des rives (les lignes droites disparaissent).
+func _soft_edges(batch: Models.Batch, chars: Dictionary) -> void:
+	var hard := ["=", "#", ":", "~", "W", "c"]
+	var grass_models := ["grass", "grass_large", "grass_leafs"] if TimeManager.season != 3 else ["rock_smallA", "rock_smallFlatA"]
+	for cell: Vector2i in chars:
+		if chars[cell] != "." and chars[cell] != ",":
+			continue
+		for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			if not str(chars.get(cell + d, ".")) in hard:
+				continue
+			var hsh := _hash(cell * 3 + d)
+			if hsh % 5 > 2:
+				continue
+			# Le long de l'arête commune, un peu en retrait côté herbe
+			var along := Vector3(absf(d.y), 0, absf(d.x)) * (float(hsh % 80) / 100.0 - 0.4)
+			var pos := _cell3d(cell) + Vector3(d.x, 0, d.y) * 0.38 + along
+			pos.y = _ground_y(cell)
+			var model: String = grass_models[hsh % grass_models.size()]
+			if hsh % 7 == 0 and TimeManager.season in [0, 1]:
+				model = ["flower_yellowA", "flower_redA", "flower_purpleA"][hsh % 3]
+			_place(batch, "nature", model, pos, 1.1 + float(hsh % 5) * 0.1, float(hsh % 628) / 100.0)
+
+
+# ------------------------------------------------------------ relief
+## Hauteur de chaque coin de case : berges en pente douce vers l'eau, fonds
+## plus profonds au milieu des étangs, talus sous les arbres de bordure,
+## collines dans le décor autour de la carte.
+var _corner_h: Dictionary = {}
+
+
+func _compute_heights(chars: Dictionary) -> void:
+	_corner_h.clear()
+	_shore.clear()
+	_water_cells.clear()
+	var size: Vector2i = map.get("_map_size")
+	var is_water := func(c: Vector2i) -> bool: return chars.get(c, "") in ["~", "W"]
+	for cell: Vector2i in chars:
+		if is_water.call(cell):
+			_water_cells[cell] = true
+	if not map is SeaMap:
+		for cell: Vector2i in _water_cells:
+			for dy in range(-2, 3):
+				for dx in range(-2, 3):
+					var c := cell + Vector2i(dx, dy)
+					if chars.has(c) and chars[c] != "#":
+						_shore[c] = true
+	var corners := {}
+	for cell: Vector2i in chars:
+		for k: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]:
+			corners[cell + k] = true
+	for p: Vector2i in corners:
+		var around: Array[Vector2i] = [p + Vector2i(-1, -1), p + Vector2i(0, -1), p + Vector2i(-1, 0), p]
+		var water := 0
+		var trees := 0
+		var known := 0
+		for c: Vector2i in around:
+			if not chars.has(c):
+				continue
+			known += 1
+			if is_water.call(c):
+				water += 1
+			elif chars[c] == "T":
+				trees += 1
+		var h := 0.0
+		if water == known and known > 0:
+			# Plein étang : plus profond loin du bord
+			var deep := true
+			for d: Vector2i in [Vector2i(-2, -2), Vector2i(1, -2), Vector2i(-2, 1), Vector2i(1, 1)]:
+				if not is_water.call(p + d):
+					deep = false
+			h = -0.42 if deep else -0.3
+		elif water > 0:
+			h = -0.13  # la berge plonge juste sous l'eau : rive arrondie
+		elif trees == known and known > 0:
+			h = 0.18 + float(_hash(p) % 10) * 0.015  # talus boisé
+		# Collines dans le décor autour de la carte
+		var out := maxi(maxi(-p.x, p.x - size.x), maxi(-p.y, p.y - size.y))
+		if out > 0 and water == 0 and not map is SeaMap:
+			var road := false
+			for c: Vector2i in around:
+				if _outskirt_road(c):
+					road = true
+			if not road:
+				var wave := sin(p.x * 0.37) + cos(p.y * 0.29) + sin((p.x + p.y) * 0.19) * 0.8
+				h = maxf(h, clampf(float(out - 1) / 4.0, 0.0, 1.0) * (0.6 + wave * 0.35))
+		_corner_h[p] = h
+	# Coins des cases de rive : la même hauteur lissée (raccord sans couture)
+	for cell: Vector2i in _shore:
+		for k: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]:
+			_corner_h[cell + k] = _shore_h(Vector2(cell + k))
+
+
+## Cases à moins de 2 cases de l'eau : relief lissé et subdivisé
+var _shore: Dictionary = {}
+var _water_cells: Dictionary = {}
+
+
+## Hauteur lissée près de l'eau : moyenne pondérée de l'eau alentour, qui
+## dessine des rives arrondies (la ligne d'eau suit une courbe).
+func _shore_h(q: Vector2) -> float:
+	var sum := 0.0
+	var wsum := 0.0
+	var base := Vector2i(floori(q.x), floori(q.y))
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			var c := base + Vector2i(dx, dy)
+			var d := q.distance_to(Vector2(c) + Vector2(0.5, 0.5))
+			var wt := maxf(0.0, 1.7 - d)
+			if wt <= 0.0:
+				continue
+			wsum += wt
+			if _water_cells.has(c):
+				sum += wt
+	var w := sum / maxf(wsum, 0.001)
+	return -0.46 * smoothstep(0.18, 0.92, w)
+
+
+## Demi-case de sol (points quelconques), diagonale qui suit le relief.
+func _quad_hf(st: SurfaceTool, pts: Array, hs: Array[float], cs: Array[Color]) -> void:
+	var p: Array[Vector3] = []
+	for i in 4:
+		p.append(Vector3(pts[i].x, hs[i], pts[i].y))
+	var tris: Array = [[0, 1, 2], [0, 2, 3]] if absf(hs[0] - hs[2]) <= absf(hs[1] - hs[3]) else [[0, 1, 3], [1, 2, 3]]
+	for t: Array in tris:
+		for i: int in t:
+			st.set_color(cs[i])
+			st.add_vertex(p[i])
+
+
+## Hauteur du sol au centre d'une case (pour poser arbres et objets).
+func _ground_y(cell: Vector2i) -> float:
+	var sum := 0.0
+	for k: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]:
+		sum += float(_corner_h.get(cell + k, 0.0))
+	return sum / 4.0
+
+
+## Case de sol à 4 hauteurs ; la diagonale suit le relief (pas d'arête).
+func _quad_h(st: SurfaceTool, cell: Vector2i, hs: Array[float], cs: Array[Color]) -> void:
+	var p := [Vector3(cell.x, hs[0], cell.y), Vector3(cell.x + 1, hs[1], cell.y), Vector3(cell.x + 1, hs[2], cell.y + 1), Vector3(cell.x, hs[3], cell.y + 1)]
+	var tris: Array = [[0, 1, 2], [0, 2, 3]] if absf(hs[0] - hs[2]) <= absf(hs[1] - hs[3]) else [[0, 1, 3], [1, 2, 3]]
+	for t: Array in tris:
+		for i: int in t:
+			st.set_color(cs[i])
+			st.add_vertex(p[i])
 
 
 const OUTSKIRT := 10  # cases de décor au-delà des bords de la carte
@@ -673,6 +861,8 @@ func _build_props() -> void:
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
 		var c := _cell3d(cell)
+		if ch != "#" and ch != "~" and ch != "W":
+			c.y += _ground_y(cell)  # suit le relief (talus, berges)
 		var rot := float(_hash(cell) % 628) / 100.0
 		if ch != "#" and DECOR_CHARS.contains(ch) and _base_char(cell, chars) == "#":
 			_dock_cell(cell, chars)  # un tonneau sur le ponton : planches dessous
@@ -710,14 +900,15 @@ func _build_props() -> void:
 					_village_lantern(cell)
 			"x":
 				# Arbre d'ornement dans un bac de bois
-				_put(_box(Vector3(0.7, 0.4, 0.7), Color(0.5, 0.33, 0.2)), c + Vector3(0, 0.2, 0))
-				_put(_box(Vector3(0.6, 0.04, 0.6), Color(0.33, 0.24, 0.16)), c + Vector3(0, 0.41, 0))
+				_put(_cyl(0.34, 0.4, Color(0.66, 0.4, 0.26)), c + Vector3(0, 0.2, 0))
+				_put(_cyl(0.37, 0.06, Color(0.56, 0.33, 0.2)), c + Vector3(0, 0.39, 0))
+				_put(_cyl(0.3, 0.04, Color(0.33, 0.24, 0.16)), c + Vector3(0, 0.41, 0))
 				_place(batch, "nature", "tree_default" if TimeManager.season != 2 else "tree_default_fall", c + Vector3(0, 0.4, 0), 0.9, rot)
 			"i":
 				# Borne d'amarrage, avec un bout de corde
-				_put(_box(Vector3(0.22, 0.4, 0.22), Color(0.2, 0.2, 0.23)), c + Vector3(0, 0.2, 0))
-				_put(_box(Vector3(0.3, 0.06, 0.3), Color(0.2, 0.2, 0.23)), c + Vector3(0, 0.42, 0))
-				_put(_box(Vector3(0.26, 0.05, 0.26), Color(0.78, 0.68, 0.45)), c + Vector3(0, 0.3, 0))
+				_put(_cyl(0.11, 0.4, Color(0.2, 0.2, 0.23)), c + Vector3(0, 0.2, 0))
+				_put(_cyl(0.15, 0.06, Color(0.2, 0.2, 0.23)), c + Vector3(0, 0.42, 0))
+				_put(_cyl(0.13, 0.05, Color(0.78, 0.68, 0.45)), c + Vector3(0, 0.3, 0))
 			"r":
 				# Filets qui sèchent sur des perches, caisses de poissons
 				for k in 2:
@@ -744,7 +935,7 @@ func _build_props() -> void:
 				for k in 3:
 					_put(_fitted("survival", "fish", 0.28), c + Vector3(-0.28 + k * 0.28, 0.65, 0.02), 0.2 * k)
 				for k in 2:
-					_put(_box(Vector3(0.05, 1.3, 0.05), Color(0.45, 0.3, 0.18)), c + Vector3(-0.45 + k * 0.9, 0.65, -0.3))
+					_put(_cyl(0.03, 1.3, Color(0.45, 0.3, 0.18)), c + Vector3(-0.45 + k * 0.9, 0.65, -0.3))
 				var awning := _box(Vector3(1.0, 0.04, 0.55), Color(0.2, 0.45, 0.75))
 				_put(awning, c + Vector3(0, 1.3, -0.08))
 				_put(_box(Vector3(1.0, 0.045, 0.18), Color(0.95, 0.95, 0.92)), c + Vector3(0, 1.31, -0.08))
@@ -768,8 +959,9 @@ func _build_props() -> void:
 				_put(_fitted("survival", "barrel", 0.55), c + Vector3(-0.18, 0, 0.1))
 				_put(_fitted("survival", "box", 0.45), c + Vector3(0.22, 0, -0.15))
 			"y":
-				_put(_box(Vector3(0.9, 0.55, 0.9), Color(0.92, 0.8, 0.42)), c + Vector3(0, 0.27, 0))
-				_put(_box(Vector3(0.6, 0.3, 0.6), Color(0.95, 0.85, 0.5)), c + Vector3(0, 0.68, 0))
+				# Balles de foin rondes, couchées
+				_put(_cyl(0.32, 0.7, Color(0.92, 0.8, 0.42), "x"), c + Vector3(0, 0.32, 0.12))
+				_put(_cyl(0.26, 0.55, Color(0.95, 0.85, 0.5), "z"), c + Vector3(0.18, 0.26, -0.3))
 			"w":
 				_well(c)
 			"W":
@@ -837,6 +1029,7 @@ func _build_props() -> void:
 				near_road = true
 		var r := _hash(cell) % 10
 		var c := _cell3d(cell)
+		c.y += _ground_y(cell)
 		if near_road:
 			if r < 2:
 				_place(batch, "nature", "plant_bushLarge", c, 2.0, float(r))
@@ -850,6 +1043,7 @@ func _build_props() -> void:
 			_place(batch, "nature", _tree_model(cell), c + jitter, 1.6 + float(_hash(cell) % 40) / 100.0, float(_hash(cell) % 628) / 100.0)
 		elif r == 7:
 			_place(batch, "nature", "plant_bushLarge", c, 2.2, 0.0)
+	_soft_edges(batch, chars)
 	batch.build(_static)
 	_build_wildlife(chars)
 	_finish_lamps()
@@ -1034,6 +1228,58 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 		root.add_child(_smoke(chimney.position + Vector3(0, 0.65, 0)))
 
 
+## Cylindre ajouté à un maillage (poteaux, pots, tonneaux...) : axe "y"
+## (debout), "x" ou "z" (couché). `center` est le milieu du cylindre.
+func _st_cyl(st: SurfaceTool, center: Vector3, radius: float, height: float, color: Color, sides: int = 10, axis: String = "y", top_radius: float = -1.0) -> void:
+	if top_radius < 0.0:
+		top_radius = radius
+	var basis := Basis.IDENTITY
+	if axis == "x":
+		basis = Basis(Vector3.FORWARD, PI / 2.0)
+	elif axis == "z":
+		basis = Basis(Vector3.RIGHT, PI / 2.0)
+	var h := height / 2.0
+	var ring_b: Array[Vector3] = []
+	var ring_t: Array[Vector3] = []
+	for i in sides:
+		var a := TAU * float(i) / sides
+		ring_b.append(Vector3(cos(a) * radius, -h, sin(a) * radius))
+		ring_t.append(Vector3(cos(a) * top_radius, h, sin(a) * top_radius))
+	var side_col := color
+	for i in sides:
+		var j := (i + 1) % sides
+		# Flancs (un peu plus sombres d'un côté : relief sans lumière)
+		st.set_color(side_col.darkened(0.08 * absf(sin(TAU * float(i) / sides))))
+		for v: Vector3 in [ring_b[i], ring_t[i], ring_t[j], ring_b[i], ring_t[j], ring_b[j]]:
+			st.add_vertex(center + basis * v)
+		# Dessus et dessous
+		st.set_color(color.lightened(0.06))
+		for v: Vector3 in [Vector3(0, h, 0), ring_t[j], ring_t[i]]:
+			st.add_vertex(center + basis * v)
+		st.set_color(color.darkened(0.2))
+		for v: Vector3 in [Vector3(0, -h, 0), ring_b[i], ring_b[j]]:
+			st.add_vertex(center + basis * v)
+
+
+## Cylindre isolé (fusionné avec le décor par _put, comme les boîtes).
+func _cyl(radius: float, height: float, color: Color, axis: String = "y") -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = radius
+	cm.bottom_radius = radius
+	cm.height = height
+	cm.radial_segments = 10
+	cm.rings = 1
+	cm.material = _flat_material(color)
+	mi.mesh = cm
+	if axis == "x":
+		mi.rotation.z = PI / 2.0
+	elif axis == "z":
+		mi.rotation.x = PI / 2.0
+	mi.set_meta("cyl", [radius, height, color, axis])
+	return mi
+
+
 ## Boîte colorée ajoutée à un maillage (détails regroupés en un seul objet).
 func _st_box(st: SurfaceTool, center: Vector3, size: Vector3, color: Color) -> void:
 	var h := size / 2.0
@@ -1210,15 +1456,15 @@ func _street_lamp(cell: Vector2i) -> void:
 		_lamp_glow_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var c := _cell3d(cell)
 	var iron := Color(0.16, 0.17, 0.2)
-	_st_box(_lamp_st, c + Vector3(0, 0.1, 0), Vector3(0.26, 0.2, 0.26), iron)
-	_st_box(_lamp_st, c + Vector3(0, 0.24, 0), Vector3(0.16, 0.08, 0.16), iron)
-	_st_box(_lamp_st, c + Vector3(0, 1.1, 0), Vector3(0.07, 1.7, 0.07), iron)
-	_st_box(_lamp_st, c + Vector3(0, 1.98, 0), Vector3(0.12, 0.06, 0.12), iron)
+	_st_cyl(_lamp_st, c + Vector3(0, 0.1, 0), 0.15, 0.2, iron, 10, "y", 0.11)
+	_st_cyl(_lamp_st, c + Vector3(0, 0.24, 0), 0.09, 0.08, iron, 8)
+	_st_cyl(_lamp_st, c + Vector3(0, 1.1, 0), 0.04, 1.7, iron, 8)
+	_st_cyl(_lamp_st, c + Vector3(0, 1.98, 0), 0.07, 0.06, iron, 8)
 	# Lanterne : cage, toit, vitres lumineuses
 	var top := c + Vector3(0, 2.18, 0)
 	_st_box(_lamp_st, top + Vector3(0, -0.15, 0), Vector3(0.26, 0.04, 0.26), iron)
 	_st_box(_lamp_st, top + Vector3(0, 0.16, 0), Vector3(0.3, 0.05, 0.3), iron)
-	_st_box(_lamp_st, top + Vector3(0, 0.22, 0), Vector3(0.16, 0.07, 0.16), iron)
+	_st_cyl(_lamp_st, top + Vector3(0, 0.24, 0), 0.14, 0.1, iron, 8, "y", 0.02)
 	for k in 4:
 		var corner := Vector3(0.11 if k % 2 == 0 else -0.11, 0, 0.11 if k < 2 else -0.11)
 		_st_box(_lamp_st, top + corner, Vector3(0.03, 0.3, 0.03), iron)
@@ -1833,17 +2079,17 @@ func _machine_model(cell: Vector2i, id: String) -> Node3D:
 	var top := 0.7
 	match id:
 		"preserves_jar":
-			_st_box(st, Vector3(0, 0.06, 0), Vector3(0.6, 0.12, 0.6), wood)
-			_st_box(st, Vector3(0, 0.38, 0), Vector3(0.44, 0.52, 0.44), Color(0.78, 0.88, 0.92))
-			_st_box(st, Vector3(0, 0.33, 0), Vector3(0.38, 0.36, 0.38), Color(0.75, 0.3, 0.38) if Machines.state.has(cell) else Color(0.7, 0.8, 0.85))
-			_st_box(st, Vector3(0, 0.68, 0), Vector3(0.48, 0.08, 0.48), Color(0.45, 0.3, 0.18))
-			_st_box(st, Vector3(0, 0.73, 0), Vector3(0.5, 0.03, 0.5), Color(0.9, 0.3, 0.25))
+			_st_cyl(st, Vector3(0, 0.06, 0), 0.32, 0.12, wood, 12)
+			_st_cyl(st, Vector3(0, 0.38, 0), 0.24, 0.52, Color(0.78, 0.88, 0.92), 12)
+			_st_cyl(st, Vector3(0, 0.33, 0), 0.2, 0.36, Color(0.75, 0.3, 0.38) if Machines.state.has(cell) else Color(0.7, 0.8, 0.85), 12)
+			_st_cyl(st, Vector3(0, 0.68, 0), 0.26, 0.08, Color(0.45, 0.3, 0.18), 12)
+			_st_cyl(st, Vector3(0, 0.73, 0), 0.28, 0.03, Color(0.9, 0.3, 0.25), 12)
 			top = 0.8
 		"fruit_press":
-			_st_box(st, Vector3(0, 0.3, 0), Vector3(0.56, 0.6, 0.56), wood)
+			_st_cyl(st, Vector3(0, 0.3, 0), 0.3, 0.6, wood, 12, "y", 0.27)
 			for y: float in [0.12, 0.48]:
-				_st_box(st, Vector3(0, y, 0), Vector3(0.6, 0.05, 0.6), iron)
-			_st_box(st, Vector3(0, 0.8, 0), Vector3(0.07, 0.4, 0.07), iron)
+				_st_cyl(st, Vector3(0, y, 0), 0.31, 0.05, iron, 12)
+			_st_cyl(st, Vector3(0, 0.8, 0), 0.035, 0.4, iron, 8)
 			_st_box(st, Vector3(0, 0.95, 0), Vector3(0.5, 0.05, 0.05), iron)
 			_st_box(st, Vector3(0.3, 0.1, 0.18), Vector3(0.12, 0.06, 0.12), Color(0.85, 0.5, 0.3))
 			top = 1.05
@@ -1859,18 +2105,19 @@ func _machine_model(cell: Vector2i, id: String) -> Node3D:
 		"cask":
 			# Tonneau couché sur son chevalet
 			_st_box(st, Vector3(0, 0.08, 0), Vector3(0.6, 0.16, 0.5), Color(0.45, 0.3, 0.18))
-			_st_box(st, Vector3(0, 0.4, 0), Vector3(0.7, 0.44, 0.48), wood)
-			_st_box(st, Vector3(0, 0.4, 0), Vector3(0.74, 0.46, 0.44), wood.darkened(0.1))
+			_st_cyl(st, Vector3(0, 0.4, 0), 0.24, 0.72, wood, 12, "x")
+			_st_cyl(st, Vector3(0, 0.4, 0), 0.26, 0.4, wood.lightened(0.05), 12, "x")
 			for x: float in [-0.22, 0.22]:
-				_st_box(st, Vector3(x, 0.4, 0), Vector3(0.05, 0.5, 0.52), iron)
+				_st_cyl(st, Vector3(x, 0.4, 0), 0.265, 0.05, iron, 12, "x")
 			_st_box(st, Vector3(0.38, 0.4, 0), Vector3(0.02, 0.1, 0.1), Color(0.3, 0.2, 0.12))
 			top = 0.7
 		"beehive":
 			# Ruche en paille, posée sur un billot
 			_st_box(st, Vector3(0, 0.12, 0), Vector3(0.4, 0.24, 0.4), Color(0.5, 0.35, 0.22))
-			for k in 4:
-				var w := 0.55 - k * 0.1
-				_st_box(st, Vector3(0, 0.3 + k * 0.12, 0), Vector3(w, 0.12, w), Color(0.88, 0.72, 0.38) if k % 2 == 0 else Color(0.8, 0.62, 0.3))
+			# Ruche de paille tressée : anneaux de plus en plus petits
+			for k in 5:
+				var w := 0.3 - k * 0.05
+				_st_cyl(st, Vector3(0, 0.3 + k * 0.1, 0), w, 0.1, Color(0.88, 0.72, 0.38) if k % 2 == 0 else Color(0.8, 0.62, 0.3), 12, "y", w - 0.04)
 			_st_box(st, Vector3(0, 0.32, 0.26), Vector3(0.1, 0.06, 0.02), Color(0.2, 0.12, 0.08))
 			top = 0.85
 		"cheese_press":
@@ -1879,7 +2126,7 @@ func _machine_model(cell: Vector2i, id: String) -> Node3D:
 				_st_box(st, Vector3(x, 0.45, 0), Vector3(0.08, 0.8, 0.08), wood)
 			_st_box(st, Vector3(0, 0.84, 0), Vector3(0.66, 0.08, 0.12), wood)
 			_st_box(st, Vector3(0, 0.62, 0), Vector3(0.05, 0.36, 0.05), iron)
-			_st_box(st, Vector3(0, 0.24, 0), Vector3(0.36, 0.26, 0.36), Color(0.96, 0.82, 0.36) if Machines.state.has(cell) else Color(0.8, 0.7, 0.55))
+			_st_cyl(st, Vector3(0, 0.24, 0), 0.2, 0.26, Color(0.96, 0.82, 0.36) if Machines.state.has(cell) else Color(0.8, 0.7, 0.55), 12)
 			top = 1.0
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
@@ -1959,11 +2206,11 @@ func _dock_cell(cell: Vector2i, chars: Dictionary) -> void:
 		_st_box(st, edge + Vector3(0, top - 0.02, 0), Vector3(0.06, 0.1, 0.06) + side * 0.94, Color(0.42, 0.29, 0.18))
 		for e: float in [-0.42, 0.42]:
 			var p := edge + side * e
-			_st_box(st, p + Vector3(0, -0.12, 0), Vector3(0.11, 0.56, 0.11), Color(0.38, 0.27, 0.17))
-			_st_box(st, p + Vector3(0, -0.36, 0), Vector3(0.12, 0.12, 0.12), Color(0.2, 0.3, 0.24))  # algues
+			_st_cyl(st, p + Vector3(0, -0.12, 0), 0.06, 0.56, Color(0.38, 0.27, 0.17), 8)
+			_st_cyl(st, p + Vector3(0, -0.36, 0), 0.066, 0.12, Color(0.2, 0.3, 0.24), 8)  # algues
 			if _hash(cell + d) % 3 == 0:
-				_st_box(st, p + Vector3(0, top + 0.12, 0), Vector3(0.1, 0.2, 0.1), Color(0.38, 0.27, 0.17))
-				_st_box(st, p + Vector3(0, top + 0.23, 0), Vector3(0.13, 0.03, 0.13), Color(0.3, 0.21, 0.13))
+				_st_cyl(st, p + Vector3(0, top + 0.12, 0), 0.055, 0.2, Color(0.38, 0.27, 0.17), 8)
+				_st_cyl(st, p + Vector3(0, top + 0.23, 0), 0.07, 0.03, Color(0.3, 0.21, 0.13), 8)
 		# Corde tendue entre deux pieux, parfois
 		if _hash(cell + d * 3) % 4 == 0:
 			_st_box(st, edge + Vector3(0, top + 0.2, 0), Vector3(0.02, 0.02, 0.02) + side * 0.84, Color(0.85, 0.76, 0.55))
@@ -1982,13 +2229,12 @@ func _dock_cell(cell: Vector2i, chars: Dictionary) -> void:
 		for k in 8:
 			var ang := k * TAU / 8.0
 			_st_box(st, ring_at + Vector3(cos(ang) * 0.14, sin(ang) * 0.14, 0), Vector3(0.07, 0.07, 0.05), Color(0.92, 0.25, 0.2) if k % 2 == 0 else Color(0.97, 0.96, 0.92))
-		_st_box(st, o + Vector3(0.5, top + 0.12, 0.5), Vector3(0.06, 0.24, 0.06), Color(0.38, 0.27, 0.17))
+		_st_cyl(st, o + Vector3(0.5, top + 0.12, 0.5), 0.035, 0.24, Color(0.38, 0.27, 0.17), 6)
 	elif _hash(cell) % 7 == 0:
 		# Rouleau de cordage
 		var coil := o + Vector3(0.3 + float(_hash(cell) % 4) * 0.1, top + 0.05, 0.35)
-		for k in 6:
-			var ang := k * TAU / 6.0
-			_st_box(st, coil + Vector3(cos(ang) * 0.09, 0, sin(ang) * 0.09), Vector3(0.06, 0.05, 0.06), Color(0.82, 0.72, 0.5))
+		_st_cyl(st, coil, 0.12, 0.05, Color(0.82, 0.72, 0.5), 10)
+		_st_cyl(st, coil + Vector3(0, 0.03, 0), 0.05, 0.02, Color(0.6, 0.5, 0.34), 8)
 
 
 func _finish_docks() -> void:
@@ -2597,11 +2843,11 @@ func _build_furniture() -> void:
 				_st_box(st, c + Vector3(0, 0.01, 0), Vector3(0.95, 0.02, 0.8), Color(0.68, 0.22, 0.22))
 				_st_box(st, c + Vector3(0, 0.022, 0), Vector3(0.6, 0.01, 0.45), Color(0.88, 0.72, 0.36))
 			"lamp":
-				_st_box(st, c + Vector3(0, 0.04, 0), Vector3(0.3, 0.08, 0.3), wood)
-				_st_box(st, c + Vector3(0, 0.6, 0), Vector3(0.06, 1.1, 0.06), wood)
-				_st_box(glow, c + Vector3(0, 1.2, 0), Vector3(0.36, 0.3, 0.36), Color(1, 0.88, 0.6))
+				_st_cyl(st, c + Vector3(0, 0.04, 0), 0.16, 0.08, wood, 10)
+				_st_cyl(st, c + Vector3(0, 0.6, 0), 0.03, 1.1, wood, 8)
+				_st_cyl(glow, c + Vector3(0, 1.2, 0), 0.22, 0.3, Color(1, 0.88, 0.6), 12, "y", 0.12)
 			"plant":
-				_st_box(st, c + Vector3(0, 0.15, 0), Vector3(0.32, 0.3, 0.32), Color(0.72, 0.4, 0.25))
+				_st_cyl(st, c + Vector3(0, 0.15, 0), 0.15, 0.3, Color(0.72, 0.4, 0.25), 10, "y", 0.19)
 				for k in 5:
 					var a := k * TAU / 5.0
 					_st_box(st, c + Vector3(cos(a) * 0.12, 0.42 + (k % 2) * 0.1, sin(a) * 0.12), Vector3(0.14, 0.22, 0.14), Color(0.3, 0.6, 0.32))
@@ -2621,7 +2867,7 @@ func _build_furniture() -> void:
 				_st_box(st, c + Vector3(0, 0.55, 0), Vector3(0.9, 0.06, 0.7), wood)
 				_st_box(st, c + Vector3(0, 0.58, 0), Vector3(0.95, 0.02, 0.75), Color(0.95, 0.94, 0.9))
 				for k in 4:
-					_st_box(st, c + Vector3(-0.38 + (k % 2) * 0.76, 0.27, -0.28 + (k / 2) * 0.56), Vector3(0.06, 0.54, 0.06), wood)
+					_st_cyl(st, c + Vector3(-0.38 + (k % 2) * 0.76, 0.27, -0.28 + (k / 2) * 0.56), 0.03, 0.54, wood, 6)
 				_st_box(st, c + Vector3(0.1, 0.66, 0), Vector3(0.12, 0.14, 0.12), Color(0.85, 0.45, 0.6))
 	for pair: Array in [[st, false], [glow, true]]:
 		var s: SurfaceTool = pair[0]

@@ -85,6 +85,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   rafraîchies moins souvent. Réglage **Qualité** (économie, normale, élevée), choisi
   automatiquement selon l'appareil. Banc d'essai : `tools/benchmark.tscn`.
 - **Rendu plus lisse** : textures filtrées, bords adoucis (anticrénelage), sol en dégradés.
+- **Monde moins cubique** : le sol est un relief continu (hauteurs aux coins de chaque case) ;
+  les berges des étangs et du lac descendent en pente douce vers l'eau, avec des contours
+  arrondis et une teinte boue/sable humide ; légères collines en forêt et en bordure de
+  carte ; touffes d'herbe, cailloux et fleurs le long des chemins, routes et clôtures pour
+  casser les bords droits. Le décor suit le relief, et les lampadaires, pontons, bornes,
+  bacs, bottes de foin, étals, machines et meubles sont faits de cylindres plutôt que de cubes.
 - **Arbres fruitiers** (chez Rosalie) : cerisier, pêcher, oranger, pommier. Adultes en
   10-12 jours, ils donnent un fruit par jour dans leur saison (3 au plus) : on les secoue.
 - **Serre** (construite par Mathis : or, bois, pierre, quartz) : on y cultive tout, en
