@@ -54,6 +54,8 @@ func _watch_inventory() -> void:
 			show("cask")
 		elif Machines.is_machine(place):
 			show("machine")
+		if GameData.item(id).get("type") == "tree_seed":
+			show("woods")
 		if id == "bait":
 			show("bait")
 		elif id == "crab_pot":

@@ -7,7 +7,8 @@
 		"port": ["Le port", "Au bout de la grande jetée, Basile loue sa barque de 6h à 18h pour pêcher au large : thons, espadons... Les bancs face à la mer permettent de se reposer."],
 		"seat": ["Se reposer", "Touche un banc ou une chaise pour t'asseoir : l'énergie remonte doucement (jusqu'à 80 %). Bouge pour te relever."],
 		"festival": ["Jour de fête", "Aujourd'hui, c'est la fête au village ! Au stand de la place, présente ton plus bel objet au concours : le jury adore les produits de qualité."],
-		"cask": ["Tonneau de vieillissement", "Mets-y un fromage, un jus ou une confiture : chaque semaine, sa qualité monte d'un cran (jusqu'au cristal)."]
+		"cask": ["Tonneau de vieillissement", "Mets-y un fromage, un jus ou une confiture : chaque semaine, sa qualité monte d'un cran (jusqu'au cristal)."],
+		"woods": ["Le bois de la forêt", "Au sud de la forêt, la clairière des bûcherons : pins à l'est du chemin, platanes et chênes à l'ouest. Abats-les à la hache pour beaucoup de bois (le chêne donne aussi du bois dur), arrache la souche, puis replante la graine tombée (pomme de pin, boule de platane, gland) sur l'herbe libre. Une souche oubliée repousse toute seule."]
 	},
 	"guide": [
 		["La ferme", "Laboure avec la houe, sème, arrose chaque jour (ou pose des arroseurs). Les récoltes s'expédient dans le coffre près de la maison : payées la nuit. Une terre laissée à l'abandon se couvre d'herbes folles."],
@@ -17,6 +18,7 @@
 		["La mine", "Entrée au nord-est du village. Les étages changent : terre, puis glace (10 à 19), puis lave (20 à 29). Au niveau 30, le Gardien de la source t'attend. Ascenseur tous les 5 niveaux."],
 		["Les habitants", "Parle-leur chaque jour, offre un cadeau par jour. Les cœurs débloquent des souvenirs. Le tableau de la place propose des demandes, parfois de qualité. Le soir, tout le monde est à la taverne du port."],
 		["La maison", "Mathis agrandit ta maison et vend des meubles. Pose-les en les tenant en main chez toi ; la pioche les reprend."],
-		["Se reposer", "Bancs et chaises : touche-les pour t'asseoir et récupérer un peu d'énergie. Dormir reste le meilleur repos."]
+		["Se reposer", "Bancs et chaises : touche-les pour t'asseoir et récupérer un peu d'énergie. Dormir reste le meilleur repos."],
+		["Le bois", "Au sud de la forêt, la clairière des bûcherons : pins à l'est du chemin, platanes et chênes à l'ouest. Abats-les à la hache pour beaucoup de bois (le chêne donne aussi du bois dur), arrache la souche, puis replante la graine tombée (pomme de pin, boule de platane, gland) sur l'herbe libre. Une souche oubliée repousse toute seule. Mathis vend aussi des graines d'arbres."]
 	]
 }

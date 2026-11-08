@@ -95,6 +95,7 @@ func save_game() -> void:
 		"port_story": PortStory.to_dict(),
 		"collections": Collections.to_dict(),
 		"machines": Machines.to_dict(),
+		"woods": Woods.to_dict(),
 		"tips": Tips.to_dict(),
 		"achievements": Achievements.to_dict(),
 	}
@@ -138,6 +139,7 @@ func load_game() -> bool:
 		for id: String in FishLog.caught:
 			Collections.discover(id)
 	Achievements.from_dict(data.get("achievements", {}))
+	Woods.from_dict(data.get("woods", {}))
 	Machines.from_dict(data.get("machines", {}))
 	Tips.from_dict(data.get("tips", {}))
 	HeartEvents.from_dict(data.get("hearts_seen", {}))

@@ -1045,6 +1045,10 @@ func _seed_details(item: Dictionary) -> String:
 		if harvest.has("sell"):
 			text += "  -  vente %d or" % int(harvest.sell)
 		return text
+	if item.get("type") == "tree_seed":
+		var wt: Dictionary = Woods.TYPES.get(str(item.get("tree", "")), {})
+		if not wt.is_empty():
+			return "Arbre adulte en %d jours (forêt), %d à %d bûches" % [int(wt.grow), int(wt.wood[0]), int(wt.wood[1])]
 	if item.get("type") == "sapling":
 		var tree: Dictionary = FarmState.tree_data.get(str(item.get("tree", "")), {})
 		if not tree.is_empty():

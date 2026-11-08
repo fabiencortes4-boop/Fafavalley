@@ -62,6 +62,9 @@
 		"buildings": true,
 		"items": [
 			"house_upgrade",
+			"pine_cone",
+			"plane_seed",
+			"acorn",
 			"rug",
 			"house_plant",
 			"floor_lamp",

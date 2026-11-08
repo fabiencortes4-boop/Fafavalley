@@ -678,6 +678,41 @@ def draw_misc(kind):
         for x in (3, 12):
             rect(x, 8, x + 1, 14, (120, 80, 50))
         rect(6, 4, 9, 6, (240, 240, 240))
+    elif kind == "pine_cone":
+        # Écailles brunes en losange, plus claires au bord
+        for y in range(3, 15):
+            w = min(y - 2, 15 - y, 5)
+            for x in range(8 - w, 8 + w):
+                c = (150, 96, 52) if (x + y) % 3 else (196, 136, 78)
+                px[x, y] = (c if y < 12 else (112, 70, 40)) + (255,)
+        rect(7, 1, 9, 3, (90, 70, 40))
+    elif kind == "plane_seed":
+        # Boule de platane hérissée, au bout de sa tige
+        rect(7, 1, 8, 6, (110, 80, 50))
+        for y in range(5, 15):
+            for x in range(3, 13):
+                d = (x - 7.5) ** 2 + (y - 9.5) ** 2
+                if d <= 20:
+                    px[x, y] = ((176, 150, 90) if (x * 3 + y) % 4 else (120, 98, 58)) + (255,)
+        px[6, 7], px[9, 8] = (220, 200, 140, 255), (220, 200, 140, 255)
+    elif kind == "acorn":
+        # Gland : cupule rugueuse et fruit brillant
+        for y in range(6, 15):
+            for x in range(4, 12):
+                if (x - 7.5) ** 2 / 14 + (y - 9.5) ** 2 / 22 <= 1:
+                    px[x, y] = ((214, 150, 70) if x < 7 and y < 11 else (176, 112, 50)) + (255,)
+        rect(3, 4, 13, 7, (120, 86, 50))
+        for x in range(3, 13, 2):
+            px[x, 5] = (90, 64, 38, 255)
+        rect(7, 2, 9, 4, (90, 64, 38))
+    elif kind == "hardwood":
+        # Bûches de chêne sombres, cernes visibles
+        for (cx, cy) in ((5, 11), (11, 11), (8, 6)):
+            for y in range(cy - 3, cy + 3):
+                for x in range(cx - 3, cx + 3):
+                    d = (x - cx + 0.5) ** 2 + (y - cy + 0.5) ** 2
+                    if d <= 9:
+                        px[x, y] = ((170, 120, 70) if d <= 3 else ((120, 76, 44) if d <= 6 else (84, 52, 30))) + (255,)
     elif kind == "plan":
         rect(3, 2, 13, 14, (235, 225, 195))
         for y in (5, 8, 11):
@@ -874,7 +909,8 @@ def extend_icons(sheet):
     # montagne, lait de chèvre, laine, tapis, lampe, plante, bibliothèque,
     # tableau, table, plan d'agrandissement
     extra += [draw_misc(k) for k in ("cask", "beehive", "honey", "frost", "lava", "heart", "goat_milk", "wool",
-                                     "rug", "lamp", "plant", "shelf", "painting", "table", "plan")]
+                                     "rug", "lamp", "plant", "shelf", "painting", "table", "plan",
+                                     "pine_cone", "plane_seed", "acorn", "hardwood")]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

@@ -106,6 +106,11 @@ func setup(world: WorldMap) -> void:
 	add_child(_bobber)
 	_bite_alert = _billboard(load("res://assets/sprites/ui_alert.png"), 0.05)
 	add_child(_bite_alert)
+	if map is ForestMap:
+		_sync_lumber()
+		Woods.changed.connect(_sync_lumber)
+		Woods.hit.connect(_on_lumber_hit)
+		Woods.felled.connect(_on_lumber_felled)
 	if map is Farm:
 		_refresh_farm_all()
 		map.visual_changed.connect(_refresh_farm_cell)
@@ -852,6 +857,92 @@ func _tree_model(cell: Vector2i) -> String:
 		3:
 			return ["tree_pineDefaultA", "tree_pineRoundC", "tree_pineTallA", "tree_pineRoundA", "tree_pineSmallA"][r]
 	return ["tree_default", "tree_oak", "tree_pineRoundA", "tree_detailed", "tree_pineDefaultA"][r]
+
+
+# ------------------------------------------------------------ arbres à bois (forêt)
+var _lumber: Dictionary = {}  # case -> [Node3D, signature]
+## Échelle selon le stade : pousse, jeune, petit arbre, adulte
+const LUMBER_SCALE := [0.3, 0.5, 0.75, 1.0]
+
+
+## Modèle d'un arbre à bois : [modèle, échelle adulte].
+func _lumber_model(type: String) -> Array:
+	var fall := TimeManager.season >= 2  # feuillage d'automne (et d'hiver) pour les feuillus
+	match type:
+		"pine":
+			return ["tree_pineTallA", 2.1]
+		"plane":
+			return ["tree_fat_fall" if fall else "tree_fat", 1.55]
+	return ["tree_oak_fall" if fall else "tree_oak", 1.65]
+
+
+func _sync_lumber() -> void:
+	for cell: Vector2i in _lumber.keys():
+		var t: Dictionary = Woods.trees.get(cell, {})
+		if t.is_empty() or _lumber_sig(cell) != _lumber[cell][1]:
+			if is_instance_valid(_lumber[cell][0]):
+				_lumber[cell][0].queue_free()
+			_lumber.erase(cell)
+	for cell: Vector2i in Woods.trees:
+		if _lumber.has(cell):
+			continue
+		var root := Node3D.new()
+		root.position = _cell3d(cell) + Vector3(0, _ground_y(cell), 0)
+		var model: Node3D
+		if Woods.is_stump(cell):
+			model = _model("nature", "stump_roundDetailed", 1.5)
+		else:
+			var spec := _lumber_model(str(Woods.trees[cell].type))
+			model = _model("nature", spec[0], float(spec[1]) * LUMBER_SCALE[Woods.stage(cell)])
+		model.rotation.y = float(_hash(cell) % 628) / 100.0
+		root.add_child(model)
+		add_child(root)
+		_lumber[cell] = [root, _lumber_sig(cell)]
+
+
+func _lumber_sig(cell: Vector2i) -> String:
+	var t: Dictionary = Woods.trees[cell]
+	return "%s|%d|%s|%s" % [t.type, Woods.stage(cell), t.stump, TimeManager.season >= 2]
+
+
+## Coup de hache : l'arbre tremble.
+func _on_lumber_hit(cell: Vector2i) -> void:
+	if not _lumber.has(cell):
+		return
+	var root: Node3D = _lumber[cell][0]
+	var dir := Vector3(map.player.facing.y, 0, -map.player.facing.x) * 0.06
+	var tw := root.create_tween()
+	tw.tween_property(root, "rotation", dir, 0.05)
+	tw.tween_property(root, "rotation", -dir * 0.6, 0.08)
+	tw.tween_property(root, "rotation", Vector3.ZERO, 0.1)
+
+
+## L'arbre abattu bascule du côté opposé au bûcheron, rebondit et s'efface ;
+## la souche le remplace aussitôt.
+func _on_lumber_felled(cell: Vector2i, _type: String, from: Vector2i) -> void:
+	if not _lumber.has(cell):
+		return
+	var root: Node3D = _lumber[cell][0]
+	_lumber.erase(cell)  # la synchronisation posera la souche
+	var away := Vector2(cell - from)
+	if away == Vector2.ZERO:
+		away = Vector2.DOWN
+	away = away.normalized()
+	var axis := Vector3.UP.cross(Vector3(away.x, 0, away.y)).normalized()
+	var fallen := Basis(axis, PI / 2.0 * 0.96)
+	var tw := root.create_tween()
+	tw.tween_property(root, "basis", Basis(axis, 0.12), 0.25).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(root, "basis", fallen, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func() -> void:
+		shake(4.0, 0.25)
+		var land := map.cell_center(cell) + away * 16.0 * 1.6
+		fx_burst(land, [Color(0.45, 0.7, 0.35), Color(0.6, 0.8, 0.4), Color(0.74, 0.47, 0.29)], 24, 70.0)
+		fx_puff(land, Color(0.9, 0.85, 0.75, 0.85), 2.6))
+	tw.tween_property(root, "basis", Basis(axis, PI / 2.0 * 0.9), 0.1)
+	tw.tween_property(root, "basis", fallen, 0.12)
+	tw.tween_interval(0.5)
+	tw.tween_property(root, "scale", Vector3(0.01, 0.01, 0.01), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw.tween_callback(root.queue_free)
 
 
 func _build_props() -> void:

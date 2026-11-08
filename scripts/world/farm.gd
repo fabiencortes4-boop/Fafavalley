@@ -196,6 +196,9 @@ func _act_on_ground(cell: Vector2i) -> bool:
 		"sapling":
 			_plant_tree(cell, str(item.get("tree", "")))
 			return true
+		"tree_seed":
+			EventBus.toast("Les arbres à bois se plantent dans la forêt, au nord de la ferme (clairière des bûcherons).")
+			return true
 		"fertilizer":
 			_deferring = FarmState.is_tilled(cell) and not FarmState.is_fertilized(cell)
 			if FarmState.is_tilled(cell) and FarmState.fertilize(cell):

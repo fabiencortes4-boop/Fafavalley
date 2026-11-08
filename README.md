@@ -128,6 +128,15 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   nord de la ferme (tronc dégagé au chapitre 1 : cueillette, lac, campement de Firmin),
   la **mine** (éboulement dégagé au chapitre 2), la **source** derrière les ronces
   (chapitre 4), qui jaillit de nouveau à la fin de l'histoire.
+- **Clairière des bûcherons** (sud de la forêt, juste au-dessus de la ferme) : 21 arbres à
+  bois, pins à l'est du chemin, platanes et chênes à l'ouest (`scripts/autoload/woods.gd`).
+  On les abat à la hache (8 à 12 coups selon l'essence, moins avec une meilleure hache) :
+  10 à 18 bûches, des graines, et du **bois dur** pour le chêne ; l'arbre bascule du côté
+  opposé au joueur, puis la souche s'arrache pour encore un peu de bois. Les graines
+  (pomme de pin, boule de platane, gland ; aussi chez Mathis) se replantent sur l'herbe
+  libre de la forêt : pousse, jeune arbre, petit arbre, adulte en 6, 8 ou 10 jours. Une
+  souche oubliée rejette au bout de 5 jours et la clairière se reboise doucement toute
+  seule. Succès « Bûcheron » (25 arbres abattus).
 - **Tableau des demandes** (panneau de la place) : 3 demandes d'habitants par jour ; on
   en accepte jusqu'à 3, on livre en parlant à l'habitant, contre de l'or et de l'amitié.
   Elles comptent aussi pour l'histoire (chapitre 2).
@@ -359,6 +368,7 @@ godot --headless res://tests/nature_test.tscn     # terrain négligé : herbes, 
 godot --headless res://tests/port_test.tscn       # port, taverne du soir, chapitre du phare
 godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mariage
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
+godot --headless res://tests/woods_test.tscn      # arbres à bois : abattage, souche, replantation, pousse
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs

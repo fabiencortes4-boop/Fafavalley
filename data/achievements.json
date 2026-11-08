@@ -180,6 +180,15 @@
 		"gold": 150
 	},
 	{
+		"id": "lumberjack",
+		"name": "Bûcheron",
+		"text": "Abattre 25 arbres dans la forêt",
+		"stat": "trees_felled",
+		"goal": 25,
+		"icon": "wood",
+		"gold": 400
+	},
+	{
 		"id": "met_all",
 		"name": "Tout le monde se connaît",
 		"text": "Rencontrer les 14 habitants",

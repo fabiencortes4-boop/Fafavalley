@@ -191,6 +191,26 @@ func _ready() -> void:
 					var xy := a.trim_prefix("--fat=").split(",")
 					var fm: WorldMap = main.call("current_map")
 					fm.player.position = fm.cell_center(Vector2i(int(xy[0]), int(xy[1])))
+			if "--woods" in args:
+				# Tous les stades : pousses, jeunes, souches, adultes
+				var k := 0
+				for c: Vector2i in Woods.trees.keys():
+					var t: Dictionary = Woods.trees[c]
+					match k % 5:
+						0: t.age = 0
+						1: t.age = int(Woods.TYPES[t.type].grow) / 2
+						2: t.stump = true
+					k += 1
+				Woods.changed.emit()
+			for a in args:
+				if a.begins_with("--fell="):
+					var fxy := a.trim_prefix("--fell=").split(",")
+					var fc := Vector2i(int(fxy[0]), int(fxy[1]))
+					var fm2: WorldMap = main.call("current_map")
+					await get_tree().create_timer(0.6).timeout
+					for i in 30:
+						if Woods.chop(fc, 1, fm2.player_cell()).done:
+							break
 		if "--board" in args:
 			Quests.accept(0)
 			main.get("_hud").open_board()

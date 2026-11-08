@@ -1781,5 +1781,43 @@
 		"buy": 8000,
 		"sell": 0,
 		"description": "Mathis ajoute une grande pièce à ta maison : de la place pour tes meubles et un coin cave."
+	},
+	"pine_cone": {
+		"name": "Pomme de pin",
+		"type": "tree_seed",
+		"tree": "pine",
+		"icon": 177,
+		"stack": 99,
+		"buy": 60,
+		"sell": 8,
+		"description": "À planter dans la forêt, sur l'herbe libre. Donne un pin adulte en 6 jours : 10 à 14 bûches à la hache."
+	},
+	"plane_seed": {
+		"name": "Boule de platane",
+		"type": "tree_seed",
+		"tree": "plane",
+		"icon": 178,
+		"stack": 99,
+		"buy": 80,
+		"sell": 10,
+		"description": "À planter dans la forêt, sur l'herbe libre. Donne un platane adulte en 8 jours : le plus de bois (14 à 18 bûches)."
+	},
+	"acorn": {
+		"name": "Gland",
+		"type": "tree_seed",
+		"tree": "oak",
+		"icon": 179,
+		"stack": 99,
+		"buy": 100,
+		"sell": 12,
+		"description": "À planter dans la forêt, sur l'herbe libre. Donne un chêne adulte en 10 jours : du bois et du bois dur."
+	},
+	"hardwood": {
+		"name": "Bois dur",
+		"type": "material",
+		"icon": 180,
+		"stack": 99,
+		"sell": 15,
+		"description": "Du chêne dense et serré. Mathis le paie bien : il en fait des meubles qui durent."
 	}
 }
