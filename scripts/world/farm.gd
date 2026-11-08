@@ -680,7 +680,7 @@ func _use_machine(cell: Vector2i) -> void:
 	var slot: Variant = Inventory.get_selected()
 	var r: Array = [] if slot == null else Machines.recipe(machine, str(slot.id))
 	if r.is_empty():
-		var hint: String = {"preserves_jar": "un fruit ou un légume", "fruit_press": "un fruit ou un légume", "smoker": "un poisson", "cheese_press": "du lait ou un œuf", "cask": "un fromage, un jus, une confiture ou du miel (pas encore cristal)"}.get(machine, "un ingrédient")
+		var hint: String = {"preserves_jar": "un fruit ou un légume", "fruit_press": "un fruit ou un légume", "smoker": "un poisson", "cheese_press": "du lait ou un œuf", "cask": "un fromage, un jus, une confiture ou du miel (pas encore cristal)", "oak_cask": "un fromage, un jus, une confiture ou du miel (pas encore cristal)"}.get(machine, "un ingrédient")
 		EventBus.toast("%s : prends %s en main, puis touche la machine." % [name, hint])
 		return
 	var nights := Machines.insert(cell, machine, str(slot.id))

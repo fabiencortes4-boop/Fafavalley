@@ -83,6 +83,7 @@ func _after_build() -> void:
 	for cell: Vector2i in Machines.furniture:
 		if _ground_chars.has(cell):
 			block_cell(cell)
+			_furniture_seat(cell)
 	# Au réveil : à côté du lit
 	_spawn_cell = bed_cell + Vector2i(1, 1)
 	_place_player()
@@ -130,10 +131,25 @@ func _act_on_ground(cell: Vector2i) -> bool:
 	Machines.furniture[cell] = str(slot.id)
 	Inventory.remove_from_slot(Inventory.selected, 1)
 	block_cell(cell)
+	_furniture_seat(cell)
 	player.play_use()
 	Sfx.play("drop")
 	furniture_changed.emit()
 	return true
+
+
+## Un fauteuil se comporte comme une chaise : on s'y assoit.
+func _furniture_seat(cell: Vector2i) -> void:
+	if GameData.item(str(Machines.furniture[cell])).get("seat", false):
+		add_seat(cell, Vector2i.DOWN)
+
+
+## Pioche en main : on reprend le meuble (même un fauteuil, au lieu de s'y asseoir).
+func act_on(cell: Vector2i) -> void:
+	if _holding_tool() == "pickaxe" and Machines.furniture.has(cell) and not player.seated:
+		_use_pickaxe(cell, 0)
+		return
+	super(cell)
 
 
 ## La pioche reprend un meuble.
@@ -146,6 +162,9 @@ func _use_pickaxe(cell: Vector2i, _energy: int) -> void:
 		return
 	Machines.furniture.erase(cell)
 	_blocked.erase(cell)
+	if seats.has(cell):
+		seats.erase(cell)
+		_interactables.erase(cell)
 	if _static_blocks.has(cell):
 		_static_blocks[cell].queue_free()
 		_static_blocks.erase(cell)

@@ -50,7 +50,7 @@ func _watch_inventory() -> void:
 		if id.contains("@"):
 			show("quality")
 		var place := str(GameData.item(id).get("place", ""))
-		if place == "cask":
+		if place == "cask" or place == "oak_cask":
 			show("cask")
 		elif Machines.is_machine(place):
 			show("machine")

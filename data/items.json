@@ -1818,6 +1818,53 @@
 		"icon": 180,
 		"stack": 99,
 		"sell": 15,
-		"description": "Du chêne dense et serré. Mathis le paie bien : il en fait des meubles qui durent."
+		"description": "Du chêne dense et serré. Sert à fabriquer le fût de chêne, des meubles en chêne et, chez Gaston, la hache renforcée."
+	},
+	"steel_axe": {
+		"name": "Hache renforcée",
+		"type": "tool",
+		"tool": "axe",
+		"power": 2,
+		"icon": 181,
+		"stack": 1,
+		"energy": 2,
+		"description": "Lame d'acier sur un manche en bois dur : elle abat les arbres deux fois plus vite."
+	},
+	"oak_cask": {
+		"name": "Fût de chêne",
+		"type": "placeable",
+		"place": "oak_cask",
+		"icon": 182,
+		"stack": 99,
+		"sell": 350,
+		"description": "Un tonneau en bois dur, plus serré : il fait vieillir fromages, jus, confitures et miel en 4 nuits au lieu de 7."
+	},
+	"oak_armchair": {
+		"name": "Fauteuil en chêne",
+		"type": "furniture",
+		"furniture": "armchair",
+		"seat": true,
+		"icon": 183,
+		"stack": 99,
+		"sell": 180,
+		"description": "Un meuble pour la maison : on s'y assoit pour se reposer un moment (l'énergie remonte doucement)."
+	},
+	"oak_wardrobe": {
+		"name": "Armoire en chêne",
+		"type": "furniture",
+		"furniture": "wardrobe",
+		"icon": 184,
+		"stack": 99,
+		"sell": 260,
+		"description": "Une grande armoire sculptée pour la maison. Elle sent bon la cire."
+	},
+	"oak_clock": {
+		"name": "Horloge comtoise",
+		"type": "furniture",
+		"furniture": "clock",
+		"icon": 185,
+		"stack": 99,
+		"sell": 320,
+		"description": "Une haute horloge en chêne, cadran de laiton et balancier doré. Tic, tac..."
 	}
 }

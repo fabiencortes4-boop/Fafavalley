@@ -2266,6 +2266,16 @@ func _machine_model(cell: Vector2i, id: String) -> Node3D:
 				_st_cyl(st, Vector3(x, 0.4, 0), 0.265, 0.05, iron, 12, "x")
 			_st_box(st, Vector3(0.38, 0.4, 0), Vector3(0.02, 0.1, 0.1), Color(0.3, 0.2, 0.12))
 			top = 0.7
+		"oak_cask":
+			# Fût de chêne : plus sombre, trois cercles de fer, robinet en laiton
+			var oak := Color(0.4, 0.25, 0.14)
+			_st_box(st, Vector3(0, 0.08, 0), Vector3(0.62, 0.16, 0.52), Color(0.3, 0.19, 0.11))
+			_st_cyl(st, Vector3(0, 0.42, 0), 0.25, 0.74, oak, 12, "x")
+			_st_cyl(st, Vector3(0, 0.42, 0), 0.27, 0.42, oak.lightened(0.06), 12, "x")
+			for x: float in [-0.26, 0.0, 0.26]:
+				_st_cyl(st, Vector3(x, 0.42, 0), 0.28, 0.045, iron, 12, "x")
+			_st_cyl(st, Vector3(0.4, 0.36, 0), 0.03, 0.08, Color(0.85, 0.68, 0.3), 8, "x")
+			top = 0.72
 		"beehive":
 			# Ruche en paille, posée sur un billot
 			_st_box(st, Vector3(0, 0.12, 0), Vector3(0.4, 0.24, 0.4), Color(0.5, 0.35, 0.22))
@@ -3020,6 +3030,38 @@ func _build_furniture() -> void:
 				_st_box(st, c + Vector3(0, 0.75, 0.04), Vector3(0.62, 0.5, 0.04), Color(0.75, 0.6, 0.3))
 				_st_box(st, c + Vector3(0, 0.8, 0.065), Vector3(0.54, 0.24, 0.01), Color(0.55, 0.78, 0.95))
 				_st_box(st, c + Vector3(0, 0.63, 0.065), Vector3(0.54, 0.14, 0.01), Color(0.4, 0.68, 0.38))
+			"armchair":
+				# Fauteuil en chêne, coussin rouge, tourné vers la pièce
+				var oak := Color(0.42, 0.26, 0.15)
+				var red := Color(0.72, 0.24, 0.24)
+				for k in 4:
+					_st_cyl(st, c + Vector3(-0.28 + (k % 2) * 0.56, 0.11, -0.24 + (k / 2) * 0.48), 0.04, 0.22, oak, 6)
+				_st_box(st, c + Vector3(0, 0.26, 0), Vector3(0.66, 0.1, 0.6), oak)
+				_st_box(st, c + Vector3(0, 0.34, 0.03), Vector3(0.56, 0.08, 0.5), red)
+				_st_box(st, c + Vector3(0, 0.62, -0.26), Vector3(0.66, 0.66, 0.1), oak)
+				_st_box(st, c + Vector3(0, 0.62, -0.2), Vector3(0.54, 0.5, 0.04), red)
+				for x: float in [-0.31, 0.31]:
+					_st_box(st, c + Vector3(x, 0.44, 0.0), Vector3(0.07, 0.08, 0.56), oak)
+					_st_cyl(st, c + Vector3(x, 0.44, 0.28), 0.05, 0.08, oak.lightened(0.08), 8, "x")
+			"wardrobe":
+				# Armoire contre le mur du fond : deux portes, corniche, poignées
+				var oak := Color(0.42, 0.26, 0.15)
+				_st_box(st, c + Vector3(0, 0.82, -0.22), Vector3(0.92, 1.56, 0.46), oak)
+				_st_box(st, c + Vector3(0, 1.64, -0.22), Vector3(1.0, 0.08, 0.52), oak.darkened(0.15))
+				_st_box(st, c + Vector3(0, 0.05, -0.22), Vector3(0.96, 0.1, 0.5), oak.darkened(0.15))
+				for x: float in [-0.215, 0.215]:
+					_st_box(st, c + Vector3(x, 0.84, 0.015), Vector3(0.38, 1.3, 0.02), oak.lightened(0.1))
+					_st_cyl(st, c + Vector3(x * 0.2, 0.86, 0.04), 0.025, 0.03, Color(0.85, 0.68, 0.3), 8, "z")
+			"clock":
+				# Horloge comtoise : caisse haute, cadran rond, balancier doré
+				var oak := Color(0.42, 0.26, 0.15)
+				_st_box(st, c + Vector3(0, 0.9, -0.25), Vector3(0.42, 1.8, 0.3), oak)
+				_st_box(st, c + Vector3(0, 1.82, -0.25), Vector3(0.5, 0.1, 0.36), oak.darkened(0.15))
+				_st_cyl(st, c + Vector3(0, 1.5, -0.09), 0.16, 0.03, Color(0.85, 0.68, 0.3), 14, "z")
+				_st_cyl(st, c + Vector3(0, 1.5, -0.07), 0.13, 0.02, Color(0.96, 0.93, 0.84), 14, "z")
+				_st_box(st, c + Vector3(0, 0.75, -0.09), Vector3(0.26, 0.8, 0.02), Color(0.2, 0.14, 0.1))
+				_st_box(st, c + Vector3(0, 0.85, -0.075), Vector3(0.02, 0.5, 0.01), Color(0.85, 0.68, 0.3))
+				_st_cyl(st, c + Vector3(0, 0.6, -0.07), 0.07, 0.02, Color(0.9, 0.72, 0.3), 12, "z")
 			"table":
 				_st_box(st, c + Vector3(0, 0.55, 0), Vector3(0.9, 0.06, 0.7), wood)
 				_st_box(st, c + Vector3(0, 0.58, 0), Vector3(0.95, 0.02, 0.75), Color(0.95, 0.94, 0.9))

@@ -73,6 +73,10 @@
 			"name": "Tonneau de vieillissement",
 			"aging": 7
 		},
+		"oak_cask": {
+			"name": "Fût de chêne",
+			"aging": 4
+		},
 		"beehive": {
 			"name": "Ruche",
 			"auto": [

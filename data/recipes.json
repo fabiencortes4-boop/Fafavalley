@@ -42,6 +42,16 @@
 			"fiber": 5
 		}
 	},
+	"steel_axe": {
+		"station": "forge",
+		"upgrade": "axe",
+		"gold": 300,
+		"ingredients": {
+			"iron_ore": 3,
+			"hardwood": 5
+		},
+		"unlock": "ch3"
+	},
 	"steel_pickaxe": {
 		"station": "forge",
 		"upgrade": "pickaxe",
@@ -228,6 +238,42 @@
 			"wood": 40,
 			"coal": 3,
 			"fiber": 20
+		}
+	},
+	"oak_cask": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"hardwood": 8,
+			"wood": 20,
+			"iron_ore": 2
+		}
+	},
+	"oak_armchair": {
+		"station": "craft",
+		"category": "Meubles",
+		"ingredients": {
+			"hardwood": 4,
+			"wood": 10,
+			"fiber": 10
+		}
+	},
+	"oak_wardrobe": {
+		"station": "craft",
+		"category": "Meubles",
+		"ingredients": {
+			"hardwood": 6,
+			"wood": 15
+		}
+	},
+	"oak_clock": {
+		"station": "craft",
+		"category": "Meubles",
+		"ingredients": {
+			"hardwood": 5,
+			"wood": 5,
+			"gold_ore": 1,
+			"quartz": 1
 		}
 	}
 }

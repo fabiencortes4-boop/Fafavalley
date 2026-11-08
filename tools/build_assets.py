@@ -713,6 +713,35 @@ def draw_misc(kind):
                     d = (x - cx + 0.5) ** 2 + (y - cy + 0.5) ** 2
                     if d <= 9:
                         px[x, y] = ((170, 120, 70) if d <= 3 else ((120, 76, 44) if d <= 6 else (84, 52, 30))) + (255,)
+    elif kind == "oak_cask":
+        rect(2, 4, 14, 13, (104, 64, 36))
+        rect(3, 5, 13, 7, (130, 82, 46))
+        for x in (3, 7, 12):
+            rect(x, 4, x + 1, 13, (70, 70, 78))
+        rect(7, 8, 9, 10, (210, 170, 70))
+    elif kind == "armchair":
+        rect(3, 2, 13, 9, (120, 74, 40))
+        rect(4, 3, 12, 8, (170, 60, 60))
+        rect(2, 8, 14, 12, (120, 74, 40))
+        rect(4, 8, 12, 11, (196, 80, 76))
+        for x in (3, 12):
+            rect(x, 12, x + 1, 15, (90, 56, 30))
+    elif kind == "wardrobe":
+        rect(3, 1, 13, 15, (110, 68, 38))
+        rect(2, 1, 14, 3, (86, 52, 28))
+        rect(4, 4, 8, 14, (140, 90, 50))
+        rect(8, 4, 12, 14, (140, 90, 50))
+        rect(7, 8, 8, 10, (230, 190, 90))
+        rect(8, 8, 9, 10, (230, 190, 90))
+    elif kind == "clock":
+        rect(5, 1, 11, 15, (110, 68, 38))
+        for y in range(2, 8):
+            for x in range(5, 11):
+                if (x - 7.5) ** 2 + (y - 4.5) ** 2 <= 6:
+                    px[x, y] = (245, 236, 210, 255)
+        px[7, 3], px[7, 4], px[8, 4] = (40, 30, 20, 255), (40, 30, 20, 255), (40, 30, 20, 255)
+        rect(7, 8, 9, 13, (60, 40, 25))
+        rect(7, 11, 9, 13, (230, 190, 70))
     elif kind == "plan":
         rect(3, 2, 13, 14, (235, 225, 195))
         for y in (5, 8, 11):
@@ -911,6 +940,12 @@ def extend_icons(sheet):
     extra += [draw_misc(k) for k in ("cask", "beehive", "honey", "frost", "lava", "heart", "goat_milk", "wool",
                                      "rug", "lamp", "plant", "shelf", "painting", "table", "plan",
                                      "pine_cone", "plane_seed", "acorn", "hardwood")]
+    # 181 : hache renforcée (lame d'acier, manche en bois dur) ; 182-185 : fût de
+    # chêne, fauteuil, armoire et horloge comtoise
+    extra.append(recolor(tile(FARM, 87), {(139, 155, 180): (110, 190, 240), (140, 156, 181): (110, 190, 240),
+                                          (192, 203, 220): (190, 230, 250), (82, 96, 124): (40, 90, 170),
+                                          (189, 108, 74): (110, 66, 40), (234, 165, 108): (150, 96, 56)}))
+    extra += [draw_misc(k) for k in ("oak_cask", "armchair", "wardrobe", "clock")]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

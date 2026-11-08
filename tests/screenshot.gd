@@ -233,7 +233,7 @@ func _ready() -> void:
 				main.get("_hud").open_appearance()
 		if "--furnished" in args:
 			PlayerState.flags["house_big"] = true
-			for e: Array in [[Vector2i(12, 2), "bookshelf"], [Vector2i(14, 2), "floor_lamp"], [Vector2i(12, 5), "rug"], [Vector2i(15, 5), "house_plant"], [Vector2i(13, 4), "dining_table"], [Vector2i(10, 2), "painting"]]:
+			for e: Array in [[Vector2i(12, 2), "bookshelf"], [Vector2i(14, 2), "floor_lamp"], [Vector2i(12, 5), "rug"], [Vector2i(15, 5), "house_plant"], [Vector2i(13, 4), "dining_table"], [Vector2i(10, 2), "painting"], [Vector2i(16, 2), "oak_wardrobe"], [Vector2i(7, 2), "oak_clock"], [Vector2i(16, 5), "oak_armchair"]]:
 				Machines.furniture[e[0]] = e[1]
 			Marriage.spouse = "lina"
 			Marriage.child_name = "Iris"

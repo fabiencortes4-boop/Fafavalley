@@ -88,6 +88,23 @@ func _ready() -> void:
 	forest.act_on(pine)
 	await get_tree().create_timer(0.6).timeout
 	_check(PlayerState.energy < energy and int(Woods.trees[pine].hp) < int(Woods.TYPES.pine.hp), "un coup de hache du joueur entame l'arbre")
+	# Le bois dur dans les recettes
+	var uses := []
+	for rid: String in Crafting.recipes:
+		if Crafting.recipes[rid].get("ingredients", {}).has("hardwood"):
+			uses.append(rid)
+	_check(uses.size() >= 5, "le bois dur sert dans %d recettes" % uses.size())
+	Inventory.add_item("hardwood", 30)
+	Inventory.add_item("wood", 60)
+	Inventory.add_item("iron_ore", 5)
+	Inventory.add_item("fiber", 10)
+	_check(Crafting.craft("oak_cask") and Inventory.count_of("oak_cask") == 1, "fabriquer un fût de chêne")
+	_check(Machines.recipe("oak_cask", "cheese") == [GameData.with_quality("cheese", 1), 4], "le fût fait vieillir en 4 nuits (tonneau : 7)")
+	_check(Crafting.craft("oak_armchair") and Crafting.craft("oak_wardrobe"), "fabriquer un fauteuil et une armoire")
+	PlayerState.flags["story_ch3"] = true
+	Inventory.add_gold(300)
+	var had_axe := Inventory.count_of("axe")
+	_check(Crafting.craft("steel_axe") and Inventory.count_of("steel_axe") == 1 and Inventory.count_of("axe") == had_axe - 1, "la hache renforcée remplace la hache")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
 
