@@ -100,6 +100,9 @@ func _ready() -> void:
 	TimeManager.minutes = 23 * 60 + 45
 	TimeManager.time_changed.emit(23, 45)
 	await get_tree().create_timer(22.0).timeout
+	for n: Npc in v.npcs:
+		if not n.is_inside():
+			print("  dehors : %s en %s" % [n.id, n.cell()])
 	_check(v.npcs.all(func(n: Npc) -> bool: return n.is_inside()), "à 23h45, les habitants sont rentrés")
 	# S'évanouir au village -> réveil à la maison
 	GameFlow.end_day(true)

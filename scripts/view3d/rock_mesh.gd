@@ -50,12 +50,12 @@ static func mesh(type: String, theme: String, variant: int) -> ArrayMesh:
 			var s := rng.randf_range(0.8, 1.25)
 			_boulder(stone, Vector3(cos(a) * d, 0, sin(a) * d), Vector3(0.13, 0.1, 0.11) * s, base, theme, rng)
 	else:
-		var s := rng.randf_range(0.92, 1.08)
+		var s := rng.randf_range(0.94, 1.02)  # reste dans sa case (pas dans les murs)
 		var vein := Color(0, 0, 0, 0)
 		if ORE.has(type):
 			vein = (ORE[type][0][0] as Color)
 			vein.a = 0.55 if ORE[type][1] == "nugget" else 0.3
-		faces = _boulder(stone, Vector3.ZERO, Vector3(0.46, 0.5, 0.42) * s, base, theme, rng, vein)
+		faces = _boulder(stone, Vector3.ZERO, Vector3(0.42, 0.5, 0.4) * s, base, theme, rng, vein)
 		if type == "stone" and theme == "earth" and variant % 2 == 0:
 			_boulder(stone, Vector3(0.3, 0, 0.22), Vector3(0.14, 0.11, 0.12), base.darkened(0.05), theme, rng)
 	var has_ore := ORE.has(type) and not faces.is_empty()
@@ -126,7 +126,7 @@ static func _boulder(st: SurfaceTool, center: Vector3, size: Vector3, color: Col
 	var verts: Array = []
 	for v: Vector3 in ico[0]:
 		# Bosses irrégulières, dessus taillé à plat, base enfoncée dans le sol
-		var p := v * rng.randf_range(0.84, 1.14)
+		var p := v * rng.randf_range(0.86, 1.1)
 		p = Vector3(p.x * size.x, (p.y + 0.3) * size.y * 0.78, p.z * size.z)
 		p.y = clampf(p.y, 0.0, size.y * (0.82 + 0.1 * _bump(v, rng)))
 		verts.append(center + p)

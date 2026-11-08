@@ -477,7 +477,7 @@ func _soft_edges(batch: Models.Batch, chars: Dictionary) -> void:
 	var hard := ["=", "#", ":", "~", "W", "c"]
 	var grass_models := ["grass", "grass_large", "grass_leafs"] if TimeManager.season != 3 else ["rock_smallA", "rock_smallFlatA"]
 	for cell: Vector2i in chars:
-		if chars[cell] != "." and chars[cell] != ",":
+		if chars[cell] != "." and chars[cell] != "," or _house_cells.has(cell) or _away(cell, 1.0) != Vector3.ZERO:
 			continue
 		for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 			if not str(chars.get(cell + d, ".")) in hard:
@@ -855,6 +855,7 @@ func _tree_model(cell: Vector2i) -> String:
 
 
 func _build_props() -> void:
+	_collect_house_cells()
 	_merge_begin()
 	var batch := Models.Batch.new()
 	var chars: Dictionary = map.get("_ground_chars")
@@ -863,14 +864,24 @@ func _build_props() -> void:
 		var c := _cell3d(cell)
 		if ch != "#" and ch != "~" and ch != "W":
 			c.y += _ground_y(cell)  # suit le relief (talus, berges)
+		var near_house := _away(cell, 1.0) != Vector3.ZERO
+		if near_house:
+			c += _away(cell, 0.3 if ch in ["T", "R"] else 0.16)
+		elif ch in ["T", "R"]:
+			# Un arbre à côté d'un banc, d'un lampadaire, d'un étal... : on
+			# l'écarte et on le réduit, son feuillage ne les traverse plus
+			var push := _away_from_props(cell, chars)
+			if push != Vector3.ZERO:
+				c += push * 0.3
+				near_house = true
 		var rot := float(_hash(cell) % 628) / 100.0
 		if ch != "#" and DECOR_CHARS.contains(ch) and _base_char(cell, chars) == "#":
 			_dock_cell(cell, chars)  # un tonneau sur le ponton : planches dessous
 		match ch:
 			"T":
-				_place(batch, "nature", _tree_model(cell), c, 1.5 + float(_hash(cell) % 30) / 100.0, rot)
+				_place(batch, "nature", _tree_model(cell), c, (1.5 + float(_hash(cell) % 30) / 100.0) * (0.8 if near_house else 1.0), rot)
 			"R":
-				_place(batch, "nature", "tree_oak" if TimeManager.season != 2 else "tree_oak_fall", c, 1.9, rot)
+				_place(batch, "nature", "tree_oak" if TimeManager.season != 2 else "tree_oak_fall", c, 1.9 * (0.8 if near_house else 1.0), rot)
 			"b":
 				_place(batch, "nature", "plant_bushLarge", c, 2.4, rot)
 			"o":
@@ -880,7 +891,8 @@ func _build_props() -> void:
 			"m":
 				_place(batch, "nature", "mushroom_redGroup", c, 2.2, rot)
 			"h":
-				_place(batch, "nature", "log_stack", c, 1.6, rot)
+				# Contre une maison : couché le long du mur, un peu plus petit
+				_place(batch, "nature", "log_stack", c, 1.2 if near_house else 1.6, (PI / 2.0 if _house_cells.has(cell + Vector2i.LEFT) or _house_cells.has(cell + Vector2i.RIGHT) else 0.0) if near_house else rot)
 			"k":
 				_place(batch, "survival", "barrel", c, 2.6, rot)
 			",":
@@ -1086,20 +1098,18 @@ func _build_buildings(chars: Dictionary) -> void:
 			match str(pb[0]):
 				"taverne":
 					_house(cell, psize, pb[3], "wall-wood", Color(0.6, 0.22, 0.18))
-					_put(_fitted("survival", "barrel", 0.5), pfront + Vector3(-0.4, 0, -0.35))
-					_put(_fitted("survival", "barrel", 0.5), pfront + Vector3(psize.x - 0.6, 0, -0.35))
-					_put(_box(Vector3(1.4, 0.36, 0.06), Color(0.45, 0.3, 0.18)), pfront + Vector3(pb[3], 1.5, -0.42))
+					# Enseigne sous l'avant-toit, à droite de la porte (pas dans le toit)
+					var sign_at := pfront + Vector3(pb[3] + 1.0, 0.86, -0.4)
+					_put(_box(Vector3(0.9, 0.24, 0.05), Color(0.45, 0.3, 0.18)), sign_at)
 					var sign := Label3D.new()
 					sign.text = "TAVERNE"
 					sign.font = UiTheme.title_font()
-					sign.font_size = 56
+					sign.font_size = 40
 					sign.pixel_size = 0.0045
 					sign.modulate = Color(1, 0.85, 0.45)
-					_put(sign, pfront + Vector3(pb[3], 1.5, -0.38))
+					_put(sign, sign_at + Vector3(0, 0, 0.03))
 				"comptoir":
 					_house(cell, psize, pb[3], "wall", Color(0.25, 0.55, 0.6))
-					_put(_fitted("survival", "box", 0.45), pfront + Vector3(psize.x - 0.4, 0, -0.35))
-					_put(_fitted("survival", "box-open", 0.4), pfront + Vector3(-0.4, 0, -0.35))
 				"celeste":
 					_house(cell, psize, pb[3], "wall-wood", Color(0.55, 0.35, 0.65))
 				"phare":
@@ -1108,40 +1118,11 @@ func _build_buildings(chars: Dictionary) -> void:
 			var b: Array = Village.BUILDINGS[ch]
 			var size: Vector2i = b[1]
 			var front := _cell3d(cell + Vector2i(0, size.y))  # première case devant la façade
+			# Le décor autour des maisons vient des jardins (Village.gardens) et
+			# du plan : rien n'est posé contre les façades (pas de chevauchement)
 			match str(b[0]):
-				"store":
-					_house(cell, size, b[3], "wall", Color(0.85, 0.35, 0.3))
-					_put(_fitted("town", "banner-red", 0.9), front + Vector3(-0.35, 0, -0.45))
-					_put(_fitted("survival", "barrel", 0.45), front + Vector3(3.4, 0, -0.4))
-				"mairie":
-					_house(cell, size, b[3], "wall", Color(0.32, 0.42, 0.62))
-					_put(_fitted("town", "banner-green", 0.9), front + Vector3(-0.35, 0, -0.45))
-					_put(_fitted("town", "banner-green", 0.9), front + Vector3(size.x - 0.65, 0, -0.45))
-				"gaston":
-					_house(cell, size, b[3], "wall", Color(0.3, 0.3, 0.34))
-					_put(_fitted("survival", "campfire-pit", 0.6), front + Vector3(size.x - 0.6, 0, -0.4))
-				"menuiserie":
-					_house(cell, size, b[3], "wall-wood", Color(0.55, 0.36, 0.22))
-					_put(_fitted("survival", "workbench", 0.8), front + Vector3(size.x - 0.5, 0, -0.35), PI)
-					_put(_fitted("nature", "log_stack", 0.8), front + Vector3(-0.5, 0, -0.9))
-				"cooperative":
-					_house(cell, size, b[3], "wall", Color(0.36, 0.6, 0.32))
-					_put(_fitted("town", "stall-green", 1.2), front + Vector3(size.x + 0.2, 0, -0.9), -PI / 2.0)
-					_put(_fitted("survival", "box-large", 0.5), front + Vector3(-0.5, 0, -0.6))
-					_put(_fitted("survival", "barrel", 0.45), front + Vector3(-0.5, 0, -1.3))
-				"ranch":
-					_house(cell, size, b[3], "wall-wood", Color(0.75, 0.25, 0.2))
-					_put(_fitted("town", "cart", 1.1), front + Vector3(size.x + 0.4, 0, -1.0), 0.4)
-				"odette":
-					_house(cell, size, b[3], "wall-wood", Color(0.78, 0.3, 0.25))
-					_put(_fitted("nature", "pot_large", 0.4), front + Vector3(-0.3, 0, -0.45))
-				"lina":
-					_house(cell, size, b[3], "wall-wood", Color(0.35, 0.55, 0.75))
-					_put(_fitted("nature", "pot_small", 0.35), front + Vector3(size.x - 0.3, 0, -0.45))
-				"jules":
-					_house(cell, size, b[3], "wall-wood", Color(0.3, 0.55, 0.5))
-					_put(_fitted("survival", "barrel", 0.5), front + Vector3(size.x + 0.3, 0, -0.9))
-					_put(_fitted("survival", "fish-large", 0.45), front + Vector3(size.x + 0.3, 0.5, -0.9))
+				"store", "mairie", "gaston", "menuiserie", "cooperative", "ranch", "odette", "lina", "jules":
+					_house(cell, size, b[3], {"store": "wall", "mairie": "wall", "gaston": "wall", "cooperative": "wall"}.get(str(b[0]), "wall-wood"), HOUSE_ROOFS[str(b[0])])
 				"fountain":
 					var f := _fitted("town", "fountain-round-detail", 2.2)
 					_put(f, Vector3(cell.x + 1.0, 0, cell.y + 1.0))
@@ -1157,12 +1138,69 @@ func _build_buildings(chars: Dictionary) -> void:
 			_static.add_child(anvil)
 
 
+const HOUSE_ROOFS := {
+	"store": Color(0.85, 0.35, 0.3), "mairie": Color(0.32, 0.42, 0.62), "gaston": Color(0.3, 0.3, 0.34),
+	"menuiserie": Color(0.55, 0.36, 0.22), "cooperative": Color(0.36, 0.6, 0.32), "ranch": Color(0.75, 0.25, 0.2),
+	"odette": Color(0.78, 0.3, 0.25), "lina": Color(0.35, 0.55, 0.75), "jules": Color(0.3, 0.55, 0.5),
+}
+
+## Cases occupées par les bâtiments (maisons, fontaine, mine...) : le décor
+## voisin est écarté des murs et des avant-toits pour ne pas les traverser.
+var _house_cells: Dictionary = {}
+
+
+func _collect_house_cells() -> void:
+	_house_cells.clear()
+	var defs: Dictionary = {}
+	if map is Village:
+		defs = Village.BUILDINGS
+	elif map is PortMap:
+		defs = PortMap.BUILDINGS
+	elif map is Farm:
+		defs = {"H": ["", Vector2i(3, 3)], "G": ["", Vector2i(3, 6)]}
+	var chars: Dictionary = map.get("_ground_chars")
+	for cell: Vector2i in chars:
+		if defs.has(chars[cell]):
+			var size: Vector2i = defs[chars[cell]][1]
+			for dy in size.y:
+				for dx in size.x:
+					_house_cells[cell + Vector2i(dx, dy)] = true
+
+
+## Décalage qui éloigne un objet des bâtiments voisins (côtés, puis coins).
+func _away(cell: Vector2i, amount: float) -> Vector3:
+	var off := Vector3.ZERO
+	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if _house_cells.has(cell + d):
+			off -= Vector3(d.x, 0, d.y) * amount
+	if off == Vector3.ZERO:
+		for d: Vector2i in [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
+			if _house_cells.has(cell + d):
+				off -= Vector3(d.x, 0, d.y) * amount * 0.7
+	return off
+
+
+const SOLID_PROPS := "nqxpuvsykiarjzwSLX"
+
+
+## Direction qui éloigne une case des objets solides voisins (8 voisins).
+func _away_from_props(cell: Vector2i, chars: Dictionary) -> Vector3:
+	var off := Vector3.ZERO
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var ch := str(chars.get(cell + Vector2i(dx, dy), ""))
+			if (dx != 0 or dy != 0) and ch.length() == 1 and SOLID_PROPS.contains(ch):
+				off -= Vector3(dx, 0, dy)
+	return off.normalized() if off != Vector3.ZERO else Vector3.ZERO
+
+
 ## Maison de plain-pied, à la taille du personnage : soubassement en pierre,
 ## murs Kenney (porte, fenêtres à volets), toit de tuiles avec faîtage et
 ## avant-toit, jardinières sous les fenêtres, marche, paillasson, lanterne.
 ## Toits et détails sont regroupés en un seul objet par maison (léger).
 func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_color: Color) -> void:
 	var root := Node3D.new()
+	root.set_meta("house_rect", Rect2(cell.x, cell.y, size.x, size.y))
 	_static.add_child(root)
 	var x0 := float(cell.x)
 	var z0 := float(cell.y)
@@ -1701,7 +1739,7 @@ func _build_gardens() -> void:
 	var petals := [Color(0.95, 0.35, 0.4), Color(0.98, 0.82, 0.3), Color(0.75, 0.5, 0.95), Color(1, 0.6, 0.25), Color(1, 1, 1)]
 	for g: Array in Village.gardens():
 		var cell: Vector2i = g[0]
-		var c := _cell3d(cell)
+		var c := _cell3d(cell) + _away(cell, 0.14)
 		var hsh := _hash(cell)
 		match str(g[1]):
 			"flowers", "veggies":

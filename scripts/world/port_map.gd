@@ -140,10 +140,23 @@ func _build_navigation() -> void:
 			_astar.set_point_weight_scale(cell, 0.5)
 
 
-func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+func find_path(from: Vector2i, to: Vector2i, avoid: Array = []) -> Array[Vector2i]:
 	if not _astar.is_in_boundsv(from) or not _astar.is_in_boundsv(to) or _astar.is_point_solid(to):
 		return []
-	return _astar.get_id_path(from, to, true)
+	return _path_avoiding(from, to, avoid)
+
+
+## Chemin qui contourne des cases occupées (quelqu'un sur le passage).
+func _path_avoiding(from: Vector2i, to: Vector2i, avoid: Array) -> Array[Vector2i]:
+	var added: Array[Vector2i] = []
+	for c: Vector2i in avoid:
+		if c != from and c != to and _astar.is_in_boundsv(c) and not _astar.is_point_solid(c):
+			_astar.set_point_solid(c, true)
+			added.append(c)
+	var path := _astar.get_id_path(from, to, true)
+	for c in added:
+		_astar.set_point_solid(c, false)
+	return path
 
 
 ## Le soir, les gens du port entrent à la taverne.

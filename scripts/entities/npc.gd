@@ -26,6 +26,11 @@ var _seat_cell: Vector2i = Vector2i(-1, -1)
 var _stand_cell: Vector2i = Vector2i(-1, -1)
 ## Sièges occupés par des habitants (case -> habitant), toutes cartes
 static var taken_seats: Dictionary = {}
+## Quelqu'un sur le passage : on attend, puis on contourne ; en dernier
+## recours (coincé plus de BLOCK_GIVE_UP secondes), on passe quand même.
+const BLOCK_GIVE_UP := 2.0
+var _blocked_time: float = 0.0
+var _rerouted: bool = false
 
 
 func _ready() -> void:
@@ -204,9 +209,25 @@ func _process(delta: float) -> void:
 	var target := village.cell_center(_path[_path_index])
 	var to_target := target - position
 	var step := SPEED * delta
+	var blocker := _blocker(to_target)
+	if blocker == null:
+		_blocked_time = 0.0
+	elif _blocked_time < BLOCK_GIVE_UP:
+		_blocked_time += delta
+		if _blocked_time > 0.6 and not _rerouted:
+			# Un seul détour par case : on contourne la case occupée si possible
+			_rerouted = true
+			var goal := _path[_path_size() - 1]
+			var around := village.find_path(cell(), goal, [Vector2i((blocker.position / WorldMap.TILE).floor())])
+			if around.size() > 2 and around.slice(1) != _path.slice(_path_index):
+				_path = around
+				_path_index = 1
+		_sprite.position.y = 0.0
+		return
 	if to_target.length() <= step:
 		position = target
 		_path_index += 1
+		_rerouted = false
 		if _path_index >= _path.size():
 			_arrive()
 	else:
@@ -215,6 +236,40 @@ func _process(delta: float) -> void:
 			_sprite.flip_h = to_target.x < 0
 	_bob += delta * 12.0
 	_sprite.position.y = -absf(sin(_bob)) * 1.5
+
+
+## Direction de marche actuelle (nulle à l'arrêt).
+func heading() -> Vector2:
+	if village == null or _inside or _path_index >= _path.size():
+		return Vector2.ZERO
+	var to := village.cell_center(_path[_path_index]) - position
+	return to.normalized() if to.length() > 0.5 else Vector2.ZERO
+
+
+func _path_size() -> int:
+	return _path.size()
+
+
+## Le joueur ou un autre habitant juste devant, dans le sens de la marche.
+func _blocker(to_target: Vector2) -> Node2D:
+	if to_target.length() < 0.5:
+		return null
+	var dir := to_target.normalized()
+	var others: Array = [village.player]
+	var list: Variant = village.get("npcs")
+	if list is Array:
+		others.append_array(list)
+	for o: Variant in others:
+		if o == null or o == self or not is_instance_valid(o):
+			continue
+		if o is Npc and ((o as Npc)._inside or (o as Npc).seated or not (o as Npc).visible):
+			continue
+		if o is Npc and (o as Npc).heading().dot(dir) > 0.3:
+			continue  # il marche devant nous dans le même sens : on le suit
+		var rel: Vector2 = (o as Node2D).position - position
+		if rel.length() < 12.0 and rel.dot(dir) > 3.0:
+			return o
+	return null
 
 
 func _arrive() -> void:

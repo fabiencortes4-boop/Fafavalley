@@ -102,6 +102,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   facettes teintée selon l'étage, filon coloré qui la traverse, pépites de cuivre, de fer,
   d'or ou de charbon, grappes de cristaux (gemmes, givre, opale de feu qui rougeoie).
   Planche de contrôle : `tools/render_rocks.tscn -- sortie.png`.
+- **Pas d'objets qui se traversent** : le décor voisin d'une maison est écarté des murs et
+  des avant-toits (jardins, tonneaux, haies, arbres réduits), les arbres s'écartent des bancs,
+  lampadaires et étals, les rochers de la mine restent dans leur case. Les habitants ne
+  traversent plus le joueur ni les autres habitants : ils s'arrêtent, contournent, et ne
+  passent qu'en dernier recours. Contrôle automatique : `tools/clip_check.tscn -- village port farm`
+  liste les objets qui rentrent dans une maison ou se chevauchent.
 - **Arbres fruitiers** (chez Rosalie) : cerisier, pêcher, oranger, pommier. Adultes en
   10-12 jours, ils donnent un fruit par jour dans leur saison (3 au plus) : on les secoue.
 - **Serre** (construite par Mathis : or, bois, pierre, quartz) : on y cultive tout, en

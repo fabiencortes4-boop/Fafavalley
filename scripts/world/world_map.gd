@@ -515,7 +515,7 @@ func talk_to_npc(npc: Npc) -> void:
 
 # ------------------------------------------------------------ habitants (cartes avec des passants)
 ## Chemin pour un habitant (village, port). Sans navigation : aucun chemin.
-func find_path(_from: Vector2i, _to: Vector2i) -> Array[Vector2i]:
+func find_path(_from: Vector2i, _to: Vector2i, _avoid: Array = []) -> Array[Vector2i]:
 	return []
 
 
