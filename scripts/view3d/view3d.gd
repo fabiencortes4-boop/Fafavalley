@@ -1312,14 +1312,16 @@ func _st_cyl(st: SurfaceTool, center: Vector3, radius: float, height: float, col
 		var j := (i + 1) % sides
 		# Flancs (un peu plus sombres d'un côté : relief sans lumière)
 		st.set_color(side_col.darkened(0.08 * absf(sin(TAU * float(i) / sides))))
-		for v: Vector3 in [ring_b[i], ring_t[i], ring_t[j], ring_b[i], ring_t[j], ring_b[j]]:
+		# Godot : faces avant dans le sens des aiguilles d'une montre vues de
+		# dehors (sinon on voit l'intérieur du cylindre au lieu de ses flancs)
+		for v: Vector3 in [ring_b[i], ring_t[j], ring_t[i], ring_b[i], ring_b[j], ring_t[j]]:
 			st.add_vertex(center + basis * v)
 		# Dessus et dessous
 		st.set_color(color.lightened(0.06))
-		for v: Vector3 in [Vector3(0, h, 0), ring_t[j], ring_t[i]]:
+		for v: Vector3 in [Vector3(0, h, 0), ring_t[i], ring_t[j]]:
 			st.add_vertex(center + basis * v)
 		st.set_color(color.darkened(0.2))
-		for v: Vector3 in [Vector3(0, -h, 0), ring_b[i], ring_b[j]]:
+		for v: Vector3 in [Vector3(0, -h, 0), ring_b[j], ring_b[i]]:
 			st.add_vertex(center + basis * v)
 
 
