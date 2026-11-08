@@ -137,8 +137,8 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   libre de la forêt : pousse, jeune arbre, petit arbre, adulte en 6, 8 ou 10 jours. Une
   souche oubliée rejette au bout de 5 jours et la clairière se reboise doucement toute
   seule. Succès « Bûcheron » (25 arbres abattus).
-- **Bois dur** (chênes) dans 5 recettes : **hache renforcée** chez Gaston (fer + bois dur,
-  abat deux fois plus vite), **fût de chêne** (vieillit en 4 nuits au lieu de 7), et des
+- **Bois dur** (chênes) dans 5 recettes : **hache renforcée** chez Gaston (12 minerais de fer,
+  5 bois dur, 500 or : abat deux fois plus vite), **fût de chêne** (vieillit en 4 nuits au lieu de 7), et des
   **meubles en chêne** : fauteuil (on s'y assoit pour se reposer, à la maison), armoire,
   horloge comtoise.
 - **Tableau des demandes** (panneau de la place) : 3 demandes d'habitants par jour ; on

@@ -45,9 +45,9 @@
 	"steel_axe": {
 		"station": "forge",
 		"upgrade": "axe",
-		"gold": 300,
+		"gold": 500,
 		"ingredients": {
-			"iron_ore": 3,
+			"iron_ore": 12,
 			"hardwood": 5
 		},
 		"unlock": "ch3"
@@ -246,7 +246,7 @@
 		"ingredients": {
 			"hardwood": 8,
 			"wood": 20,
-			"iron_ore": 2
+			"iron_ore": 5
 		}
 	},
 	"oak_armchair": {
