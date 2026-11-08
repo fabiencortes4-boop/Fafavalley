@@ -1,0 +1,22 @@
+{
+	"tips": {
+		"quality": ["Qualité", "Ce produit a une étoile : il est de qualité argent, or ou cristal ! Il se vend plus cher, nourrit mieux et fait plus plaisir en cadeau. L'engrais, ta compétence, l'âge des arbres et le bonheur des animaux améliorent la qualité."],
+		"machine": ["Machines", "Pose cette machine à la ferme, puis touche-la avec un ingrédient en main. Quelques nuits plus tard, le produit est prêt et garde la qualité de l'ingrédient."],
+		"bait": ["Appâts", "Garde des appâts dans ton sac : un appât est utilisé à chaque lancer, le poisson mord deux fois plus vite et la prise est souvent plus belle."],
+		"crab_pot": ["Casiers", "Pose le casier dans l'eau (un étang ou au port), en le tenant en main face à l'eau. Chaque nuit, il attrape quelque chose. La pioche permet de le reprendre."],
+		"port": ["Le port", "Au bout de la grande jetée, Basile loue sa barque de 6h à 18h pour pêcher au large : thons, espadons... Les bancs face à la mer permettent de se reposer."],
+		"seat": ["Se reposer", "Touche un banc ou une chaise pour t'asseoir : l'énergie remonte doucement (jusqu'à 80 %). Bouge pour te relever."],
+		"festival": ["Jour de fête", "Aujourd'hui, c'est la fête au village ! Au stand de la place, présente ton plus bel objet au concours : le jury adore les produits de qualité."],
+		"cask": ["Tonneau de vieillissement", "Mets-y un fromage, un jus ou une confiture : chaque semaine, sa qualité monte d'un cran (jusqu'au cristal)."]
+	},
+	"guide": [
+		["La ferme", "Laboure avec la houe, sème, arrose chaque jour (ou pose des arroseurs). Les récoltes s'expédient dans le coffre près de la maison : payées la nuit. Une terre laissée à l'abandon se couvre d'herbes folles."],
+		["La qualité", "Normale, ★ argent, ★ or, ★ cristal. Elle dépend de ta compétence, de l'engrais, de l'âge des arbres fruitiers, du bonheur des animaux, de la taille du poisson et d'une prise parfaite. Prix x1,25 / x1,5 / x2."],
+		["Les machines", "Bocal (confitures, conserves), pressoir (jus), fumoir (poisson fumé), presse à fromage, tonneau de vieillissement, ruche. À fabriquer (Menu > Fabrication), à poser à la ferme, à remplir avec l'objet en main."],
+		["La pêche", "Canne chez Rosalie. Lance face à l'eau, attends le « ! », puis garde le poisson dans le filet. Étangs et lac : poissons d'eau douce. Port et large : poissons de mer. Appâts et casiers chez Basile. Quatre poissons légendaires se cachent dans la vallée."],
+		["La mine", "Entrée au nord-est du village. Les étages changent : terre, puis glace (10 à 19), puis lave (20 à 29). Au niveau 30, le Gardien de la source t'attend. Ascenseur tous les 5 niveaux."],
+		["Les habitants", "Parle-leur chaque jour, offre un cadeau par jour. Les cœurs débloquent des souvenirs. Le tableau de la place propose des demandes, parfois de qualité. Le soir, tout le monde est à la taverne du port."],
+		["La maison", "Mathis agrandit ta maison et vend des meubles. Pose-les en les tenant en main chez toi ; la pioche les reprend."],
+		["Se reposer", "Bancs et chaises : touche-les pour t'asseoir et récupérer un peu d'énergie. Dormir reste le meilleur repos."]
+	]
+}

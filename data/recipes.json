@@ -212,5 +212,22 @@
 			"copper_ore": 2
 		},
 		"unlock": "ch4"
+	},
+	"cask": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"wood": 50,
+			"iron_ore": 2
+		}
+	},
+	"beehive": {
+		"station": "craft",
+		"category": "Objets",
+		"ingredients": {
+			"wood": 40,
+			"coal": 3,
+			"fiber": 20
+		}
 	}
 }

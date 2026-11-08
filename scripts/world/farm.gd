@@ -70,7 +70,7 @@ func _map_rows() -> Array:
 
 
 func display_name() -> String:
-	return "Ferme"
+	return PlayerState.farm_name if PlayerState.farm_name != "La ferme" else "Ferme"
 
 
 func _place_special(cell: Vector2i, ch: String) -> void:
@@ -187,6 +187,7 @@ func _act_on_ground(cell: Vector2i) -> bool:
 			if _can_place(cell):
 				_deferring = true
 				FarmState.place_object(cell, str(item.place))
+				Machines.start_auto(cell, str(item.place))
 				Inventory.remove_from_slot(Inventory.selected, 1)
 				_gesture("bend", cell, func() -> void:
 					Sfx.play("drop")
@@ -521,9 +522,10 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 	if id == "chest" and not FarmState.chest_is_empty(cell):
 		EventBus.toast("Vide le coffre avant de le déplacer.")
 		return
-	if Machines.state.has(cell):
+	if Machines.state.has(cell) and not Machines.data.get(id, {}).has("auto"):
 		EventBus.toast("Attends que la machine ait fini (ou récupère son produit) avant de la déplacer.")
 		return
+	Machines.remove(cell)
 	if not Inventory.can_add(id):
 		EventBus.toast("Inventaire plein !")
 		return
@@ -675,7 +677,7 @@ func _use_machine(cell: Vector2i) -> void:
 	var slot: Variant = Inventory.get_selected()
 	var r: Array = [] if slot == null else Machines.recipe(machine, str(slot.id))
 	if r.is_empty():
-		var hint: String = {"preserves_jar": "un fruit ou un légume", "fruit_press": "un fruit ou un légume", "smoker": "un poisson", "cheese_press": "du lait ou un œuf"}.get(machine, "un ingrédient")
+		var hint: String = {"preserves_jar": "un fruit ou un légume", "fruit_press": "un fruit ou un légume", "smoker": "un poisson", "cheese_press": "du lait ou un œuf", "cask": "un fromage, un jus, une confiture ou du miel (pas encore cristal)"}.get(machine, "un ingrédient")
 		EventBus.toast("%s : prends %s en main, puis touche la machine." % [name, hint])
 		return
 	var nights := Machines.insert(cell, machine, str(slot.id))

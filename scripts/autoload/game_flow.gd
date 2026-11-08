@@ -33,6 +33,7 @@ func new_game() -> void:
 	PortStory.reset()
 	Collections.reset()
 	Machines.reset()
+	Tips.reset()
 	Achievements.reset()
 	for entry: Array in STARTING_ITEMS:
 		Inventory.add_item(entry[0], entry[1])

@@ -593,6 +593,30 @@
 					]
 				]
 			}
+		},
+		{
+			"hearts": 8,
+			"title": "Le dernier lancer de Firmin",
+			"lines": [
+				"Jules est assis au bord de l'étang, sa canne posée à côté de lui.",
+				"Firmin et moi, on pêchait ici chaque dimanche. Le jour où il est parti, il m'a laissé sa vieille canne. Je ne m'en suis jamais servi.",
+				"Je crois qu'elle t'attendait."
+			],
+			"choice": {
+				"prompt": "Que lui dis-tu ?",
+				"options": [
+					[
+						"Pêchons ensemble, comme vous le faisiez.",
+						80,
+						"Il te tend la canne. Pendant une heure, vous ne dites rien. Le plus beau des silences."
+					],
+					[
+						"Garde-la, c'est ton souvenir.",
+						-20,
+						"Hm. Tu as raison. Mais pense à moi quand tu ferreras le prochain."
+					]
+				]
+			}
 		}
 	],
 	"marius": [
@@ -616,6 +640,30 @@
 						"Il reviendra peut-être.",
 						80,
 						"Peut-être... J'ai gardé sa chope, au cas où."
+					]
+				]
+			}
+		},
+		{
+			"hearts": 5,
+			"title": "La recette du marin",
+			"lines": [
+				"Marius touille une grande marmite, derrière le comptoir de la taverne.",
+				"Ma soupe du marin, c'est la recette de ma femme. Elle tenait la taverne avec moi, avant... Je n'ai jamais réussi à la refaire tout à fait pareille.",
+				"Il manque quelque chose. Je ne sais pas quoi."
+			],
+			"choice": {
+				"prompt": "Que lui dis-tu ?",
+				"options": [
+					[
+						"Peut-être un peu d'amour en plus ?",
+						80,
+						"Ha ! Tu parles comme elle. Goûte, tiens... Oui. C'est peut-être ça."
+					],
+					[
+						"Un peu plus de sel ?",
+						-20,
+						"Du sel... Hm. Non, ce n'est pas ça."
 					]
 				]
 			}
@@ -645,6 +693,30 @@
 					]
 				]
 			}
+		},
+		{
+			"hearts": 5,
+			"title": "La carte du grand-père",
+			"lines": [
+				"Nina déplie une vieille carte marine sur la table du phare.",
+				"Mon grand-père a noté ici tous les écueils de la baie. Chaque croix, c'est un bateau qu'il a sauvé avec la lumière du phare.",
+				"Maintenant que le phare brille de nouveau... j'ai l'impression qu'il veille encore."
+			],
+			"choice": {
+				"prompt": "Que lui dis-tu ?",
+				"options": [
+					[
+						"Il serait fier de toi.",
+						80,
+						"...Merci. Je crois que oui. Il disait que la lumière, ça se transmet."
+					],
+					[
+						"C'est juste une vieille carte.",
+						-20,
+						"Pour toi, peut-être."
+					]
+				]
+			}
 		}
 	],
 	"basile": [
@@ -671,6 +743,30 @@
 					]
 				]
 			}
+		},
+		{
+			"hearts": 5,
+			"title": "Le coffre de Basile",
+			"lines": [
+				"Basile ferme la porte du comptoir et baisse la voix.",
+				"Tu sais garder un secret ? Ce coffre vient d'un navire échoué, il y a trente ans. Je ne l'ai jamais ouvert.",
+				"J'ai peur d'être déçu. Tant qu'il est fermé, il peut contenir un trésor."
+			],
+			"choice": {
+				"prompt": "Que lui conseilles-tu ?",
+				"options": [
+					[
+						"Garde le mystère, c'est plus beau.",
+						80,
+						"Ha ! Tu as l'âme d'un marchand de rêves. Je le garderai fermé, alors."
+					],
+					[
+						"Ouvre-le, voyons !",
+						-20,
+						"Facile à dire... Ce n'est pas ton trésor."
+					]
+				]
+			}
 		}
 	],
 	"celeste": [
@@ -694,6 +790,30 @@
 						"Ça risque d'être long.",
 						30,
 						"La musique sait attendre."
+					]
+				]
+			}
+		},
+		{
+			"hearts": 5,
+			"title": "La chanson de Valfleur",
+			"lines": [
+				"Céleste accorde sa guitare sur la plage, au coucher du soleil.",
+				"J'ai fini la chanson sur Valfleur. Elle parle d'une source qui se tait, et de quelqu'un qui revient la réveiller.",
+				"Tu veux l'entendre ? Tu es un peu dedans, tu sais."
+			],
+			"choice": {
+				"prompt": "Que réponds-tu ?",
+				"options": [
+					[
+						"Chante-la-moi, s'il te plaît.",
+						80,
+						"Elle joue doucement. La mer se tait pour l'écouter. Quand elle finit, elle te sourit."
+					],
+					[
+						"Je n'ai pas le temps.",
+						-20,
+						"Oh... Une autre fois, alors."
 					]
 				]
 			}

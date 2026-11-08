@@ -164,6 +164,8 @@ func _after_build() -> void:
 		_add_static_block(Events.BOOTH)
 		_interactables[Events.BOOTH] = "booth"
 	_build_navigation()
+	if Story.chapter >= 1:
+		Tips.show("seat")
 	for id: String in GameData.npcs:
 		if id == Marriage.spouse or GameData.npc(id).get("map", "") == "port":
 			continue  # vit à la ferme, ou au port

@@ -15,6 +15,12 @@ var view_3d: bool = true
 var music: bool = true
 ## Vibrations du téléphone (récolte, coups, récompenses)
 var vibration: bool = true
+## Accessibilité : qualité marquée par 1, 2 ou 3 points (pas seulement la
+## couleur de l'étoile), et vitesse du texte des dialogues
+var colorblind: bool = false
+const TEXT_SPEEDS := ["lent", "normal", "rapide", "instantané"]
+const TEXT_SPEED_FACTOR := [1.7, 1.0, 0.5, 0.0]
+var text_speed: int = 1
 ## Taille du texte : index dans TEXT_SIZES (Normal, Grand, Très grand)
 const TEXT_SIZES := [9, 11, 13]
 const TEXT_NAMES := ["normal", "grand", "très grand"]
@@ -34,6 +40,8 @@ func _ready() -> void:
 		view_3d = bool(cfg.get_value("affichage", "vue_3d", true))
 		music = bool(cfg.get_value("son", "musique", true))
 		vibration = bool(cfg.get_value("son", "vibrations", true))
+		colorblind = bool(cfg.get_value("accessibilite", "formes", false))
+		text_speed = clampi(int(cfg.get_value("accessibilite", "vitesse_texte", 1)), 0, 3)
 		text_size = clampi(int(cfg.get_value("affichage", "texte", 1)), 0, TEXT_SIZES.size() - 1)
 		quality = int(cfg.get_value("affichage", "qualite", -1))
 	if quality < 0 or quality > 2:
@@ -94,6 +102,19 @@ func toggle_music() -> void:
 	changed.emit()
 
 
+func toggle_colorblind() -> void:
+	colorblind = not colorblind
+	GameData.clear_quality_icons()
+	_save()
+	changed.emit()
+
+
+func cycle_text_speed() -> void:
+	text_speed = (text_speed + 1) % TEXT_SPEEDS.size()
+	_save()
+	changed.emit()
+
+
 func toggle_vibration() -> void:
 	vibration = not vibration
 	_save()
@@ -133,6 +154,8 @@ func _save() -> void:
 	cfg.set_value("affichage", "vue_3d", view_3d)
 	cfg.set_value("son", "musique", music)
 	cfg.set_value("son", "vibrations", vibration)
+	cfg.set_value("accessibilite", "formes", colorblind)
+	cfg.set_value("accessibilite", "vitesse_texte", text_speed)
 	cfg.set_value("affichage", "texte", text_size)
 	cfg.set_value("affichage", "qualite", quality)
 	cfg.save(PATH)

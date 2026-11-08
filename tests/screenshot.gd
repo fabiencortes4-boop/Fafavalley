@@ -10,7 +10,9 @@ func _ready() -> void:
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame
-	if "--title" not in args:
+	if "--create" in args:
+		main.call("_show_creation")
+	if "--title" not in args and "--create" not in args:
 		Story.play_arrival = "--arrival" in args
 		main.call("_start", false)
 		if "--debris" not in args:
@@ -203,6 +205,16 @@ func _ready() -> void:
 				Relations.met[who] = true
 				Relations.add_points(who, 600)
 				EventBus.heart_scene_requested.emit(who, HeartEvents.pending(who))
+		if "--furnished" in args:
+			PlayerState.flags["house_big"] = true
+			for e: Array in [[Vector2i(12, 2), "bookshelf"], [Vector2i(14, 2), "floor_lamp"], [Vector2i(12, 5), "rug"], [Vector2i(15, 5), "house_plant"], [Vector2i(13, 4), "dining_table"], [Vector2i(10, 2), "painting"]]:
+				Machines.furniture[e[0]] = e[1]
+			Marriage.spouse = "lina"
+			Marriage.child_name = "Iris"
+			Marriage.child_day = Marriage.day_number()
+			PlayerState.look = 2
+			main.call("_switch_to", "home")
+			await get_tree().process_frame
 		if "--quality" in args:
 			for id: String in ["carrot", "carrot@1", "tomato@2", "roach@3", "egg@2", "sardine@1", "daffodil@2"]:
 				Inventory.add_item(id, 3)

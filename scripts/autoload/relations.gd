@@ -16,6 +16,7 @@ var gifted_today: Dictionary = {}
 func reset() -> void:
 	points.clear()
 	met.clear()
+	remarks_said.clear()
 	new_day()
 
 
@@ -47,6 +48,10 @@ func talk(id: String) -> String:
 		return _pick(lines.get("again", ["..."]))
 	talked_today[id] = true
 	add_points(id, TALK_POINTS)
+	# Parfois, une remarque sur ce que le joueur a accompli
+	var remark := _remark(id)
+	if remark != "":
+		return remark
 	var pool: Array = []
 	var h := hearts(id)
 	pool.append_array(lines.get("stranger", []) if h < 3 else lines.get("friend", []))
@@ -58,6 +63,55 @@ func talk(id: String) -> String:
 		pool.append_array(lines.get("rain", []))
 		pool.append_array(lines.get("rain", []))  # plus probable quand il pleut
 	return _pick(pool)
+
+
+## Remarques (data/remarks.json) déjà dites : "habitant:index"
+var remarks_said: Dictionary = {}
+var _remarks: Array = []
+
+
+func _remark(id: String) -> String:
+	if _remarks.is_empty():
+		var file := FileAccess.open("res://data/remarks.json", FileAccess.READ)
+		if file != null:
+			var data: Variant = JSON.parse_string(file.get_as_text())
+			if data is Dictionary:
+				_remarks = data.get("remarks", [])
+	if randf() > 0.4:
+		return ""
+	for i in _remarks.size():
+		var r: Dictionary = _remarks[i]
+		var key := "%s:%d" % [id, i]
+		var who: Array = r.get("npcs", [])
+		if remarks_said.has(key) or (not who.is_empty() and not id in who) or not _remark_applies(str(r.when)):
+			continue
+		remarks_said[key] = true
+		var lines: Array = r.get("lines", ["..."])
+		return str(lines[randi() % lines.size()])
+	return ""
+
+
+static func _remark_applies(when: String) -> bool:
+	if when.begins_with("flag:"):
+		return PlayerState.flags.has(when.trim_prefix("flag:"))
+	if when.begins_with("chapter:"):
+		return Story.chapter >= int(when.trim_prefix("chapter:"))
+	if when.begins_with("collection:"):
+		return Collections.total_found() >= int(when.trim_prefix("collection:"))
+	match when:
+		"machine":
+			return Collections.count("artisan") > 0
+		"legend":
+			return Achievements.value("legends") > 0
+		"boss":
+			return PlayerState.flags.has("mine_boss")
+		"married":
+			return Marriage.spouse != ""
+		"child":
+			return Marriage.child_name != ""
+		"quality":
+			return Collections.found.size() > 0 and Inventory.slots.any(func(s: Variant) -> bool: return s != null and GameData.quality_of(str(s.id)) >= 2)
+	return false
 
 
 ## Goût d'un habitant pour un objet : loved, liked, neutral ou disliked.
@@ -102,6 +156,7 @@ func to_dict() -> Dictionary:
 		"met": met.keys(),
 		"talked": talked_today.keys(),
 		"gifted": gifted_today.keys(),
+		"remarks": remarks_said.keys(),
 	}
 
 
@@ -116,4 +171,6 @@ func from_dict(data: Dictionary) -> void:
 		talked_today[str(id)] = true
 	for id: Variant in data.get("gifted", []):
 		gifted_today[str(id)] = true
+	for key: Variant in data.get("remarks", []):
+		remarks_said[str(key)] = true
 	EventBus.relations_changed.emit()

@@ -43,6 +43,8 @@ var _lantern_glows: Array[MeshInstance3D] = []
 const PET_MODELS := {
 	"chicken": ["animal-chick", 0.42], "bunny": ["animal-bunny", 0.45], "cat": ["animal-cat", 0.45],
 	"dog": ["animal-dog", 0.6], "pig": ["animal-pig", 0.62], "cow": ["animal-cow", 0.95],
+	# Chèvre et mouton : vache et cochon recolorés (et la toison du mouton)
+	"goat": ["animal-cow", 0.68, Color(0.98, 0.93, 0.82)], "sheep": ["animal-pig", 0.6, Color(1.0, 1.6, 1.45)],
 }
 ## Objet -> modèle 3D (sinon : l'icône pixel en panneau face caméra)
 const ITEM_MODELS := {
@@ -70,7 +72,11 @@ const MONSTER_LOOKS := {
 	"spider": ["character-orc", Color(0.35, 0.3, 0.35), 0.75, 0.0],
 	"crab": ["character-orc", Color(1.0, 0.45, 0.4), 0.85, 0.0],
 	"ghost": ["character-human", Color(1, 1, 1, 0.55), 0.8, 0.35],
+	# Le Gardien de la source : un colosse de pierre aux reflets d'eau
+	"guardian": ["character-orc", Color(0.55, 0.62, 0.66), 1.9, 0.0],
 }
+## Gelées : couleur selon l'espèce
+const SLIME_COLORS := {"slime": Color(0.45, 0.85, 0.5, 0.85), "frost_slime": Color(0.6, 0.85, 1.0, 0.85), "magma_slime": Color(1.0, 0.45, 0.2, 0.9)}
 
 
 # ------------------------------------------------------------ mise en place
@@ -1634,6 +1640,63 @@ func _tri_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, 
 	_tri(st, a, c, d, color)
 
 
+# ------------------------------------------------------------ orages, brouillard, feux d'artifice
+var _flash_timer: float = 3.0
+var _firework_timer: float = 1.0
+
+
+func _weather_fx(delta: float) -> void:
+	# Orage : éclairs (le ciel et le sol blanchissent un instant) et tonnerre
+	if TimeManager.is_storm():
+		_flash_timer -= delta
+		if _flash_timer <= 0.0:
+			_flash_timer = randf_range(4.0, 10.0)
+			var base := _env.ambient_light_energy
+			var tw := create_tween()
+			tw.tween_property(_env, "ambient_light_energy", base + 2.5, 0.05)
+			tw.tween_property(_env, "ambient_light_energy", base, 0.12)
+			tw.tween_property(_env, "ambient_light_energy", base + 1.5, 0.05)
+			tw.tween_property(_env, "ambient_light_energy", base, 0.25)
+			get_tree().create_timer(randf_range(0.3, 1.2)).timeout.connect(func() -> void: Sfx.play("thunder", -2.0, 0.15))
+	# Feu d'artifice sur la place, le soir de la fête
+	var fest := Events.festival_today()
+	if map is Village and not fest.is_empty() and str(fest.activity) == "fireworks" and Events.gathering_now():
+		_firework_timer -= delta
+		if _firework_timer <= 0.0:
+			_firework_timer = randf_range(0.6, 1.4)
+			_firework(Vector3(31.0 + randf_range(-5, 5), randf_range(6.0, 8.0), 25.0 + randf_range(-4, 2)))
+
+
+func _firework(at: Vector3) -> void:
+	var p := CPUParticles3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3.ONE * 0.12
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	box.material = mat
+	p.mesh = box
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.amount = 40 if Settings.quality > 0 else 20
+	p.lifetime = 1.4
+	p.spread = 180.0
+	p.direction = Vector3.UP
+	p.initial_velocity_min = 3.0
+	p.initial_velocity_max = 4.5
+	p.gravity = Vector3(0, -2.5, 0)
+	var color: Color = [Color(1, 0.4, 0.4), Color(0.5, 0.8, 1), Color(1, 0.9, 0.4), Color(0.7, 1, 0.5), Color(1, 0.5, 0.95)][randi() % 5]
+	var ramp := Gradient.new()
+	ramp.set_color(0, color.lightened(0.4))
+	ramp.set_color(1, Color(color.r, color.g, color.b, 0))
+	p.color_ramp = ramp
+	p.position = at
+	add_child(p)
+	p.emitting = true
+	p.finished.connect(p.queue_free)
+	Sfx.play("firework", -6.0, 0.2)
+
+
 # ------------------------------------------------------------ faune d'ambiance
 ## Mouettes au port et au large, canards sur les étangs, papillons au
 ## printemps et en été : du mouvement, sans logique de jeu (vue 3D seulement).
@@ -1793,6 +1856,23 @@ func _machine_model(cell: Vector2i, id: String) -> Node3D:
 			top = 1.1
 			if Machines.busy(cell) and Settings.quality > 0:
 				root.add_child(_smoke(Vector3(0.2, 1.0, -0.1)))
+		"cask":
+			# Tonneau couché sur son chevalet
+			_st_box(st, Vector3(0, 0.08, 0), Vector3(0.6, 0.16, 0.5), Color(0.45, 0.3, 0.18))
+			_st_box(st, Vector3(0, 0.4, 0), Vector3(0.7, 0.44, 0.48), wood)
+			_st_box(st, Vector3(0, 0.4, 0), Vector3(0.74, 0.46, 0.44), wood.darkened(0.1))
+			for x: float in [-0.22, 0.22]:
+				_st_box(st, Vector3(x, 0.4, 0), Vector3(0.05, 0.5, 0.52), iron)
+			_st_box(st, Vector3(0.38, 0.4, 0), Vector3(0.02, 0.1, 0.1), Color(0.3, 0.2, 0.12))
+			top = 0.7
+		"beehive":
+			# Ruche en paille, posée sur un billot
+			_st_box(st, Vector3(0, 0.12, 0), Vector3(0.4, 0.24, 0.4), Color(0.5, 0.35, 0.22))
+			for k in 4:
+				var w := 0.55 - k * 0.1
+				_st_box(st, Vector3(0, 0.3 + k * 0.12, 0), Vector3(w, 0.12, w), Color(0.88, 0.72, 0.38) if k % 2 == 0 else Color(0.8, 0.62, 0.3))
+			_st_box(st, Vector3(0, 0.32, 0.26), Vector3(0.1, 0.06, 0.02), Color(0.2, 0.12, 0.08))
+			top = 0.85
 		"cheese_press":
 			_st_box(st, Vector3(0, 0.05, 0), Vector3(0.66, 0.1, 0.56), wood)
 			for x: float in [-0.27, 0.27]:
@@ -2490,6 +2570,76 @@ func _build_home() -> void:
 	lamp.omni_range = 9.0
 	lamp.light_energy = 0.6
 	_put(lamp, Vector3(size.x / 2.0, 2.5, size.y / 2.0))
+	if map is HomeMap:
+		_build_furniture()
+		if not map.furniture_changed.is_connected(_build_furniture):
+			map.furniture_changed.connect(_build_furniture)
+
+
+## Meubles achetés chez Mathis et posés dans la maison.
+var _furniture_root: Node3D
+
+
+func _build_furniture() -> void:
+	if _furniture_root != null and is_instance_valid(_furniture_root):
+		_furniture_root.queue_free()
+	_furniture_root = Node3D.new()
+	add_child(_furniture_root)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var glow := SurfaceTool.new()
+	glow.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wood := Color(0.52, 0.34, 0.2)
+	for cell: Vector2i in Machines.furniture:
+		var c := _cell3d(cell)
+		match str(GameData.item(str(Machines.furniture[cell])).get("furniture", "")):
+			"rug":
+				_st_box(st, c + Vector3(0, 0.01, 0), Vector3(0.95, 0.02, 0.8), Color(0.68, 0.22, 0.22))
+				_st_box(st, c + Vector3(0, 0.022, 0), Vector3(0.6, 0.01, 0.45), Color(0.88, 0.72, 0.36))
+			"lamp":
+				_st_box(st, c + Vector3(0, 0.04, 0), Vector3(0.3, 0.08, 0.3), wood)
+				_st_box(st, c + Vector3(0, 0.6, 0), Vector3(0.06, 1.1, 0.06), wood)
+				_st_box(glow, c + Vector3(0, 1.2, 0), Vector3(0.36, 0.3, 0.36), Color(1, 0.88, 0.6))
+			"plant":
+				_st_box(st, c + Vector3(0, 0.15, 0), Vector3(0.32, 0.3, 0.32), Color(0.72, 0.4, 0.25))
+				for k in 5:
+					var a := k * TAU / 5.0
+					_st_box(st, c + Vector3(cos(a) * 0.12, 0.42 + (k % 2) * 0.1, sin(a) * 0.12), Vector3(0.14, 0.22, 0.14), Color(0.3, 0.6, 0.32))
+			"shelf":
+				_st_box(st, c + Vector3(0, 0.75, -0.25), Vector3(0.9, 1.5, 0.35), wood)
+				for y: float in [0.35, 0.8, 1.25]:
+					for k in 6:
+						_st_box(st, c + Vector3(-0.35 + k * 0.14, y, -0.08), Vector3(0.1, 0.3, 0.04), [Color(0.75, 0.2, 0.2), Color(0.25, 0.45, 0.75), Color(0.85, 0.7, 0.25), Color(0.3, 0.6, 0.35)][(k + int(y * 10)) % 4])
+			"painting":
+				# Chevalet et toile de Lina
+				for x: float in [-0.2, 0.2]:
+					_st_box(st, c + Vector3(x, 0.55, 0), Vector3(0.05, 1.1, 0.05), wood)
+				_st_box(st, c + Vector3(0, 0.75, 0.04), Vector3(0.62, 0.5, 0.04), Color(0.75, 0.6, 0.3))
+				_st_box(st, c + Vector3(0, 0.8, 0.065), Vector3(0.54, 0.24, 0.01), Color(0.55, 0.78, 0.95))
+				_st_box(st, c + Vector3(0, 0.63, 0.065), Vector3(0.54, 0.14, 0.01), Color(0.4, 0.68, 0.38))
+			"table":
+				_st_box(st, c + Vector3(0, 0.55, 0), Vector3(0.9, 0.06, 0.7), wood)
+				_st_box(st, c + Vector3(0, 0.58, 0), Vector3(0.95, 0.02, 0.75), Color(0.95, 0.94, 0.9))
+				for k in 4:
+					_st_box(st, c + Vector3(-0.38 + (k % 2) * 0.76, 0.27, -0.28 + (k / 2) * 0.56), Vector3(0.06, 0.54, 0.06), wood)
+				_st_box(st, c + Vector3(0.1, 0.66, 0), Vector3(0.12, 0.14, 0.12), Color(0.85, 0.45, 0.6))
+	for pair: Array in [[st, false], [glow, true]]:
+		var s: SurfaceTool = pair[0]
+		s.generate_normals()
+		var mesh := s.commit()
+		if mesh.get_surface_count() == 0:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.vertex_color_use_as_albedo = true
+		mat.vertex_color_is_srgb = true
+		if pair[1]:
+			mat.emission_enabled = true
+			mat.emission = Color(1, 0.8, 0.5)
+			mat.emission_energy_multiplier = 1.2
+		mi.material_override = mat
+		_furniture_root.add_child(mi)
 
 
 # ------------------------------------------------------------ mine
@@ -2518,10 +2668,60 @@ func _build_mine() -> void:
 				_stairs_up(cell)
 	batch.build(_static)
 	var mine := map as MineLevel
+	_mine_theme_decor(chars, MineLevel.theme_for(mine.level))
 	if mine.elevator_cell != Vector2i(-1, -1):
 		_elevator(_cell3d(mine.elevator_cell))
 	if mine.treasure_cell != Vector2i(-1, -1):
 		_build_treasure()
+
+
+## Décor propre à l'étage : stalactites de glace, coulées de lave, eau de la
+## source au fond.
+func _mine_theme_decor(chars: Dictionary, theme: String) -> void:
+	if theme == "earth":
+		return
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var glow := SurfaceTool.new()
+	glow.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for cell: Vector2i in chars:
+		if chars[cell] != "#":
+			continue
+		var open := false
+		for dd: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			if chars.get(cell + dd, "#") != "#":
+				open = true
+		if not open or _hash(cell) % 4 != 0:
+			continue
+		var c := _cell3d(cell)
+		match theme:
+			"ice":
+				# Cristaux de glace qui sortent des parois
+				for k in 3:
+					var h := 0.3 + float((_hash(cell) + k * 7) % 5) * 0.12
+					_st_box(st, c + Vector3(-0.25 + k * 0.25, h / 2.0, 0.42), Vector3(0.12, h, 0.12), Color(0.75, 0.92, 1.0))
+			"lava":
+				# Fissures rougeoyantes au pied des parois
+				_st_box(glow, c + Vector3(0, 0.02, 0.5), Vector3(0.9, 0.03, 0.18), Color(1.0, 0.45, 0.1))
+			"deep":
+				_st_box(glow, c + Vector3(0, 0.02, 0.5), Vector3(0.9, 0.03, 0.18), Color(0.3, 0.9, 0.85))
+	for pair: Array in [[st, false], [glow, true]]:
+		var s: SurfaceTool = pair[0]
+		s.generate_normals()
+		var mesh := s.commit()
+		if mesh.get_surface_count() == 0:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.vertex_color_use_as_albedo = true
+		mat.vertex_color_is_srgb = true
+		if pair[1]:
+			mat.emission_enabled = true
+			mat.emission = Color(1.0, 0.5, 0.2) if theme == "lava" else Color(0.3, 0.9, 0.85)
+			mat.emission_energy_multiplier = 1.5
+		mi.material_override = mat
+		_static.add_child(mi)
 
 
 var _ladder_floor: Node3D
@@ -2701,7 +2901,11 @@ func _sync_rocks() -> void:
 		var tint: Color = {
 			"coal": Color(0.4, 0.38, 0.42), "copper": Color(1.0, 0.65, 0.45), "iron": Color(0.7, 0.78, 0.95),
 			"gold": Color(1.0, 0.88, 0.45), "gem": Color(0.85, 0.6, 1.0),
+			"frost": Color(0.7, 0.95, 1.3), "magma": Color(1.4, 0.55, 0.3),
 		}.get(type, Color.WHITE)
+		# Pierre ordinaire : givrée ou noircie selon l'étage
+		if tint == Color.WHITE:
+			tint = {"ice": Color(0.85, 0.95, 1.15), "lava": Color(0.55, 0.42, 0.4), "deep": Color(0.6, 0.75, 0.78)}.get(MineLevel.theme_for((map as MineLevel).level), Color.WHITE)
 		if tint != Color.WHITE:
 			Models.tint(rock, tint)
 		add_child(rock)
@@ -2917,6 +3121,9 @@ const SEAT_BACK := 0.12
 
 func _build_player() -> void:
 	_player3d = _model("blocky", "character-a", CHARACTER_SCALE)
+	# Tenue choisie à la création du personnage
+	if PlayerState.look > 0:
+		Models.retexture(_player3d, "res://assets/kenney3d/blocky/Textures/npc/player_%d.png" % PlayerState.look)
 	add_child(_player3d)
 	var shadow := _blob(1.6)
 	_player3d.add_child(shadow)
@@ -3030,6 +3237,38 @@ func _sync_proxies() -> void:
 
 
 func _make_proxy(node: Node) -> Node3D:
+	if node.has_meta("child"):
+		# L'enfant : bébé dans son berceau, puis petit bout sur le tapis
+		var holder := Node3D.new()
+		if str(node.get_meta("child")) == "baby":
+			var st := SurfaceTool.new()
+			st.begin(Mesh.PRIMITIVE_TRIANGLES)
+			var w := Color(0.92, 0.88, 0.8)
+			_st_box(st, Vector3(0, 0.25, 0), Vector3(0.7, 0.08, 0.45), w)
+			for x: float in [-0.33, 0.33]:
+				_st_box(st, Vector3(x, 0.3, 0), Vector3(0.05, 0.6, 0.45), w)
+			for z: float in [-0.21, 0.21]:
+				_st_box(st, Vector3(0, 0.42, z), Vector3(0.7, 0.04, 0.03), w)
+			_st_box(st, Vector3(0, 0.32, 0), Vector3(0.6, 0.06, 0.38), Color(0.75, 0.85, 1.0))
+			_st_box(st, Vector3(-0.15, 0.4, 0), Vector3(0.14, 0.12, 0.14), Color(0.95, 0.78, 0.65))
+			_st_box(st, Vector3(0.08, 0.38, 0), Vector3(0.3, 0.08, 0.3), Color(1.0, 0.9, 0.6))
+			st.generate_normals()
+			var mi := MeshInstance3D.new()
+			mi.mesh = st.commit()
+			var mat := StandardMaterial3D.new()
+			mat.vertex_color_use_as_albedo = true
+			mat.vertex_color_is_srgb = true
+			mi.material_override = mat
+			holder.add_child(mi)
+		else:
+			var kid := Models.instance(Models.path("blocky", "character-a"))
+			kid.scale = Vector3.ONE * CHARACTER_SCALE * 0.5
+			holder.add_child(kid)
+			holder.add_child(_blob(0.8))
+			var tw := kid.create_tween().set_loops()
+			tw.tween_property(kid, "position:y", 0.08, 0.35).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(kid, "position:y", 0.0, 0.35).set_trans(Tween.TRANS_SINE)
+		return holder
 	if node is Npc:
 		# Chaque habitant porte la tenue de son métier ; Théo est un enfant : plus petit
 		var npc_id := (node as Npc).id
@@ -3040,13 +3279,17 @@ func _make_proxy(node: Node) -> Node3D:
 		return npc
 	if node is Monster:
 		var kind: String = (node as Monster).kind
-		if kind == "slime":
+		if SLIME_COLORS.has(kind):
 			var slime := MeshInstance3D.new()
 			var sphere := SphereMesh.new()
 			sphere.radius = 0.24
 			sphere.height = 0.34
-			var mat := _flat_material(Color(0.45, 0.85, 0.5, 0.85))
+			var mat := _flat_material(SLIME_COLORS[kind])
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			if kind == "magma_slime":
+				mat.emission_enabled = true
+				mat.emission = Color(1.0, 0.35, 0.1)
+				mat.emission_energy_multiplier = 0.8
 			sphere.material = mat
 			slime.mesh = sphere
 			slime.position.y = 0.17
@@ -3068,7 +3311,14 @@ func _make_proxy(node: Node) -> Node3D:
 	if node is Critter:
 		var look: Array = PET_MODELS.get((node as Critter).kind, PET_MODELS["chicken"])
 		var holder := Node3D.new()
-		holder.add_child(_fitted("pets", look[0], look[1]))
+		var pet := _fitted("pets", look[0], look[1])
+		if look.size() > 2:
+			Models.tint(pet, look[2])
+		holder.add_child(pet)
+		if (node as Critter).kind == "sheep":
+			var fleece := _box(Vector3(0.42, 0.3, 0.5), Color(0.97, 0.95, 0.9))
+			fleece.position = Vector3(0, 0.38, -0.02)
+			holder.add_child(fleece)
 		holder.add_child(_blob(float(look[1]) * 1.4))
 		return holder
 	if node is Pickup or node is Sprite2D:
@@ -3164,6 +3414,8 @@ func _process(delta: float) -> void:
 	_sync_proxies()
 	if not _wildlife.is_empty():
 		_animate_wildlife(delta)
+	if not _is_mine and not _is_home:
+		_weather_fx(delta)
 	if _is_mine:
 		_sync_rocks()
 		_lantern.position = _player3d.position + Vector3(0, 1.2, 0.3)
@@ -3273,6 +3525,17 @@ func _update_light(_h: int, _m: int) -> void:
 		_sun.visible = false
 		var depth := clampf(float((map as MineLevel).level) / MineLevel.MAX_LEVEL, 0.0, 1.0)
 		_env.ambient_light_color = Color(0.45, 0.42, 0.5).lerp(Color(0.12, 0.1, 0.16), depth)
+		# Couleur de l'étage : glace bleutée, lave rougeoyante, fond turquoise
+		match MineLevel.theme_for((map as MineLevel).level):
+			"ice":
+				_env.ambient_light_color = Color(0.42, 0.55, 0.72)
+				_lantern.light_color = Color(0.85, 0.95, 1.0)
+			"lava":
+				_env.ambient_light_color = Color(0.45, 0.2, 0.14)
+				_lantern.light_color = Color(1.0, 0.7, 0.45)
+			"deep":
+				_env.ambient_light_color = Color(0.15, 0.3, 0.32)
+				_lantern.light_color = Color(0.7, 1.0, 0.95)
 		_env.ambient_light_energy = 1.0
 		return
 	if _is_home:
@@ -3305,6 +3568,16 @@ func _update_light(_h: int, _m: int) -> void:
 		_env.ambient_light_color = Color(0.7, 0.64, 0.66).lerp(Color(0.2, 0.18, 0.34), night)
 	var sky := Color(0.55, 0.75, 0.92).lerp(Color(0.05, 0.07, 0.15), night)
 	_env.background_color = sky.darkened(0.25) if rain else sky
+	if TimeManager.is_storm():
+		_env.background_color = sky.darkened(0.45)
+		_sun.light_energy *= 0.6
+	# Brume du matin sur le port et au large (et par temps de pluie)
+	var foggy: bool = (map is PortMap or map is SeaMap) and (hours < 10.0 or rain)
+	_env.fog_enabled = foggy
+	if foggy:
+		_env.fog_light_color = Color(0.72, 0.78, 0.84).lerp(Color(0.12, 0.14, 0.2), night)
+		_env.fog_density = 0.035 if hours < 10.0 else 0.02
+		_env.fog_sky_affect = 0.0
 
 
 func _on_day_started(_d: int, _s: int, _y: int) -> void:

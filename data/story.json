@@ -185,7 +185,7 @@
 		],
 		[
 			"bertrand",
-			"Te voilà enfin ! Bertrand, maire de Valfleur. Bienvenue chez toi !"
+			"Te voilà enfin, {nom} ! Bertrand, maire de Valfleur. Bienvenue chez toi !"
 		],
 		[
 			"bertrand",
@@ -197,7 +197,7 @@
 		],
 		[
 			"rosalie",
-			"Bertrand, laisse-lui le temps de poser ses valises ! Bonjour, moi c'est Rosalie, l'épicière. On compte tous sur toi, tu sais."
+			"Bertrand, laisse-lui le temps de poser ses valises ! Bonjour {nom}, moi c'est Rosalie, l'épicière. On compte tous sur toi, tu sais."
 		],
 		[
 			"bertrand",

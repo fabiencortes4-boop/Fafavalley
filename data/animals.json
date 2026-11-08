@@ -89,6 +89,25 @@
 			"product": "truffle",
 			"every": 1,
 			"no_winter": true
+		},
+		"goat": {
+			"name": "Chèvre",
+			"building": "barn",
+			"price": 2500,
+			"model": "animal-cow",
+			"frame": 1,
+			"product": "goat_milk",
+			"every": 2,
+			"tool": "milk_pail"
+		},
+		"sheep": {
+			"name": "Mouton",
+			"building": "barn",
+			"price": 3000,
+			"model": "animal-pig",
+			"frame": 1,
+			"product": "wool",
+			"every": 3
 		}
 	},
 	"names": [

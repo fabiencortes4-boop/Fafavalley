@@ -125,6 +125,9 @@ func _ready() -> void:
 		var bday := HeartEvents.birthday_today()
 		if not fest.is_empty():
 			show_toast("Aujourd'hui : %s au village, de %dh à %dh !" % [fest.name, int(fest.start), int(fest.end)])
+			Tips.show("festival")
+		elif TimeManager.is_storm():
+			show_toast("Orage aujourd'hui : la pluie arrose tout, mais gare aux éclairs !")
 		elif bday != "":
 			show_toast("C'est l'anniversaire de %s aujourd'hui ! Un cadeau lui ferait plaisir." % GameData.npc(bday).name)
 		elif Marriage.last_help != "":
@@ -352,7 +355,7 @@ func _layout() -> void:
 func _refresh_status() -> void:
 	_date_label.text = "%s %d - %s" % [TimeManager.weekday(), TimeManager.day, TimeManager.SEASONS[TimeManager.season]]
 	_time_label.text = TimeManager.time_string()
-	_weather_icon.texture = _hud_icon({"rain": 1, "snow": 2}.get(TimeManager.weather, 0))
+	_weather_icon.texture = _hud_icon({"rain": 1, "snow": 2, "storm": 1}.get(TimeManager.weather, 0))
 	if _gold_tween == null or not _gold_tween.is_running():
 		_gold_label.text = "%d" % Inventory.gold
 		_gold_shown = Inventory.gold
@@ -816,6 +819,7 @@ func open_pause_menu() -> void:
 	_add_button(box, "Carnet de pêche", open_fish_log)
 	_add_button(box, "Album", open_collections.bind(""))
 	_add_button(box, "Succès", open_achievements)
+	_add_button(box, "Guide", open_guide.bind(0))
 	_add_button(box, "Réglages", open_settings)
 	_add_button(box, "Sauvegarder", func() -> void:
 		SaveManager.save_game()
@@ -851,6 +855,21 @@ func open_settings() -> void:
 	_add_button(box, "Vibrations : %s" % ("oui" if Settings.vibration else "non"), func() -> void:
 		Settings.toggle_vibration()
 		open_settings())
+	_add_button(box, "Texte : %s" % Settings.TEXT_SPEEDS[Settings.text_speed], func() -> void:
+		Settings.cycle_text_speed()
+		open_settings())
+	_add_button(box, "Qualité : %s" % ("étoile + points" if Settings.colorblind else "étoile"), func() -> void:
+		Settings.toggle_colorblind()
+		_refresh_hotbar()
+		open_settings())
+	_add_button(box, "Exporter la partie", func() -> void:
+		var text := SaveManager.export_text()
+		DisplayServer.clipboard_set(text)
+		show_message("Partie exportée", "La partie est copiée dans le presse-papiers (%d caractères). Colle-la où tu veux pour la garder ; pour la retrouver, copie-la puis choisis « Importer une partie » sur l'écran titre." % text.length()))
+	_add_button(box, "Écran titre", func() -> void:
+		SaveManager.save_game()
+		get_tree().paused = false
+		get_tree().reload_current_scene())
 	_add_button(box, "Revoir le tutoriel", func() -> void:
 		Tutorial.restart()
 		close_modal())
@@ -931,6 +950,11 @@ func open_shop(shop_id: String = "store") -> void:
 	elif shop.get("buildings", false):
 		for id: String in Animals.data.get("buildings", {}):
 			list.add_child(_building_row(id))
+		# Mathis vend aussi des meubles et agrandit la maison
+		if not Shops.items(shop_id).is_empty():
+			list.add_child(_section_label("Pour la maison"))
+			for id: String in Shops.items(shop_id):
+				list.add_child(_item_row(id))
 	else:
 		for id: String in Shops.items(shop_id):
 			list.add_child(_item_row(id))
@@ -959,7 +983,7 @@ func _item_row(id: String) -> HBoxContainer:
 	var is_seed: bool = item.get("type") == "seed"
 	var in_season := not is_seed or GameData.crop_in_season(str(item.crop), TimeManager.season)
 	var is_bag: bool = item.get("type") == "backpack"
-	var owned: bool = (item.get("type") == "tool" and Inventory.count_of(id) > 0) or (is_bag and Inventory.capacity >= int(item.capacity))
+	var owned: bool = (item.get("type") == "tool" and Inventory.count_of(id) > 0) or (is_bag and Inventory.capacity >= int(item.capacity)) or (item.get("type") == "house_upgrade" and PlayerState.flags.has("house_big"))
 	# Le sac de voyageur demande d'avoir déjà le grand sac.
 	var locked: bool = is_bag and Inventory.capacity < int(item.capacity) - Inventory.HOTBAR
 	var price := Shops.price(_current_shop, id)
@@ -1098,6 +1122,14 @@ func _building_row(id: String) -> VBoxContainer:
 func _buy(id: String, qty: int = 1) -> void:
 	var item := GameData.item(id)
 	var price := Shops.price(_current_shop, id)
+	if item.get("type") == "house_upgrade":
+		if PlayerState.flags.has("house_big"):
+			return
+		if Inventory.spend_gold(price):
+			Sfx.play("coins")
+			PlayerState.flags["house_big"] = true
+			show_message("Menuiserie de Mathis", "« Marché conclu ! Ce soir, ta maison aura une grande pièce en plus. Pense à la meubler ! »")
+		return
 	if item.get("type") == "backpack":
 		var target := int(item.capacity)
 		# Jamais de sac plus petit, et on agrandit un palier à la fois.
@@ -1314,6 +1346,10 @@ func _type_text(label: Label, text: String) -> void:
 	if total <= 0:
 		total = text.length()
 	var voice := _dialog_voice
+	var speed: float = Settings.TEXT_SPEED_FACTOR[Settings.text_speed]
+	if speed <= 0.0:
+		label.visible_characters = -1
+		return
 	_dialog_tween = create_tween()
 	_dialog_tween.tween_method(func(n: int) -> void:
 		if not is_instance_valid(label):
@@ -1323,13 +1359,19 @@ func _type_text(label: Label, text: String) -> void:
 			_voice_shown = n
 			var c := text.substr(clampi(n - 1, 0, text.length() - 1), 1)
 			if voice > 0.0 and c != " " and c != "\n":
-				Sfx.play("voice", 0.0, 0.06, voice), 0, total, clampf(total * 0.03, 0.3, 3.5))
+				Sfx.play("voice", 0.0, 0.06, voice), 0, total, clampf(total * 0.03, 0.3, 3.5) * speed)
 	_dialog_tween.tween_callback(func() -> void:
 		if is_instance_valid(label):
 			label.visible_characters = -1)
 
 
+## Remplace {nom} et {ferme} par le prénom du joueur et le nom de sa ferme.
+static func personalize(text: String) -> String:
+	return text.replace("{nom}", PlayerState.player_name).replace("{ferme}", PlayerState.farm_name)
+
+
 func _open_dialog(title: String, portrait: Texture2D, text: String, hearts: int) -> void:
+	text = personalize(text)
 	close_modal()
 	_modal_closable = true
 	_joystick.release()
@@ -1525,12 +1567,12 @@ func _scene_step(title: String, lines: Array, index: int, choice: Dictionary, on
 		name_label.text = str(GameData.npc(who).get("name", who))
 		name_label.add_theme_color_override("font_color", UiTheme.ACCENT)
 		col.add_child(name_label)
-	var text := _add_label(col, str(entry[1]))
+	var text := _add_label(col, personalize(str(entry[1])))
 	if who == "":
 		text.add_theme_color_override("font_color", Color(0.85, 0.82, 0.75))  # narration
 	# La narration défile en silence ; les habitants parlent avec leur voix
 	_dialog_voice = 0.0 if who == "" else float(GameData.npc(who).get("voice", 1.0))
-	_type_text(text, str(entry[1]))
+	_type_text(text, personalize(str(entry[1])))
 	_add_button(box, "Suivant  >" if index < lines.size() - 1 or not choice.is_empty() else "Fermer", func() -> void:
 		if text.visible_characters != -1 and text.visible_ratio < 1.0:
 			if _dialog_tween != null:
@@ -2074,10 +2116,80 @@ func _play_wedding() -> void:
 		show_toast("%s vit maintenant avec toi à la ferme." % GameData.npc(Marriage.spouse).name))
 
 
+## Guide du jeu : une rubrique à la fois.
+func open_guide(index: int) -> void:
+	var box := _open_modal("Guide de Valfleur")
+	var tabs := GridContainer.new()
+	tabs.columns = 4
+	tabs.add_theme_constant_override("h_separation", 3)
+	tabs.add_theme_constant_override("v_separation", 3)
+	box.add_child(tabs)
+	for i in Tips.guide.size():
+		var b := _add_button(tabs, str(Tips.guide[i][0]), open_guide.bind(i))
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if i == index:
+			b.add_theme_color_override("font_color", UiTheme.ACCENT)
+	var text := _add_label(box, str(Tips.guide[index][1]) if index < Tips.guide.size() else "")
+	text.custom_minimum_size = Vector2(360, 70)
+	_add_button(box, "Retour", open_pause_menu)
+
+
+var _boss_bar: ProgressBar
+var _boss_max: int = 0
+
+
+## Barre de vie du Gardien, en haut de l'écran, pendant le combat.
+func _update_boss_bar() -> void:
+	var boss: Node = null
+	if _world is MineLevel:
+		for m in get_tree().get_nodes_in_group("monsters"):
+			if m is Monster and (m as Monster).kind == "guardian" and (m as Monster).hp > 0:
+				boss = m
+	if boss == null:
+		if _boss_bar != null:
+			_boss_bar.queue_free()
+			_boss_bar = null
+		return
+	if _boss_bar == null:
+		_boss_bar = ProgressBar.new()
+		_boss_bar.show_percentage = false
+		_boss_bar.custom_minimum_size = Vector2(200, 10)
+		var red := StyleBoxFlat.new()
+		red.bg_color = Color(0.75, 0.2, 0.25)
+		red.set_expand_margin_all(-3)
+		_boss_bar.add_theme_stylebox_override("fill", red)
+		var name := Label.new()
+		name.text = "Le Gardien de la source"
+		name.position = Vector2(0, -14)
+		name.add_theme_color_override("font_color", Color(1, 0.85, 0.6))
+		_boss_bar.add_child(name)
+		_root.add_child(_boss_bar)
+		_boss_max = (boss as Monster).hp
+	var vp := get_viewport().get_visible_rect().size
+	_boss_bar.size = Vector2(200, 10)
+	_boss_bar.position = Vector2((vp.x - 200) / 2.0, 58)
+	_boss_bar.max_value = _boss_max
+	_boss_bar.value = (boss as Monster).hp
+
+
 func _process(_delta: float) -> void:
+	_update_boss_bar()
+	# Astuce en attente : on l'affiche dès qu'aucun menu n'est ouvert
+	if _modal == null and get_tree() != null and not get_tree().paused:
+		var tip := Tips.pop()
+		if not tip.is_empty():
+			show_message("Astuce : " + str(tip[0]), str(tip[1]))
 	# Le matin du mariage : la scène, dès qu'aucune fenêtre n'est ouverte
 	if Marriage.wedding_pending and _modal == null and not _wedding_playing:
 		_play_wedding()
+	if Marriage.birth_pending and _modal == null and not _wedding_playing and not Marriage.wedding_pending:
+		Marriage.birth_pending = false
+		var sp := Marriage.spouse
+		title_card("Une naissance !", Marriage.child_name, Color(1, 0.8, 0.9))
+		Sfx.play("achievement")
+		play_scene("Une naissance", [["", "Au petit matin, la maison est pleine de cris... de joie."],
+			[sp, "Regarde... C'est %s. Notre bébé." % Marriage.child_name],
+			[sp, "Firmin disait qu'une ferme, c'est fait pour les familles. Il avait raison."]])
 	# Le bandeau du tutoriel s'efface derrière les fenêtres et dialogues
 	if _tutorial_panel != null:
 		_tutorial_panel.visible = Tutorial.active() and _modal == null
@@ -2146,7 +2258,10 @@ func open_booth() -> void:
 	elif activity == "contest":
 		var slot: Variant = Inventory.get_selected()
 		var item := {} if slot == null else GameData.item(slot.id)
-		if slot == null or int(item.get("sell", 0)) <= 0 or item.get("type") in ["tool", "weapon", "seed"]:
+		var only := str(fest.get("only", ""))
+		if only != "" and slot != null and str(item.get("type", "")) != only:
+			_add_label(box, "Ce concours n'accepte que les %s. Prends-en un en main, puis reviens au stand." % {"crop": "récoltes", "fish": "poissons"}.get(only, only))
+		elif slot == null or int(item.get("sell", 0)) <= 0 or item.get("type") in ["tool", "weapon", "seed"]:
 			_add_label(box, "Choisis dans ta barre l'objet à présenter (légume, poisson, produit d'élevage, plat...), puis reviens au stand.")
 		else:
 			var id := str(slot.id)
@@ -2165,6 +2280,14 @@ func open_booth() -> void:
 					"" if GameData.quality_of(id) > 0 else " (Astuce : le jury adore les produits de qualité ★.)"]))
 			var preview := _add_label(box, "Note estimée du jury : %d points. Concurrents : %s." % [Events.contest_score(id), ", ".join(Events.rivals().map(func(e: Dictionary) -> String: return "%s (%s)" % [GameData.npc(str(e.npc)).name, e.entry]))])
 			preview.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+	elif activity == "fireworks":
+		_add_button(box, "Profiter du spectacle", func() -> void:
+			Events.mark_done(str(fest.id))
+			for nid: String in GameData.npcs:
+				Relations.add_points(nid, 30)
+			Sfx.play("achievement")
+			close_modal()
+			title_card("Feu d'artifice !", "Tout Valfleur lève les yeux au ciel", Color(1, 0.75, 0.95)))
 	elif activity == "dance":
 		_add_label(box, "Qui veux-tu inviter à danser ?")
 		var row := HFlowContainer.new()

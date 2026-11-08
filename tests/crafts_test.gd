@@ -17,7 +17,7 @@ func _ready() -> void:
 	var farm: Farm = _main.call("current_map")
 	# ---- Produits artisanaux
 	var jam := GameData.item("jam:melon")
-	_check(str(jam.name) == "Confiture de melon" and int(jam.sell) == int(round(GameData.item("melon").sell * 2.0 + 40)), "« Confiture de melon » vaut 2 x le melon + 40 (%d or)" % int(jam.sell))
+	_check(str(jam.name) == "Confiture de melon" and int(jam.sell) == int(round(GameData.item("melon").sell * 1.6 + 30)), "« Confiture de melon » vaut 1,6 x le melon + 30 (%d or)" % int(jam.sell))
 	_check(str(GameData.item("jam:orange").name) == "Confiture d'orange", "élision : confiture d'orange")
 	_check(int(GameData.item("jam:melon@2").sell) == int(round(int(jam.sell) * 1.5)), "la qualité s'applique au produit")
 	_check(Machines.category("melon@1") == "fruit" and Machines.category("carrot") == "vegetable" and Machines.category("sardine") == "fish", "fruits, légumes, poissons reconnus")
@@ -37,11 +37,17 @@ func _ready() -> void:
 	Machines.new_day()
 	_check(Machines.busy(cell), "après une nuit, pas encore prêt")
 	Machines.new_day()
-	_check(Machines.ready(cell) and farm.action_hint(cell) == "Récupérer", "après deux nuits : prêt à récupérer")
+	Machines.new_day()
+	_check(Machines.ready(cell) and farm.action_hint(cell) == "Récupérer", "après trois nuits : prêt à récupérer")
 	farm.act_on(cell)
 	_check(Inventory.count_of("jam:melon@2") == 1, "on récupère une confiture de melon ★ or")
 	# ---- Presse à fromage : lait -> fromage, en gardant la qualité
-	_check(Machines.recipe("cheese_press", "milk@1") == ["cheese@1", 1], "lait argent -> fromage argent (1 nuit)")
+	_check(Machines.recipe("cheese_press", "milk@1") == ["cheese@1", 3], "lait argent -> fromage argent (3 nuits)")
+	_check(Machines.recipe("cask", "cheese@1") == ["cheese@2", 7], "le tonneau fait vieillir le fromage : argent -> or en 7 jours")
+	_check(Machines.recipe("cask", "jam:melon@3").is_empty() and Machines.recipe("cask", "carrot").is_empty(), "pas au-delà du cristal, ni pour les légumes crus")
+	FarmState.place_object(Vector2i(32, 12), "beehive")
+	Machines.start_auto(Vector2i(32, 12), "beehive")
+	_check(Machines.busy(Vector2i(32, 12)) and GameData.base_id(str(Machines.state[Vector2i(32, 12)].output)) == "honey", "la ruche produit du miel toute seule")
 	# ---- Cuisine : le plat prend la qualité de ses ingrédients
 	Inventory.add_item("egg@2", 2)
 	PlayerState.flags["story_ch2"] = true

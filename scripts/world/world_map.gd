@@ -237,9 +237,14 @@ func _add_building(cell: Vector2i, size_cells: Vector2i, texture_path: String, d
 
 
 ## Rend une case infranchissable (collision comprise).
+## Corps de collision posés par block_cell (pour pouvoir les retirer)
+var _static_blocks: Dictionary = {}
+
+
 func block_cell(cell: Vector2i) -> void:
 	_blocked[cell] = true
 	var body := StaticBody2D.new()
+	_static_blocks[cell] = body
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = Vector2(TILE, TILE) * 0.9
@@ -386,7 +391,7 @@ const KIND_HINTS := {
 	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
 	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
 	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
-	"board": "Demandes", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "boat": "En mer",
+	"board": "Demandes", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "boat": "En mer", "child": "Jouer",
 }
 const TOOL_HINTS := {
 	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",

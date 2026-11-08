@@ -48,7 +48,7 @@
 			}
 		],
 		"dialogue": {
-			"intro": "Oh ! C'est toi qui as repris la vieille ferme ? Bienvenue à Valfleur ! Je tiens l'épicerie : graines, conseils, et commérages gratuits.",
+			"intro": "Oh ! C'est toi, {nom}, qui as repris la vieille ferme ? Bienvenue à Valfleur ! Je tiens l'épicerie : graines, conseils, et commérages gratuits.",
 			"stranger": [
 				"L'épicerie ouvre à 9h et ferme à 17h. Pas une minute de plus, mes pieds ne suivent pas !",
 				"Les graines de saison sont toujours en rayon. Hors saison... il faudra patienter.",

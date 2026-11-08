@@ -108,6 +108,15 @@
 		"gold": 200
 	},
 	{
+		"id": "boss",
+		"name": "Gardien vaincu",
+		"text": "Vaincre le Gardien de la source, au fond de la mine",
+		"stat": "flag:mine_boss",
+		"goal": 1,
+		"icon": "mountain_heart",
+		"gold": 1000
+	},
+	{
 		"id": "mine_30",
 		"name": "Tout au fond",
 		"text": "Atteindre le niveau 30 de la mine",
@@ -259,5 +268,14 @@
 		"goal": 7,
 		"icon": "truffle",
 		"gold": 3000
+	},
+	{
+		"id": "artisan",
+		"name": "Fait maison",
+		"text": "Récupérer 150 produits (élevage et machines)",
+		"stat": "products",
+		"goal": 150,
+		"icon": "honey",
+		"gold": 500
 	}
 ]

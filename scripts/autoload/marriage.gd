@@ -11,6 +11,14 @@ var wedding_day: int = -1  # numéro de jour absolu du mariage
 var spouse: String = ""
 var wedding_pending: bool = false  # la scène du mariage reste à jouer
 var last_help: String = ""  # aide du matin (affichée au réveil)
+## L'enfant : il naît quelques semaines après le mariage, grandit à la maison
+var child_name: String = ""
+var child_day: int = -1  # jour de naissance
+var birth_pending: bool = false  # la scène de la naissance reste à jouer
+var played_today: bool = false
+const CHILD_NAMES := ["Léa", "Noé", "Rose", "Hugo", "Iris", "Malo"]
+const CHILD_AFTER_DAYS := 14  # jours de mariage avant la naissance possible
+const TODDLER_DAYS := 28  # le bébé marche à quatre pattes au bout de 28 jours
 
 
 func _ready() -> void:
@@ -28,6 +36,31 @@ func reset() -> void:
 	spouse = ""
 	wedding_pending = false
 	last_help = ""
+	child_name = ""
+	child_day = -1
+	birth_pending = false
+	played_today = false
+
+
+## Stade de l'enfant : "" (pas d'enfant), "baby" (au berceau), "toddler".
+func child_stage() -> String:
+	if child_name == "":
+		return ""
+	return "baby" if day_number() - child_day < TODDLER_DAYS else "toddler"
+
+
+## Jouer avec l'enfant (une fois par jour) : un peu d'énergie et de bonheur.
+func play_with_child() -> String:
+	if child_name == "":
+		return ""
+	if played_today:
+		return "%s fait la sieste. Chut !" % child_name
+	played_today = true
+	PlayerState.heal(10, 0)
+	if spouse != "":
+		Relations.add_points(spouse, 20)
+	var lines := ["%s rit aux éclats quand tu le fais sauter dans tes bras !", "%s attrape ton doigt et ne le lâche plus.", "Tu racontes à %s l'histoire de la source. Ses yeux brillent.", "%s fait ses premiers pas... jusqu'à tes bottes !"]
+	return str(lines[randi() % (2 if child_stage() == "baby" else lines.size())]) % child_name + " (+10 énergie)"
 
 
 func is_candidate(id: String) -> bool:
@@ -76,6 +109,12 @@ func give(id: String, item: String) -> Dictionary:
 ## Chaque nuit : le jour du mariage arrive ; marié·e, l'aide du matin.
 func new_day() -> void:
 	last_help = ""
+	played_today = false
+	# Une naissance, quelques semaines après le mariage
+	if spouse != "" and child_name == "" and wedding_day >= 0 and day_number() - wedding_day >= CHILD_AFTER_DAYS and randf() < 0.2:
+		child_name = CHILD_NAMES[randi() % CHILD_NAMES.size()]
+		child_day = day_number()
+		birth_pending = true
 	if fiance != "" and day_number() >= wedding_day:
 		spouse = fiance
 		fiance = ""
@@ -94,6 +133,14 @@ func new_day() -> void:
 			if Animals.is_built(b):
 				Animals.buildings[b].hay = mini(int(Animals.buildings[b].hay) + 4, Animals.FEEDER_MAX)
 		last_help = "%s a rempli les mangeoires de foin." % name
+	elif roll < 0.7 and Machines.state.size() > 0:
+		# Récupère les produits prêts des machines
+		var got := 0
+		for cell: Vector2i in Machines.state.keys():
+			if Machines.ready(cell) and Machines.collect(cell) != "":
+				got += 1
+		if got > 0:
+			last_help = "%s a vidé %d machine(s) : les produits sont dans ton sac." % [name, got]
 	elif roll < 0.85:
 		var dish: String = ["vegetable_soup", "omelette", "salad", "grilled_fish"][randi() % 4]
 		if Inventory.add_item(dish, 1) == 0:
@@ -132,7 +179,8 @@ func wedding_lines() -> Array:
 
 
 func to_dict() -> Dictionary:
-	return {"dating": dating.keys(), "fiance": fiance, "wedding_day": wedding_day, "spouse": spouse, "wedding_pending": wedding_pending}
+	return {"dating": dating.keys(), "fiance": fiance, "wedding_day": wedding_day, "spouse": spouse, "wedding_pending": wedding_pending,
+		"child_name": child_name, "child_day": child_day, "birth_pending": birth_pending}
 
 
 func from_dict(saved: Dictionary) -> void:
@@ -143,3 +191,6 @@ func from_dict(saved: Dictionary) -> void:
 	wedding_day = int(saved.get("wedding_day", -1))
 	spouse = str(saved.get("spouse", ""))
 	wedding_pending = bool(saved.get("wedding_pending", false))
+	child_name = str(saved.get("child_name", ""))
+	child_day = int(saved.get("child_day", -1))
+	birth_pending = bool(saved.get("birth_pending", false))

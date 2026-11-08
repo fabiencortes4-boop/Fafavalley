@@ -16,7 +16,20 @@ const MAP := [
 	"#__________#",
 	"######D#####",
 ]
+## Après l'agrandissement (chez Mathis) : une grande pièce à droite.
+const MAP_BIG := [
+	"#################",
+	"#Z_____k__x______#",
+	"#________________#",
+	"#___rr__tc_______#",
+	"#p__rr__c________#",
+	"#________________#",
+	"#________________#",
+	"######D###########",
+]
 const FARM_DOOR_FRONT := Vector2i(7, 7)  # devant la porte de la maison, à la ferme
+
+signal furniture_changed
 
 var bed_cell: Vector2i = Vector2i(1, 1)
 
@@ -26,7 +39,7 @@ func _init() -> void:
 
 
 func _map_rows() -> Array:
-	return MAP
+	return MAP_BIG if PlayerState.flags.has("house_big") else MAP
 
 
 func display_name() -> String:
@@ -67,11 +80,37 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 
 
 func _after_build() -> void:
+	for cell: Vector2i in Machines.furniture:
+		if _ground_chars.has(cell):
+			block_cell(cell)
 	# Au réveil : à côté du lit
 	_spawn_cell = bed_cell + Vector2i(1, 1)
 	_place_player()
 	if Marriage.spouse_place() == "home":
 		_spawn_spouse(Vector2i(8, 5))
+	_spawn_child()
+
+
+## L'enfant : au berceau près du lit, puis il joue sur le tapis.
+var child: Node2D
+
+
+func _spawn_child() -> void:
+	var stage := Marriage.child_stage()
+	if stage == "":
+		return
+	var cell := bed_cell + Vector2i(2, 0) if stage == "baby" else Vector2i(4, 5)
+	child = Node2D.new()
+	child.set_meta("child", stage)
+	child.position = cell_center(cell)
+	var sprite := Sprite2D.new()
+	sprite.texture = load("res://assets/sprites/player.png")
+	sprite.scale = Vector2(0.55, 0.55)
+	sprite.offset = Vector2(0, -8)
+	child.add_child(sprite)
+	_entities.add_child(child)
+	block_cell(cell)
+	_interactables[cell] = "child"
 
 
 func _place_player() -> void:
@@ -79,10 +118,48 @@ func _place_player() -> void:
 	super()
 
 
+# ------------------------------------------------------------ meubles
+## Poser le meuble tenu en main sur le plancher.
+func _act_on_ground(cell: Vector2i) -> bool:
+	var slot: Variant = Inventory.get_selected()
+	if slot == null or str(GameData.item(slot.id).get("type", "")) != "furniture":
+		return false
+	if _ground_chars.get(cell, "") != "_" or _blocked.has(cell) or cell == player_cell() or _interactables.has(cell):
+		EventBus.toast("Pose le meuble sur le plancher libre, devant toi.")
+		return true
+	Machines.furniture[cell] = str(slot.id)
+	Inventory.remove_from_slot(Inventory.selected, 1)
+	block_cell(cell)
+	player.play_use()
+	Sfx.play("drop")
+	furniture_changed.emit()
+	return true
+
+
+## La pioche reprend un meuble.
+func _use_pickaxe(cell: Vector2i, _energy: int) -> void:
+	if not Machines.furniture.has(cell):
+		return
+	var id := str(Machines.furniture[cell])
+	if Inventory.add_item(id, 1) > 0:
+		EventBus.toast("Inventaire plein !")
+		return
+	Machines.furniture.erase(cell)
+	_blocked.erase(cell)
+	if _static_blocks.has(cell):
+		_static_blocks[cell].queue_free()
+		_static_blocks.erase(cell)
+	player.play_use()
+	Sfx.play("pickup")
+	furniture_changed.emit()
+
+
 func _interact(kind: String, _cell: Vector2i) -> void:
 	match kind:
 		"bed":
 			EventBus.sleep_requested.emit()
+		"child":
+			EventBus.message_requested.emit(Marriage.child_name, Marriage.play_with_child())
 		"kitchen":
 			EventBus.kitchen_requested.emit()
 		"exit":

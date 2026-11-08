@@ -22,7 +22,21 @@ const ROCKS := {
 	"iron": [WorldTiles.MINE_ROCK_IRON, 3, [["iron_ore", 1, 2, 1.0]]],
 	"gold": [WorldTiles.MINE_ROCK_GOLD, 4, [["gold_ore", 1, 2, 1.0]]],
 	"gem": [WorldTiles.MINE_ROCK_GEM, 3, []],
+	# Étages gelés (10-19) et de lave (20-29) : leurs trésors propres
+	"frost": [WorldTiles.MINE_ROCK_GEM, 3, [["frost_crystal", 1, 1, 1.0], ["stone", 1, 1, 0.5]]],
+	"magma": [WorldTiles.MINE_ROCK_GEM, 4, [["fire_opal", 1, 1, 1.0], ["coal", 1, 2, 0.6]]],
 }
+
+
+## Thème de l'étage : terre (1-9), glace (10-19), lave (20-29), le fond (30).
+static func theme_for(depth: int) -> String:
+	if depth >= 30:
+		return "deep"
+	if depth >= 20:
+		return "lava"
+	if depth >= 10:
+		return "ice"
+	return "earth"
 ## Coffres des paliers (tous les 15 étages) : niveau -> arme
 const TREASURES := {15: "steel_sword", 30: "firmin_blade"}
 
@@ -215,6 +229,11 @@ func _rock_type() -> String:
 	if r < 0.025 + level * 0.0015:
 		return "gem"
 	r = _rng.randf()
+	if level >= 10 and level < 20 and r < 0.05:
+		return "frost"
+	if level >= 20 and r < 0.05:
+		return "magma"
+	r = _rng.randf()
 	if level >= 20 and r < 0.11:
 		return "gold"
 	if level >= 10 and r < 0.19:
@@ -306,6 +325,9 @@ func _after_build() -> void:
 		EventBus.toast("Le fond de la mine... L'escalier s'arrête ici.")
 	else:
 		EventBus.toast(display_name())
+	# Le fond de la mine : le Gardien de la source, tant qu'il n'est pas vaincu
+	if level == MAX_LEVEL and not PlayerState.flags.has("mine_boss"):
+		_spawn_boss()
 	var deepest := int(PlayerState.flags.get("mine_deepest", 1))
 	PlayerState.flags["mine_deepest"] = maxi(deepest, level)
 	if level % ELEVATOR_STEP == 0 and not PlayerState.flags.has("elevator_%d" % level):
@@ -319,6 +341,36 @@ func _place_player() -> void:
 	player.position = cell_center(_spawn_cell)
 	player.facing = Vector2i.DOWN
 	_camera.reset_smoothing()
+
+
+func _spawn_boss() -> void:
+	var boss := Monster.new()
+	boss.kind = "guardian"
+	boss.level = level
+	boss.target = player
+	var cell := _spawn_cell + Vector2i(0, 4)
+	for r in range(4, 12):
+		var c := _spawn_cell + Vector2i(0, r)
+		if is_walkable(c):
+			cell = c
+	boss.position = cell_center(cell)
+	boss.died.connect(_on_boss_died)
+	boss.add_to_group("monsters")
+	_entities.add_child(boss)
+	EventBus.message_requested.emit("Le Gardien de la source", "Au fond de la mine, une silhouette de pierre se dresse entre toi et la source... Le Gardien ! Frappe, recule, et ne te laisse pas encercler.")
+
+
+func _on_boss_died(_monster: Monster) -> void:
+	PlayerState.flags["mine_boss"] = true
+	Sfx.play("achievement")
+	Settings.vibrate(150)
+	EventBus.camera_shake.emit(5.0, 0.5)
+	Inventory.add_gold(5000)
+	if Inventory.add_item("mountain_heart", 1) > 0:
+		_drop("mountain_heart", _monster.position)
+	Skills.add_xp("combat", 300)
+	Story.bump("monsters")
+	EventBus.message_requested.emit("Victoire !", "Le Gardien s'effondre en une pluie de pierres. Dans les éboulis brille le Cœur de la montagne. +5000 or.")
 
 
 func _spawn_monster(cell: Vector2i) -> void:

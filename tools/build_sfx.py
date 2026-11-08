@@ -175,6 +175,19 @@ def synth_all():
     save("escape", sweep(600, 200, 0.4, "tri") * env(int(RATE * 0.4), 0.01, 5))
     synth_rewards()
     synth_voice()
+    synth_weather()
+
+
+def synth_weather():
+    """Tonnerre (orage) et explosion de feu d'artifice."""
+    d = 2.2
+    crack = highpass(noise(0.15), 1500) * env(int(RATE * 0.15), 0.001, 25)
+    rumble = lowpass(noise(d), 180) * env(int(RATE * d), 0.05, 1.6)
+    rumble *= 1 + 0.5 * np.sin(2 * np.pi * 3.0 * t(d))
+    save("thunder", mix(crack * 0.5, at(rumble * 2.5, 0.05)), 0.85)
+    boom = lowpass(noise(0.4), 600) * env(int(RATE * 0.4), 0.002, 10)
+    sparkle = mix(*[at(highpass(noise(0.02), 3000) * env(int(RATE * 0.02), 0.001, 80) * 0.5, 0.15 + 0.04 * i) for i in range(8)])
+    save("firework", mix(boom, sparkle), 0.7)
 
 
 def synth_voice():

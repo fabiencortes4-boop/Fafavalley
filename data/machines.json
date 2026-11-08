@@ -18,11 +18,11 @@
 			"accepts": {
 				"fruit": [
 					"jam",
-					2
+					3
 				],
 				"vegetable": [
 					"pickles",
-					2
+					3
 				]
 			}
 		},
@@ -31,11 +31,11 @@
 			"accepts": {
 				"fruit": [
 					"juice",
-					3
+					4
 				],
 				"vegetable": [
 					"veg_juice",
-					2
+					3
 				]
 			}
 		},
@@ -44,7 +44,7 @@
 			"accepts": {
 				"fish": [
 					"smoked_fish",
-					1
+					2
 				]
 			}
 		},
@@ -53,17 +53,32 @@
 			"accepts": {
 				"milk": [
 					"cheese",
-					1
+					3
 				],
 				"egg": [
 					"mayonnaise",
-					1
+					2
 				],
 				"big_egg": [
 					"mayonnaise",
-					1
+					2
+				],
+				"goat_milk": [
+					"cheese",
+					3
 				]
 			}
+		},
+		"cask": {
+			"name": "Tonneau de vieillissement",
+			"aging": 7
+		},
+		"beehive": {
+			"name": "Ruche",
+			"auto": [
+				"honey",
+				4
+			]
 		}
 	}
 }

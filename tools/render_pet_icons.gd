@@ -4,7 +4,8 @@ extends Node3D
 ##   xvfb-run godot --rendering-driver opengl3 res://tools/render_pet_icons.tscn
 
 const PETS := {"chicken": "animal-chick", "bunny": "animal-bunny", "cow": "animal-cow", "pig": "animal-pig",
-	"dog": "animal-dog", "cat": "animal-cat"}
+	"dog": "animal-dog", "cat": "animal-cat", "goat": "animal-cow", "sheep": "animal-pig"}
+const TINTS := {"goat": Color(0.98, 0.93, 0.82), "sheep": Color(1.0, 1.6, 1.45)}
 
 
 func _ready() -> void:
@@ -30,6 +31,18 @@ func _ready() -> void:
 	vp.add_child(cam)
 	for type: String in PETS:
 		var model := Models.instance(Models.path("pets", PETS[type]))
+		if TINTS.has(type):
+			Models.tint(model, TINTS[type])
+		if type == "sheep":
+			var fleece := MeshInstance3D.new()
+			var bm := BoxMesh.new()
+			bm.size = Vector3(0.7, 0.45, 0.8)
+			var fm := StandardMaterial3D.new()
+			fm.albedo_color = Color(0.97, 0.95, 0.9)
+			bm.material = fm
+			fleece.mesh = bm
+			fleece.position = Vector3(0, 0.62, 0)
+			model.add_child(fleece)
 		vp.add_child(model)
 		model.rotation_degrees.y = 35
 		var box := _aabb(model)

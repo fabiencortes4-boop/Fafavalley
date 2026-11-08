@@ -226,6 +226,13 @@ func item_icon(id: String) -> Texture2D:
 	return tex
 
 
+## Les icônes de qualité sont recalculées (réglage d'accessibilité changé).
+func clear_quality_icons() -> void:
+	for key: String in _icon_cache.keys():
+		if key.contains("@"):
+			_icon_cache.erase(key)
+
+
 ## Petite étoile (argent, or ou cristal) en bas à gauche de l'icône.
 func _starred_icon(base: Texture2D, quality: int) -> Texture2D:
 	var img := base.get_image()
@@ -251,6 +258,16 @@ func _starred_icon(base: Texture2D, quality: int) -> Texture2D:
 	for p: Vector2i in pts:
 		img.set_pixelv(p, fill)
 	img.set_pixel(2, 11, fill.lightened(0.5))
+	# Accessibilité : 1, 2 ou 3 points blancs à côté de l'étoile
+	if Settings.colorblind:
+		for k in quality:
+			var dot := Vector2i(6 + k * 3, 13)
+			for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+				img.set_pixelv(dot + d, Color(1, 1, 1))
+			for d: Vector2i in [Vector2i(-1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(2, 1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(0, 2), Vector2i(1, 2)]:
+				var q := dot + d
+				if q.x < 16 and q.y < 16 and img.get_pixelv(q) != Color(1, 1, 1):
+					img.set_pixelv(q, dark)
 	return ImageTexture.create_from_image(img)
 
 

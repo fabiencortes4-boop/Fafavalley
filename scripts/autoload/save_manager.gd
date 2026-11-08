@@ -11,8 +11,65 @@ const WEB_AUTOSAVE_SECONDS := 45.0
 var _autosave_timer: float = 0.0
 
 
-func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+## Emplacement de sauvegarde (0 à 2). Le 0 garde le fichier historique.
+const SLOTS := 3
+var slot: int = 0
+
+
+static func slot_path(s: int) -> String:
+	return SAVE_PATH if s == 0 else "user://fafavalley_save_v2_s%d.json" % s
+
+
+func has_save(s: int = -1) -> bool:
+	return FileAccess.file_exists(slot_path(slot if s < 0 else s))
+
+
+## Résumé d'une sauvegarde pour l'écran titre : {} si l'emplacement est vide.
+func summary(s: int) -> Dictionary:
+	if not has_save(s):
+		return {}
+	var file := FileAccess.open(slot_path(s), FileAccess.READ)
+	if file == null:
+		return {}
+	var data: Variant = JSON.parse_string(file.get_as_text())
+	if not data is Dictionary:
+		return {}
+	var p: Dictionary = data.get("player", {})
+	var t: Dictionary = data.get("time", {})
+	var seasons := ["printemps", "été", "automne", "hiver"]
+	return {
+		"name": str(p.get("name", "Fermier")), "farm": str(p.get("farm_name", "La ferme")),
+		"date": "%s %d, année %d" % [seasons[int(t.get("season", 0)) % 4], int(t.get("day", 1)), int(t.get("year", 1))],
+		"gold": int(data.get("inventory", {}).get("gold", 0)),
+	}
+
+
+## Export : la sauvegarde en texte (compressée, base64), à copier ailleurs.
+func export_text() -> String:
+	save_game()
+	var file := FileAccess.open(slot_path(slot), FileAccess.READ)
+	if file == null:
+		return ""
+	var raw := file.get_as_text().to_utf8_buffer()
+	return "FAFA1:" + Marshalls.raw_to_base64(raw.compress(FileAccess.COMPRESSION_GZIP)) + ":" + str(raw.size())
+
+
+## Import : écrit la partie dans l'emplacement `s`. Renvoie true si valide.
+func import_text(text: String, s: int) -> bool:
+	text = text.strip_edges()
+	var parts := text.split(":")
+	if parts.size() != 3 or parts[0] != "FAFA1":
+		return false
+	var packed := Marshalls.base64_to_raw(parts[1])
+	var raw := packed.decompress(int(parts[2]), FileAccess.COMPRESSION_GZIP)
+	var data: Variant = JSON.parse_string(raw.get_string_from_utf8())
+	if not data is Dictionary or not data.has("time") or not data.has("player"):
+		return false
+	var file := FileAccess.open(slot_path(s), FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(raw.get_string_from_utf8())
+	return true
 
 
 func save_game() -> void:
@@ -38,9 +95,10 @@ func save_game() -> void:
 		"port_story": PortStory.to_dict(),
 		"collections": Collections.to_dict(),
 		"machines": Machines.to_dict(),
+		"tips": Tips.to_dict(),
 		"achievements": Achievements.to_dict(),
 	}
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(slot_path(slot), FileAccess.WRITE)
 	if file == null:
 		push_error("Sauvegarde impossible : %s" % FileAccess.get_open_error())
 		return
@@ -50,7 +108,7 @@ func save_game() -> void:
 func load_game() -> bool:
 	if not has_save():
 		return false
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var file := FileAccess.open(slot_path(slot), FileAccess.READ)
 	if file == null:
 		return false
 	var data: Variant = JSON.parse_string(file.get_as_text())
@@ -81,6 +139,7 @@ func load_game() -> bool:
 			Collections.discover(id)
 	Achievements.from_dict(data.get("achievements", {}))
 	Machines.from_dict(data.get("machines", {}))
+	Tips.from_dict(data.get("tips", {}))
 	HeartEvents.from_dict(data.get("hearts_seen", {}))
 	Marriage.from_dict(data.get("marriage", {}))
 	PortStory.from_dict(data.get("port_story", {}))

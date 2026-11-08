@@ -745,7 +745,7 @@
 		"name": "Fromage",
 		"type": "food",
 		"icon": 75,
-		"sell": 320,
+		"sell": 260,
 		"stack": 99,
 		"edible": [
 			80,
@@ -1409,8 +1409,8 @@
 		"stack": 99,
 		"sell": 100,
 		"from": "Confiture de %s",
-		"mult": 2.0,
-		"add": 40,
+		"mult": 1.6,
+		"add": 30,
 		"edible": [
 			50,
 			15
@@ -1424,8 +1424,8 @@
 		"stack": 99,
 		"sell": 90,
 		"from": "Bocal de %s",
-		"mult": 2.0,
-		"add": 30,
+		"mult": 1.6,
+		"add": 20,
 		"edible": [
 			40,
 			15
@@ -1439,8 +1439,8 @@
 		"stack": 99,
 		"sell": 120,
 		"from": "Jus de %s",
-		"mult": 2.5,
-		"add": 20,
+		"mult": 2.0,
+		"add": 10,
 		"edible": [
 			45,
 			10
@@ -1454,7 +1454,7 @@
 		"stack": 99,
 		"sell": 90,
 		"from": "Jus de %s",
-		"mult": 2.2,
+		"mult": 1.8,
 		"add": 10,
 		"edible": [
 			40,
@@ -1469,7 +1469,7 @@
 		"stack": 99,
 		"sell": 100,
 		"from": "Poisson fumé (%s)",
-		"mult": 2.0,
+		"mult": 1.6,
 		"add": 20,
 		"edible": [
 			60,
@@ -1496,7 +1496,7 @@
 		"icon": 148,
 		"stack": 99,
 		"sell": 100,
-		"description": "Se pose à la ferme. Fruits -> confiture, légumes -> conserve (2 jours). Garde la qualité."
+		"description": "Se pose à la ferme. Fruits -> confiture, légumes -> conserve (3 jours). Garde la qualité."
 	},
 	"fruit_press": {
 		"name": "Pressoir",
@@ -1505,7 +1505,7 @@
 		"icon": 149,
 		"stack": 99,
 		"sell": 150,
-		"description": "Se pose à la ferme. Fruits ou légumes -> jus (2 à 3 jours). Garde la qualité."
+		"description": "Se pose à la ferme. Fruits ou légumes -> jus (3 à 4 jours). Garde la qualité."
 	},
 	"smoker": {
 		"name": "Fumoir",
@@ -1514,7 +1514,7 @@
 		"icon": 150,
 		"stack": 99,
 		"sell": 120,
-		"description": "Se pose à la ferme. Poisson -> poisson fumé (1 jour). Garde la qualité."
+		"description": "Se pose à la ferme. Poisson -> poisson fumé (2 jours). Garde la qualité."
 	},
 	"cheese_press": {
 		"name": "Presse à fromage",
@@ -1523,7 +1523,7 @@
 		"icon": 151,
 		"stack": 99,
 		"sell": 150,
-		"description": "Se pose à la ferme. Lait -> fromage, œuf -> mayonnaise (1 jour). Garde la qualité."
+		"description": "Se pose à la ferme. Lait -> fromage (3 jours), œuf -> mayonnaise (2 jours). Garde la qualité."
 	},
 	"crab": {
 		"name": "Crabe",
@@ -1638,5 +1638,148 @@
 			60
 		],
 		"description": "Un poisson légendaire. On n'en pêche qu'un."
+	},
+	"cask": {
+		"name": "Tonneau de vieillissement",
+		"type": "placeable",
+		"place": "cask",
+		"icon": 162,
+		"stack": 99,
+		"sell": 200,
+		"description": "Se pose à la ferme. Fromage, jus, confiture ou miel : chaque semaine, la qualité monte d'un cran (jusqu'au cristal)."
+	},
+	"beehive": {
+		"name": "Ruche",
+		"type": "placeable",
+		"place": "beehive",
+		"icon": 163,
+		"stack": 99,
+		"sell": 150,
+		"description": "Se pose à la ferme. Donne un pot de miel tous les 4 jours (sauf en hiver), meilleur près des fleurs."
+	},
+	"honey": {
+		"name": "Miel",
+		"type": "artisan",
+		"icon": 164,
+		"stack": 99,
+		"sell": 120,
+		"edible": [
+			45,
+			20
+		],
+		"description": "Le miel des ruches de la ferme."
+	},
+	"frost_crystal": {
+		"name": "Cristal de givre",
+		"type": "loot",
+		"icon": 165,
+		"stack": 99,
+		"sell": 180,
+		"description": "Trouvé dans les étages gelés de la mine (10 à 19)."
+	},
+	"fire_opal": {
+		"name": "Opale de feu",
+		"type": "loot",
+		"icon": 166,
+		"stack": 99,
+		"sell": 320,
+		"description": "Trouvée dans les étages de lave de la mine (20 à 29)."
+	},
+	"mountain_heart": {
+		"name": "Cœur de la montagne",
+		"type": "loot",
+		"icon": 167,
+		"stack": 1,
+		"sell": 3000,
+		"description": "Le trésor du Gardien de la source, au fond de la mine."
+	},
+	"goat_milk": {
+		"name": "Lait de chèvre",
+		"type": "animal",
+		"icon": 168,
+		"stack": 99,
+		"sell": 160,
+		"edible": [
+			30,
+			15
+		],
+		"description": "Le lait des chèvres de la ferme."
+	},
+	"wool": {
+		"name": "Laine",
+		"type": "animal",
+		"icon": 169,
+		"stack": 99,
+		"sell": 220,
+		"description": "Tondue sur les moutons de la ferme."
+	},
+	"rug": {
+		"name": "Tapis brodé",
+		"type": "furniture",
+		"icon": 170,
+		"stack": 99,
+		"buy": 300,
+		"sell": 100,
+		"furniture": "rug",
+		"description": "Un meuble pour la maison : tiens-le en main chez toi et touche le sol."
+	},
+	"floor_lamp": {
+		"name": "Lampe sur pied",
+		"type": "furniture",
+		"icon": 171,
+		"stack": 99,
+		"buy": 450,
+		"sell": 150,
+		"furniture": "lamp",
+		"description": "Un meuble pour la maison : tiens-le en main chez toi et touche le sol."
+	},
+	"house_plant": {
+		"name": "Plante en pot",
+		"type": "furniture",
+		"icon": 172,
+		"stack": 99,
+		"buy": 200,
+		"sell": 70,
+		"furniture": "plant",
+		"description": "Un meuble pour la maison : tiens-le en main chez toi et touche le sol."
+	},
+	"bookshelf": {
+		"name": "Bibliothèque",
+		"type": "furniture",
+		"icon": 173,
+		"stack": 99,
+		"buy": 800,
+		"sell": 250,
+		"furniture": "shelf",
+		"description": "Un meuble pour la maison : tiens-le en main chez toi et touche le sol."
+	},
+	"painting": {
+		"name": "Tableau de Lina",
+		"type": "furniture",
+		"icon": 174,
+		"stack": 99,
+		"buy": 600,
+		"sell": 200,
+		"furniture": "painting",
+		"description": "Un paysage de Valfleur. Tiens-le en main chez toi et touche le sol."
+	},
+	"dining_table": {
+		"name": "Table et nappe",
+		"type": "furniture",
+		"icon": 175,
+		"stack": 99,
+		"buy": 700,
+		"sell": 220,
+		"furniture": "table",
+		"description": "Un meuble pour la maison : tiens-le en main chez toi et touche le sol."
+	},
+	"house_upgrade": {
+		"name": "Agrandissement de la maison",
+		"type": "house_upgrade",
+		"icon": 176,
+		"stack": 1,
+		"buy": 8000,
+		"sell": 0,
+		"description": "Mathis ajoute une grande pièce à ta maison : de la place pour tes meubles et un coin cave."
 	}
 }

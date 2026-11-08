@@ -59,7 +59,16 @@
 		"closed_days": [
 			6
 		],
-		"buildings": true
+		"buildings": true,
+		"items": [
+			"house_upgrade",
+			"rug",
+			"house_plant",
+			"floor_lamp",
+			"painting",
+			"dining_table",
+			"bookshelf"
+		]
 	},
 	"tavern": {
 		"name": "Taverne du Héron",

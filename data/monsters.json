@@ -103,5 +103,51 @@
 		"drop": "ectoplasm",
 		"drop_chance": 0.6,
 		"weight": 2
+	},
+	"frost_slime": {
+		"name": "Gelée de givre",
+		"sprite": 0,
+		"hp": 45,
+		"damage": 9,
+		"speed": 34,
+		"behavior": "hop",
+		"levels": [
+			10,
+			19
+		],
+		"drop": "frost_crystal",
+		"drop_chance": 0.25,
+		"weight": 5
+	},
+	"magma_slime": {
+		"name": "Gelée de magma",
+		"sprite": 0,
+		"hp": 85,
+		"damage": 15,
+		"speed": 36,
+		"behavior": "hop",
+		"levels": [
+			20,
+			29
+		],
+		"drop": "fire_opal",
+		"drop_chance": 0.2,
+		"weight": 5
+	},
+	"guardian": {
+		"name": "Gardien de la source",
+		"sprite": 4,
+		"hp": 520,
+		"damage": 18,
+		"speed": 30,
+		"behavior": "chase",
+		"levels": [
+			99,
+			99
+		],
+		"drop": "mountain_heart",
+		"drop_chance": 1.0,
+		"weight": 0,
+		"boss": true
 	}
 }

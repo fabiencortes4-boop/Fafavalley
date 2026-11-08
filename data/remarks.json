@@ -1,0 +1,13 @@
+{
+	"_comment": "Remarques des habitants sur ce que le joueur a accompli. when : flag:X, products, legend, married, child, boss, chapter:N, collection:N, machine. npcs : qui peut le dire (vide = tout le monde). Chaque remarque n'est dite qu'une fois par habitant.",
+	"remarks": [
+		{"when": "machine", "npcs": ["rosalie", "odette", "theo", "margot"], "lines": ["J'ai goûté ta confiture, au marché... Tu me donneras la recette ?", "On m'a dit que tu fabriquais tes propres conserves. Firmin serait fier !"]},
+		{"when": "legend", "npcs": [], "lines": ["Tout le village parle de ton poisson légendaire ! Jules n'en dort plus.", "C'est vrai, cette histoire de poisson géant ? Tu me montreras où tu l'as pêché ?"]},
+		{"when": "boss", "npcs": ["gaston", "bertrand", "mathis", "leon"], "lines": ["Le Gardien de la source... vaincu. Hm. Respect.", "Il paraît que tu es descendu au fond de la mine. Tu as du cran !"]},
+		{"when": "married", "npcs": [], "lines": ["Alors, la vie à deux à la ferme ? Vous faites un beau couple.", "Ton mariage, quelle fête ! On en parle encore."]},
+		{"when": "child", "npcs": ["odette", "rosalie", "margot", "celeste", "nina"], "lines": ["Comment va ton petit bout ? Amène-le donc au village un de ces jours !", "Un bébé à la ferme de Firmin... la vallée revit vraiment."]},
+		{"when": "chapter:3", "npcs": ["bertrand", "rosalie", "lina"], "lines": ["Depuis que tu es là, Valfleur a retrouvé des couleurs. Merci.", "Les gens reviennent au marché. C'est grâce à toi, tu sais."]},
+		{"when": "collection:40", "npcs": ["lina", "basile", "theo"], "lines": ["Ton album est déjà bien rempli ! Il te manque quoi ?", "Tu collectionnes tout ce que tu trouves ? Moi aussi ! Enfin, les cailloux."]},
+		{"when": "quality", "npcs": ["rosalie", "margot", "basile", "marius"], "lines": ["Tes légumes de qualité or se vendent comme des petits pains !", "Avec des produits pareils, ma soupe n'a jamais été aussi bonne."]}
+	]
+}

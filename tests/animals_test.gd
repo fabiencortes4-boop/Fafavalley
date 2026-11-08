@@ -88,7 +88,7 @@ func _ready() -> void:
 	hud.close_modal()
 	_check(Animals.milk(cow) == "", "pas de traite sans seau à lait")
 	Inventory.add_item("milk_pail", 1)
-	_check(Animals.milk(cow) == "milk" and Inventory.count_of("milk") == 1, "avec le seau, on trait la vache")
+	_check(GameData.base_id(Animals.milk(cow)) == "milk" and Inventory.count_of("milk") == 1, "avec le seau, on trait la vache")
 	# ---- Le bâtiment apparaît sur la ferme
 	await _go("farm", Vector2i(10, 12))
 	farm = _main.call("current_map")

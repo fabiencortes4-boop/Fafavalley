@@ -111,6 +111,7 @@ func _after_build() -> void:
 	_spawn_cell = Vector2i(2, 14)
 	for c: Vector2i in BOAT_CELLS:
 		_interactables[c] = "boat"
+	Tips.show("port")
 	_place_player()
 	_build_navigation()
 	for id: String in GameData.npcs:

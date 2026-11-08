@@ -148,6 +148,27 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
   vers le sac et petits tremblements d'écran sur les gros coups.
+- **Création du personnage** : prénom (utilisé dans les dialogues), nom de la ferme, tenue
+  au choix. **3 emplacements** de sauvegarde, export et import de partie en texte
+  (Réglages > Exporter, écran titre > Importer), retour à l'écran titre.
+- **Accessibilité** : qualité marquée aussi par 1 à 3 points (pas seulement la couleur),
+  vitesse du texte réglable (lent, normal, rapide, instantané).
+- **Guide** (Menu > Guide) et **astuces** qui s'affichent une fois, au bon moment
+  (qualité, machines, appâts, casiers, port, bancs, fêtes, tonneau).
+- **Mine à thèmes** : terre, glace (10-19, gelées de givre, cristaux de givre), lave
+  (20-29, gelées de magma, opales de feu), et au niveau 30 le **Gardien de la source**
+  (barre de vie, 5000 or, Cœur de la montagne, succès).
+- **Maison** : agrandissement chez Mathis (8000 or) et meubles à poser (tapis, lampe,
+  plante, bibliothèque, tableau de Lina, table) ; la pioche les reprend.
+- **Ferme** : chèvres (lait de chèvre) et moutons (laine) ; ruche (miel tous les 4 jours,
+  sauf l'hiver) ; tonneau de vieillissement (+1 cran de qualité par semaine).
+- **Famille** : quelques semaines après le mariage, un bébé arrive (scène), au berceau
+  puis sur le tapis ; on joue avec lui chaque jour. Le conjoint vide aussi les machines.
+- **Météo** : orages l'été (éclairs, tonnerre), brume du matin sur le port et au large.
+- **Fêtes** : feu d'artifice de l'été, foire aux citrouilles (récoltes), pêche sur glace
+  (poissons). Les habitants commentent tes exploits (confitures, légendes, Gardien...)
+  et de nouvelles scènes de cœur au port.
+- **Économie** : `python3 tools/economy_sim.py` (valeur ajoutée des machines, année type).
 - **Transformation** (à fabriquer, à poser à la ferme) : bocal à conserves (confitures,
   conserves), pressoir (jus), fumoir (poisson fumé), presse à fromage (fromage, mayonnaise).
   Le produit garde la qualité et le nom de l'ingrédient (« Confiture de melon ★ or »),
@@ -314,6 +335,7 @@ godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
+godot --headless res://tests/life2_test.tscn     # mine à thèmes, Gardien, maison, enfant, fêtes, sauvegardes, accessibilité
 godot --headless res://tests/crafts_test.tscn    # machines, plats de qualité, concours, appâts, casiers, mer, légendaires
 godot --headless res://tests/quality_test.tscn   # qualité, demandes exigeantes, poissons de lac et de mer
 godot --headless res://tests/decor_test.tscn     # place, bancs et chaises (repos), infos des graines

@@ -13,6 +13,10 @@ var map: String = "farm"
 var health: int = MAX_HEALTH
 ## Progrès divers (kit de mine reçu, niveau le plus profond...).
 var flags: Dictionary = {}
+## Identité choisie à la création (gardée par reset())
+var player_name: String = "Fermier"
+var farm_name: String = "La ferme"
+var look: int = 0  # tenue : 0 (d'origine) à 3
 
 
 func reset() -> void:
@@ -96,6 +100,9 @@ func to_dict() -> Dictionary:
 		"map": map,
 		"health": health,
 		"flags": flags.duplicate(),
+		"name": player_name,
+		"farm_name": farm_name,
+		"look": look,
 	}
 
 
@@ -108,4 +115,7 @@ func from_dict(data: Dictionary) -> void:
 	map = str(data.get("map", "farm"))
 	health = int(data.get("health", MAX_HEALTH))
 	flags = data.get("flags", {}).duplicate()
+	player_name = str(data.get("name", "Fermier"))
+	farm_name = str(data.get("farm_name", "La ferme"))
+	look = clampi(int(data.get("look", 0)), 0, 3)
 	_emit()

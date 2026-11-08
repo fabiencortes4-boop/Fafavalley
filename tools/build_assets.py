@@ -599,6 +599,93 @@ def draw_sea_life(kind):
     return outlined(img)
 
 
+def draw_misc(kind):
+    """Tonneau, ruche, miel, minerais de glace et de lave, cœur de la
+    montagne, lait de chèvre, laine, meubles, plan d'agrandissement."""
+    img = new_img(16, 16)
+    px = img.load()
+    def rect(x0, y0, x1, y1, c):
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                px[x, y] = c + (255,)
+    def gem(light, mid, dark):
+        for y in range(3, 14):
+            w = 5 - abs(y - 8) // 1 if abs(y - 8) < 5 else 0
+            for x in range(8 - w, 8 + w):
+                px[x, y] = (light if x < 8 and y < 8 else (mid if y < 10 else dark)) + (255,)
+    if kind == "cask":
+        rect(2, 4, 14, 13, (150, 96, 56))
+        for x in (4, 11):
+            rect(x, 4, x + 1, 13, (90, 90, 96))
+        rect(7, 7, 9, 10, (60, 40, 30))
+    elif kind == "beehive":
+        for i, y in enumerate(range(4, 14, 2)):
+            rect(4 - (i % 2), y, 12 + (i % 2), y + 2, (230, 190, 90) if i % 2 == 0 else (210, 160, 70))
+        rect(7, 11, 9, 13, (60, 40, 30))
+        rect(3, 14, 13, 15, (130, 90, 55))
+    elif kind == "honey":
+        rect(4, 5, 12, 14, (240, 170, 40))
+        rect(5, 6, 6, 13, (255, 210, 110))
+        rect(4, 3, 12, 5, (200, 150, 90))
+        rect(6, 9, 10, 11, (250, 235, 200))
+    elif kind == "frost":
+        gem((230, 250, 255), (150, 210, 245), (90, 150, 210))
+    elif kind == "lava":
+        gem((255, 220, 120), (240, 110, 50), (160, 40, 30))
+    elif kind == "heart":
+        for y in range(4, 14):
+            for x in range(2, 14):
+                dx, dy = (x - 5.5, y - 6) if x < 8 else (x - 10.5, y - 6)
+                if dx * dx + dy * dy <= 7 or (y >= 6 and abs(x - 8) <= 13 - y):
+                    px[x, y] = ((120, 230, 220) if x + y < 14 else (40, 160, 170)) + (255,)
+        px[5, 5] = (255, 255, 255, 255)
+    elif kind == "goat_milk":
+        rect(5, 4, 11, 14, (245, 242, 230))
+        rect(6, 2, 10, 4, (200, 190, 170))
+        rect(5, 8, 11, 10, (150, 190, 120))
+    elif kind == "wool":
+        for (cx, cy) in ((6, 8), (10, 8), (8, 6), (8, 10)):
+            for y in range(cy - 3, cy + 3):
+                for x in range(cx - 3, cx + 3):
+                    if (x - cx) ** 2 + (y - cy) ** 2 <= 8:
+                        px[x, y] = (250, 248, 240, 255)
+        px[7, 7], px[10, 9] = (215, 210, 200, 255), (215, 210, 200, 255)
+    elif kind == "rug":
+        rect(2, 4, 14, 12, (170, 60, 60))
+        rect(4, 6, 12, 10, (220, 180, 90))
+        rect(6, 7, 10, 9, (170, 60, 60))
+    elif kind == "lamp":
+        rect(7, 6, 9, 14, (90, 70, 50))
+        rect(5, 13, 11, 15, (90, 70, 50))
+        rect(4, 2, 12, 7, (250, 220, 140))
+    elif kind == "plant":
+        rect(5, 10, 11, 15, (180, 100, 60))
+        for (x, y) in ((8, 3), (6, 5), (10, 5), (7, 7), (9, 7), (8, 8), (5, 8), (11, 8)):
+            rect(x - 1, y - 1, x + 1, y + 1, (70, 150, 80))
+    elif kind == "shelf":
+        rect(3, 2, 13, 15, (130, 85, 50))
+        for y in (5, 9, 13):
+            rect(4, y - 3, 12, y, (60, 40, 30))
+            for k, x in enumerate(range(4, 12, 2)):
+                rect(x, y - 3, x + 1, y, [(200, 60, 60), (60, 120, 200), (230, 190, 60), (80, 160, 90)][(k + y) % 4])
+    elif kind == "painting":
+        rect(2, 3, 14, 13, (180, 140, 60))
+        rect(3, 4, 13, 12, (140, 200, 240))
+        rect(3, 9, 13, 12, (90, 160, 80))
+        rect(9, 5, 11, 7, (255, 230, 120))
+    elif kind == "table":
+        rect(2, 6, 14, 8, (150, 100, 60))
+        for x in (3, 12):
+            rect(x, 8, x + 1, 14, (120, 80, 50))
+        rect(6, 4, 9, 6, (240, 240, 240))
+    elif kind == "plan":
+        rect(3, 2, 13, 14, (235, 225, 195))
+        for y in (5, 8, 11):
+            rect(5, y, 11, y + 1, (90, 110, 170))
+        rect(5, 5, 6, 12, (90, 110, 170))
+    return outlined(img)
+
+
 def legendary(img):
     """Contour doré des poissons légendaires."""
     px = img.load()
@@ -783,6 +870,11 @@ def extend_icons(sheet):
               legendary(draw_fish(6, 3, (60, 64, 76), (130, 134, 146), (50, 54, 66), "whiskers")),
               legendary(draw_fish(6, 2, (90, 170, 150), (210, 240, 220), (60, 140, 120), "spots")),
               legendary(draw_fish(6, 3, (60, 100, 170), (220, 228, 240), (40, 80, 150), None))]
+    # 162+ : tonneau, ruche, miel, cristal de givre, opale de feu, cœur de la
+    # montagne, lait de chèvre, laine, tapis, lampe, plante, bibliothèque,
+    # tableau, table, plan d'agrandissement
+    extra += [draw_misc(k) for k in ("cask", "beehive", "honey", "frost", "lava", "heart", "goat_milk", "wool",
+                                     "rug", "lamp", "plant", "shelf", "painting", "table", "plan")]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

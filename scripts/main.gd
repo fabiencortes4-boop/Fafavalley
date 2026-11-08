@@ -35,9 +35,8 @@ func _ready() -> void:
 	subtitle.text = "Une petite ferme, une grande aventure"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(subtitle)
-	if SaveManager.has_save():
-		_add_button(box, "Continuer", _start.bind(true))
-	_add_button(box, "Nouvelle partie", _start.bind(false))
+	_title_box = box
+	_show_slots()
 	var hint := _install_hint()
 	if hint != "":
 		var label := Label.new()
@@ -68,6 +67,96 @@ func _install_hint() -> String:
 	return ""
 
 
+var _title_box: VBoxContainer
+var _slot_list: VBoxContainer
+var _identity: Dictionary = {}
+
+
+## Les trois emplacements de sauvegarde : continuer, ou commencer une partie.
+func _show_slots() -> void:
+	if _slot_list != null:
+		_slot_list.queue_free()
+	_slot_list = VBoxContainer.new()
+	_slot_list.add_theme_constant_override("separation", 4)
+	_title_box.add_child(_slot_list)
+	_title_box.move_child(_slot_list, 2)
+	for s in SaveManager.SLOTS:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		_slot_list.add_child(row)
+		var info := SaveManager.summary(s)
+		var label := Label.new()
+		label.custom_minimum_size = Vector2(220, 0)
+		label.text = "Partie %d : vide" % (s + 1) if info.is_empty() else "%s - %s\n%s, %d or" % [info.name, info.farm, info.date, info.gold]
+		row.add_child(label)
+		if not info.is_empty():
+			_add_button(row, "Continuer", func() -> void:
+				SaveManager.slot = s
+				_start(true))
+		_add_button(row, "Nouvelle", func() -> void:
+			SaveManager.slot = s
+			_show_creation())
+	_add_button(_slot_list, "Importer une partie", _show_import)
+
+
+## Création du personnage : nom, nom de la ferme, tenue.
+func _show_creation() -> void:
+	_slot_list.queue_free()
+	_slot_list = VBoxContainer.new()
+	_slot_list.add_theme_constant_override("separation", 4)
+	_title_box.add_child(_slot_list)
+	_title_box.move_child(_slot_list, 2)
+	var name_edit := LineEdit.new()
+	name_edit.placeholder_text = "Ton prénom"
+	name_edit.max_length = 14
+	name_edit.custom_minimum_size = Vector2(220, 24)
+	_slot_list.add_child(name_edit)
+	var farm_edit := LineEdit.new()
+	farm_edit.placeholder_text = "Nom de ta ferme (ex. Les Tournesols)"
+	farm_edit.max_length = 22
+	_slot_list.add_child(farm_edit)
+	var looks := HBoxContainer.new()
+	looks.alignment = BoxContainer.ALIGNMENT_CENTER
+	looks.add_theme_constant_override("separation", 4)
+	_slot_list.add_child(looks)
+	var chosen := [0]
+	var buttons: Array = []
+	for i in 4:
+		var b := Button.new()
+		b.text = ["Salopette", "Bleu de travail", "Robe d'été", "Chemise rouge"][i]
+		b.toggle_mode = true
+		b.button_pressed = i == 0
+		looks.add_child(b)
+		buttons.append(b)
+		b.pressed.connect(func() -> void:
+			chosen[0] = i
+			for k in buttons.size():
+				(buttons[k] as Button).button_pressed = k == i)
+	_add_button(_slot_list, "Commencer l'aventure", func() -> void:
+		var n := name_edit.text.strip_edges()
+		var f := farm_edit.text.strip_edges()
+		_identity = {"name": n if n != "" else "Fermier", "farm": f if f != "" else "La ferme", "look": chosen[0]}
+		_start(false))
+	_add_button(_slot_list, "Retour", _show_slots)
+
+
+## Importer une partie exportée (texte copié) dans le premier emplacement libre.
+func _show_import() -> void:
+	var text := DisplayServer.clipboard_get()
+	var target := 0
+	for s in SaveManager.SLOTS:
+		if not SaveManager.has_save(s):
+			target = s
+			break
+	var ok := SaveManager.import_text(text, target)
+	_show_slots()
+	var msg := Label.new()
+	msg.text = ("Partie importée dans l'emplacement %d !" % (target + 1)) if ok else "Rien à importer : copie d'abord le texte d'une partie exportée (Menu > Réglages > Exporter)."
+	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	msg.custom_minimum_size = Vector2(300, 0)
+	_slot_list.add_child(msg)
+
+
 func _add_button(box: Container, text: String, callback: Callable) -> void:
 	var b := Button.new()
 	b.text = text
@@ -79,6 +168,9 @@ func _add_button(box: Container, text: String, callback: Callable) -> void:
 func _start(load_save: bool) -> void:
 	if not (load_save and GameFlow.continue_game()):
 		GameFlow.new_game()
+		PlayerState.player_name = str(_identity.get("name", "Fermier"))
+		PlayerState.farm_name = str(_identity.get("farm", "La ferme"))
+		PlayerState.look = int(_identity.get("look", 0))
 	_title_layer.queue_free()
 	_hud = Hud.new()
 	add_child(_hud)
@@ -190,7 +282,7 @@ func _announce(map_id: String, previous: String) -> void:
 	elif map_id == "sea":
 		_hud.title_card("Au large", "Thons, espadons... et peut-être une légende", Color(0.5, 0.75, 1.0))
 	elif map_id == "farm":
-		_hud.title_card("La ferme", "%s, jour %d" % [seasons[TimeManager.season % 4], TimeManager.day], Color(0.75, 1, 0.65))
+		_hud.title_card(PlayerState.farm_name, "%s, jour %d" % [seasons[TimeManager.season % 4], TimeManager.day], Color(0.75, 1, 0.65))
 	elif map_id == "village" and not previous.begins_with("in:"):
 		var fest := Events.festival_today()
 		if not fest.is_empty():

@@ -49,6 +49,10 @@ LOOKS = {
     "nina": ("e", [(BODY, "a878e8", "2e4a7a"), (HEAD, "995a41", "2d2a30"), (BODY, "995a41", "2d2a30"), (ALL, "f6d1a5", "c99067"), (ALL, "e79a76", "b07050")]),
     # Le marchand du port : veste ocre de négociant, lunettes
     "basile": ("i", [(BODY, "d0e8ff", "c8923f"), (BODY, "a0c0e0", "9a6c2c"), (BODY, "b7d4f6", "5a4a3a")]),
+    # Tenues du joueur au choix (création du personnage)
+    "player_1": ("a", [(BODY, "37a177", "3f5fa8"), (BODY, "1e835a", "2d4680"), (BODY, "b56544", "7a4a2a")]),
+    "player_2": ("e", [(BODY, "a878e8", "d9a43a"), (HEAD, "995a41", "3a2a22"), (BODY, "995a41", "3a2a22")]),
+    "player_3": ("f", [(BODY, "58bd98", "c0453c"), (BODY, "8494c9", "3a3a4a")]),
     # La musicienne : cheveux blonds, tunique violette de scène
     "celeste": ("e", [(HEAD, "995a41", "e6c060"), (BODY, "995a41", "e6c060"), (BODY, "a878e8", "8a3ab0")]),
 }

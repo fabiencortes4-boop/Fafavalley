@@ -23,6 +23,24 @@
 			"activity": "market",
 			"desc": "Un marché sous la neige : vin chaud, lanternes et produits rares au stand du colporteur.",
 			"letter": "Demain, Marché d'hiver sur la place, de 10h à 16h. Le colporteur revient avec des marchandises rares !"
+		},
+		{
+			"id": "fireworks", "name": "Feu d'artifice de l'été", "season": 1, "day": 27, "start": 20, "end": 23,
+			"activity": "fireworks",
+			"desc": "Tout Valfleur se retrouve sur la place pour le feu d'artifice. Assieds-toi sur un banc et profite du spectacle !",
+			"letter": "Demain soir, grand feu d'artifice sur la place, de 20h à 23h ! Mathis prépare les fusées depuis des semaines."
+		},
+		{
+			"id": "pumpkin_fair", "name": "Foire aux citrouilles", "season": 2, "day": 27, "start": 9, "end": 16,
+			"activity": "contest", "only": "crop",
+			"desc": "La foire de fin d'automne : le jury ne regarde que les récoltes. Qui aura la plus belle ?",
+			"letter": "Demain, Foire aux citrouilles sur la place ! Le concours est réservé aux récoltes : apporte ta plus belle, de qualité si possible."
+		},
+		{
+			"id": "ice_fishing", "name": "Pêche sur glace", "season": 3, "day": 20, "start": 8, "end": 14,
+			"activity": "contest", "only": "fish",
+			"desc": "L'étang du village est gelé : Jules organise un concours de pêche. Présente ton plus beau poisson au stand !",
+			"letter": "Demain matin, concours de pêche sur glace ! Jules dit qu'il va gagner. Montre-lui ton plus beau poisson, sur la place de 8h à 14h."
 		}
 	],
 	"weekly": [

@@ -64,7 +64,7 @@ func date_string() -> String:
 
 
 func weather_string() -> String:
-	return {"rain": "Pluie", "snow": "Neige"}.get(weather, "Soleil")
+	return {"rain": "Pluie", "snow": "Neige", "storm": "Orage"}.get(weather, "Soleil")
 
 
 func weekday() -> String:
@@ -76,7 +76,11 @@ func is_snowing() -> bool:
 
 
 func is_raining() -> bool:
-	return weather == "rain"
+	return weather == "rain" or weather == "storm"
+
+
+func is_storm() -> bool:
+	return weather == "storm"
 
 
 ## Passe au jour suivant (sans émettre de signal : GameFlow s'en charge
@@ -95,6 +99,9 @@ func advance_day() -> void:
 		weather = "snow" if randf() < SNOW_CHANCE else "sunny"
 	else:
 		weather = "rain" if randf() < RAIN_CHANCE else "sunny"
+		# L'été, la pluie tourne parfois à l'orage (il arrose aussi)
+		if weather == "rain" and season == 1 and randf() < 0.45:
+			weather = "storm"
 
 
 func start_day() -> void:

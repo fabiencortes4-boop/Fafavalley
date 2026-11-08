@@ -33,6 +33,8 @@ func get_achievement(id: String) -> Dictionary:
 
 ## Valeur actuelle d'une statistique de succès (totaux de la partie).
 func value(stat: String) -> int:
+	if stat.begins_with("flag:"):
+		return 1 if PlayerState.flags.has(stat.trim_prefix("flag:")) else 0
 	match stat:
 		"met", "hearts_max", "hearts_sum", "mine_depth", "buildings":
 			return Story.value(stat)
