@@ -148,9 +148,13 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Gestes d'outils animés (houe levée puis abattue, arrosoir qui verse, hache, pioche, faux,
   canne à pêche) avec particules (terre, eau, copeaux, éclats, herbe), récoltes qui sautent
   vers le sac et petits tremblements d'écran sur les gros coups.
-- **Création du personnage** : prénom (utilisé dans les dialogues), nom de la ferme, tenue
-  au choix. **3 emplacements** de sauvegarde, export et import de partie en texte
-  (Réglages > Exporter, écran titre > Importer), retour à l'écran titre.
+- **Éditeur de personnage** (nouvelle partie, et Menu > Réglages > Apparence) : aperçu 3D
+  qui tourne, sexe, 6 teintes de peau, 8 coupes (court, rasé, mèche, afro, carré, long,
+  chignon, chauve), 8 couleurs de cheveux, pilosité (moustache, bouc, barbes, favoris),
+  couleur des yeux, du haut et du bas, bouton « Au hasard ». La texture du personnage est
+  peinte à la volée (`scripts/view3d/character_look.gd`). Prénom (utilisé dans les
+  dialogues) et nom de la ferme. **3 emplacements** de sauvegarde, export et import de
+  partie en texte (Réglages > Exporter, écran titre > Importer), retour à l'écran titre.
 - **Accessibilité** : qualité marquée aussi par 1 à 3 points (pas seulement la couleur),
   vitesse du texte réglable (lent, normal, rapide, instantané).
 - **Guide** (Menu > Guide) et **astuces** qui s'affichent une fois, au bon moment

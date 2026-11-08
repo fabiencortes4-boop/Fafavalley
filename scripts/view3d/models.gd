@@ -81,7 +81,11 @@ static func parts(model_path: String) -> Array:
 ## Teinte un modèle (multiplie la couleur de ses matériaux).
 ## Remplace la texture d'un personnage Blocky (tenue d'un habitant).
 static func retexture(node: Node, texture_path: String) -> void:
-	var tex: Texture2D = load(texture_path)
+	apply_texture(node, load(texture_path))
+
+
+## Même chose avec une texture déjà chargée (apparence générée du joueur).
+static func apply_texture(node: Node, tex: Texture2D) -> void:
 	for n in node.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
 		for i in mi.mesh.get_surface_count():

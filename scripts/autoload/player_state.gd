@@ -16,7 +16,9 @@ var flags: Dictionary = {}
 ## Identité choisie à la création (gardée par reset())
 var player_name: String = "Fermier"
 var farm_name: String = "La ferme"
-var look: int = 0  # tenue : 0 (d'origine) à 3
+var look: int = 0  # ancienne tenue (parties d'avant l'éditeur) : 0 à 3
+## Apparence choisie dans l'éditeur de personnage (voir CharacterLook)
+var appearance: Dictionary = {}
 
 
 func reset() -> void:
@@ -103,6 +105,7 @@ func to_dict() -> Dictionary:
 		"name": player_name,
 		"farm_name": farm_name,
 		"look": look,
+		"appearance": appearance.duplicate(),
 	}
 
 
@@ -118,4 +121,5 @@ func from_dict(data: Dictionary) -> void:
 	player_name = str(data.get("name", "Fermier"))
 	farm_name = str(data.get("farm_name", "La ferme"))
 	look = clampi(int(data.get("look", 0)), 0, 3)
+	appearance = data.get("appearance", {}).duplicate()
 	_emit()

@@ -48,13 +48,15 @@ func _ready() -> void:
 	farm.act_on(cell)
 	_check(Inventory.count_of("carrot") == 1, "la récolte arrive dans l'inventaire")
 	var gold_before := Inventory.gold
+	var carrot_id := "carrot"
 	for i in Inventory.SIZE:
-		if Inventory.slots[i] != null and Inventory.slots[i].id == "carrot":
+		if Inventory.slots[i] != null and GameData.base_id(str(Inventory.slots[i].id)) == "carrot":
 			Inventory.select(i)
+			carrot_id = str(Inventory.slots[i].id)  # parfois de qualité argent
 	farm.act_on(Vector2i(10, 6))  # coffre d'expédition
 	GameFlow.end_day(false)
 	farm.hud.close_modal()
-	var price := int(GameData.item("carrot").sell)
+	var price := int(GameData.item(carrot_id).sell)
 	_check(Inventory.gold == gold_before + price, "la carotte est vendue la nuit (+%d or)" % price)
 	SaveManager.save_game()
 	_check(SaveManager.load_game(), "la sauvegarde se recharge")

@@ -104,6 +104,32 @@ func _ready() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveManager.slot_path(2)))
 	SaveManager.slot = 0
 	_check(Hud.personalize("Bonjour {nom} !") == "Bonjour Camille !", "le prénom dans les dialogues")
+	# ---- Éditeur de personnage
+	var a := CharacterLook.default_look()
+	var b := a.duplicate()
+	b.hair_color = 4
+	b.beard = 3
+	var ia := CharacterLook.image(a)
+	var ib := CharacterLook.image(b)
+	_check(ia.get_size() == Vector2i(256, 256), "texture du personnage générée (256 px)")
+	_check(ia.get_pixelv(CharacterLook.TOP + Vector2i(5, 5)) != ib.get_pixelv(CharacterLook.TOP + Vector2i(5, 5)), "la couleur des cheveux change le dessus de la tête")
+	_check(ia.get_pixelv(CharacterLook.FRONT + Vector2i(5, 28)) != ib.get_pixelv(CharacterLook.FRONT + Vector2i(5, 28)), "la barbe se voit sur le menton")
+	var bald := a.duplicate()
+	bald.hair = CharacterLook.HAIR_STYLES.find("Chauve")
+	_check(CharacterLook.image(bald).get_pixelv(CharacterLook.BACK + Vector2i(16, 4)) == CharacterLook.SKINS[a.skin], "chauve : le crâne est couleur peau")
+	var woman := a.duplicate()
+	woman.sex = 1
+	woman.top = 1
+	_check(CharacterLook.image(woman).get_pixel(60, 200) != ia.get_pixel(60, 200), "le corps change avec le sexe et le haut")
+	_check(CharacterLook.texture(a) == CharacterLook.texture(a.duplicate()), "les textures sont mises en cache")
+	PlayerState.appearance = b
+	SaveManager.save_game()
+	PlayerState.appearance = {}
+	SaveManager.load_game()
+	_check(int(PlayerState.appearance.get("beard", -1)) == 3, "l'apparence se sauvegarde")
+	hud.open_appearance()
+	_check(hud.get("_modal") != null, "on peut changer d'apparence en cours de partie")
+	hud.close_modal()
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
 

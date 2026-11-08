@@ -3121,8 +3121,10 @@ const SEAT_BACK := 0.12
 
 func _build_player() -> void:
 	_player3d = _model("blocky", "character-a", CHARACTER_SCALE)
-	# Tenue choisie à la création du personnage
-	if PlayerState.look > 0:
+	# Apparence choisie dans l'éditeur (ou ancienne tenue)
+	if not PlayerState.appearance.is_empty():
+		Models.apply_texture(_player3d, CharacterLook.texture(PlayerState.appearance))
+	elif PlayerState.look > 0:
 		Models.retexture(_player3d, "res://assets/kenney3d/blocky/Textures/npc/player_%d.png" % PlayerState.look)
 	add_child(_player3d)
 	var shadow := _blob(1.6)
@@ -3131,6 +3133,12 @@ func _build_player() -> void:
 	var arms := _player3d.find_children("arm-right", "", true, false)
 	_hand = arms[0] as Node3D if not arms.is_empty() else _player3d
 	map.player.gesture_started.connect(_on_gesture)
+
+
+## L'apparence a changé (Menu > Réglages > Apparence).
+func refresh_player_look() -> void:
+	if _player3d != null and not PlayerState.appearance.is_empty():
+		Models.apply_texture(_player3d, CharacterLook.texture(PlayerState.appearance))
 
 
 func _on_gesture(gesture: String) -> void:

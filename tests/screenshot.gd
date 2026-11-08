@@ -205,6 +205,12 @@ func _ready() -> void:
 				Relations.met[who] = true
 				Relations.add_points(who, 600)
 				EventBus.heart_scene_requested.emit(who, HeartEvents.pending(who))
+		if "--look" in args:
+			PlayerState.appearance = {"sex": 1, "skin": 3, "hair": 5, "hair_color": 5, "beard": 0, "eyes": 2, "top": 4, "pants": 1}
+			if View3D.current != null:
+				View3D.current.refresh_player_look()
+			if "--appearance" in args:
+				main.get("_hud").open_appearance()
 		if "--furnished" in args:
 			PlayerState.flags["house_big"] = true
 			for e: Array in [[Vector2i(12, 2), "bookshelf"], [Vector2i(14, 2), "floor_lamp"], [Vector2i(12, 5), "rug"], [Vector2i(15, 5), "house_plant"], [Vector2i(13, 4), "dining_table"], [Vector2i(10, 2), "painting"]]:

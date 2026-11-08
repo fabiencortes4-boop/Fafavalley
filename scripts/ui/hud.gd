@@ -862,6 +862,7 @@ func open_settings() -> void:
 		Settings.toggle_colorblind()
 		_refresh_hotbar()
 		open_settings())
+	_add_button(box, "Apparence", open_appearance)
 	_add_button(box, "Exporter la partie", func() -> void:
 		var text := SaveManager.export_text()
 		DisplayServer.clipboard_set(text)
@@ -2114,6 +2115,54 @@ func _play_wedding() -> void:
 		Marriage.wedding_pending = false
 		_wedding_playing = false
 		show_toast("%s vit maintenant avec toi à la ferme." % GameData.npc(Marriage.spouse).name))
+
+
+## Changer d'apparence en cours de partie (le personnage se met à jour
+## derrière la fenêtre).
+func open_appearance() -> void:
+	if PlayerState.appearance.is_empty():
+		PlayerState.appearance = CharacterLook.default_look()
+	var box := _open_modal("Apparence")
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	box.add_child(row)
+	var preview := LookPreview.new(Vector2(80, 140))
+	row.add_child(preview)
+	preview.show_look(PlayerState.appearance)
+	var titles := {"sex": "Sexe", "skin": "Peau", "hair": "Coupe", "hair_color": "Cheveux", "beard": "Pilosité", "eyes": "Yeux", "top": "Haut", "pants": "Bas"}
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(grid)
+	for key: String in CharacterLook.KEYS:
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation", 3)
+		grid.add_child(line)
+		var l := Label.new()
+		l.text = titles[key]
+		l.custom_minimum_size = Vector2(54, 0)
+		line.add_child(l)
+		var value := Label.new()
+		value.custom_minimum_size = Vector2(84, 0)
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		value.text = CharacterLook.label(key, int(PlayerState.appearance.get(key, 0)))
+		for d: int in [-1, 1]:
+			var b := Button.new()
+			b.text = "<" if d < 0 else ">"
+			b.custom_minimum_size = Vector2(24, 18)
+			b.pressed.connect(func() -> void:
+				var n := CharacterLook.count(key)
+				PlayerState.appearance[key] = (int(PlayerState.appearance.get(key, 0)) + d + n) % n
+				value.text = CharacterLook.label(key, int(PlayerState.appearance[key]))
+				Sfx.play("click")
+				preview.show_look(PlayerState.appearance)
+				if View3D.current != null:
+					View3D.current.refresh_player_look())
+			line.add_child(b)
+			if d < 0:
+				line.add_child(value)
+	_add_button(box, "Retour", open_settings)
 
 
 ## Guide du jeu : une rubrique à la fois.

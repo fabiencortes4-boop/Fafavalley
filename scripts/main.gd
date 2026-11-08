@@ -99,45 +99,110 @@ func _show_slots() -> void:
 	_add_button(_slot_list, "Importer une partie", _show_import)
 
 
-## Création du personnage : nom, nom de la ferme, tenue.
+## Éditeur de personnage : aperçu 3D qui tourne, prénom, nom de la ferme,
+## sexe, peau, coupe et couleur des cheveux, pilosité, yeux, haut, bas.
+var _look: Dictionary = {}
+var _preview: LookPreview
+
+
 func _show_creation() -> void:
 	_slot_list.queue_free()
+	_title_box.get_child(0).visible = false  # le grand titre laisse la place
+	_title_box.get_child(1).visible = false
+	_look = CharacterLook.default_look()
 	_slot_list = VBoxContainer.new()
-	_slot_list.add_theme_constant_override("separation", 4)
 	_title_box.add_child(_slot_list)
 	_title_box.move_child(_slot_list, 2)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	_slot_list.add_child(row)
+	# Aperçu 3D
+	var frame := PanelContainer.new()
+	row.add_child(frame)
+	_preview = LookPreview.new()
+	frame.add_child(_preview)
+	_refresh_preview()
+	# Réglages
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	row.add_child(col)
+	var small := maxi(8, Settings.font_size() - 2)
+	var names := HBoxContainer.new()
+	col.add_child(names)
 	var name_edit := LineEdit.new()
 	name_edit.placeholder_text = "Ton prénom"
 	name_edit.max_length = 14
-	name_edit.custom_minimum_size = Vector2(220, 24)
-	_slot_list.add_child(name_edit)
+	name_edit.custom_minimum_size = Vector2(110, 18)
+	name_edit.add_theme_font_size_override("font_size", small)
+	names.add_child(name_edit)
 	var farm_edit := LineEdit.new()
-	farm_edit.placeholder_text = "Nom de ta ferme (ex. Les Tournesols)"
+	farm_edit.placeholder_text = "Nom de ta ferme"
 	farm_edit.max_length = 22
-	_slot_list.add_child(farm_edit)
-	var looks := HBoxContainer.new()
-	looks.alignment = BoxContainer.ALIGNMENT_CENTER
-	looks.add_theme_constant_override("separation", 4)
-	_slot_list.add_child(looks)
-	var chosen := [0]
-	var buttons: Array = []
-	for i in 4:
-		var b := Button.new()
-		b.text = ["Salopette", "Bleu de travail", "Robe d'été", "Chemise rouge"][i]
-		b.toggle_mode = true
-		b.button_pressed = i == 0
-		looks.add_child(b)
-		buttons.append(b)
-		b.pressed.connect(func() -> void:
-			chosen[0] = i
-			for k in buttons.size():
-				(buttons[k] as Button).button_pressed = k == i)
-	_add_button(_slot_list, "Commencer l'aventure", func() -> void:
+	farm_edit.custom_minimum_size = Vector2(130, 18)
+	farm_edit.add_theme_font_size_override("font_size", small)
+	names.add_child(farm_edit)
+	var titles := {"sex": "Sexe", "skin": "Peau", "hair": "Coupe", "hair_color": "Cheveux", "beard": "Pilosité", "eyes": "Yeux", "top": "Haut", "pants": "Bas"}
+	var values := {}
+	for key: String in CharacterLook.KEYS:
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation", 3)
+		col.add_child(line)
+		var l := Label.new()
+		l.text = titles[key]
+		l.custom_minimum_size = Vector2(56, 0)
+		l.add_theme_font_size_override("font_size", small)
+		line.add_child(l)
+		var value := Label.new()
+		value.custom_minimum_size = Vector2(100, 0)
+		value.add_theme_font_size_override("font_size", small)
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		values[key] = value
+		var prev := Button.new()
+		prev.text = "<"
+		prev.custom_minimum_size = Vector2(26, 19)
+		var next := Button.new()
+		next.text = ">"
+		next.custom_minimum_size = Vector2(26, 19)
+		line.add_child(prev)
+		line.add_child(value)
+		line.add_child(next)
+		for pair: Array in [[prev, -1], [next, 1]]:
+			(pair[0] as Button).pressed.connect(func() -> void:
+				var n := CharacterLook.count(key)
+				_look[key] = (int(_look.get(key, 0)) + int(pair[1]) + n) % n
+				_update_look_labels(values)
+				_refresh_preview())
+	_update_look_labels(values)
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 4)
+	col.add_child(buttons)
+	var rnd := _add_button(buttons, "Au hasard", func() -> void:
+		_look = CharacterLook.random_look()
+		_update_look_labels(values)
+		_refresh_preview())
+	var back := _add_button(buttons, "Retour", func() -> void:
+		_title_box.get_child(0).visible = true
+		_title_box.get_child(1).visible = true
+		_show_slots())
+	rnd.custom_minimum_size = Vector2(70, 20)
+	back.custom_minimum_size = Vector2(60, 20)
+	var go := _add_button(buttons, "Commencer", func() -> void:
 		var n := name_edit.text.strip_edges()
 		var f := farm_edit.text.strip_edges()
-		_identity = {"name": n if n != "" else "Fermier", "farm": f if f != "" else "La ferme", "look": chosen[0]}
+		_identity = {"name": n if n != "" else "Fermier", "farm": f if f != "" else "La ferme", "appearance": _look.duplicate()}
 		_start(false))
-	_add_button(_slot_list, "Retour", _show_slots)
+	go.custom_minimum_size = Vector2(80, 20)
+	go.add_theme_color_override("font_color", Color(0.2, 0.45, 0.15))
+	buttons.add_theme_constant_override("separation", 4)
+
+
+func _update_look_labels(values: Dictionary) -> void:
+	for key: String in values:
+		(values[key] as Label).text = CharacterLook.label(key, int(_look.get(key, 0)))
+
+
+func _refresh_preview() -> void:
+	_preview.show_look(_look)
 
 
 ## Importer une partie exportée (texte copié) dans le premier emplacement libre.
@@ -157,12 +222,13 @@ func _show_import() -> void:
 	_slot_list.add_child(msg)
 
 
-func _add_button(box: Container, text: String, callback: Callable) -> void:
+func _add_button(box: Container, text: String, callback: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(160, 26)
 	b.pressed.connect(callback)
 	box.add_child(b)
+	return b
 
 
 func _start(load_save: bool) -> void:
@@ -170,7 +236,8 @@ func _start(load_save: bool) -> void:
 		GameFlow.new_game()
 		PlayerState.player_name = str(_identity.get("name", "Fermier"))
 		PlayerState.farm_name = str(_identity.get("farm", "La ferme"))
-		PlayerState.look = int(_identity.get("look", 0))
+		PlayerState.look = 0
+		PlayerState.appearance = _identity.get("appearance", {}).duplicate()
 	_title_layer.queue_free()
 	_hud = Hud.new()
 	add_child(_hud)

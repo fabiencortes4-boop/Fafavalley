@@ -9,11 +9,48 @@ const H := 160
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	if "--portraits" in args:
+	if "--looks" in args:
+		await _looks(args[args.find("--looks") + 1])
+	elif "--portraits" in args:
 		await _portraits()
 	else:
 		await _sheet(args[0] if args.size() > 0 and not args[0].begins_with("--") else "res://characters.png")
 	get_tree().quit()
+
+
+## Planche d'apparences de l'éditeur de personnage (face et dos).
+func _looks(out: String) -> void:
+	var vp := _viewport(Vector2i(W, H))
+	var cam: Camera3D = vp.get_meta("cam")
+	var looks: Array = []
+	for i in 6:
+		var l := CharacterLook.default_look()
+		l.sex = i % 2
+		l.hair = [0, 5, 2, 4, 3, 6][i]
+		l.hair_color = [1, 4, 0, 5, 0, 2][i]
+		l.beard = [3, 0, 1, 0, 5, 0][i]
+		l.skin = [0, 2, 4, 1, 5, 3][i]
+		l.top = i
+		looks.append(l)
+	var sheet := Image.create(W * 6, H * 2, false, Image.FORMAT_RGBA8)
+	sheet.fill(Color(0.3, 0.45, 0.3))
+	for row in 2:
+		for i in looks.size():
+			var model := Models.instance(Models.path("blocky", "character-a"))
+			Models.apply_texture(model, CharacterLook.texture(looks[i]))
+			vp.add_child(model)
+			model.rotation_degrees.y = 25 if row == 0 else 180
+			var box := _aabb(model)
+			cam.size = box.size.y * 1.15
+			cam.position = box.get_center() + Vector3(0, 0, 4)
+			cam.look_at(box.get_center(), Vector3.UP)
+			for f in 3:
+				await RenderingServer.frame_post_draw
+			var img := vp.get_texture().get_image()
+			img.convert(Image.FORMAT_RGBA8)
+			sheet.blend_rect(img, Rect2i(0, 0, W, H), Vector2i(i * W, row * H))
+			model.free()
+	sheet.save_png(out)
 
 
 ## Planche des habitants en pied, avec leur tenue.
