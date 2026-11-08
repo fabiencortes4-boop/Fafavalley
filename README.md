@@ -91,6 +91,17 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   carte ; touffes d'herbe, cailloux et fleurs le long des chemins, routes et clôtures pour
   casser les bords droits. Le décor suit le relief, et les lampadaires, pontons, bornes,
   bacs, bottes de foin, étals, machines et meubles sont faits de cylindres plutôt que de cubes.
+- **Maisons adoucies** : toits galbés (pente raide au bord, arrondis au faîte) avec faîtage
+  et rives en rondins, pignons courbes, poteaux d'angle ronds, soubassement aux angles
+  arrondis, cheminée ronde en pierre, marche en demi-lune, auvent bombé, jardinières rondes.
+- **Personnages « peluche »** : les pièces cubiques des modèles Blocky (tête, buste, bras,
+  jambes) sont arrondies au chargement (`Models.rounded`) : faces subdivisées et projetées
+  sur une boîte aux arêtes arrondies, UV conservés, donc tenues, éditeur de personnage et
+  animations inchangés. Les portraits de dialogue sont rendus depuis ces mêmes modèles.
+- **Rochers de la mine** modelés à la volée (`scripts/view3d/rock_mesh.gd`) : pierre à
+  facettes teintée selon l'étage, filon coloré qui la traverse, pépites de cuivre, de fer,
+  d'or ou de charbon, grappes de cristaux (gemmes, givre, opale de feu qui rougeoie).
+  Planche de contrôle : `tools/render_rocks.tscn -- sortie.png`.
 - **Arbres fruitiers** (chez Rosalie) : cerisier, pêcher, oranger, pommier. Adultes en
   10-12 jours, ils donnent un fruit par jour dans leur saison (3 au plus) : on les secoue.
 - **Serre** (construite par Mathis : or, bois, pierre, quartz) : on y cultive tout, en

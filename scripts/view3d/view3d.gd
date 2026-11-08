@@ -1180,24 +1180,38 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 		_wall(root, side, Vector3(x0 + w - 0.5, base, z0 + j + 0.5), 0.0)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	# Soubassement en pierre
-	_st_box(st, Vector3(x0 + w / 2.0, base / 2.0, z0 + d / 2.0), Vector3(w + 0.08, base, d + 0.08), Color(0.58, 0.56, 0.54))
-	# Toit de tuiles
+	# Soubassement en pierre, aux angles arrondis
+	_st_rbox(st, Vector3(x0 + w / 2.0, base / 2.0, z0 + d / 2.0), Vector3(w + 0.14, base, d + 0.14), 0.1, Color(0.58, 0.56, 0.54))
+	# Poteaux d'angle en rondins : ils adoucissent les arêtes des murs
+	var beam := Color(0.42, 0.28, 0.18) if wall == "wall-wood" else Color(0.86, 0.82, 0.74)
+	for corner: Vector2 in [Vector2(x0, z0), Vector2(x0 + w, z0), Vector2(x0, z0 + d), Vector2(x0 + w, z0 + d)]:
+		_st_cyl(st, Vector3(corner.x, base + 0.5, corner.y), 0.075, 1.0, beam, 8)
+	# Toit de tuiles galbé
 	_roof_into(st, Vector3(x0, base + 1.0, z0), float(w), float(d), roof_color)
-	# Jardinières fleuries sous les fenêtres, marche et paillasson devant la porte
+	# Jardinières arrondies et fleuries sous les fenêtres ; devant la porte :
+	# marche en demi-lune, paillasson et auvent bombé
 	var flowers := [Color(0.92, 0.3, 0.3), Color(0.98, 0.82, 0.3), Color(0.85, 0.5, 0.9), Color(1, 1, 1)]
 	for i in w:
 		var cx := x0 + i + 0.5
 		var fz := z0 + d + 0.02
 		if i == door_col:
-			_st_box(st, Vector3(cx, 0.04, fz + 0.18), Vector3(0.62, 0.08, 0.34), Color(0.62, 0.6, 0.58))
-			_st_box(st, Vector3(cx, 0.085, fz + 0.16), Vector3(0.42, 0.01, 0.22), Color(0.7, 0.28, 0.24))
+			_st_cyl(st, Vector3(cx, 0.04, fz + 0.06), 0.36, 0.08, Color(0.62, 0.6, 0.58), 14)
+			_st_rbox(st, Vector3(cx, 0.085, fz + 0.16), Vector3(0.42, 0.01, 0.22), 0.06, Color(0.7, 0.28, 0.24))
+			_st_cyl(st, Vector3(cx, base + 0.88, fz + 0.1), 0.11, 0.74, roof_color.darkened(0.08), 10, "x")
+			for side: float in [-0.36, 0.36]:
+				_st_cyl(st, Vector3(cx + side, base + 0.78, fz + 0.05), 0.025, 0.14, beam, 6, "z")
 			continue
-		_st_box(st, Vector3(cx, base + 0.36, fz + 0.06), Vector3(0.5, 0.1, 0.14), Color(0.48, 0.32, 0.2))
+		_st_rbox(st, Vector3(cx, base + 0.36, fz + 0.06), Vector3(0.5, 0.1, 0.15), 0.05, Color(0.48, 0.32, 0.2))
 		for k in 3:
 			var col: Color = flowers[(k + cell.x + i) % flowers.size()]
-			_st_box(st, Vector3(cx - 0.15 + k * 0.15, base + 0.45, fz + 0.06), Vector3(0.09, 0.09, 0.09), col)
-			_st_box(st, Vector3(cx - 0.15 + k * 0.15, base + 0.41, fz + 0.06), Vector3(0.05, 0.05, 0.05), Color(0.3, 0.6, 0.3))
+			_st_cyl(st, Vector3(cx - 0.15 + k * 0.15, base + 0.45, fz + 0.06), 0.05, 0.07, col, 7, "y", 0.03)
+			_st_cyl(st, Vector3(cx - 0.15 + k * 0.15, base + 0.41, fz + 0.06), 0.035, 0.04, Color(0.3, 0.6, 0.3), 6)
+	# Cheminée ronde en pierre, qui traverse le toit
+	var chim := Vector3(x0 + w - 0.7, 0, z0 + 0.75)
+	var roof_here := _roof_curve((chim.z - (z0 - ROOF_O)) / (d / 2.0 + ROOF_O))
+	var chim_top := base + 1.0 + roof_here + 0.45
+	_st_cyl(st, Vector3(chim.x, (base + 1.0 + chim_top) / 2.0, chim.z), 0.15, chim_top - base - 1.0, Color(0.62, 0.55, 0.5), 10)
+	_st_cyl(st, Vector3(chim.x, chim_top + 0.03, chim.z), 0.19, 0.08, Color(0.48, 0.43, 0.4), 10)
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
@@ -1210,8 +1224,11 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 	root.add_child(mi)
 	# Lanterne près de la porte
 	var lamp := MeshInstance3D.new()
-	var bulb := BoxMesh.new()
-	bulb.size = Vector3(0.1, 0.14, 0.1)
+	var bulb := SphereMesh.new()
+	bulb.radius = 0.07
+	bulb.height = 0.15
+	bulb.radial_segments = 10
+	bulb.rings = 5
 	var lm := StandardMaterial3D.new()
 	lm.albedo_color = Color(1, 0.85, 0.5)
 	lm.emission_enabled = true
@@ -1221,11 +1238,18 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 	lamp.mesh = bulb
 	lamp.position = Vector3(x0 + door_col + 0.92, base + 0.72, z0 + d + 0.05)
 	root.add_child(lamp)
-	var chimney := _model("town", "chimney", 0.7)
-	chimney.position = Vector3(x0 + w - 0.7, base + 1.3, z0 + 0.75)
-	root.add_child(chimney)
 	if Settings.quality > 0:
-		root.add_child(_smoke(chimney.position + Vector3(0, 0.65, 0)))
+		root.add_child(_smoke(Vector3(chim.x, chim_top + 0.1, chim.z)))
+
+
+## Pavé aux angles verticaux arrondis (soubassements, jardinières...).
+func _st_rbox(st: SurfaceTool, center: Vector3, size: Vector3, radius: float, color: Color) -> void:
+	radius = minf(radius, minf(size.x, size.z) / 2.0)
+	_st_box(st, center, Vector3(size.x - radius * 2.0, size.y, size.z), color)
+	_st_box(st, center, Vector3(size.x, size.y, size.z - radius * 2.0), color)
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_st_cyl(st, center + Vector3(sx * (size.x / 2.0 - radius), 0, sz * (size.z / 2.0 - radius)), radius, size.y, color, 8)
 
 
 ## Cylindre ajouté à un maillage (poteaux, pots, tonneaux...) : axe "y"
@@ -2565,56 +2589,58 @@ func _wall(parent: Node3D, model: String, at: Vector3, rot: float) -> void:
 	parent.add_child(n)
 
 
-## Toit à deux pans, en rangées de tuiles, avec avant-toit et faîtage.
+## Toit à deux pans, en rangées de tuiles : profil galbé (pente raide au
+## bord, arrondi au faîte), large débord, faîtage et rives en rondins.
+const ROOF_H := 1.2
+const ROOF_O := 0.24  # débord
+
+
+## Hauteur du toit à la fraction `t` du bord (0) vers le faîte (1).
+static func _roof_curve(t: float) -> float:
+	return ROOF_H * (1.0 - pow(1.0 - clampf(t, 0.0, 1.0), 1.8))
+
+
 func _roof_into(st: SurfaceTool, origin: Vector3, w: float, d: float, color: Color) -> void:
-	var o := 0.22  # débord
-	var h := 1.05
-	var rows := 5
-	var x0 := origin.x - o
-	var x1 := origin.x + w + o
+	var o := ROOF_O
+	var rows := 7
+	var x0 := origin.x - o * 0.8
+	var x1 := origin.x + w + o * 0.8
 	var zm := origin.z + d / 2.0
 	for side in 2:
 		var z_edge := origin.z + d + o if side == 0 else origin.z - o
+		var shade := color.darkened(0.12 if side == 1 else 0.0)
 		for r in rows:
 			var t0 := float(r) / rows
 			var t1 := float(r + 1) / rows
 			var za := lerpf(z_edge, zm, t0)
 			var zb := lerpf(z_edge, zm, t1)
-			var ya := origin.y + h * t0
-			var yb := origin.y + h * t1
-			var shade := color.darkened(0.12 if side == 1 else 0.0)
+			# Le débord descend un peu sous le haut des murs
+			var ya := origin.y - 0.12 + (_roof_curve(t0) + 0.12 * t0)
+			var yb := origin.y - 0.12 + (_roof_curve(t1) + 0.12 * t1)
 			# Rangées de tuiles bien marquées : claire en haut, ombrée en bas
-			var lip := 0.05
-			st.set_color(shade.darkened(0.16) if r % 2 == 0 else shade.lightened(0.04))
+			var lip := 0.045
+			st.set_color(shade.darkened(0.14) if r % 2 == 0 else shade.lightened(0.05))
 			for p: Vector3 in [Vector3(x0, ya - lip, za), Vector3(x1, ya - lip, za), Vector3(x1, yb, zb), Vector3(x0, ya - lip, za), Vector3(x1, yb, zb), Vector3(x0, yb, zb)]:
 				st.add_vertex(p)
-		# Avant-toit (planche de rive)
-		_st_box(st, Vector3((x0 + x1) / 2.0, origin.y - 0.03, z_edge), Vector3(x1 - x0, 0.06, 0.06), Color(0.45, 0.3, 0.2))
-	# Pignons (couleur claire) et faîtage
+		# Rive basse en rondin
+		_st_cyl(st, Vector3((x0 + x1) / 2.0, origin.y - 0.17, z_edge), 0.05, x1 - x0, Color(0.45, 0.3, 0.2), 8, "x")
+	# Pignons (couleur claire) qui suivent la courbe du toit
 	var gable := Color(0.93, 0.86, 0.72)
 	st.set_color(gable)
+	var steps := 8
 	for gx: float in [origin.x + 0.02, origin.x + w - 0.02]:
-		for p: Vector3 in [Vector3(gx, origin.y, origin.z + d), Vector3(gx, origin.y, origin.z), Vector3(gx, origin.y + h - 0.04, zm)]:
-			st.add_vertex(p)
-	_st_box(st, Vector3((x0 + x1) / 2.0, origin.y + h + 0.02, zm), Vector3(x1 - x0, 0.08, 0.12), color.darkened(0.3))
-
-
-## Toit à deux pans (objet séparé) : bâtiments de la ferme.
-func _roof(origin: Vector3, w: float, d: float, color: Color) -> MeshInstance3D:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_roof_into(st, Vector3.ZERO, w, d, color)
-	st.generate_normals()
-	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.vertex_color_is_srgb = true
-	mat.roughness = 0.9
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mi.material_override = mat
-	mi.position = origin
-	return mi
+		var base_mid := Vector3(gx, origin.y, zm)
+		for side in 2:
+			var z_edge := origin.z + d if side == 0 else origin.z
+			for k in steps:
+				var t0 := float(k) / steps
+				var t1 := float(k + 1) / steps
+				var pa := Vector3(gx, origin.y + _roof_curve(t0) * 0.96, lerpf(z_edge, zm, t0))
+				var pb := Vector3(gx, origin.y + _roof_curve(t1) * 0.96, lerpf(z_edge, zm, t1))
+				for p: Vector3 in [base_mid, pa, pb]:
+					st.add_vertex(p)
+	# Faîtage arrondi
+	_st_cyl(st, Vector3((x0 + x1) / 2.0, origin.y + ROOF_H - 0.01, zm), 0.085, x1 - x0 + 0.04, color.darkened(0.3), 10, "x")
 
 
 # ------------------------------------------------------------ maison
@@ -3140,20 +3166,13 @@ func _sync_rocks() -> void:
 		if _rocks.has(cell):
 			continue
 		var type: String = data[cell].type
-		var model := "rock_smallC" if type == "pebbles" else "rock_smallA"
-		var rock := _model("nature", model, 2.2)
+		# Rocher modelé : pierre à facettes teintée selon l'étage, filons selon le minerai
+		var rock := Node3D.new()
+		var mi := MeshInstance3D.new()
+		mi.mesh = RockMesh.mesh(type, MineLevel.theme_for((map as MineLevel).level), _hash(cell) % 4)
+		rock.add_child(mi)
 		rock.position = _cell3d(cell)
 		rock.rotation.y = float(_hash(cell) % 628) / 100.0
-		var tint: Color = {
-			"coal": Color(0.4, 0.38, 0.42), "copper": Color(1.0, 0.65, 0.45), "iron": Color(0.7, 0.78, 0.95),
-			"gold": Color(1.0, 0.88, 0.45), "gem": Color(0.85, 0.6, 1.0),
-			"frost": Color(0.7, 0.95, 1.3), "magma": Color(1.4, 0.55, 0.3),
-		}.get(type, Color.WHITE)
-		# Pierre ordinaire : givrée ou noircie selon l'étage
-		if tint == Color.WHITE:
-			tint = {"ice": Color(0.85, 0.95, 1.15), "lava": Color(0.55, 0.42, 0.4), "deep": Color(0.6, 0.75, 0.78)}.get(MineLevel.theme_for((map as MineLevel).level), Color.WHITE)
-		if tint != Color.WHITE:
-			Models.tint(rock, tint)
 		add_child(rock)
 		_rocks[cell] = rock
 	# Échelle de descente révélée
@@ -3235,7 +3254,11 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 			"twig":
 				debris = _model("nature", "log", 1.0)
 			"stone":
-				debris = _model("nature", "rock_smallA", 1.8)
+				debris = Node3D.new()
+				var rmi := MeshInstance3D.new()
+				rmi.mesh = RockMesh.mesh("stone", "farm", _hash(cell) % 4)
+				debris.add_child(rmi)
+				debris.scale = Vector3.ONE * 0.85
 			_:
 				debris = _model("nature", "stump_old", 2.4)
 		debris.rotation.y = rot
