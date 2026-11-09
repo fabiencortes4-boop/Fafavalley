@@ -737,22 +737,32 @@ func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
 		return
 	match tool:
 		"hoe":
-			if not _can_till(cell):
+			# La houe en cuivre laboure plusieurs cases en ligne.
+			var plots: Array[Vector2i] = []
+			for k in int(item.get("area", 1)):
+				var c := cell + player.facing * k
+				if _can_till(c) and not FarmState.debris.has(c):
+					plots.append(c)
+			if plots.is_empty():
 				_gesture("strike", cell, func() -> void: Sfx.play("whoosh"))
 				return
 			if not spend_energy(energy):
 				return
 			_deferring = true
-			FarmState.till(cell)
-			# Parfois, la houe met au jour un fossile
-			var fossil := Museum.roll_find(0.015)
-			if fossil != "":
-				_drop(fossil, cell_center(cell))
-				EventBus.toast("Un fossile dans la terre : %s ! (Le musée est dans Menu > Journal.)" % GameData.item_name(fossil))
+			if FarmState.tiles.size() >= 3:
+				Tips.show("hold")
+			for c in plots:
+				FarmState.till(c)
+				# Parfois, la houe met au jour un fossile
+				var fossil := Museum.roll_find(0.015)
+				if fossil != "":
+					_drop(fossil, cell_center(c))
+					EventBus.toast("Un fossile dans la terre : %s ! (Le musée est dans Menu > Journal.)" % GameData.item_name(fossil))
 			_gesture("strike", cell, func() -> void:
 				Sfx.play("dig")
-				Fx.burst(_entities, _cell_fx_point(cell), Fx.DIRT, 14, 65.0)
-				Fx.puff(_entities, cell_center(cell), Color(0.7, 0.55, 0.4, 0.6), 1.2))
+				for c: Vector2i in plots:
+					Fx.burst(_entities, _cell_fx_point(c), Fx.DIRT, 14, 65.0)
+					Fx.puff(_entities, cell_center(c), Color(0.7, 0.55, 0.4, 0.6), 1.2))
 		"axe":
 			_gesture("strike", cell, func() -> void: Sfx.play("whoosh"))
 		"scythe":

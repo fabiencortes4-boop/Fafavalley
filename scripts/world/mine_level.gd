@@ -84,6 +84,36 @@ static func forget_all() -> void:
 	_memory_day = -1
 
 
+## Sauvegarde : la mémoire du jour suit la partie (on retrouve ses étages
+## dégagés après avoir fermé le jeu).
+static func memory_to_dict() -> Dictionary:
+	var levels := {}
+	for lvl: int in _memory:
+		var m: Dictionary = _memory[lvl]
+		levels[str(lvl)] = {
+			"broken": (m.broken as Dictionary).keys().map(func(c: Vector2i) -> Array: return [c.x, c.y]),
+			"killed": (m.killed as Dictionary).keys().map(func(c: Vector2i) -> Array: return [c.x, c.y]),
+			"ladder": [m.ladder.x, m.ladder.y],
+		}
+	return {"day": _memory_day, "levels": levels}
+
+
+static func memory_from_dict(data: Dictionary) -> void:
+	forget_all()
+	_memory_day = int(data.get("day", -1))
+	var levels: Dictionary = data.get("levels", {})
+	for key: String in levels:
+		var src: Dictionary = levels[key]
+		var m := {"broken": {}, "ladder": Vector2i(-1, -1), "killed": {}}
+		for c: Array in src.get("broken", []):
+			m.broken[Vector2i(int(c[0]), int(c[1]))] = true
+		for c: Array in src.get("killed", []):
+			m.killed[Vector2i(int(c[0]), int(c[1]))] = true
+		var l: Array = src.get("ladder", [-1, -1])
+		m.ladder = Vector2i(int(l[0]), int(l[1]))
+		_memory[int(key)] = m
+
+
 func setup(depth: int) -> void:
 	level = clampi(depth, 1, MAX_LEVEL)
 	map_id = "mine:%d" % level

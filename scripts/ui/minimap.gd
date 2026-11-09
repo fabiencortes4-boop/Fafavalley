@@ -17,6 +17,7 @@ const COLORS := {
 	"s": Color(0.8, 0.35, 0.3), ":": Color(0.93, 0.85, 0.62), "W": Color(0.75, 0.3, 0.25),
 }
 const GRASS := Color(0.45, 0.7, 0.36)
+const SEASON_GRASS := [Color(0.45, 0.7, 0.36), Color(0.42, 0.66, 0.3), Color(0.66, 0.62, 0.32), Color(0.5, 0.6, 0.42)]
 const BUILDING := Color(0.72, 0.36, 0.3)
 
 var world: WorldMap
@@ -54,9 +55,15 @@ func _paint() -> void:
 	var img := _image
 	var chars: Dictionary = map.get("_ground_chars")
 	var blocked: Dictionary = map.get("_blocked")
+	# Le plan suit les saisons : herbe rousse en automne, neige en hiver
+	var outside := not (map is MineLevel or map is InteriorMap or map is HomeMap)
+	var grass: Color = SEASON_GRASS[TimeManager.season] if outside else GRASS
+	var snowy := outside and View3D.snow_cover() > 0.0
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
-		var color: Color = COLORS.get(ch, GRASS)
+		var color: Color = COLORS.get(ch, grass)
+		if snowy and (not COLORS.has(ch) or ch in ["T", "R", "b", "g"]) and View3D.snow_at(cell):
+			color = Color(0.93, 0.95, 0.98) if not COLORS.has(ch) else Color(0.74, 0.82, 0.84)
 		if blocked.has(cell) and not COLORS.has(ch):
 			color = BUILDING
 		if map is MineLevel and ch != "#":

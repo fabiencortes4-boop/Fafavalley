@@ -465,6 +465,16 @@
 		"energy": 2,
 		"description": "Casse les rochers deux fois plus vite."
 	},
+	"copper_hoe": {
+		"name": "Houe en cuivre",
+		"type": "tool",
+		"tool": "hoe",
+		"area": 3,
+		"icon": 212,
+		"stack": 1,
+		"energy": 3,
+		"description": "Laboure 3 cases d'un coup, droit devant toi."
+	},
 	"copper_can": {
 		"name": "Arrosoir en cuivre",
 		"type": "tool",

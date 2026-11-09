@@ -1127,6 +1127,16 @@ def extend_icons(sheet):
                                      "garden_lantern", "flower_bed", "garden_fountain", "camera")]
     # 210 fragment de météorite, 211 statue dorée (ferme parfaite)
     extra += [draw_misc(k) for k in ("meteorite", "statue")]
+    # 212 houe en cuivre (la houe de base, fer recoloré)
+    hoe = sheet.crop((0, 0, T, T)).copy()
+    hp = hoe.load()
+    for y in range(T):
+        for x in range(T):
+            r, g, b, a = hp[x, y]
+            if a and b >= r and max(r, g, b) - min(r, g, b) < 70 and (r + g + b) > 200:
+                l = (r + g + b) / 765.0
+                hp[x, y] = (int(120 + 135 * l), int(40 + 150 * l), int(20 + 120 * l), a)
+    extra.append(hoe)
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

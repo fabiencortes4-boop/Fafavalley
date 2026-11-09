@@ -51,7 +51,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   petites phrases en passant, dialogues et cadeaux : Rosalie, Gaston, Odette, Lina,
   Bertrand, Mathis (charpentier), Margot (coopérative), Léon (ranch), Théo, Jules (pêcheur).
 - **Mini-carte** (en haut à gauche) : joueur, habitants, animaux ; un toucher l'agrandit
-  avec le nom des quartiers.
+  avec le nom des quartiers. Elle suit les saisons (herbe rousse, plaques de neige).
 - **Élevage** : Mathis construit le poulailler et l'étable sur les terrains de la ferme
   (or + bois + pierre, 2 jours de chantier) ; Léon vend poules, lapins, vaches et cochons ;
   Margot vend foin, brosse, seau à lait. Mangeoire à remplir, caresses et brossage
@@ -333,7 +333,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   sous un rocher, lanterne et obscurité croissante, ascenseur tous les 5 niveaux, armes
   à trouver aux niveaux 10 et 20. Chaque étage garde son état pour la journée
   (rochers cassés, escalier trouvé, monstres vaincus) : on remonte par le chemin déjà
-  dégagé, sans énergie. Aux 10 premiers étages, une corde d'urgence à côté des
+  dégagé, sans énergie (cette mémoire est enregistrée avec la partie). Aux 10 premiers étages, une corde d'urgence à côté des
   escaliers remonte d'un coup à la surface.
 - **Combat** : coups d'épée devant soi, 7 monstres (gelée, chauve-souris, rats, araignée,
   crabe, fantôme) qui sautent, volent ou poursuivent, butins à vendre. Barre de vie ;
@@ -343,7 +343,9 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   chaque matin, se ramassent à la pioche), engrais (croissance plus rapide), 4 plats
   cuisinés qui soignent bien plus que les aliments crus.
 - **Forge de Gaston** (enclume devant sa maison) : pioche renforcée (2x plus efficace),
-  arrosoir en cuivre (60 doses, arrose 3 cases), épée en fer.
+  arrosoir en cuivre (60 doses, arrose 3 cases), houe en cuivre (laboure 3 cases), épée en fer.
+- **Action maintenue** : garder le bouton Action appuyé répète le geste — on laboure,
+  arrose, sème ou fauche en avançant, la pioche et la hache frappent en rythme.
 - **Sac** (bouton « Sac ») : 12 places au départ (= barre rapide), 24 puis 36 avec le grand
   sac et le sac de voyageur (épicerie). Toucher un objet puis la case où le poser ;
   description et prix de vente affichés.

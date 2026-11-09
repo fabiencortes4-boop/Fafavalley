@@ -146,6 +146,57 @@ func _ready() -> void:
 	var last := View3D.snow_cover()
 	_check(first < middle and last < middle and middle == 1.0, "la neige tient peu à peu, puis fond (%.2f, %.2f, %.2f)" % [first, middle, last])
 	TimeManager.season = 1
+	# ---- Neige en plaques, houe en cuivre, action maintenue, mémoire de la mine
+	TimeManager.season = 3
+	TimeManager.day = 2
+	var white := 0
+	for x in 40:
+		for y in 30:
+			if View3D.snow_at(Vector2i(x, y)):
+				white += 1
+	_check(white > 300 and white < 1000, "début d'hiver : la neige tient par plaques (%d cases sur 1200)" % white)
+	TimeManager.season = 1
+	TimeManager.day = 7
+	_check(not View3D.snow_at(Vector2i(5, 5)), "pas de neige en été")
+	_main.call("_switch_to", "farm")
+	await get_tree().process_frame
+	farm = _main.call("current_map")
+	var row: Array[Vector2i] = [Vector2i(14, 16), Vector2i(14, 15), Vector2i(14, 14), Vector2i(14, 13)]
+	for c in row + [Vector2i(14, 17), Vector2i(14, 12)]:
+		FarmState.debris.erase(c)
+		FarmState.objects.erase(c)
+		FarmState.tiles.erase(c)
+	farm.call("_refresh_all")
+	farm.player.position = farm.cell_center(Vector2i(14, 17))
+	farm.player.facing = Vector2i.UP
+	Inventory.add_item("copper_hoe", 1)
+	Inventory.select(Inventory.slots.find(Inventory.slots.filter(func(sl: Variant) -> bool: return sl != null and sl.id == "copper_hoe")[0]))
+	PlayerState.energy = 200
+	farm.act_on(Vector2i(14, 16))
+	_check(FarmState.is_tilled(Vector2i(14, 16)) and FarmState.is_tilled(Vector2i(14, 15)) and FarmState.is_tilled(Vector2i(14, 14)) and not FarmState.is_tilled(Vector2i(14, 13)), "la houe en cuivre laboure 3 cases d'un coup")
+	_check(PlayerState.energy == 197, "pour 3 points d'énergie")
+	# Bouton Action maintenu : le geste se répète sur la case suivante
+	farm.player.position = farm.cell_center(Vector2i(14, 14))
+	hud.call("close_modal")
+	get_tree().paused = false
+	for i in 40:
+		await get_tree().process_frame
+	Input.action_press("use_tool")
+	for i in 90:
+		await get_tree().process_frame
+	_check(FarmState.is_tilled(Vector2i(14, 13)), "garder le bouton appuyé laboure en avançant")
+	var spent := PlayerState.energy
+	for i in 90:
+		await get_tree().process_frame
+	_check(PlayerState.energy == spent, "sans bouger, le geste ne se répète pas dans le vide")
+	Input.action_release("use_tool")
+	for c in row + [Vector2i(14, 12), Vector2i(14, 11)]:
+		FarmState.tiles.erase(c)
+	MineLevel.forget_all()
+	MineLevel.memory_from_dict(JSON.parse_string(JSON.stringify({"day": Marriage.day_number(), "levels": {"3": {"broken": [[4, 5], [6, 7]], "killed": [[2, 2]], "ladder": [9, 8]}}})))
+	var mem: Dictionary = MineLevel.memory_to_dict()
+	_check(int(mem.day) == Marriage.day_number() and (mem.levels["3"].broken as Array).size() == 2 and mem.levels["3"].ladder == [9, 8], "la mémoire de la mine suit la sauvegarde")
+	MineLevel.forget_all()
 	# ---- Mini-carte en temps réel
 	_main.call("_switch_to", "farm")
 	await get_tree().process_frame

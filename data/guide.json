@@ -1,5 +1,6 @@
 {
 	"tips": {
+		"hold": ["Garde le doigt appuyé", "Inutile de toucher le bouton à chaque case : garde le bouton Action appuyé et avance. Tu laboures, arroses, sèmes ou fauches case après case, et la pioche ou la hache frappent en rythme. À la forge, la houe et l'arrosoir en cuivre travaillent 3 cases d'un coup."],
 		"meteor": ["Une météorite !", "Les nuits d'étoiles filantes, une météorite tombe parfois à la ferme. Casse-la à la pioche (plusieurs coups) : fragments de météorite, fer, or... de quoi faire un beau bénéfice."],
 		"perfection": ["La ferme parfaite", "Journal > Ferme parfaite : album, amitiés, histoire, musée, rénovations, compétences, grotte et bilan de l'année. À 100 %, Valfleur t'offre une statue dorée."],
 		"quality": ["Qualité", "Ce produit a une étoile : il est de qualité argent, or ou cristal ! Il se vend plus cher, nourrit mieux et fait plus plaisir en cadeau. L'engrais, ta compétence, l'âge des arbres et le bonheur des animaux améliorent la qualité."],

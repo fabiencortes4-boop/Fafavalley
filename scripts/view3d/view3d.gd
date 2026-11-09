@@ -61,7 +61,7 @@ const ITEM_MODELS := {
 const TOOL_MODELS := {
 	"hoe": ["survival", "tool-hoe"], "axe": ["survival", "tool-axe"], "pickaxe": ["survival", "tool-pickaxe"],
 	"steel_pickaxe": ["survival", "tool-pickaxe-upgraded"], "watering_can": ["survival", "bucket"],
-	"copper_can": ["survival", "bucket"], "scythe": ["survival", "tool-shovel"],
+	"copper_can": ["survival", "bucket"], "copper_hoe": ["survival", "tool-hoe"], "scythe": ["survival", "tool-shovel"],
 	"rusty_sword": ["dungeon", "weapon-sword"], "iron_sword": ["dungeon", "weapon-sword"], "war_axe": ["survival", "tool-axe-upgraded"],
 	"steel_sword": ["dungeon", "weapon-sword"], "firmin_blade": ["dungeon", "weapon-sword"],
 }
@@ -2293,6 +2293,19 @@ static func snow_cover() -> float:
 	return 0.0
 
 
+## La neige tient-elle sur cette case ? Des plaques de quelques cases, qui
+## s'étendent (ou fondent) de jour en jour.
+static func snow_at(cell: Vector2i) -> bool:
+	var snow := snow_cover()
+	if snow <= 0.0:
+		return false
+	if snow >= 1.0:
+		return true
+	var n := (sin(cell.x * 1.31 + cell.y * 0.4) + cos(cell.y * 1.53 - cell.x * 0.3) + sin((cell.x + cell.y) * 0.87) + 3.0) / 6.0
+	n = clampf((n - 0.5) * 1.7 + 0.5, 0.0, 1.0) * 0.85 + float(absi(cell.x * 7349 + cell.y * 9151) % 100) / 667.0
+	return n < snow
+
+
 ## Couleur de l'herbe d'une case (avec la neige en plaques).
 func _grass_color(cell: Vector2i, colors: Dictionary) -> Color:
 	var col: Color = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
@@ -2301,10 +2314,7 @@ func _grass_color(cell: Vector2i, colors: Dictionary) -> Color:
 		return col
 	if TimeManager.season == 3 and snow < 1.0:
 		col = Color(0.46, 0.58, 0.37) if _hash(cell) % 3 != 0 else Color(0.42, 0.54, 0.34)  # herbe d'hiver
-	# Plaques : un bruit doux (les cases voisines se ressemblent)
-	var n := (sin(cell.x * 0.61) + cos(cell.y * 0.73) + sin((cell.x + cell.y) * 0.37) + 3.0) / 6.0
-	n = n * 0.8 + float(_hash(cell) % 100) / 500.0
-	if n < snow:
+	if snow_at(cell):
 		return Color(0.93, 0.95, 0.98) if _hash(cell) % 3 != 0 else Color(0.86, 0.9, 0.96)
 	return col
 

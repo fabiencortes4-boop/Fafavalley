@@ -61,6 +61,16 @@
 		},
 		"unlock": "ch4"
 	},
+	"copper_hoe": {
+		"station": "forge",
+		"upgrade": "hoe",
+		"gold": 300,
+		"ingredients": {
+			"copper_ore": 5,
+			"hardwood": 2
+		},
+		"unlock": "ch3"
+	},
 	"copper_can": {
 		"station": "forge",
 		"upgrade": "watering_can",

@@ -387,6 +387,45 @@ func _process(_delta: float) -> void:
 	_target_cell = player_cell() + player.facing
 	_cursor.position = Vector2(_target_cell * TILE)
 	_cursor.visible = not fishing.busy()
+	_repeat_action(_delta)
+
+
+# ------------------------------------------------------------ action maintenue
+## Garder le bouton Action appuyé répète le geste : on laboure, arrose,
+## sème ou fauche en avançant, et la pioche ou la hache frappent en rythme.
+const REPEAT_DELAY := 0.28
+const REPEAT_TOOLS := ["hoe", "watering_can", "scythe", "axe", "pickaxe"]
+const REPEAT_TYPES := ["seed", "fertilizer"]
+var _held_time: float = 0.0
+var _repeat_cell := Vector2i(-999, -999)
+var _repeat_alive: bool = true
+
+
+func _repeat_action(delta: float) -> void:
+	if not Input.is_action_pressed("use_tool"):
+		_held_time = 0.0
+		_repeat_cell = Vector2i(-999, -999)
+		_repeat_alive = true
+		return
+	_held_time += delta
+	if _held_time < REPEAT_DELAY or player.busy() or player.seated or fishing.busy() or _warping:
+		return
+	var tool := _holding_tool()
+	if tool not in REPEAT_TOOLS and _holding_type() not in REPEAT_TYPES:
+		return
+	var cell := _target_cell
+	if _interactables.has(cell) or _forage_sprites.has(cell) or Machines.has_pot(map_id, cell) or _spouse_at(cell):
+		return
+	if _pet != null and is_instance_valid(_pet) and _pet.position.distance_to(cell_center(cell)) < TILE * 0.8:
+		return
+	# Sur la même case, seuls les outils à plusieurs coups insistent (tant qu'ils portent).
+	if cell == _repeat_cell and (tool not in ["axe", "pickaxe"] or not _repeat_alive):
+		return
+	_repeat_cell = cell
+	_held_time = REPEAT_DELAY * 0.5
+	var energy := PlayerState.energy
+	act_on(cell)
+	_repeat_alive = player.busy() and (PlayerState.energy < energy or tool == "scythe")
 
 
 func _physics_process(_delta: float) -> void:
