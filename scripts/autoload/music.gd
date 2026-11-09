@@ -2,8 +2,8 @@ extends Node
 ## Musique d'ambiance (assets/music/, créations originales) : un morceau par
 ## lieu, la nuit au calme, la fête au village ; fondu enchaîné entre deux.
 
-const VOLUME_DB := -10.0
-const FADE := 1.5
+const VOLUME_DB := -12.0  # en fond, sans couvrir les bruitages
+const FADE := 2.5  # fondu lent entre deux morceaux
 
 var _players: Array[AudioStreamPlayer] = []
 var _active: int = 0

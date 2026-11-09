@@ -155,8 +155,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - **Ergonomie** : le bouton Action annonce ce qu'il va faire (Labourer, Parler, Entrer,
   Récolter, Descendre...) ; chaque fenêtre a une croix et se ferme en touchant à côté ;
   menu pause simplifié avec un écran Réglages ; achat par 5 dans les boutiques.
-- **Musique d'ambiance** originale (composée par `tools/build_music.py`) : ferme, village,
-  mine, intérieurs, fêtes et nuit, avec fondu enchaîné (Menu → Musique pour couper).
+- **Musique d'ambiance** originale et douce (composée par `tools/build_music.py`) : ferme,
+  village, mine, intérieurs, fêtes et nuit. Tempos lents, instruments ronds (piano
+  électrique, harpe, flûte soufflée, nappes, basse ronde), aigus filtrés, pas de batterie
+  hors fête, mélodies en phrases qui se répondent sur la gamme pentatonique, passages qui
+  respirent, réverbération stéréo ; boucles de 70 à 140 s, fondu enchaîné lent (Menu →
+  Musique pour couper).
 - **Tutoriel guidé** pour les nouvelles parties : une consigne à la fois (marcher, courrier,
   labourer, semer, arroser, histoire, village, habitants, dormir), qui avance dès que
   l'action est faite. Bouton « Passer », relançable depuis le menu.
@@ -173,7 +177,7 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   concours de pêche, chorale, balade). Le tableau d'affichage donne le calendrier.
 - **Village décoré** : jardinières fleuries, bancs, haies, puits, meules de foin,
   tonneaux, bacs à fleurs sur la place ; forêt et route qui continuent au-delà des bords.
-- Le temps passe plus vite : une journée dure environ 9 minutes.
+- Une journée (6h-2h) dure environ 11 minutes.
 - **Histoire en 5 chapitres** (bouton *Histoire*) : la source de Valfleur s'est tarie,
   la Fête des fleurs a disparu, Firmin a quitté la ferme... À toi de faire refleurir la
   vallée. Chaque chapitre propose **3 voies au choix** (cultiver, défricher, vendre,

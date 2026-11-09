@@ -14,7 +14,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_main.call("_start", false)
 	await get_tree().process_frame
-	_check(TimeManager.REAL_SECONDS_PER_TICK < 5.0, "le temps passe plus vite (10 min toutes les %.1f s)" % TimeManager.REAL_SECONDS_PER_TICK)
+	_check(TimeManager.REAL_SECONDS_PER_TICK >= 5.0 and TimeManager.REAL_SECONDS_PER_TICK <= 6.0, "une journée dure environ 11 minutes (10 min toutes les %.1f s)" % TimeManager.REAL_SECONDS_PER_TICK)
 	# ---- Lettre la veille de la Fête des semis
 	TimeManager.day = 12
 	Mail.check()
