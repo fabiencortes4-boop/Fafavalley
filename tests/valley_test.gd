@@ -146,6 +146,32 @@ func _ready() -> void:
 	var last := View3D.snow_cover()
 	_check(first < middle and last < middle and middle == 1.0, "la neige tient peu à peu, puis fond (%.2f, %.2f, %.2f)" % [first, middle, last])
 	TimeManager.season = 1
+	# ---- Mini-carte en temps réel
+	_main.call("_switch_to", "farm")
+	await get_tree().process_frame
+	var mm: Minimap = hud.get("_minimap")
+	var spot := Vector2i(14, 14)
+	FarmState.debris.erase(spot)
+	FarmState.objects.erase(spot)
+	FarmState.tiles.erase(spot)
+	mm.refresh()
+	FarmState.till(spot)
+	mm.refresh()
+	_check(_near(mm._image.get_pixelv(spot), Farm.MAP_COLORS.soil), "mini-carte : le sillon apparaît aussitôt")
+	FarmState.plant(spot, "parsnip" if GameData.crops.has("parsnip") else GameData.crops.keys()[0])
+	mm.refresh()
+	_check(_near(mm._image.get_pixelv(spot), Farm.MAP_COLORS.crop), "puis la culture plantée")
+	FarmState.tiles.erase(spot)
+	FarmState.place_object(spot, "garden_fountain")
+	mm.refresh()
+	_check(_near(mm._image.get_pixelv(spot), Farm.MAP_COLORS.decor), "un décor posé se voit sur le plan")
+	FarmState.objects.erase(spot)
+	FarmState.add_fence(FarmState.edge_between(spot, spot + Vector2i.RIGHT))
+	_check(not (_main.call("current_map") as WorldMap).minimap_lines().is_empty(), "les clôtures sont tracées sur la mini-carte")
+	_main.call("_switch_to", "village")
+	await get_tree().process_frame
+	mm.refresh()
+	_check(_near(mm._image.get_pixelv(Projects.SITES.bridge.position + Vector2i(2, 0)), Color(0.62, 0.44, 0.27)), "le pont rénové se voit au-dessus de l'étang")
 	# ---- La ferme parfaite
 	_check(Perfection.percent() < 100 and not Perfection.check(), "la ferme n'est pas encore parfaite (%d %%)" % Perfection.percent())
 	for id: String in Collections._category_of:
@@ -167,6 +193,11 @@ func _ready() -> void:
 	hud.call("close_modal")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
+
+
+## Couleurs de la mini-carte (stockées sur 8 bits) : à peu près égales.
+func _near(a: Color, b: Color) -> bool:
+	return absf(a.r - b.r) < 0.01 and absf(a.g - b.g) < 0.01 and absf(a.b - b.b) < 0.01
 
 
 func _check(ok: bool, label: String) -> void:

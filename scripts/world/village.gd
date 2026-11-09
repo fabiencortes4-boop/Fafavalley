@@ -434,6 +434,19 @@ func _bridge(cell: Vector2i) -> bool:
 	return Projects.state("bridge") == "done" and (Projects.SITES.bridge as Rect2i).has_point(cell)
 
 
+## Mini-carte : les chantiers de rénovation et le pont de l'étang.
+func minimap_color(cell: Vector2i) -> Color:
+	var id := Projects.site_at(cell)
+	if id == "":
+		return Color(0, 0, 0, 0)
+	match Projects.state(id):
+		"works":
+			return Color(0.88, 0.7, 0.45)
+		"done":
+			return Color(0.62, 0.44, 0.27) if id == "bridge" else Color(0.72, 0.36, 0.3)
+	return Color(0, 0, 0, 0) if id == "bridge" else Color(0.55, 0.52, 0.48)  # ruines
+
+
 func _ground_tile(cell: Vector2i, ch: String) -> int:
 	if _bridge(cell):
 		return WorldTiles.PATH_INNER

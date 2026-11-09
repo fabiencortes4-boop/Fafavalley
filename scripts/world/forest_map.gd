@@ -117,6 +117,15 @@ func _after_build() -> void:
 static var _spots: Array = []
 
 ## Emplacements des arbres de la clairière : [case, essence].
+## Mini-carte : arbres à bois abattus, souches et jeunes pousses.
+func minimap_color(cell: Vector2i) -> Color:
+	if Woods.trees.has(cell):
+		if Woods.is_stump(cell):
+			return Color(0.45, 0.3, 0.18)
+		return Color(0.2, 0.42, 0.26) if Woods.stage(cell) >= 3 else Color(0.4, 0.68, 0.32)
+	return Color(0, 0, 0, 0)
+
+
 static func lumber_spots() -> Array:
 	if _spots.is_empty():
 		for y in MAP.size():

@@ -2,7 +2,9 @@ class_name Minimap
 extends Control
 ## Mini-carte du lieu actuel : plan simplifié, joueur (rouge), habitants
 ## (jaune), animaux (blanc). Un toucher l'agrandit (avec les quartiers),
-## un second la referme.
+## un second la referme. Elle suit le terrain en temps réel : sillons,
+## cultures, objets posés, bâtiments, chantiers, arbres coupés ou replantés
+## (chaque carte peint ses changements : WorldMap.minimap_color).
 
 const SMALL_MAX := Vector2(92, 60)
 const COLORS := {
@@ -20,7 +22,10 @@ const BUILDING := Color(0.72, 0.36, 0.3)
 var world: WorldMap
 var big: bool = false
 var _texture: ImageTexture
+var _image: Image
 var _map_size: Vector2i
+const REFRESH := 0.35  # secondes entre deux mises à jour du plan
+var _refresh_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -35,10 +40,20 @@ func _ready() -> void:
 
 func setup(map: WorldMap) -> void:
 	world = map
+	_map_size = map.get("_map_size")
+	_image = Image.create(_map_size.x, _map_size.y, false, Image.FORMAT_RGBA8)
+	_paint()
+	_texture = ImageTexture.create_from_image(_image)
+	big = false
+	_layout()
+
+
+## Plan de la carte : le sol, puis ce qui change (cultures, objets, chantiers...).
+func _paint() -> void:
+	var map := world
+	var img := _image
 	var chars: Dictionary = map.get("_ground_chars")
 	var blocked: Dictionary = map.get("_blocked")
-	_map_size = map.get("_map_size")
-	var img := Image.create(_map_size.x, _map_size.y, false, Image.FORMAT_RGBA8)
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
 		var color: Color = COLORS.get(ch, GRASS)
@@ -48,10 +63,10 @@ func setup(map: WorldMap) -> void:
 			color = Color(0.55, 0.48, 0.4)
 		if (map is PortMap or map is SeaMap) and ch == "#":
 			color = Color(0.62, 0.44, 0.27)  # pontons et pont de la barque
+		var live: Color = map.minimap_color(cell)
+		if live.a > 0.0:
+			color = live
 		img.set_pixel(cell.x, cell.y, color)
-	_texture = ImageTexture.create_from_image(img)
-	big = false
-	_layout()
 
 
 func _layout() -> void:
@@ -79,6 +94,19 @@ func _process(delta: float) -> void:
 	if _redraw_timer <= 0.0 and world != null and is_instance_valid(world):
 		_redraw_timer = 0.16
 		queue_redraw()
+	# Le terrain a pu changer (on plante, on bâtit, on coupe...)
+	_refresh_timer -= delta
+	if _refresh_timer <= 0.0 and _image != null and world != null and is_instance_valid(world):
+		_refresh_timer = REFRESH
+		refresh()
+
+
+## Remet le plan à jour tout de suite.
+func refresh() -> void:
+	if _image == null or world == null or not is_instance_valid(world):
+		return
+	_paint()
+	_texture.update(_image)
 
 
 func _draw() -> void:
@@ -89,6 +117,9 @@ func _draw() -> void:
 	draw_texture_rect(_texture, Rect2(Vector2(2, 2), size - Vector2(4, 4)), false, Color(1, 1, 1, 0.95))
 	var to_map := func(p: Vector2) -> Vector2:
 		return Vector2(2, 2) + p / WorldMap.TILE * c
+	# Traits (clôtures posées sur les bords des cases)
+	for seg: Array in world.minimap_lines():
+		draw_line(Vector2(2, 2) + (seg[0] as Vector2) * c, Vector2(2, 2) + (seg[1] as Vector2) * c, Color(0.5, 0.33, 0.18), maxf(1.0, c * 0.35))
 	# Habitants et animaux
 	var entities: Node = world.get("_entities")
 	for child in entities.get_children():

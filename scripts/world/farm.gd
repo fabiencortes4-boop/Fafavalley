@@ -927,6 +927,69 @@ func _on_day_started(day: int, season: int, year: int) -> void:
 	_refresh_all()
 
 
+# ------------------------------------------------------------ mini-carte
+const MAP_COLORS := {
+	"soil": Color(0.6, 0.43, 0.28), "wet": Color(0.42, 0.3, 0.2),
+	"crop": Color(0.3, 0.66, 0.22), "ripe": Color(0.98, 0.78, 0.25),
+	"weed": Color(0.24, 0.48, 0.2), "twig": Color(0.5, 0.36, 0.22), "stump": Color(0.45, 0.3, 0.18),
+	"stone": Color(0.58, 0.58, 0.6), "meteorite": Color(0.5, 0.32, 0.66),
+	"tree": Color(0.18, 0.46, 0.22), "sapling": Color(0.4, 0.68, 0.32), "path_wood": Color(0.78, 0.58, 0.36),
+	"path_stone": Color(0.72, 0.72, 0.74), "sprinkler": Color(0.4, 0.62, 0.95), "decor": Color(0.92, 0.6, 0.72),
+	"statue": Color(1.0, 0.82, 0.25), "scarecrow": Color(0.88, 0.76, 0.4), "object": Color(0.55, 0.45, 0.4),
+	"glass": Color(0.78, 0.92, 0.98), "works": Color(0.88, 0.7, 0.45),
+}
+
+
+func minimap_color(cell: Vector2i) -> Color:
+	if FarmState.debris.has(cell):
+		return MAP_COLORS.get(str(FarmState.debris[cell].type), MAP_COLORS.stone)
+	if FarmState.objects.has(cell):
+		var obj := str(FarmState.objects[cell])
+		match obj:
+			"tree":
+				return MAP_COLORS.tree if FarmState.tree_stage(cell) >= 2 else MAP_COLORS.sapling
+			"wood_tree":
+				if Woods.is_stump(cell, "farm"):
+					return MAP_COLORS.stump
+				return MAP_COLORS.tree if Woods.stage(cell, "farm") >= 3 else MAP_COLORS.sapling
+			"path_wood", "path_stone", "scarecrow":
+				return MAP_COLORS[obj]
+			"sprinkler", "quality_sprinkler":
+				return MAP_COLORS.sprinkler
+			"garden_bench", "garden_lantern", "flower_bed", "garden_fountain":
+				return MAP_COLORS.decor
+			"golden_statue":
+				return MAP_COLORS.statue
+			_:
+				return MAP_COLORS.object
+	if FarmState.tiles.has(cell):
+		var stage := FarmState.crop_stage(cell)
+		if stage < 0:
+			return MAP_COLORS.wet if FarmState.is_watered(cell) else MAP_COLORS.soil
+		var ripe: bool = stage >= GameData.crop(FarmState.get_crop(cell)).get("stage_days", []).size()
+		return MAP_COLORS.ripe if ripe else MAP_COLORS.crop
+	# Bâtiments d'élevage et serre : en chantier, vitrée, ou terrain libre
+	for id: String in plots:
+		var r := Rect2i(plots[id].cell, plots[id].size)
+		if not r.has_point(cell):
+			continue
+		if Animals.under_construction(id):
+			return MAP_COLORS.works
+		if id == "greenhouse" and Animals.is_built(id) and _blocked.has(cell):
+			return MAP_COLORS.glass
+	return Color(0, 0, 0, 0)
+
+
+func minimap_lines() -> Array:
+	var out: Array = []
+	for edge: String in FarmState.fences:
+		var parts := FarmState.edge_parts(edge)
+		var c: Vector2i = parts[1]
+		var a := Vector2(c)
+		out.append([a, a + (Vector2.RIGHT if parts[0] else Vector2.DOWN)])
+	return out
+
+
 func _refresh_all() -> void:
 	_soil.clear()
 	_objects.clear()

@@ -307,6 +307,17 @@ func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell * TILE) + Vector2(TILE / 2.0, TILE * 0.75)
 
 
+## Mini-carte : couleur de ce qui a changé sur une case (cultures, objets,
+## chantiers...), ou transparent pour garder la couleur du sol.
+func minimap_color(_cell: Vector2i) -> Color:
+	return Color(0, 0, 0, 0)
+
+
+## Mini-carte : traits à dessiner, en cases ([[début, fin], ...]).
+func minimap_lines() -> Array:
+	return []
+
+
 func is_water(cell: Vector2i) -> bool:
 	return _ground_chars.get(cell, "") == "~"
 
