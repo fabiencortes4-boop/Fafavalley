@@ -85,6 +85,7 @@ func reset() -> void:
 	chests.clear()
 	debris.clear()
 	trees.clear()
+	fences.clear()
 
 
 func is_tilled(cell: Vector2i) -> bool:
@@ -110,6 +111,46 @@ func water(cell: Vector2i) -> void:
 ## Objets posés sur lesquels on marche (chemins)
 const WALKABLE_OBJECTS := ["path_wood", "path_stone"]
 
+## Clôtures : posées sur les bords des cases, pas au milieu. Clé « h:x,y »
+## (bord du haut de la case x,y) ou « v:x,y » (bord gauche de la case).
+signal fences_changed
+var fences: Dictionary = {}
+
+
+## Le bord commun à deux cases voisines ("" si elles ne se touchent pas).
+static func edge_between(a: Vector2i, b: Vector2i) -> String:
+	match b - a:
+		Vector2i.UP:
+			return "h:%d,%d" % [a.x, a.y]
+		Vector2i.DOWN:
+			return "h:%d,%d" % [b.x, b.y]
+		Vector2i.LEFT:
+			return "v:%d,%d" % [a.x, a.y]
+		Vector2i.RIGHT:
+			return "v:%d,%d" % [b.x, b.y]
+	return ""
+
+
+## [horizontal ?, case] d'un bord.
+static func edge_parts(edge: String) -> Array:
+	var xy := edge.substr(2).split(",")
+	return [edge.begins_with("h"), Vector2i(int(xy[0]), int(xy[1]))]
+
+
+func add_fence(edge: String) -> bool:
+	if edge == "" or fences.has(edge):
+		return false
+	fences[edge] = true
+	fences_changed.emit()
+	return true
+
+
+func remove_fence(edge: String) -> bool:
+	if not fences.erase(edge):
+		return false
+	fences_changed.emit()
+	return true
+
 
 func place_object(cell: Vector2i, id: String) -> void:
 	objects[cell] = id
@@ -118,16 +159,6 @@ func place_object(cell: Vector2i, id: String) -> void:
 		slots.resize(CHEST_SIZE)
 		chests[cell] = slots
 	EventBus.farm_tile_changed.emit(cell)
-	_refresh_neighbours(cell, id)
-
-
-## Une clôture se relie à ses voisines : elles se redessinent aussi.
-func _refresh_neighbours(cell: Vector2i, id: String) -> void:
-	if id != "fence":
-		return
-	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
-		if objects.get(cell + d) == "fence":
-			EventBus.farm_tile_changed.emit(cell + d)
 
 
 func remove_object(cell: Vector2i) -> String:
@@ -135,7 +166,6 @@ func remove_object(cell: Vector2i) -> String:
 	objects.erase(cell)
 	chests.erase(cell)
 	EventBus.farm_tile_changed.emit(cell)
-	_refresh_neighbours(cell, id)
 	return id
 
 
@@ -359,7 +389,7 @@ func to_dict() -> Dictionary:
 	var orchard := {}
 	for cell: Vector2i in trees:
 		orchard["%d,%d" % [cell.x, cell.y]] = trees[cell].duplicate()
-	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs, "chests": boxes, "debris": junk, "trees": orchard}
+	return {"tiles": out, "shipping": shipping.duplicate(true), "objects": objs, "chests": boxes, "debris": junk, "trees": orchard, "fences": fences.keys()}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -381,7 +411,13 @@ func from_dict(data: Dictionary) -> void:
 	var objs: Dictionary = data.get("objects", {})
 	for key: String in objs:
 		var parts := key.split(",")
-		objects[Vector2i(int(parts[0]), int(parts[1]))] = str(objs[key])
+		var c := Vector2i(int(parts[0]), int(parts[1]))
+		if str(objs[key]) == "fence":
+			fences["h:%d,%d" % [c.x, c.y + 1]] = true  # ancienne clôture « au milieu » : posée sur le bord du bas
+			continue
+		objects[c] = str(objs[key])
+	for edge: Variant in data.get("fences", []):
+		fences[str(edge)] = true
 	var junk: Dictionary = data.get("debris", {})
 	for key: String in junk:
 		var parts := key.split(",")

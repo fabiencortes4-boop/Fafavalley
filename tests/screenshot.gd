@@ -215,9 +215,9 @@ func _ready() -> void:
 			# Clôture, chemins et arbres à bois devant la maison
 			FarmState.debris.clear()
 			for x in range(9, 16):
-				FarmState.place_object(Vector2i(x, 10), "fence")
-			FarmState.place_object(Vector2i(9, 11), "fence")
-			FarmState.place_object(Vector2i(9, 12), "fence")
+				FarmState.add_fence("h:%d,10" % x)
+			FarmState.add_fence("v:9,10")
+			FarmState.add_fence("v:9,11")
 			for y in range(7, 13):
 				FarmState.place_object(Vector2i(7, y), "path_wood")
 			for x in range(10, 15):

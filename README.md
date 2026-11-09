@@ -144,8 +144,9 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   aussi 10 bois dur.
 - **Arbres à bois à la ferme** : pomme de pin, boule de platane et gland se plantent aussi
   sur l'herbe de la ferme (mêmes stades, même abattage, souche, chute de l'arbre).
-- **Clôtures et chemins** (Fabrication > Ferme) : clôture en bois (les poteaux se relient
-  à leurs voisins, on ne la traverse pas), chemin de planches et chemin pavé (on y marche,
+- **Clôtures et chemins** (Fabrication > Ferme) : clôture en bois posée sur le bord entre
+  le joueur et la case visée (poteaux aux coins, partagés entre tronçons ; collision fine le
+  long du bord, la case reste libre), chemin de planches et chemin pavé (on y marche,
   les herbes folles n'y poussent pas) ; la pioche les reprend.
 - **Moins cubique, suite** : parois de la mine en roche irrégulière (plus sombres que les
   rochers à miner), cristaux de glace pointus, animaux à l'ombrage lisse, lits et tables de

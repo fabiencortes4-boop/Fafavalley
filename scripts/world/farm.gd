@@ -112,6 +112,8 @@ func _after_build() -> void:
 	_objects.z_index = -1
 	add_child(_objects)
 	EventBus.farm_tile_changed.connect(_refresh_cell)
+	FarmState.fences_changed.connect(_refresh_fences)
+	_refresh_fences()
 	if not PlayerState.flags.has("farm_debris"):
 		PlayerState.flags["farm_debris"] = true
 		_scatter_debris(DEBRIS_COUNT)
@@ -184,6 +186,9 @@ func _act_on_ground(cell: Vector2i) -> bool:
 			_plant(cell, str(item.get("crop", "")))
 			return true
 		"placeable":
+			if str(item.place) == "fence":
+				_place_fence(cell)
+				return true
 			if _can_place(cell):
 				_deferring = true
 				FarmState.place_object(cell, str(item.place))
@@ -324,6 +329,60 @@ func _plant_tree(cell: Vector2i, type: String) -> void:
 		EventBus.toast("%s planté ! Adulte dans %d jours." % [info.name, int(info.grow_days)])
 	else:
 		_deferring = false
+
+
+# ------------------------------------------------------------ clôtures
+var _fence_layer: Node2D
+
+
+## Le bord visé : entre le joueur et la case touchée (ou devant lui).
+func _fence_edge(cell: Vector2i) -> String:
+	var from := player_cell()
+	var edge := FarmState.edge_between(from, cell)
+	return edge if edge != "" else FarmState.edge_between(from, from + player.facing)
+
+
+func _place_fence(cell: Vector2i) -> void:
+	var edge := _fence_edge(cell)
+	if edge == "":
+		return
+	if FarmState.fences.has(edge):
+		EventBus.toast("Il y a déjà une clôture ici. (La pioche la reprend.)")
+		return
+	var parts := FarmState.edge_parts(edge)
+	var c: Vector2i = parts[1]
+	var other: Vector2i = c + (Vector2i.UP if parts[0] else Vector2i.LEFT)
+	if not (_ground_chars.has(c) or _ground_chars.has(other)) or _blocked.has(c) and _blocked.has(other):
+		return
+	FarmState.add_fence(edge)
+	Inventory.remove_from_slot(Inventory.selected, 1)
+	_gesture("bend", cell, func() -> void: Sfx.play("drop"))
+
+
+## Collisions fines le long des bords clôturés, et leur dessin en 2D.
+func _refresh_fences() -> void:
+	if _fence_layer != null:
+		_fence_layer.queue_free()
+	_fence_layer = Node2D.new()
+	add_child(_fence_layer)
+	var body := StaticBody2D.new()
+	_fence_layer.add_child(body)
+	for edge: String in FarmState.fences:
+		var parts := FarmState.edge_parts(edge)
+		var c: Vector2i = parts[1]
+		var a := Vector2(c * TILE)
+		var b := a + (Vector2(TILE, 0) if parts[0] else Vector2(0, TILE))
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(TILE + 2, 4) if parts[0] else Vector2(4, TILE + 2)
+		shape.shape = rect
+		shape.position = (a + b) / 2.0
+		body.add_child(shape)
+		var line := Line2D.new()
+		line.points = [a, b]
+		line.width = 3.0
+		line.default_color = Color(0.6, 0.42, 0.26)
+		_fence_layer.add_child(line)
 
 
 ## Arbre à bois planté à la ferme (pin, platane, chêne).
@@ -572,6 +631,14 @@ func _can_place(cell: Vector2i) -> bool:
 
 ## La pioche ramasse les objets posés (arroseurs).
 func _use_pickaxe(cell: Vector2i, energy: int) -> void:
+	var edge := _fence_edge(cell)
+	if FarmState.fences.has(edge):
+		if Inventory.add_item("fence", 1) > 0:
+			EventBus.toast("Inventaire plein !")
+			return
+		FarmState.remove_fence(edge)
+		_gesture("strike", cell, func() -> void: Sfx.play("pickup"))
+		return
 	if _hit_debris(cell, "pickaxe", energy):
 		return
 	if not FarmState.objects.has(cell) or FarmState.objects[cell] in ["tree", "wood_tree"]:
@@ -806,8 +873,6 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.QUALITY_SPRINKLER))
 		"chest":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.CHEST))
-		"fence":
-			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.FENCE_MID))
 		"path_wood", "path_stone":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.COBBLES))
 		"wood_tree":

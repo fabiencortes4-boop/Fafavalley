@@ -112,6 +112,8 @@ func setup(world: WorldMap) -> void:
 		Woods.hit.connect(_on_lumber_hit)
 		Woods.felled.connect(_on_lumber_felled)
 	if map is Farm:
+		_build_farm_fences()
+		FarmState.fences_changed.connect(_build_farm_fences)
 		Woods.hit.connect(_on_lumber_hit)
 		Woods.felled.connect(_on_lumber_felled)
 		_refresh_farm_all()
@@ -890,26 +892,37 @@ func _lumber_model_node(cell: Vector2i, place: String) -> Node3D:
 	return model
 
 
-## Clôture : un poteau rond, et des lisses vers les clôtures voisines.
-func _fence_node(cell: Vector2i) -> Node3D:
+## Clôtures de la ferme, sur les bords des cases : un poteau rond à chaque
+## coin (partagé entre les tronçons qui s'y rejoignent), deux lisses le long
+## de chaque bord. Un seul maillage, refait quand on pose ou reprend une clôture.
+var _fence_root: Node3D
+
+
+func _build_farm_fences() -> void:
+	if _fence_root != null and is_instance_valid(_fence_root):
+		_fence_root.queue_free()
+	_fence_root = null
+	if FarmState.fences.is_empty():
+		return
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var wood := Color(0.62, 0.43, 0.27)
-	_st_cyl(st, Vector3(0, 0.3, 0), 0.065, 0.6, wood, 8)
-	_st_cyl(st, Vector3(0, 0.62, 0), 0.075, 0.04, wood.darkened(0.15), 8)
-	var any := false
-	for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-		if FarmState.objects.get(cell + d) != "fence":
-			continue
-		any = true
-		var mid := Vector3(d.x, 0, d.y) * 0.25
+	var posts: Dictionary = {}
+	for edge: String in FarmState.fences:
+		var parts := FarmState.edge_parts(edge)
+		var c: Vector2i = parts[1]
+		var a := Vector3(c.x, 0, c.y)
+		var dir := Vector3(1, 0, 0) if parts[0] else Vector3(0, 0, 1)
+		posts[a] = true
+		posts[a + dir] = true
 		for y: float in [0.24, 0.46]:
-			_st_box(st, mid + Vector3(0, y, 0), Vector3(0.5 if d.x != 0 else 0.06, 0.07, 0.06 if d.x != 0 else 0.5), wood.lightened(0.05))
-	if not any:
-		# Clôture seule : deux courtes lisses en croix pour qu'elle se lise
-		for y: float in [0.24, 0.46]:
-			_st_box(st, Vector3(0, y, 0), Vector3(0.5, 0.07, 0.06), wood.lightened(0.05))
-	return _vc_mesh(st)
+			_st_box(st, a + dir * 0.5 + Vector3(0, y, 0), Vector3(1.0, 0.07, 0.06) if parts[0] else Vector3(0.06, 0.07, 1.0), wood.lightened(0.05))
+	for p: Vector3 in posts:
+		_st_cyl(st, p + Vector3(0, 0.3, 0), 0.065, 0.6, wood, 8)
+		_st_cyl(st, p + Vector3(0, 0.62, 0), 0.075, 0.04, wood.darkened(0.15), 8)
+	_fence_root = Node3D.new()
+	_fence_root.add_child(_vc_mesh(st))
+	add_child(_fence_root)
 
 
 ## Chemin : trois planches, ou des pavés ronds de tailles variées.
@@ -3519,8 +3532,6 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 		"wood_tree":
 			if Woods.farm.has(cell):
 				node.add_child(_lumber_model_node(cell, "farm"))
-		"fence":
-			node.add_child(_fence_node(cell))
 		"path_wood", "path_stone":
 			node.add_child(_path_node(cell, str(FarmState.objects[cell])))
 		var other:

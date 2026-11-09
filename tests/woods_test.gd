@@ -136,9 +136,23 @@ func _ready() -> void:
 	_check(Crafting.craft("fence") and Inventory.count_of("fence") == 2, "fabriquer des clôtures (par 2)")
 	_check(Crafting.craft("path_stone") and Inventory.count_of("path_stone") == 4, "fabriquer des pavés (par 4)")
 	FarmState.place_object(spot, "path_stone")
-	FarmState.place_object(spot + Vector2i.RIGHT, "fence")
 	await get_tree().process_frame
-	_check(farm.is_walkable(spot) and not farm.is_walkable(spot + Vector2i.RIGHT), "on marche sur le chemin, pas à travers la clôture")
+	_check(farm.is_walkable(spot), "on marche sur le chemin")
+	# Clôture posée sur le bord entre le joueur et la case visée (pas au milieu)
+	farm.player.position = farm.cell_center(spot)
+	Inventory.select(_slot_of(func(id: String) -> bool: return id == "fence"))
+	farm.act_on(spot + Vector2i.RIGHT)
+	await get_tree().create_timer(0.6).timeout
+	_check(FarmState.fences.has("v:%d,%d" % [spot.x + 1, spot.y]) and farm.is_walkable(spot + Vector2i.RIGHT), "la clôture se pose sur le bord de la case, la case reste libre")
+	# Le joueur ne la traverse pas
+	farm.player.position = farm.cell_center(spot)
+	for i in 40:
+		farm.player.velocity = Vector2(80, 0)
+		farm.player.move_and_slide()
+	_check(farm.player.position.x < (spot.x + 1) * 16, "on ne traverse pas la clôture (x = %.1f)" % farm.player.position.x)
+	var saved_fences := FarmState.to_dict()
+	FarmState.from_dict(saved_fences)
+	_check(FarmState.fences.size() == 1, "les clôtures sont sauvegardées")
 	_check(Animals.data.buildings.barn.materials.has("hardwood"), "l'étable demande du bois dur")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
