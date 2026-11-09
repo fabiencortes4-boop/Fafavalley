@@ -106,6 +106,40 @@ func _ready() -> void:
 	var had_axe := Inventory.count_of("axe")
 	_check(Crafting.missing("steel_axe").is_empty(), "la hache renforcée : 12 minerais de fer, 5 bois dur, 500 or")
 	_check(Crafting.craft("steel_axe") and Inventory.count_of("steel_axe") == 1 and Inventory.count_of("axe") == had_axe - 1, "la hache renforcée remplace la hache")
+	# ---- À la ferme : arbres à bois, clôtures et chemins
+	_main.call("_switch_to", "farm")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var farm: Farm = _main.call("current_map")
+	FarmState.debris.clear()
+	var spot := Vector2i(20, 14)
+	farm.player.position = farm.cell_center(spot + Vector2i.DOWN)
+	Inventory.add_item("acorn", 1)
+	Inventory.select(_slot_of(func(id: String) -> bool: return id == "acorn"))
+	farm.act_on(spot)
+	await get_tree().create_timer(0.6).timeout
+	_check(FarmState.objects.get(spot) == "wood_tree" and Woods.farm.has(spot) and not farm.is_walkable(spot), "un gland se plante à la ferme")
+	for d in int(Woods.TYPES.oak.grow):
+		Woods.new_day()
+	_check(Woods.stage(spot, "farm") == 3, "le chêne de la ferme pousse")
+	var got: Array = []
+	for i in 40:
+		var r3 := Woods.chop(spot, 3, spot + Vector2i.DOWN, "farm")
+		got.append_array(r3.drops)
+		if r3.done and not Woods.farm.has(spot):
+			break
+	_check(got.count("wood") >= 15 and got.count("hardwood") >= 2, "abattu puis dessouché à la ferme : bois et bois dur")
+	FarmState.remove_object(spot)
+	_check(farm.is_walkable(spot), "la case de la ferme est libre")
+	Inventory.add_item("stone", 3)
+	Inventory.add_item("wood", 5)
+	_check(Crafting.craft("fence") and Inventory.count_of("fence") == 2, "fabriquer des clôtures (par 2)")
+	_check(Crafting.craft("path_stone") and Inventory.count_of("path_stone") == 4, "fabriquer des pavés (par 4)")
+	FarmState.place_object(spot, "path_stone")
+	FarmState.place_object(spot + Vector2i.RIGHT, "fence")
+	await get_tree().process_frame
+	_check(farm.is_walkable(spot) and not farm.is_walkable(spot + Vector2i.RIGHT), "on marche sur le chemin, pas à travers la clôture")
+	_check(Animals.data.buildings.barn.materials.has("hardwood"), "l'étable demande du bois dur")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
 

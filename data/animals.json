@@ -21,7 +21,8 @@
 			"price": 6000,
 			"materials": {
 				"wood": 200,
-				"stone": 100
+				"stone": 100,
+				"hardwood": 10
 			},
 			"capacity": 4,
 			"days": 2,
@@ -38,7 +39,8 @@
 			"materials": {
 				"wood": 200,
 				"stone": 100,
-				"quartz": 5
+				"quartz": 5,
+				"hardwood": 10
 			},
 			"capacity": 0,
 			"days": 3,

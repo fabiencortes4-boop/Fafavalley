@@ -116,6 +116,31 @@ static func mesh(type: String, theme: String, variant: int) -> ArrayMesh:
 	return out
 
 
+## Paroi de la mine : un haut bloc de roche irrégulier (et un second, plus
+## petit, posé de travers dessus), aux couleurs de l'étage. Les blocs voisins
+## se chevauchent un peu : la paroi paraît continue, sans arêtes de cube.
+static func wall(theme: String, variant: int) -> ArrayMesh:
+	var key := "wall|%s|%d" % [theme, variant]
+	if _cache.has(key):
+		return _cache[key]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(key)
+	# Plus sombre que les rochers à miner : on voit tout de suite ce qui se casse
+	var base: Color = STONE.get(theme, STONE.earth).darkened(0.32)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_boulder(st, Vector3.ZERO, Vector3(0.5, 1.55, 0.5), base, "wall", rng)
+	_boulder(st, Vector3(rng.randf_range(-0.12, 0.12), 0.75, rng.randf_range(-0.12, 0.12)), Vector3(0.36, 0.8, 0.36), base.lightened(0.04), "wall", rng)
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.95
+	st.set_material(mat)
+	var out := st.commit()
+	_cache[key] = out
+	return out
+
+
 ## Bloc de pierre : icosphère bosselée, aplatie dessous, teinte par facette
 ## (dessus plus clair, givré dans les étages de glace). Renvoie les facettes.
 static func _boulder(st: SurfaceTool, center: Vector3, size: Vector3, color: Color, theme: String, rng: RandomNumberGenerator, vein: Color = Color(0, 0, 0, 0)) -> Array:

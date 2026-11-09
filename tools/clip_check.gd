@@ -98,6 +98,8 @@ func _in_house(n: Node, houses: Array) -> bool:
 
 
 func _is_actor(n: Node, view: Node) -> bool:
+	if view.get("_furniture_root") != null and (view.get("_furniture_root") as Node).is_ancestor_of(n):
+		return false
 	var p := n.get_parent()
 	while p != null and p != view:
 		if p.get_parent() == view and p.name != "Static" and p != view.get("_static"):

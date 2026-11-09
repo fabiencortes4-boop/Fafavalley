@@ -45,6 +45,7 @@ func _ready() -> void:
 	Inventory.add_gold(10000)
 	Inventory.add_item("wood", 200)
 	Inventory.add_item("stone", 100)
+	Inventory.add_item("hardwood", 10)
 	Inventory.add_item("quartz", 5)
 	_check(Animals.start_construction("greenhouse"), "on commande la serre")
 	for i in 3:

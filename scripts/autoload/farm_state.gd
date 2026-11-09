@@ -107,6 +107,10 @@ func water(cell: Vector2i) -> void:
 		EventBus.farm_tile_changed.emit(cell)
 
 
+## Objets posés sur lesquels on marche (chemins)
+const WALKABLE_OBJECTS := ["path_wood", "path_stone"]
+
+
 func place_object(cell: Vector2i, id: String) -> void:
 	objects[cell] = id
 	if id == "chest":
@@ -114,6 +118,16 @@ func place_object(cell: Vector2i, id: String) -> void:
 		slots.resize(CHEST_SIZE)
 		chests[cell] = slots
 	EventBus.farm_tile_changed.emit(cell)
+	_refresh_neighbours(cell, id)
+
+
+## Une clôture se relie à ses voisines : elles se redessinent aussi.
+func _refresh_neighbours(cell: Vector2i, id: String) -> void:
+	if id != "fence":
+		return
+	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if objects.get(cell + d) == "fence":
+			EventBus.farm_tile_changed.emit(cell + d)
 
 
 func remove_object(cell: Vector2i) -> String:
@@ -121,6 +135,7 @@ func remove_object(cell: Vector2i) -> String:
 	objects.erase(cell)
 	chests.erase(cell)
 	EventBus.farm_tile_changed.emit(cell)
+	_refresh_neighbours(cell, id)
 	return id
 
 

@@ -211,6 +211,24 @@ func _ready() -> void:
 					for i in 30:
 						if Woods.chop(fc, 1, fm2.player_cell()).done:
 							break
+		if "--yard" in args:
+			# Clôture, chemins et arbres à bois devant la maison
+			FarmState.debris.clear()
+			for x in range(9, 16):
+				FarmState.place_object(Vector2i(x, 10), "fence")
+			FarmState.place_object(Vector2i(9, 11), "fence")
+			FarmState.place_object(Vector2i(9, 12), "fence")
+			for y in range(7, 13):
+				FarmState.place_object(Vector2i(7, y), "path_wood")
+			for x in range(10, 15):
+				FarmState.place_object(Vector2i(x, 12), "path_stone")
+			var k := 0
+			for c: Vector2i in [Vector2i(11, 8), Vector2i(13, 8), Vector2i(15, 8), Vector2i(17, 9)]:
+				Woods.plant(c, ["pine", "plane", "oak", "pine"][k], "farm")
+				Woods.farm[c].age = [10, 3, 10, 1][k]
+				FarmState.place_object(c, "wood_tree")
+				k += 1
+			main.call("current_map").call("_refresh_all")
 		if "--board" in args:
 			Quests.accept(0)
 			main.get("_hud").open_board()

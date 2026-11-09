@@ -216,6 +216,10 @@ def synth_rewards():
     save("achievement", mix(*fan, at(chord, 0.33), at(sparkle, 0.3)), 0.75)
     # Pièce : tintement bref (compteur d'or)
     save("coin", mix(bell(1976, 0.12, 28), at(bell(2637, 0.1, 32) * 0.6, 0.03)), 0.5)
+    # Horloge comtoise : carillon doux de quatre notes, puis un coup grave
+    tune = (659, 523, 587, 392)
+    chime = mix(*[at(bell(f, 1.4, 2.6) * 0.5, 0.45 * i) for i, f in enumerate(tune)], at(bell(262, 2.4, 1.6) * 0.7, 2.0))
+    save("clock_chime", lowpass(chime, 3000), 0.45)
 
 
 # --------------------------------------------------------------- sons Kenney

@@ -275,5 +275,29 @@
 			"gold_ore": 1,
 			"quartz": 1
 		}
+	},
+	"fence": {
+		"station": "craft",
+		"category": "Ferme",
+		"count": 2,
+		"ingredients": {
+			"wood": 3
+		}
+	},
+	"path_wood": {
+		"station": "craft",
+		"category": "Ferme",
+		"count": 4,
+		"ingredients": {
+			"wood": 2
+		}
+	},
+	"path_stone": {
+		"station": "craft",
+		"category": "Ferme",
+		"count": 4,
+		"ingredients": {
+			"stone": 3
+		}
 	}
 }

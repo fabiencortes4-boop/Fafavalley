@@ -76,6 +76,7 @@ func _ready() -> void:
 	Inventory.add_gold(6000)
 	Inventory.add_item("wood", 200)
 	Inventory.add_item("stone", 100)
+	Inventory.add_item("hardwood", 10)
 	_check(Animals.start_construction("barn"), "on commande l'étable")
 	for i in 2:
 		GameFlow.end_day(false)

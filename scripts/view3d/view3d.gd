@@ -112,6 +112,8 @@ func setup(world: WorldMap) -> void:
 		Woods.hit.connect(_on_lumber_hit)
 		Woods.felled.connect(_on_lumber_felled)
 	if map is Farm:
+		Woods.hit.connect(_on_lumber_hit)
+		Woods.felled.connect(_on_lumber_felled)
 		_refresh_farm_all()
 		map.visual_changed.connect(_refresh_farm_cell)
 		Machines.changed.connect(_refresh_farm_cell)
@@ -480,7 +482,7 @@ func _build_ground() -> void:
 ## des chemins, des places et des rives (les lignes droites disparaissent).
 func _soft_edges(batch: Models.Batch, chars: Dictionary) -> void:
 	var hard := ["=", "#", ":", "~", "W", "c"]
-	var grass_models := ["grass", "grass_large", "grass_leafs"] if TimeManager.season != 3 else ["rock_smallA", "rock_smallFlatA"]
+	var grass_models := ["grass", "grass_large"] if TimeManager.season != 3 else ["rock_smallA", "rock_smallFlatA"]
 	for cell: Vector2i in chars:
 		if chars[cell] != "." and chars[cell] != "," or _house_cells.has(cell) or _away(cell, 1.0) != Vector3.ZERO:
 			continue
@@ -876,6 +878,69 @@ func _lumber_model(type: String) -> Array:
 	return ["tree_oak_fall" if fall else "tree_oak", 1.65]
 
 
+## Modèle d'un arbre à bois (stade, souche), centré sur sa case.
+func _lumber_model_node(cell: Vector2i, place: String) -> Node3D:
+	var model: Node3D
+	if Woods.is_stump(cell, place):
+		model = _model("nature", "stump_roundDetailed", 1.5)
+	else:
+		var spec := _lumber_model(str(Woods.of(place)[cell].type))
+		model = _model("nature", spec[0], float(spec[1]) * LUMBER_SCALE[Woods.stage(cell, place)])
+	model.rotation.y = float(_hash(cell) % 628) / 100.0
+	return model
+
+
+## Clôture : un poteau rond, et des lisses vers les clôtures voisines.
+func _fence_node(cell: Vector2i) -> Node3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wood := Color(0.62, 0.43, 0.27)
+	_st_cyl(st, Vector3(0, 0.3, 0), 0.065, 0.6, wood, 8)
+	_st_cyl(st, Vector3(0, 0.62, 0), 0.075, 0.04, wood.darkened(0.15), 8)
+	var any := false
+	for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		if FarmState.objects.get(cell + d) != "fence":
+			continue
+		any = true
+		var mid := Vector3(d.x, 0, d.y) * 0.25
+		for y: float in [0.24, 0.46]:
+			_st_box(st, mid + Vector3(0, y, 0), Vector3(0.5 if d.x != 0 else 0.06, 0.07, 0.06 if d.x != 0 else 0.5), wood.lightened(0.05))
+	if not any:
+		# Clôture seule : deux courtes lisses en croix pour qu'elle se lise
+		for y: float in [0.24, 0.46]:
+			_st_box(st, Vector3(0, y, 0), Vector3(0.5, 0.07, 0.06), wood.lightened(0.05))
+	return _vc_mesh(st)
+
+
+## Chemin : trois planches, ou des pavés ronds de tailles variées.
+func _path_node(cell: Vector2i, kind: String) -> Node3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var h := _hash(cell)
+	if kind == "path_wood":
+		for k in 3:
+			var col := Color(0.66, 0.46, 0.28).darkened(0.06 * float((h + k) % 3))
+			_st_box(st, Vector3(0, 0.03, -0.3 + k * 0.3), Vector3(0.92, 0.05, 0.27), col)
+	else:
+		var spots := [Vector3(-0.22, 0, -0.22), Vector3(0.22, 0, -0.2), Vector3(-0.2, 0, 0.22), Vector3(0.24, 0, 0.24), Vector3(0.0, 0, 0.0)]
+		for k in spots.size():
+			var r := 0.2 + float((h + k * 7) % 5) * 0.012
+			_st_cyl(st, spots[k] + Vector3(0, 0.025, 0), r, 0.05, Color(0.66, 0.64, 0.6).darkened(0.05 * float((h + k) % 3)), 9)
+	return _vc_mesh(st)
+
+
+func _vc_mesh(st: SurfaceTool) -> MeshInstance3D:
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.9
+	mi.material_override = mat
+	return mi
+
+
 func _sync_lumber() -> void:
 	for cell: Vector2i in _lumber.keys():
 		var t: Dictionary = Woods.trees.get(cell, {})
@@ -907,9 +972,9 @@ func _lumber_sig(cell: Vector2i) -> String:
 
 ## Coup de hache : l'arbre tremble.
 func _on_lumber_hit(cell: Vector2i) -> void:
-	if not _lumber.has(cell):
+	var root: Node3D = _lumber[cell][0] if _lumber.has(cell) else (_cells[cell] if map is Farm and _cells.has(cell) else null)
+	if root == null:
 		return
-	var root: Node3D = _lumber[cell][0]
 	var dir := Vector3(map.player.facing.y, 0, -map.player.facing.x) * 0.06
 	var tw := root.create_tween()
 	tw.tween_property(root, "rotation", dir, 0.05)
@@ -919,11 +984,24 @@ func _on_lumber_hit(cell: Vector2i) -> void:
 
 ## L'arbre abattu bascule du côté opposé au bûcheron, rebondit et s'efface ;
 ## la souche le remplace aussitôt.
-func _on_lumber_felled(cell: Vector2i, _type: String, from: Vector2i) -> void:
-	if not _lumber.has(cell):
+func _on_lumber_felled(cell: Vector2i, type: String, from: Vector2i, place: String = "forest") -> void:
+	var root: Node3D
+	if place == "farm" and map is Farm:
+		# À la ferme : un arbre adulte provisoire tombe, la case montre la souche
+		root = Node3D.new()
+		root.position = _cell3d(cell)
+		var spec := _lumber_model(type)
+		var model := _model("nature", spec[0], float(spec[1]))
+		model.rotation.y = float(_hash(cell) % 628) / 100.0
+		root.add_child(model)
+		add_child(root)
+		if _cells.has(cell):
+			_cells[cell].visible = false
+	elif _lumber.has(cell):
+		root = _lumber[cell][0]
+		_lumber.erase(cell)  # la synchronisation posera la souche
+	else:
 		return
-	var root: Node3D = _lumber[cell][0]
-	_lumber.erase(cell)  # la synchronisation posera la souche
 	var away := Vector2(cell - from)
 	if away == Vector2.ZERO:
 		away = Vector2.DOWN
@@ -2859,10 +2937,17 @@ func _build_home() -> void:
 		var c := _cell3d(cell)
 		match chars[cell]:
 			"Z", "B":
-				_put(_fitted("nature", "bed", 1.4), c + Vector3(0.0, 0, 0.2), PI / 2.0)
-				# Table de chevet et sa bougie
-				_put(_box(Vector3(0.35, 0.4, 0.35), Color(0.45, 0.3, 0.2)), c + Vector3(0.75, 0.2, -0.25))
-				_put(_fitted("dungeon", "potion", 0.25), c + Vector3(0.75, 0.4, -0.25))
+				# Contre un mur, le lit est un peu plus court et décalé : il ne rentre
+				# pas dans le mur ; la table de chevet se met du côté libre
+				var wall_left := str(chars.get(cell + Vector2i.LEFT, "")) == "#"
+				var wall_right := str(chars.get(cell + Vector2i.RIGHT, "")) == "#"
+				var shift := 0.1 if wall_left else (-0.1 if wall_right else 0.0)
+				_put(_fitted("nature", "bed", 1.2 if wall_left or wall_right else 1.4), c + Vector3(shift, 0, 0.2), PI / 2.0)
+				var side := -0.75 if wall_right else 0.75
+				# Table de chevet et sa bougie (seulement si la place est libre)
+				if str(chars.get(cell + (Vector2i.LEFT if wall_right else Vector2i.RIGHT), "")) == "_":
+					_put(_box(Vector3(0.35, 0.4, 0.35), Color(0.45, 0.3, 0.2)), c + Vector3(side, 0.2, -0.25))
+					_put(_fitted("dungeon", "potion", 0.25), c + Vector3(side, 0.4, -0.25))
 			"k":
 				# Cuisine : plan de travail clair, marmite, étagère colorée
 				_put(_fitted("survival", "workbench", 0.9), c, PI)
@@ -3092,16 +3177,24 @@ func _build_mine() -> void:
 	_env.background_color = Color(0.02, 0.02, 0.03)
 	var batch := Models.Batch.new()
 	var chars: Dictionary = map.get("_ground_chars")
+	var theme := MineLevel.theme_for((map as MineLevel).level)
+	var walls: Dictionary = {}  # [variante, morceau] -> Array[Transform3D]
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
 		var c := _cell3d(cell) - Vector3(0, 0, 0)
 		if ch == "#":
 			var open := false
-			for dd: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			for dd: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]:
 				if chars.get(cell + dd, "#") != "#":
 					open = true
 			if open:
-				_place(batch, "dungeon", "wall", c, 1.0, 0.0)
+				# Paroi de roche irrégulière (au lieu d'un mur cubique)
+				var h := _hash(cell)
+				var basis := Basis(Vector3.UP, float(h % 628) / 100.0).scaled(Vector3(1.0, 0.85 + float(h % 30) / 100.0, 1.0))
+				var key := [h % 4, floori(cell.x / 8.0), floori(cell.y / 8.0)]
+				if not walls.has(key):
+					walls[key] = []
+				walls[key].append(Transform3D(basis, c))
 		else:
 			# Le sol de l'escalier qui descend est à part : on l'enlève quand on le trouve
 			if cell == map.get("_ladder_cell"):
@@ -3112,6 +3205,16 @@ func _build_mine() -> void:
 			if ch == "U":
 				_stairs_up(cell)
 	batch.build(_static)
+	for key: Array in walls:
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = RockMesh.wall(theme, int(key[0]))
+		mm.instance_count = walls[key].size()
+		for i in mm.instance_count:
+			mm.set_instance_transform(i, walls[key][i])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		_static.add_child(mmi)
 	var mine := map as MineLevel
 	_mine_theme_decor(chars, MineLevel.theme_for(mine.level))
 	if mine.elevator_cell != Vector2i(-1, -1):
@@ -3144,7 +3247,7 @@ func _mine_theme_decor(chars: Dictionary, theme: String) -> void:
 				# Cristaux de glace qui sortent des parois
 				for k in 3:
 					var h := 0.3 + float((_hash(cell) + k * 7) % 5) * 0.12
-					_st_box(st, c + Vector3(-0.25 + k * 0.25, h / 2.0, 0.42), Vector3(0.12, h, 0.12), Color(0.75, 0.92, 1.0))
+					_st_cyl(st, c + Vector3(-0.25 + k * 0.25, h / 2.0, 0.42), 0.07, h, Color(0.75, 0.92, 1.0), 6, "y", 0.0)
 			"lava":
 				# Fissures rougeoyantes au pied des parois
 				_st_box(glow, c + Vector3(0, 0.02, 0.5), Vector3(0.9, 0.03, 0.18), Color(1.0, 0.45, 0.1))
@@ -3413,6 +3516,13 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 			node.add_child(s)
 		"tree":
 			node.add_child(_fruit_tree(cell))
+		"wood_tree":
+			if Woods.farm.has(cell):
+				node.add_child(_lumber_model_node(cell, "farm"))
+		"fence":
+			node.add_child(_fence_node(cell))
+		"path_wood", "path_stone":
+			node.add_child(_path_node(cell, str(FarmState.objects[cell])))
 		var other:
 			if Machines.is_machine(str(other)):
 				node.add_child(_machine_model(cell, str(other)))
@@ -3422,7 +3532,7 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 			"weed":
 				# Herbes folles : hautes, d'un vert sombre, bien visibles sur la terre
 				debris = _model("nature", "grass_leafsLarge", 2.5)
-				Models.tint(debris, Color(0.62, 0.85, 0.45))
+				Models.tint(debris, Color(0.8, 0.9, 0.75))  # un vert plus sombre que l'herbe
 				debris.scale.y *= 1.3
 			"twig":
 				debris = _model("nature", "log", 1.0)

@@ -6,6 +6,15 @@ extends RefCounted
 
 const BASE := "res://assets/kenney3d/"
 
+## Herbes et petites plantes Kenney : leur cyan vif, sur l'herbe verte, les
+## faisait ressembler à de petites salades. On les ramène à un vert naturel.
+const PLANT_TINTS := {
+	"grass": Color(0.82, 0.78, 0.42), "grass_large": Color(0.82, 0.78, 0.42),
+	"grass_leafs": Color(0.8, 0.74, 0.4), "grass_leafsLarge": Color(0.78, 0.72, 0.38),
+	"plant_bushSmall": Color(0.85, 0.8, 0.45), "crops_leafsStageA": Color(0.85, 0.82, 0.45),
+	"crops_leafsStageB": Color(0.85, 0.82, 0.45),
+}
+
 static var _scenes: Dictionary = {}
 static var _parts: Dictionary = {}
 static var _fixed: Dictionary = {}  # matériau d'origine -> matériau corrigé
@@ -50,11 +59,61 @@ static func scene(model_path: String) -> PackedScene:
 static func instance(model_path: String) -> Node3D:
 	var root := scene(model_path).instantiate() as Node3D
 	var soft := model_path.contains("/blocky/")
+	var pets := model_path.contains("/pets/")
+	var plant: Color = PLANT_TINTS.get(model_path.get_file().get_basename(), Color.WHITE)
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
 		if soft:
 			(mi as MeshInstance3D).mesh = rounded((mi as MeshInstance3D).mesh)
+		elif pets:
+			(mi as MeshInstance3D).mesh = smoothed((mi as MeshInstance3D).mesh)
 		_fix_mesh_instance(mi as MeshInstance3D)
+	if plant != Color.WHITE:
+		tint(root, plant)
 	return root
+
+
+static var _smoothed: Dictionary = {}
+
+## Animaux : ombrage lisse (les normales des sommets qui se touchent sont
+## moyennées). Les arêtes biseautées des modèles deviennent des courbes
+## douces, sans toucher à la forme (cornes, oreilles, museau restent).
+static func smoothed(mesh: Mesh) -> Mesh:
+	if mesh == null:
+		return mesh
+	var key := mesh.get_instance_id()
+	if _smoothed.has(key):
+		return _smoothed[key]
+	var out := ArrayMesh.new()
+	for surf in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(surf)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+		if idx.is_empty():
+			for i in verts.size():
+				idx.append(i)
+		var acc: Dictionary = {}  # position arrondie -> somme des normales des faces
+		for t in range(0, idx.size(), 3):
+			var a := verts[idx[t]]
+			var n := (verts[idx[t + 2]] - a).cross(verts[idx[t + 1]] - a)  # pondérée par l'aire
+			for k in 3:
+				var p := verts[idx[t + k]].snapped(Vector3.ONE * 0.0005)
+				acc[p] = acc.get(p, Vector3.ZERO) + n
+		var normals := PackedVector3Array()
+		normals.resize(verts.size())
+		var old: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		for i in verts.size():
+			var sum: Vector3 = acc.get(verts[i].snapped(Vector3.ONE * 0.0005), Vector3.ZERO)
+			var n := sum.normalized() if sum.length_squared() > 1e-12 else Vector3.UP
+			# Garde le bon sens par rapport à la normale d'origine
+			if not old.is_empty() and n.dot(old[i]) < 0.0:
+				n = -n
+			normals[i] = n
+		arrays[Mesh.ARRAY_NORMAL] = normals
+		arrays[Mesh.ARRAY_TANGENT] = null
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		out.surface_set_material(out.get_surface_count() - 1, mesh.surface_get_material(surf))
+	_smoothed[key] = out
+	return out
 
 
 static var _rounded: Dictionary = {}
@@ -181,8 +240,13 @@ static func parts(model_path: String) -> Array:
 			p = p.get_parent()
 		# Copie du maillage avec les matériaux actifs (corrigés)
 		var mesh := mi.mesh.duplicate() as Mesh
+		var tint: Color = PLANT_TINTS.get(model_path.get_file().get_basename(), Color.WHITE)
 		for i in mesh.get_surface_count():
-			mesh.surface_set_material(i, mi.get_active_material(i))
+			var mat := mi.get_active_material(i)
+			if tint != Color.WHITE and mat is StandardMaterial3D:
+				mat = (mat as StandardMaterial3D).duplicate()
+				(mat as StandardMaterial3D).albedo_color *= tint
+			mesh.surface_set_material(i, mat)
 		out.append([mesh, t])
 	root.free()
 	_parts[model_path] = out

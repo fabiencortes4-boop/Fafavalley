@@ -742,6 +742,23 @@ def draw_misc(kind):
         px[7, 3], px[7, 4], px[8, 4] = (40, 30, 20, 255), (40, 30, 20, 255), (40, 30, 20, 255)
         rect(7, 8, 9, 13, (60, 40, 25))
         rect(7, 11, 9, 13, (230, 190, 70))
+    elif kind == "fence":
+        for x in (3, 11):
+            rect(x, 3, x + 2, 15, (150, 100, 58))
+            rect(x, 3, x + 2, 4, (190, 140, 90))
+        for y in (6, 10):
+            rect(1, y, 15, y + 2, (176, 120, 70))
+    elif kind == "path_wood":
+        for k, y in enumerate((3, 7, 11)):
+            rect(2 + k % 2, y, 14 - (k + 1) % 2, y + 3, (170, 116, 66) if k % 2 == 0 else (150, 100, 56))
+            px[4, y + 1] = (90, 60, 34, 255)
+            px[11, y + 1] = (90, 60, 34, 255)
+    elif kind == "path_stone":
+        for (cx, cy, r, c) in ((5, 5, 3, (170, 168, 160)), (11, 6, 3, (150, 148, 142)), (7, 11, 3, (160, 158, 150)), (12, 12, 2, (180, 178, 170))):
+            for y in range(cy - r, cy + r):
+                for x in range(cx - r, cx + r):
+                    if (x - cx + 0.5) ** 2 + (y - cy + 0.5) ** 2 <= r * r:
+                        px[x, y] = c + (255,)
     elif kind == "plan":
         rect(3, 2, 13, 14, (235, 225, 195))
         for y in (5, 8, 11):
@@ -946,6 +963,8 @@ def extend_icons(sheet):
                                           (192, 203, 220): (190, 230, 250), (82, 96, 124): (40, 90, 170),
                                           (189, 108, 74): (110, 66, 40), (234, 165, 108): (150, 96, 56)}))
     extra += [draw_misc(k) for k in ("oak_cask", "armchair", "wardrobe", "clock")]
+    # 186-188 : clôture en bois, chemin de planches, chemin pavé
+    extra += [draw_misc(k) for k in ("fence", "path_wood", "path_stone")]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

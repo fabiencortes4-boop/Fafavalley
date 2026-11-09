@@ -80,6 +80,7 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 
 
 func _after_build() -> void:
+	TimeManager.time_changed.connect(_on_hour)
 	for cell: Vector2i in Machines.furniture:
 		if _ground_chars.has(cell):
 			block_cell(cell)
@@ -136,6 +137,12 @@ func _act_on_ground(cell: Vector2i) -> bool:
 	Sfx.play("drop")
 	furniture_changed.emit()
 	return true
+
+
+## L'horloge comtoise sonne les heures (si elle est dans la maison).
+func _on_hour(_h: int, m: int) -> void:
+	if m == 0 and Machines.furniture.values().has("oak_clock"):
+		Sfx.play("clock_chime", -6.0, 0.0)
 
 
 ## Un fauteuil se comporte comme une chaise : on s'y assoit.

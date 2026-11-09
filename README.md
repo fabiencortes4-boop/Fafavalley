@@ -140,7 +140,17 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - **Bois dur** (chênes) dans 5 recettes : **hache renforcée** chez Gaston (12 minerais de fer,
   5 bois dur, 500 or : abat deux fois plus vite), **fût de chêne** (vieillit en 4 nuits au lieu de 7), et des
   **meubles en chêne** : fauteuil (on s'y assoit pour se reposer, à la maison), armoire,
-  horloge comtoise.
+  horloge comtoise (qui sonne les heures à la maison). L'étable et la serre demandent
+  aussi 10 bois dur.
+- **Arbres à bois à la ferme** : pomme de pin, boule de platane et gland se plantent aussi
+  sur l'herbe de la ferme (mêmes stades, même abattage, souche, chute de l'arbre).
+- **Clôtures et chemins** (Fabrication > Ferme) : clôture en bois (les poteaux se relient
+  à leurs voisins, on ne la traverse pas), chemin de planches et chemin pavé (on y marche,
+  les herbes folles n'y poussent pas) ; la pioche les reprend.
+- **Moins cubique, suite** : parois de la mine en roche irrégulière (plus sombres que les
+  rochers à miner), cristaux de glace pointus, animaux à l'ombrage lisse, lits et tables de
+  chevet qui ne rentrent plus dans les murs, herbes et petites plantes d'un vert naturel
+  (leur cyan vif les faisait ressembler à des mini salades).
 - **Tableau des demandes** (panneau de la place) : 3 demandes d'habitants par jour ; on
   en accepte jusqu'à 3, on livre en parlant à l'habitant, contre de l'or et de l'amitié.
   Elles comptent aussi pour l'histoire (chapitre 2).

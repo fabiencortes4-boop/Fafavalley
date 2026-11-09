@@ -1866,5 +1866,32 @@
 		"stack": 99,
 		"sell": 320,
 		"description": "Une haute horloge en chêne, cadran de laiton et balancier doré. Tic, tac..."
+	},
+	"fence": {
+		"name": "Clôture en bois",
+		"type": "placeable",
+		"place": "fence",
+		"icon": 186,
+		"stack": 99,
+		"sell": 4,
+		"description": "À poser sur la ferme : les poteaux se relient tout seuls à leurs voisins. La pioche la reprend."
+	},
+	"path_wood": {
+		"name": "Chemin de planches",
+		"type": "placeable",
+		"place": "path_wood",
+		"icon": 187,
+		"stack": 99,
+		"sell": 2,
+		"description": "Un chemin où l'on marche, posé sur l'herbe de la ferme. Les herbes folles n'y poussent pas. La pioche le reprend."
+	},
+	"path_stone": {
+		"name": "Chemin pavé",
+		"type": "placeable",
+		"place": "path_stone",
+		"icon": 188,
+		"stack": 99,
+		"sell": 2,
+		"description": "Des pavés posés sur l'herbe de la ferme : on y marche, les herbes folles n'y poussent pas. La pioche les reprend."
 	}
 }

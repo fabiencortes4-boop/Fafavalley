@@ -197,7 +197,7 @@ func _act_on_ground(cell: Vector2i) -> bool:
 			_plant_tree(cell, str(item.get("tree", "")))
 			return true
 		"tree_seed":
-			EventBus.toast("Les arbres à bois se plantent dans la forêt, au nord de la ferme (clairière des bûcherons).")
+			_plant_wood_tree(cell, str(item.get("tree", "")))
 			return true
 		"fertilizer":
 			_deferring = FarmState.is_tilled(cell) and not FarmState.is_fertilized(cell)
@@ -236,6 +236,11 @@ func act_on(cell: Vector2i) -> void:
 		return
 	if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe" and not fishing.busy():
 		EventBus.chest_requested.emit(cell)
+		return
+	if FarmState.objects.get(cell) == "wood_tree" and _holding_tool() != "axe" and not fishing.busy() and Woods.farm.has(cell):
+		player.face_towards(cell - player_cell())
+		var tip := "coupe-la à la hache" if Woods.is_stump(cell, "farm") else ("coupe-le à la hache pour du bois" if Woods.stage(cell, "farm") == 3 else "adulte dans %d jour(s)" % Woods.days_left(cell, "farm"))
+		EventBus.toast("%s : %s." % [Woods.label(cell, "farm"), tip])
 		return
 	super(cell)
 
@@ -321,6 +326,55 @@ func _plant_tree(cell: Vector2i, type: String) -> void:
 		_deferring = false
 
 
+## Arbre à bois planté à la ferme (pin, platane, chêne).
+func _plant_wood_tree(cell: Vector2i, type: String) -> void:
+	if not _can_place(cell) or FarmState.in_greenhouse(cell):
+		EventBus.toast("Plante l'arbre sur de l'herbe libre.")
+		return
+	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if FarmState.objects.get(cell + d, "") in ["tree", "wood_tree"]:
+			EventBus.toast("Trop près d'un autre arbre : laisse-lui de la place.")
+			return
+	if not Woods.plant(cell, type, "farm"):
+		return
+	_deferring = true
+	FarmState.place_object(cell, "wood_tree")
+	Inventory.remove_from_slot(Inventory.selected, 1)
+	_gesture("bend", cell, func() -> void:
+		Sfx.play("plant")
+		Fx.puff(_entities, cell_center(cell), Color(0.62, 0.45, 0.3, 0.7), 1.2))
+	EventBus.toast("%s planté ! Adulte dans %d jours." % [Woods.TYPES[type].name, int(Woods.TYPES[type].grow)])
+
+
+func _chop_wood_tree(cell: Vector2i, axe: Dictionary) -> void:
+	if not Woods.farm.has(cell):
+		FarmState.remove_object(cell)
+		return
+	if not spend_energy(int(axe.get("energy", 2))):
+		return
+	var from := player_cell()
+	var was_tree := not Woods.is_stump(cell, "farm") and Woods.stage(cell, "farm") == 3
+	var res := Woods.chop(cell, int(axe.get("power", 1)), from, "farm")
+	if res.done and not Woods.farm.has(cell):
+		_deferring = true
+		FarmState.remove_object(cell)
+	elif res.done:
+		_deferring = true
+		EventBus.farm_tile_changed.emit(cell)  # devenu souche
+	var at := _cell_fx_point(cell)
+	_gesture("strike", cell, func() -> void:
+		Sfx.play("chop")
+		Fx.burst(_entities, at, Fx.WOOD, 18 if res.done else 8, 60.0)
+		if res.done and was_tree:
+			Sfx.play("tree_fall")
+			Settings.vibrate(70)
+			shake(3.5, 0.3)
+			Fx.puff(_entities, cell_center(cell), Color(0.9, 0.85, 0.75, 0.9), 2.4)
+		var away := Vector2(cell - from).normalized() if cell != from else Vector2.DOWN
+		for i in res.drops.size():
+			_drop(str(res.drops[i]), cell_center(cell) + away * float(4 + i % 3 * 3) + Vector2(randf_range(-10, 10), randf_range(-8, 8))))
+
+
 func _shake_tree(cell: Vector2i) -> void:
 	var t: Dictionary = FarmState.trees[cell]
 	var info: Dictionary = FarmState.tree_data[t.type]
@@ -381,7 +435,8 @@ func _animal_at(cell: Vector2i) -> Node2D:
 
 
 func is_walkable(cell: Vector2i) -> bool:
-	return super(cell) and not FarmState.objects.has(cell) and not FarmState.debris.has(cell)
+	var obj: String = FarmState.objects.get(cell, "")
+	return super(cell) and (obj == "" or obj in FarmState.WALKABLE_OBJECTS) and not FarmState.debris.has(cell)
 
 
 # ------------------------------------------------------------ gestes
@@ -519,7 +574,7 @@ func _can_place(cell: Vector2i) -> bool:
 func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 	if _hit_debris(cell, "pickaxe", energy):
 		return
-	if not FarmState.objects.has(cell) or FarmState.objects[cell] == "tree":
+	if not FarmState.objects.has(cell) or FarmState.objects[cell] in ["tree", "wood_tree"]:
 		return
 	var id := FarmState.objects[cell] as String
 	if id == "chest" and not FarmState.chest_is_empty(cell):
@@ -542,6 +597,9 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 
 func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
 	var energy := int(item.get("energy", 2))
+	if tool == "axe" and FarmState.objects.get(cell) == "wood_tree":
+		_chop_wood_tree(cell, item)
+		return
 	if _hit_debris(cell, tool, energy):
 		return
 	match tool:
@@ -748,6 +806,16 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.QUALITY_SPRINKLER))
 		"chest":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.CHEST))
+		"fence":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.FENCE_MID))
+		"path_wood", "path_stone":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.COBBLES))
+		"wood_tree":
+			var wt := 0 if not Woods.farm.has(cell) else (WorldTiles.STUMP if Woods.is_stump(cell, "farm") else (WorldTiles.BUSH if Woods.stage(cell, "farm") < 3 else (WorldTiles.PINE if Woods.farm[cell].type == "pine" else WorldTiles.ROUND_TREE)))
+			if wt != 0:
+				_objects.set_cell(cell, 0, WorldTiles.coords(wt))
+			else:
+				_objects.erase_cell(cell)
 		"tree":
 			var stage := FarmState.tree_stage(cell)
 			_objects.set_cell(cell, 0, WorldTiles.coords([WorldTiles.GRASS_TUFT, WorldTiles.BUSH, WorldTiles.ROUND_TREE][stage]))

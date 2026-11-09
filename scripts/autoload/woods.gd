@@ -8,7 +8,7 @@ extends Node
 
 signal changed
 signal hit(cell: Vector2i)
-signal felled(cell: Vector2i, type: String, from: Vector2i)
+signal felled(cell: Vector2i, type: String, from: Vector2i, place: String)
 
 const TYPES := {
 	"pine": {
@@ -31,13 +31,20 @@ const STUMP_REGROW := 5  # jours avant qu'une souche oubliée ne rejette
 const WILD_SPROUT := 0.25  # chance par nuit qu'un emplacement vide reparte (forêt clairsemée)
 
 ## Case -> {"type": String, "age": int, "hp": int, "stump": bool, "stump_age": int}
-var trees: Dictionary = {}
+var trees: Dictionary = {}  # la forêt
+var farm: Dictionary = {}  # arbres plantés à la ferme (même fonctionnement)
 var seeded: bool = false
 
 
 func reset() -> void:
 	trees.clear()
+	farm.clear()
 	seeded = false
+
+
+## Les arbres d'un lieu : "forest" (par défaut) ou "farm".
+func of(place: String) -> Dictionary:
+	return farm if place == "farm" else trees
 
 
 ## Plante les arbres d'origine de la forêt (une seule fois par partie).
@@ -52,8 +59,8 @@ func ensure_seeded() -> void:
 
 
 ## 0 pousse, 1 jeune, 2 petit arbre, 3 adulte.
-func stage(cell: Vector2i) -> int:
-	var t: Dictionary = trees.get(cell, {})
+func stage(cell: Vector2i, place: String = "forest") -> int:
+	var t: Dictionary = of(place).get(cell, {})
 	if t.is_empty():
 		return -1
 	var grow := int(TYPES[t.type].grow)
@@ -62,46 +69,47 @@ func stage(cell: Vector2i) -> int:
 	return clampi(int(t.age) * 3 / grow, 0, 2)
 
 
-func is_stump(cell: Vector2i) -> bool:
-	return trees.has(cell) and bool(trees[cell].stump)
+func is_stump(cell: Vector2i, place: String = "forest") -> bool:
+	return of(place).has(cell) and bool(of(place)[cell].stump)
 
 
-func max_hp(cell: Vector2i) -> int:
-	if is_stump(cell):
+func max_hp(cell: Vector2i, place: String = "forest") -> int:
+	if is_stump(cell, place):
 		return STUMP_HP
-	return [1, 2, 4, int(TYPES[trees[cell].type].hp)][stage(cell)]
+	return [1, 2, 4, int(TYPES[of(place)[cell].type].hp)][stage(cell, place)]
 
 
 ## Nom affiché : « Pin », « Jeune chêne », « Souche de platane »...
-func label(cell: Vector2i) -> String:
-	var t: Dictionary = trees[cell]
+func label(cell: Vector2i, place: String = "forest") -> String:
+	var t: Dictionary = of(place)[cell]
 	var name: String = TYPES[t.type].name
 	if t.stump:
 		return "Souche de " + name.to_lower()
-	var s := stage(cell)
+	var s := stage(cell, place)
 	return name if s == 3 else "%s %s" % [STAGE_NAMES[s], name.to_lower()]
 
 
-func days_left(cell: Vector2i) -> int:
-	var t: Dictionary = trees[cell]
+func days_left(cell: Vector2i, place: String = "forest") -> int:
+	var t: Dictionary = of(place)[cell]
 	return maxi(0, int(TYPES[t.type].grow) - int(t.age))
 
 
-func plant(cell: Vector2i, type: String) -> bool:
-	if trees.has(cell) or not TYPES.has(type):
+func plant(cell: Vector2i, type: String, place: String = "forest") -> bool:
+	if of(place).has(cell) or not TYPES.has(type):
 		return false
-	trees[cell] = {"type": type, "age": 0, "hp": 1, "stump": false, "stump_age": 0}
+	of(place)[cell] = {"type": type, "age": 0, "hp": 1, "stump": false, "stump_age": 0}
 	changed.emit()
 	return true
 
 
 ## Un coup de hache (`power` : force de la hache). Renvoie ce qui tombe :
 ## {"done": bool (arbre abattu ou souche arrachée), "drops": [ids]}.
-func chop(cell: Vector2i, power: int, from: Vector2i) -> Dictionary:
+func chop(cell: Vector2i, power: int, from: Vector2i, place: String = "forest") -> Dictionary:
 	var out := {"done": false, "drops": [], "stump": false}
-	if not trees.has(cell):
+	var d := of(place)
+	if not d.has(cell):
 		return out
-	var t: Dictionary = trees[cell]
+	var t: Dictionary = d[cell]
 	t.hp = int(t.hp) - maxi(1, power)
 	if int(t.hp) > 0:
 		hit.emit(cell)
@@ -113,11 +121,11 @@ func chop(cell: Vector2i, power: int, from: Vector2i) -> Dictionary:
 		out.stump = true
 		for i in randi_range(STUMP_WOOD[0], STUMP_WOOD[1]):
 			out.drops.append("wood")
-		trees.erase(cell)
+		d.erase(cell)
 		Skills.add_xp("foraging", 4)
 		changed.emit()
 		return out
-	var s := stage(cell)
+	var s := stage(cell, place)
 	if s == 3:
 		var wood := randi_range(int(info.wood[0]), int(info.wood[1]))
 		if Skills.roll("foraging", 6.0):
@@ -136,7 +144,7 @@ func chop(cell: Vector2i, power: int, from: Vector2i) -> Dictionary:
 		t.stump = true
 		t.stump_age = 0
 		t.hp = STUMP_HP
-		felled.emit(cell, str(t.type), from)
+		felled.emit(cell, str(t.type), from, place)
 	else:
 		# Un jeune arbre ne donne que quelques bûches ; la graine est rendue
 		for i in [1, 2, 4][s]:
@@ -144,7 +152,7 @@ func chop(cell: Vector2i, power: int, from: Vector2i) -> Dictionary:
 		if s == 0:
 			out.drops.append(str(info.seed))
 		Skills.add_xp("foraging", 2)
-		trees.erase(cell)
+		d.erase(cell)
 	changed.emit()
 	return out
 
@@ -153,17 +161,19 @@ func chop(cell: Vector2i, power: int, from: Vector2i) -> Dictionary:
 ## emplacements vides de la clairière se reboisent doucement.
 func new_day() -> void:
 	ensure_seeded()
-	for cell: Vector2i in trees:
-		var t: Dictionary = trees[cell]
-		if t.stump:
-			t.stump_age = int(t.stump_age) + 1
-			if int(t.stump_age) >= STUMP_REGROW:
-				trees[cell] = {"type": t.type, "age": 0, "hp": 1, "stump": false, "stump_age": 0}
-			continue
-		var before := stage(cell)
-		t.age = int(t.age) + 1
-		if stage(cell) != before:
-			t.hp = max_hp(cell)  # il a grandi : plus solide
+	for place: String in ["forest", "farm"]:
+		var d := of(place)
+		for cell: Vector2i in d:
+			var t: Dictionary = d[cell]
+			if t.stump:
+				t.stump_age = int(t.stump_age) + 1
+				if int(t.stump_age) >= STUMP_REGROW:
+					d[cell] = {"type": t.type, "age": 0, "hp": 1, "stump": false, "stump_age": 0}
+				continue
+			var before := stage(cell, place)
+			t.age = int(t.age) + 1
+			if stage(cell, place) != before:
+				t.hp = max_hp(cell, place)  # il a grandi : plus solide
 	for spot: Array in ForestMap.lumber_spots():
 		if not trees.has(spot[0]) and randf() < WILD_SPROUT:
 			trees[spot[0]] = {"type": spot[1], "age": 0, "hp": 1, "stump": false, "stump_age": 0}
@@ -171,17 +181,22 @@ func new_day() -> void:
 
 
 func to_dict() -> Dictionary:
+	return {"trees": _list(trees), "farm": _list(farm), "seeded": seeded}
+
+
+func _list(d: Dictionary) -> Array:
 	var list: Array = []
-	for cell: Vector2i in trees:
-		var t: Dictionary = trees[cell]
+	for cell: Vector2i in d:
+		var t: Dictionary = d[cell]
 		list.append([cell.x, cell.y, t.type, int(t.age), int(t.hp), bool(t.stump), int(t.stump_age)])
-	return {"trees": list, "seeded": seeded}
+	return list
 
 
 func from_dict(data: Dictionary) -> void:
 	reset()
 	seeded = bool(data.get("seeded", false))
-	for e: Variant in data.get("trees", []):
-		var a: Array = e
-		if a.size() >= 7 and TYPES.has(str(a[2])):
-			trees[Vector2i(int(a[0]), int(a[1]))] = {"type": str(a[2]), "age": int(a[3]), "hp": int(a[4]), "stump": bool(a[5]), "stump_age": int(a[6])}
+	for pair: Array in [[trees, "trees"], [farm, "farm"]]:
+		for e: Variant in data.get(pair[1], []):
+			var a: Array = e
+			if a.size() >= 7 and TYPES.has(str(a[2])):
+				(pair[0] as Dictionary)[Vector2i(int(a[0]), int(a[1]))] = {"type": str(a[2]), "age": int(a[3]), "hp": int(a[4]), "stump": bool(a[5]), "stump_age": int(a[6])}
