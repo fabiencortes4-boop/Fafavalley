@@ -403,7 +403,7 @@ const KIND_HINTS := {
 	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
 	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
 	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
-	"board": "Demandes", "cave": "Entrer", "cave_chest": "Ouvrir", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "project:mill": "Voir", "project:bandstand": "Voir", "project:bridge": "Voir", "boat": "En mer", "child": "Jouer",
+	"board": "Demandes", "cave": "Entrer", "cave_chest": "Ouvrir", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "rope": "Remonter", "project:mill": "Voir", "project:bandstand": "Voir", "project:bridge": "Voir", "boat": "En mer", "child": "Jouer",
 }
 const TOOL_HINTS := {
 	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",

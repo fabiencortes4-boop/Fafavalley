@@ -331,7 +331,10 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   une pioche et une épée rouillée. Niveaux générés au hasard (30 au total) : rochers à
   casser (pierre, charbon, cuivre, fer, or, gemmes selon la profondeur), échelle cachée
   sous un rocher, lanterne et obscurité croissante, ascenseur tous les 5 niveaux, armes
-  à trouver aux niveaux 10 et 20.
+  à trouver aux niveaux 10 et 20. Chaque étage garde son état pour la journée
+  (rochers cassés, escalier trouvé, monstres vaincus) : on remonte par le chemin déjà
+  dégagé, sans énergie. Aux 10 premiers étages, une corde d'urgence à côté des
+  escaliers remonte d'un coup à la surface.
 - **Combat** : coups d'épée devant soi, 7 monstres (gelée, chauve-souris, rats, araignée,
   crabe, fantôme) qui sautent, volent ou poursuivent, butins à vendre. Barre de vie ;
   à 0, on se réveille au village (soins payants). Légumes et poissons se mangent

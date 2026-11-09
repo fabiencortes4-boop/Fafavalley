@@ -3913,6 +3913,40 @@ func _stairs_up(cell: Vector2i) -> void:
 	_stair_arrows.append([_put(_arrow(true), c + Vector3(0, 1.3, 0)), 1.3])
 
 
+var _ropes: Dictionary = {}
+
+
+## Corde d'urgence : une corde à nœuds qui pend d'une poulie fixée à une
+## poutre, une cloche pour prévenir là-haut, et une petite pancarte.
+func _rope(cell: Vector2i) -> Node3D:
+	var root := Node3D.new()
+	root.position = _cell3d(cell)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wood := Color(0.48, 0.33, 0.2)
+	var rope := Color(0.86, 0.74, 0.5)
+	for sx: float in [-0.36, 0.36]:
+		_st_box(st, Vector3(sx, 1.1, -0.1), Vector3(0.1, 2.2, 0.1), wood)  # montants
+	_st_box(st, Vector3(0, 2.18, -0.1), Vector3(0.9, 0.12, 0.14), wood)  # poutre
+	_st_cyl(st, Vector3(0, 2.05, -0.1), 0.1, 0.06, Color(0.35, 0.35, 0.38), 10, "z")  # poulie
+	_st_cyl(st, Vector3(0, 1.0, -0.1), 0.025, 2.0, rope, 6)  # corde
+	for k in 5:
+		_st_cyl(st, Vector3(0, 0.25 + k * 0.35, -0.1), 0.05, 0.07, rope.darkened(0.1), 8)  # nœuds
+	_st_cyl(st, Vector3(0.25, 1.85, -0.1), 0.07, 0.14, Color(0.85, 0.65, 0.2), 8, "y", 0.03)  # cloche
+	_st_box(st, Vector3(-0.22, 0.75, 0.0), Vector3(0.3, 0.2, 0.03), Color(0.75, 0.2, 0.18))  # pancarte
+	_st_box(st, Vector3(-0.22, 0.75, 0.02), Vector3(0.2, 0.04, 0.01), Color(1, 1, 1))
+	_st_box(st, Vector3(-0.22, 0.75, 0.02), Vector3(0.04, 0.14, 0.01), Color(1, 1, 1))
+	root.add_child(_vc_mesh(st))
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.85, 0.6)
+	light.omni_range = 2.2
+	light.light_energy = 0.8
+	light.position = Vector3(0, 1.6, 0.2)
+	root.add_child(light)
+	add_child(root)
+	return root
+
+
 ## Puits d'escalier qui s'enfonce dans le sol (révélé sous un rocher).
 func _stairs_down(cell: Vector2i) -> void:
 	var c := _cell3d(cell)
@@ -4065,6 +4099,10 @@ func _sync_rocks() -> void:
 		rock.rotation.y = float(_hash(cell) % 628) / 100.0
 		add_child(rock)
 		_rocks[cell] = rock
+	# Cordes d'urgence (celle de l'escalier qui descend apparaît avec lui)
+	for rc: Vector2i in (map as MineLevel).rope_cells:
+		if not _ropes.has(rc):
+			_ropes[rc] = _rope(rc)
 	# Échelle de descente révélée
 	var ladder: Vector2i = map.get("_ladder_cell")
 	if map.get("_ladder_found") and not _rocks.has(ladder) and not has_meta("ladder"):

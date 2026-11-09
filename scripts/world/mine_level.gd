@@ -58,6 +58,30 @@ var elevator_cell: Vector2i = Vector2i(-1, -1)
 var treasure_cell: Vector2i = Vector2i(-1, -1)
 var _from_below: bool = false
 var _initial_rocks: int = 0
+## Cordes d'urgence (à côté des escaliers des premiers étages) : on tire
+## dessus et l'on est remonté à la surface, sans effort.
+const ROPE_LEVELS := 10
+var rope_cells: Array[Vector2i] = []
+
+## Mémoire de la journée : chaque étage garde ses rochers cassés, son
+## escalier trouvé et ses monstres vaincus jusqu'au lendemain. On peut
+## ainsi remonter par le chemin déjà dégagé, même sans énergie.
+static var _memory: Dictionary = {}  # niveau -> {"broken", "ladder", "killed"}
+static var _memory_day: int = -1
+
+
+func _mem() -> Dictionary:
+	if _memory_day != Marriage.day_number():
+		_memory.clear()
+		_memory_day = Marriage.day_number()
+	if not _memory.has(level):
+		_memory[level] = {"broken": {}, "ladder": Vector2i(-1, -1), "killed": {}}
+	return _memory[level]
+
+
+static func forget_all() -> void:
+	_memory.clear()
+	_memory_day = -1
 
 
 func setup(depth: int) -> void:
@@ -99,6 +123,13 @@ func _generate() -> void:
 	_up_cell = up
 	# Ascenseur (tous les 5 étages) et coffre (tous les 15) près de l'arrivée
 	var reserved := {up: true, _spawn_cell: true}
+	# Corde d'urgence à côté de l'escalier qui remonte
+	if level <= ROPE_LEVELS:
+		for c: Vector2i in [up + Vector2i.LEFT, up + Vector2i.RIGHT, _spawn_cell + Vector2i.LEFT, _spawn_cell + Vector2i.RIGHT]:
+			if floor_set.has(c) and not reserved.has(c):
+				rope_cells.append(c)
+				reserved[c] = true
+				break
 	if level % ELEVATOR_STEP == 0:
 		elevator_cell = _free_near(_spawn_cell, floor_set, reserved)
 		reserved[elevator_cell] = true
@@ -119,6 +150,13 @@ func _generate() -> void:
 		_rock_data[c].hp = ROCKS[_rock_data[c].type][1]
 	if level < MAX_LEVEL and not rock_cells.is_empty():
 		_ladder_cell = rock_cells[_rng.randi() % rock_cells.size()]
+	# Ce qu'on a déjà fait ici aujourd'hui : rochers cassés, escalier trouvé
+	var mem := _mem()
+	for c: Vector2i in mem.broken:
+		_rock_data.erase(c)
+	if mem.ladder != Vector2i(-1, -1):
+		_ladder_cell = mem.ladder
+		_rock_data.erase(_ladder_cell)
 	# En remontant : l'escalier qui descend est déjà dégagé, on arrive à côté
 	_from_below = arrive_from_below and _ladder_cell != Vector2i(-1, -1)
 	arrive_from_below = false
@@ -136,8 +174,9 @@ func _generate() -> void:
 			break
 		var c: Vector2i = region[_rng.randi() % region.size()]
 		var d: Vector2i = c - _spawn_cell
-		if absi(d.x) + absi(d.y) > 7 and not _rock_data.has(c) and not c in _monster_cells:
+		if absi(d.x) + absi(d.y) > 7 and not _rock_data.has(c) and not c in _monster_cells and not reserved.has(c):
 			_monster_cells.append(c)
+	_monster_cells.assign(_monster_cells.filter(func(c: Vector2i) -> bool: return not mem.killed.has(c)))
 	# Plan ASCII : # mur, _ sol, U échelle montante
 	for y in HEIGHT:
 		var row := ""
@@ -294,8 +333,10 @@ func _after_build() -> void:
 	_initial_rocks = _rock_data.size()
 	if level < MAX_LEVEL and _ladder_cell == Vector2i(-1, -1):
 		_reveal_ladder(_monster_cells[0] if not _monster_cells.is_empty() else _spawn_cell + Vector2i.RIGHT)
-	if _from_below:
-		_reveal_ladder(_ladder_cell, true)
+	if _from_below or _mem().ladder != Vector2i(-1, -1):
+		_reveal_ladder(_ladder_cell, true, false)
+	for c: Vector2i in rope_cells:
+		_add_rope(c)
 	if elevator_cell != Vector2i(-1, -1):
 		_blocked[elevator_cell] = true
 		_interactables[elevator_cell] = "elevator"
@@ -379,6 +420,7 @@ func _spawn_monster(cell: Vector2i) -> void:
 	monster.level = level
 	monster.target = player
 	monster.position = cell_center(cell)
+	monster.set_meta("spawn", cell)
 	monster.died.connect(_on_monster_died)
 	monster.add_to_group("monsters")
 	_entities.add_child(monster)
@@ -415,6 +457,8 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 			EventBus.elevator_requested.emit(elevator_levels())
 		"treasure":
 			_open_treasure()
+		"rope":
+			_climb_rope()
 
 
 ## Marcher sur un escalier = changer d'étage.
@@ -439,6 +483,23 @@ func _go_up() -> void:
 	else:
 		arrive_from_below = true
 		EventBus.map_change_requested.emit("mine:%d" % (level - 1), Vector2i.ZERO)
+
+
+## Corde d'urgence : on est hissé jusqu'à l'entrée de la mine.
+func _climb_rope() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	Sfx.play("door")
+	EventBus.toast("Tu tires sur la corde d'urgence : on te hisse jusqu'à la surface !")
+	EventBus.map_change_requested.emit("village", VILLAGE_EXIT)
+
+
+func _add_rope(cell: Vector2i) -> void:
+	if not cell in rope_cells:
+		rope_cells.append(cell)
+	_blocked[cell] = true
+	_interactables[cell] = "rope"
 
 
 func _go_down() -> void:
@@ -497,6 +558,7 @@ func _use_pickaxe(cell: Vector2i, energy: int) -> void:
 func _break_rock(cell: Vector2i) -> Array:
 	var type: String = _rock_data[cell].type
 	_rock_data.erase(cell)
+	_mem().broken[cell] = true
 	var out: Array = []
 	var drops: Array = ROCKS[type][2]
 	if type == "gem":
@@ -526,18 +588,36 @@ func _break_rock(cell: Vector2i) -> Array:
 	return out
 
 
-func _reveal_ladder(cell: Vector2i, show_now: bool = true) -> void:
+func _reveal_ladder(cell: Vector2i, show_now: bool = true, announce: bool = true) -> void:
 	if _ladder_found:
 		return
 	_ladder_found = true
 	_ladder_cell = cell
+	_mem().ladder = cell
 	if show_now:
 		_ground.set_cell(cell, 0, WorldTiles.coords(WorldTiles.LADDER_DOWN))
 	_interactables[cell] = "ladder_down"
-	EventBus.toast("Un escalier descend vers le niveau %d !" % (level + 1))
+	if announce:
+		EventBus.toast("Un escalier descend vers le niveau %d !" % (level + 1))
+	# Corde d'urgence aussi à côté de l'escalier qui descend (premiers étages),
+	# sur une case dégagée qui ne bouche pas le passage
+	if level <= ROPE_LEVELS:
+		for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var c := cell + d
+			if _ground_chars.get(c, "#") != "_" or _rock_data.has(c) or _blocked.has(c) or c == _spawn_cell or c in _monster_cells:
+				continue
+			var open := 0
+			for d2: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				if _ground_chars.get(c + d2, "#") != "#":
+					open += 1
+			if open >= 3:
+				_add_rope(c)
+				break
 
 
 func _on_monster_died(monster: Monster) -> void:
+	if monster.has_meta("spawn"):
+		_mem().killed[monster.get_meta("spawn")] = true
 	Sfx.play("monster_die")
 	Fx.puff(_entities, monster.position, Color(0.95, 0.95, 1.0, 0.85), 1.6)
 	var data: Dictionary = GameData.monsters.get(monster.kind, {})

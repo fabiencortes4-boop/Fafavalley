@@ -14,6 +14,7 @@ func _ready() -> void:
 
 
 func new_game() -> void:
+	MineLevel.forget_all()
 	TimeManager.reset()
 	Inventory.reset()
 	FarmState.reset()
@@ -50,6 +51,7 @@ func new_game() -> void:
 
 
 func continue_game() -> bool:
+	MineLevel.forget_all()
 	return SaveManager.load_game()
 
 

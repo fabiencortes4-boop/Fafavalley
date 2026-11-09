@@ -43,8 +43,8 @@ func _ready() -> void:
 	await _frames(40)  # laisser les objets tomber puis être attirés
 	# Ramasser les débris à côté de l'escalier, puis marcher dessus
 	var free_next := ladder
-	for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-		if mine.is_walkable(ladder + d):
+	for d: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP]:
+		if mine.is_walkable(ladder + d) and ladder + d != mine.up_cell():
 			free_next = ladder + d
 			break
 	# Le rocher peut ne rien lâcher (les minerais sont rares) : on vérifie
@@ -151,6 +151,48 @@ func _ready() -> void:
 	deep.act_on(deep.treasure_cell)
 	_check(Inventory.count_of("steel_sword") == 1, "un coffre ne s'ouvre qu'une fois")
 	_check(MineLevel.TREASURES.has(30), "un autre coffre au niveau 30")
+	# ---- Mémoire des étages : on remonte par le chemin déjà dégagé
+	MineLevel.forget_all()
+	_main.call("_switch_to", "mine:1")
+	await get_tree().process_frame
+	var m1: MineLevel = _main.call("current_map")
+	_check(not m1.rope_cells.is_empty(), "une corde d'urgence à côté de l'escalier (niveau 1)")
+	var broken: Array[Vector2i] = []
+	for c: Vector2i in m1._rock_data.keys().slice(0, 6):
+		m1._break_rock(c)
+		broken.append(c)
+	if not m1._ladder_found:
+		var floor_cell := Vector2i(-1, -1)
+		for c: Vector2i in m1._ground_chars:
+			if m1._ground_chars[c] == "_" and not m1._rock_data.has(c) and not m1._blocked.has(c) and c != m1._spawn_cell:
+				floor_cell = c
+		m1._reveal_ladder(floor_cell)
+	var ladder1: Vector2i = m1._ladder_cell
+	_check(m1.rope_cells.size() >= 1, "et près de l'escalier qui descend : %d corde(s)" % m1.rope_cells.size())
+	_main.call("_switch_to", "mine:2")
+	await get_tree().process_frame
+	PlayerState.energy = 0
+	var m2: MineLevel = _main.call("current_map")
+	_check(m2.player_cell().distance_to(m2.up_cell()) <= 1.5, "au niveau 2, on arrive au pied de l'escalier qui remonte")
+	m2._interact("ladder_up", m2.up_cell())
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var back: MineLevel = _main.call("current_map")
+	_check(back is MineLevel and back.level == 1, "sans énergie, on remonte quand même au niveau 1")
+	_check(broken.all(func(c: Vector2i) -> bool: return not back._rock_data.has(c)), "les rochers cassés le restent")
+	_check(back._ladder_found and back._ladder_cell == ladder1, "l'escalier trouvé est au même endroit")
+	_check(back.player_cell().distance_to(ladder1) <= 1.5, "et l'on arrive juste à côté")
+	back._interact("rope", back.rope_cells[0])
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check((_main.call("current_map") as WorldMap).map_id == "village", "la corde d'urgence ramène à la surface")
+	var abyss: MineLevel = MineLevel.new()
+	abyss.setup(25)
+	abyss._map_rows()
+	_check(abyss.rope_cells.is_empty(), "pas de corde dans les profondeurs (niveau 25)")
+	abyss.free()
+	GameFlow.end_day()
+	MineLevel.forget_all()
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
 
