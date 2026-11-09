@@ -216,6 +216,25 @@ func _ready() -> void:
 					for i in 30:
 						if Woods.chop(fc, 1, fm2.player_cell()).done:
 							break
+		if "--decor" in args:
+			# Décor du jardin, épouvantail et compagnon devant la maison
+			FarmState.debris.clear()
+			Pet.adopt("dog", "Biscuit")
+			for e: Array in [[Vector2i(9, 9), "garden_bench"], [Vector2i(12, 9), "garden_fountain"], [Vector2i(14, 9), "flower_bed"], [Vector2i(10, 11), "garden_lantern"], [Vector2i(15, 11), "scarecrow"], [Vector2i(8, 11), "flower_bed"]]:
+				FarmState.place_object(e[0], e[1])
+			main.call("_switch_to", "farm")
+			await get_tree().process_frame
+		if "--cave" in args:
+			main.call("_switch_to", "cave")
+			await get_tree().process_frame
+			if "--solved" in args:
+				PlayerState.flags["cave_solved"] = true
+				main.call("current_map").emit_signal("puzzle_changed")
+		for a in args:
+			if a.begins_with("--photo="):
+				var h: Node = main.get("_hud")
+				h.set("_photo_filter", int(a.trim_prefix("--photo=")))
+				h.call("open_photo_mode")
 		if "--yard" in args:
 			# Clôture, chemins et arbres à bois devant la maison
 			FarmState.debris.clear()

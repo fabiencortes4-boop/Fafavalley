@@ -124,6 +124,7 @@ func _ready() -> void:
 	Settings.changed.connect(_apply_zoom)
 	EventBus.camera_shake.connect(shake)
 	_after_build()
+	_spawn_pet()
 	_update_tint(0, 0)
 	_update_weather()
 	_spawn_forage()
@@ -391,7 +392,7 @@ const KIND_HINTS := {
 	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
 	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
 	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
-	"board": "Demandes", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "boat": "En mer", "child": "Jouer",
+	"board": "Demandes", "cave": "Entrer", "cave_chest": "Ouvrir", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "boat": "En mer", "child": "Jouer",
 }
 const TOOL_HINTS := {
 	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",
@@ -417,6 +418,8 @@ func action_hint(cell: Vector2i) -> String:
 	if kind != "":
 		if kind.begins_with("door:"):
 			return "Entrer"
+		if kind.begins_with("lever:"):
+			return "Actionner"
 		if kind.begins_with("animals:"):
 			return "Soigner"
 		if kind.begins_with("plot:") or kind.begins_with("construction:"):
@@ -503,6 +506,12 @@ func talk_to_npc(npc: Npc) -> void:
 	if not scene.is_empty():
 		EventBus.heart_scene_requested.emit(id, scene)
 		return
+	var rumor := Rumors.try_hear(id)
+	if rumor != "":
+		Relations.talked_today[id] = true
+		Relations.add_points(id, Relations.TALK_POINTS)
+		EventBus.dialogue_requested.emit(id, rumor)
+		return
 	var slot: Variant = Inventory.get_selected()
 	if slot != null and GameData.item(slot.id).get("type") in ["crop", "fish", "forage", "animal", "food"]:
 		var result := Relations.give_gift(id, slot.id)
@@ -575,6 +584,9 @@ func act_on(cell: Vector2i) -> void:
 	if player.seated:
 		stand_up()
 		return
+	if _pet != null and is_instance_valid(_pet) and _pet.position.distance_to(cell_center(cell)) < TILE * 0.8:
+		_pet_the_pet()
+		return
 	if _spouse_at(cell):
 		talk_to_npc(_spouse_npc)
 		return
@@ -609,6 +621,43 @@ func act_on(cell: Vector2i) -> void:
 		var slot: Variant = Inventory.get_selected()
 		if slot != null and GameData.item(slot.id).has("edible"):
 			EventBus.eat_requested.emit(slot.id)
+
+
+# ------------------------------------------------------------ compagnon
+var _pet: PetFollower
+
+
+func _spawn_pet() -> void:
+	if Pet.kind == "" or map_id.begins_with("mine") or map_id == "sea" or (map_id.begins_with("in:")):
+		return
+	var at_home := self is HomeMap
+	# L'hiver, le compagnon reste au chaud à la maison
+	if TimeManager.season == 3 and not at_home:
+		return
+	_pet = PetFollower.new()
+	_pet.kind = Pet.kind
+	_pet.frame = 2
+	_pet.player = player
+	_pet.follow = not at_home
+	if at_home:
+		_pet.position = cell_center(get("bed_cell") + Vector2i(1, 1))
+		_pet.set_process(false)
+	else:
+		_pet.position = player.position + Vector2(-14, 2)
+	_entities.add_child(_pet)
+
+
+func _pet_the_pet() -> void:
+	player.play_use()
+	if Pet.pet():
+		Sfx.play("harvest")
+		Settings.vibrate(18)
+		PlayerState.heal(5, 0)
+		Fx.burst(_entities, _pet.position + Vector2(0, -10), [Color(1, 0.45, 0.55), Color(1, 0.75, 0.8)], 8, 35.0)
+		var mood: String = ["s'étire au soleil du printemps", "halète un peu : il fait chaud", "joue avec une feuille morte", "se blottit contre toi pour se réchauffer"][TimeManager.season]
+		EventBus.toast("%s %s. Ça fait du bien ! (+5 énergie)" % [Pet.pet_name, mood])
+	else:
+		EventBus.toast("%s te regarde, ravi. Il a déjà eu ses caresses aujourd'hui." % Pet.pet_name)
 
 
 func _holding_type() -> String:
@@ -753,6 +802,16 @@ func _spawn_forage() -> void:
 func _pick_forage(cell: Vector2i) -> void:
 	var sprite: Sprite2D = _forage_sprites[cell]
 	var id := Forage.take(map_id, cell)
+	if id == "lost_purse":
+		# La bourse perdue (rumeur de la taverne) : de l'or, tout de suite
+		var gold := int(Rumors.current().get("gold", 300))
+		Inventory.add_gold(gold)
+		Sfx.play("coins")
+		Fx.item_pop(_entities, cell_center(cell), GameData.item_icon("lost_purse"), player)
+		EventBus.toast("La bourse perdue du colporteur : +%d or !" % gold)
+		sprite.queue_free()
+		_forage_sprites.erase(cell)
+		return
 	if id == "" or not Inventory.can_add(id):
 		if id != "":
 			Forage.spots.get(map_id, {})["%d,%d" % [cell.x, cell.y]] = id

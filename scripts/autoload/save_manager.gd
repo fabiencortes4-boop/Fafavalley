@@ -95,6 +95,11 @@ func save_game() -> void:
 		"machines": Machines.to_dict(),
 		"woods": Woods.to_dict(),
 		"year_review": YearReview.to_dict(),
+		"challenges": Challenges.to_dict(),
+		"rumors": Rumors.to_dict(),
+		"pet": Pet.to_dict(),
+		"projects": Projects.to_dict(),
+		"museum": Museum.to_dict(),
 		"tips": Tips.to_dict(),
 		"achievements": Achievements.to_dict(),
 	}
@@ -171,6 +176,11 @@ func load_game() -> bool:
 	Achievements.from_dict(data.get("achievements", {}))
 	Woods.from_dict(data.get("woods", {}))
 	YearReview.from_dict(data.get("year_review", {}))
+	Challenges.from_dict(data.get("challenges", {}))
+	Rumors.from_dict(data.get("rumors", {}))
+	Pet.from_dict(data.get("pet", {}))
+	Projects.from_dict(data.get("projects", {}))
+	Museum.from_dict(data.get("museum", {}))
 	Machines.from_dict(data.get("machines", {}))
 	Tips.from_dict(data.get("tips", {}))
 	HeartEvents.from_dict(data.get("hearts_seen", {}))

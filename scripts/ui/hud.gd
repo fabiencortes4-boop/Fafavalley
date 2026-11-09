@@ -130,11 +130,15 @@ func _ready() -> void:
 			show_toast("Aujourd'hui : %s au village, de %dh à %dh !" % [fest.name, int(fest.start), int(fest.end)])
 			Tips.show("festival")
 		elif TimeManager.is_storm():
-			show_toast("Orage aujourd'hui : la pluie arrose tout, mais gare aux éclairs !")
+			show_toast("Orage aujourd'hui : la pluie arrose tout, mais il peut coucher quelques cultures cette nuit.")
+		elif TimeManager.heatwave:
+			show_toast("Canicule aujourd'hui : arrose tes cultures deux fois, sinon elles ne pousseront pas cette nuit !")
 		elif bday != "":
 			show_toast("C'est l'anniversaire de %s aujourd'hui ! Un cadeau lui ferait plaisir." % GameData.npc(bday).name)
 		elif Marriage.last_help != "":
 			show_toast(Marriage.last_help)
+		else:
+			show_toast("Défi du jour : " + Challenges.summary())
 		_nature_report())
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
@@ -783,7 +787,12 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 	var panel := PanelContainer.new()
 	center.add_child(panel)
 	panel.resized.connect(_fit_panel.bind(panel))
-	get_tree().process_frame.connect(_fit_panel.bind(panel), CONNECT_ONE_SHOT)
+	# Au cadre suivant (la fenêtre a sa taille) ; elle a pu être fermée entre-temps
+	var ref: WeakRef = weakref(panel)
+	get_tree().process_frame.connect(func() -> void:
+		var p: PanelContainer = ref.get_ref()
+		if p != null:
+			_fit_panel(p), CONNECT_ONE_SHOT)
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(220, 0)
 	box.add_theme_constant_override("separation", 4)
@@ -863,6 +872,7 @@ func open_pause_menu() -> void:
 	_add_menu_entry(box, "Ma ferme", GameData.item("carrot").get("icon", 0), open_farm_menu)
 	_add_menu_entry(box, "Journal", GameData.item("house_upgrade").get("icon", 0), open_journal_menu)
 	_add_menu_entry(box, "Aide", GameData.item("sign").get("icon", -1) if GameData.items.has("sign") else -1, open_help_menu)
+	_add_menu_entry(box, "Photo", PHOTO_ICON, open_photo_mode)
 	_add_menu_entry(box, "Réglages", -1, open_settings.bind(""))
 	_add_menu_entry(box, "Sauvegarder", -1, func() -> void:
 		SaveManager.save_game()
@@ -881,6 +891,14 @@ func open_farm_menu() -> void:
 	_add_menu_entry(box, "Sac", GameData.item("chest").get("icon", 0), open_bag)
 	_add_menu_entry(box, "Fabrication", CRAFT_ICON, open_crafting.bind("craft"))
 	_add_menu_entry(box, "Compétences", GameData.item("steel_pickaxe").get("icon", 0), open_skills)
+	_add_menu_entry(box, "Beauté de la ferme", GameData.item("garden_fountain").get("icon", 0), func() -> void:
+		var score := FarmState.beauty()
+		var next := -1
+		for t: int in FarmState.VISITOR_TIERS:
+			if score < t:
+				next = t
+				break
+		show_message("Beauté de la ferme", "Score de beauté : %d.\n\nBancs, lanternes, parterres, fontaines, chemins, clôtures, arbres et fleurs embellissent la ferme (Fabrication > Jardin). Le dimanche, une belle ferme attire des habitants du village : %d visiteur(s) en ce moment.%s" % [score, FarmState.visitors_count(), "\n\nProchain visiteur à %d points." % next if next > 0 else "\n\nLe maximum de visiteurs est atteint : bravo !"]))
 	_size_menu(box)
 	_add_button(outer, "Retour", open_pause_menu)
 
@@ -889,14 +907,256 @@ func open_farm_menu() -> void:
 func open_journal_menu() -> void:
 	var outer := _open_modal("Journal")
 	var box := _menu_grid(outer)
+	_add_menu_entry(box, "Défi du jour", GameData.item("valfleur_trophy").get("icon", 0), func() -> void:
+		show_message("Défi du jour", Challenges.summary() + ("\n\nSérie en cours : %d jour(s) réussi(s) d'affilée (+10 %% d'or par jour, jusqu'à +50 %%)." % Challenges.streak if Challenges.streak > 0 else "\n\nRéussis-le avant la nuit pour gagner l'or. Un nouveau défi chaque matin !"))
+	)
 	_add_menu_entry(box, "Histoire", GameData.item("house_upgrade").get("icon", 0), open_story)
 	_add_menu_entry(box, "Habitants", GameData.item("daffodil").get("icon", 0), open_relations)
 	_add_menu_entry(box, "Demandes", GameData.item("wood").get("icon", 0), open_requests)
 	_add_menu_entry(box, "Carnet de pêche", GameData.item("fishing_rod").get("icon", 0), open_fish_log)
 	_add_menu_entry(box, "Album", GameData.item("emerald").get("icon", 0), open_collections.bind(""))
 	_add_menu_entry(box, "Succès", GameData.item("valfleur_trophy").get("icon", 0), open_achievements)
+	_add_menu_entry(box, "Rénovations", GameData.item("house_upgrade").get("icon", 0), open_projects)
+	_add_menu_entry(box, "Musée", GameData.item("fossil_skull").get("icon", 0), open_museum)
+	_add_menu_entry(box, "Photos", PHOTO_ICON, open_photo_album)
 	_size_menu(box)
 	_add_button(outer, "Retour", open_pause_menu)
+
+
+## Rénovations du village : chantiers à financer.
+func open_projects() -> void:
+	var box := _open_modal("Rénovations du village")
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(360, 170)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	for id: String in Projects.PROJECTS:
+		var p: Dictionary = Projects.PROJECTS[id]
+		var title := _add_label(list, str(p.name) + ("  (terminé)" if Projects.done.has(id) else ""))
+		title.add_theme_color_override("font_color", UiTheme.ACCENT)
+		_add_label(list, str(p.text))
+		if Projects.done.has(id):
+			continue
+		var cost: Array = ["%d or" % int(p.gold)]
+		for item: String in p.materials:
+			cost.append("%d %s (%d/%d)" % [int(p.materials[item]), GameData.item_name(item).to_lower(), mini(Inventory.count_of(item), int(p.materials[item])), int(p.materials[item])])
+		_add_label(list, "Coût : " + ", ".join(cost))
+		var b := _add_button(list, "Financer le chantier", func() -> void:
+			if Projects.fund(id):
+				Sfx.play("achievement")
+				show_toast("%s : le chantier est terminé !" % p.name)
+			open_projects())
+		b.disabled = not Projects.missing(id).is_empty()
+	_add_button(box, "Retour", open_journal_menu)
+
+
+## Musée : les fossiles donnés, ceux qui manquent, et ceux qu'on peut donner.
+func open_museum() -> void:
+	var box := _open_modal("Musée de Valfleur")
+	_add_label(box, "Le grand squelette : %d/%d morceaux.%s" % [Museum.donated.size(), Museum.PIECES.size(), "  Complet !" if Museum.complete() else "  Les fossiles se trouvent en labourant la terre et en cassant la pierre de la mine."])
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 8)
+	box.add_child(grid)
+	for id: String in Museum.PIECES:
+		var cell := VBoxContainer.new()
+		cell.custom_minimum_size = Vector2(64, 0)
+		var icon := TextureRect.new()
+		icon.texture = GameData.item_icon(id)
+		icon.custom_minimum_size = Vector2(28, 28)
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.modulate = Color.WHITE if Museum.donated.has(id) or Inventory.count_of(id) > 0 else Color(0, 0, 0, 0.6)
+		cell.add_child(icon)
+		var name := Label.new()
+		name.text = GameData.item_name(id) if Museum.donated.has(id) or Inventory.count_of(id) > 0 else "???"
+		name.add_theme_font_size_override("font_size", 7)
+		name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cell.add_child(name)
+		if not Museum.donated.has(id) and Inventory.count_of(id) > 0:
+			var b := Button.new()
+			b.text = "Donner"
+			b.pressed.connect(func() -> void:
+				if Museum.donate(id):
+					Sfx.play("discover")
+					if Museum.complete():
+						show_toast("Le squelette est complet ! +%d or" % Museum.REWARD)
+				open_museum())
+			cell.add_child(b)
+		grid.add_child(cell)
+	_add_button(box, "Retour", open_journal_menu)
+
+
+# ------------------------------------------------------------ mode photo
+const PHOTO_ICON := 209
+const PHOTO_DIR := "user://photos"
+const PHOTO_FILTERS := ["Naturel", "Sépia", "Noir et blanc", "Doré", "Rêveur"]
+const PHOTO_SHADER := """
+shader_type canvas_item;
+uniform sampler2D screen_tex : hint_screen_texture, filter_linear;
+uniform int mode = 0;
+void fragment() {
+	vec3 c = texture(screen_tex, SCREEN_UV).rgb;
+	float g = dot(c, vec3(0.299, 0.587, 0.114));
+	if (mode == 1) { c = vec3(g * 1.07 + 0.05, g * 0.94 + 0.02, g * 0.74); }
+	else if (mode == 2) { c = vec3(g); }
+	else if (mode == 3) { c = c * vec3(1.08, 0.98, 0.82) + vec3(0.04, 0.02, 0.0); }
+	else if (mode == 4) { c = mix(c, vec3(g), 0.25) * 1.04 + vec3(0.05, 0.03, 0.09); }
+	vec2 d = SCREEN_UV - 0.5;
+	c *= 1.0 - dot(d, d) * 0.7;
+	COLOR = vec4(c, 1.0);
+}
+"""
+var _photo_layer: CanvasLayer
+var _photo_bar: Control
+var _photo_filter: int = 0
+var _photo_hidden: Array = []
+
+
+## Mode photo : l'interface disparaît (le joystick reste pour cadrer en
+## marchant), un filtre au choix, et le cliché va dans l'album.
+func open_photo_mode() -> void:
+	close_modal()
+	_photo_hidden.clear()
+	for c: Node in _root.get_children():
+		if c is CanvasItem and (c as CanvasItem).visible and c != _joystick and c != _toast:
+			(c as CanvasItem).visible = false
+			_photo_hidden.append(c)
+	for extra: CanvasItem in [_action_button]:
+		if extra.visible:
+			extra.visible = false
+			_photo_hidden.append(extra)
+	_photo_layer = CanvasLayer.new()
+	_photo_layer.layer = 20
+	add_child(_photo_layer)
+	var filter := ColorRect.new()
+	filter.set_anchors_preset(Control.PRESET_FULL_RECT)
+	filter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	var sh := Shader.new()
+	sh.code = PHOTO_SHADER
+	mat.shader = sh
+	mat.set_shader_parameter("mode", _photo_filter)
+	filter.material = mat
+	filter.name = "Filter"
+	_photo_layer.add_child(filter)
+	var ui := Control.new()
+	ui.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.theme = _root.theme
+	_photo_layer.add_child(ui)
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 6)
+	ui.add_child(bar)
+	_photo_bar = bar
+	var shoot := Button.new()
+	shoot.text = "Prendre la photo"
+	shoot.icon = GameData.icon_at(PHOTO_ICON)
+	shoot.pressed.connect(_take_photo)
+	bar.add_child(shoot)
+	var fbtn := Button.new()
+	fbtn.text = "Filtre : %s" % PHOTO_FILTERS[_photo_filter]
+	fbtn.pressed.connect(func() -> void:
+		_photo_filter = (_photo_filter + 1) % PHOTO_FILTERS.size()
+		mat.set_shader_parameter("mode", _photo_filter)
+		fbtn.text = "Filtre : %s" % PHOTO_FILTERS[_photo_filter])
+	bar.add_child(fbtn)
+	var zoom := Button.new()
+	zoom.text = "Zoom"
+	zoom.pressed.connect(Settings.cycle_zoom)
+	bar.add_child(zoom)
+	var quit := Button.new()
+	quit.text = "Quitter"
+	quit.pressed.connect(close_photo_mode)
+	bar.add_child(quit)
+	var vp := get_viewport().get_visible_rect().size
+	await get_tree().process_frame
+	if is_instance_valid(bar):
+		bar.size = bar.get_combined_minimum_size()
+		var k := minf(1.0, (vp.x - 8.0) / bar.size.x)
+		bar.scale = Vector2(k, k)
+		bar.position = Vector2((vp.x - bar.size.x * k) / 2.0, vp.y - bar.size.y * k - 6)
+
+
+func close_photo_mode() -> void:
+	if _photo_layer != null and is_instance_valid(_photo_layer):
+		_photo_layer.queue_free()
+	_photo_layer = null
+	for c: Variant in _photo_hidden:
+		if is_instance_valid(c):
+			(c as CanvasItem).visible = true
+	_photo_hidden.clear()
+
+
+func _take_photo() -> void:
+	if _photo_bar == null:
+		return
+	_photo_bar.visible = false
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var img := get_viewport().get_texture().get_image()
+	_photo_bar.visible = true
+	if img == null or img.is_empty():
+		show_toast("Impossible de prendre la photo ici.")
+		return
+	DirAccess.make_dir_recursive_absolute(PHOTO_DIR)
+	var name := "photo_%d.png" % int(Time.get_unix_time_from_system())
+	img.save_png("%s/%s" % [PHOTO_DIR, name])
+	if OS.has_feature("web"):
+		JavaScriptBridge.download_buffer(img.save_png_to_buffer(), "fafavalley_" + name, "image/png")
+	Sfx.play("click")
+	Story.bump("photos")
+	# Éclair blanc de l'appareil
+	var flash := ColorRect.new()
+	flash.color = Color(1, 1, 1, 0.8)
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_photo_layer.add_child(flash)
+	var tw := flash.create_tween()
+	tw.tween_property(flash, "color:a", 0.0, 0.35)
+	tw.tween_callback(flash.queue_free)
+	show_toast("Photo rangée dans l'album (Menu > Journal > Photos).")
+
+
+## Album photo : les derniers clichés, en vignettes ; toucher pour agrandir.
+func open_photo_album() -> void:
+	var box := _open_modal("Album photo")
+	var files: Array = []
+	var dir := DirAccess.open(PHOTO_DIR)
+	if dir != null:
+		for f: String in dir.get_files():
+			if f.ends_with(".png"):
+				files.append(f)
+	files.sort()
+	files.reverse()
+	if files.is_empty():
+		_add_label(box, "Aucune photo pour l'instant. Menu > Photo pour immortaliser ta ferme !")
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	box.add_child(grid)
+	for f: String in files.slice(0, 12):
+		var img := Image.load_from_file("%s/%s" % [PHOTO_DIR, f])
+		if img == null or img.is_empty():
+			continue
+		var big := ImageTexture.create_from_image(img)
+		img.resize(96, int(96.0 * img.get_height() / maxf(img.get_width(), 1)))
+		var b := TextureButton.new()
+		b.texture_normal = ImageTexture.create_from_image(img)
+		b.pressed.connect(func() -> void:
+			var view := _open_modal("Photo")
+			var tr := TextureRect.new()
+			tr.texture = big
+			tr.custom_minimum_size = Vector2(360, 200)
+			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			view.add_child(tr)
+			_add_button(view, "Retour", open_photo_album))
+		grid.add_child(b)
+	_add_button(box, "Retour", open_journal_menu)
 
 
 ## Aide : le guide et le tutoriel.
@@ -1768,6 +2028,8 @@ func open_requests() -> void:
 
 
 func _requests_section(list: Container) -> void:
+	var defi := _add_label(list, Challenges.summary())
+	defi.add_theme_color_override("font_color", Color(0.95, 0.9, 0.6))
 	if Quests.active.is_empty():
 		return
 	var header := _add_label(list, "En cours (%d/%d) - parle à l'habitant pour livrer :" % [Quests.active.size(), Quests.MAX_ACTIVE])
@@ -2403,6 +2665,16 @@ func _refresh_tutorial() -> void:
 func _nature_report() -> void:
 	var n: Dictionary = FarmState.last_night
 	var parts: Array = []
+	if int(n.get("frost", 0)) > 0:
+		parts.append("le gel a ralenti %d jeune(s) pousse(s)" % int(n.frost))
+	if int(n.get("storm", 0)) > 0:
+		parts.append("l'orage a couché %d culture(s) (elles repartent, avec du retard)" % int(n.storm))
+	if int(n.get("heat", 0)) > 0:
+		parts.append("%d culture(s) n'ont pas poussé : pendant la canicule, il faut arroser deux fois" % int(n.heat))
+	if int(n.get("crows", 0)) > 0:
+		parts.append("les corbeaux ont picoré %d culture(s) (un épouvantail les éloigne)" % int(n.crows))
+	if int(n.get("hybrid", 0)) > 0:
+		parts.append("%d graine(s) hybride(s) sont nées entre deux cultures voisines !" % int(n.hybrid))
 	if int(n.get("season", 0)) > 0:
 		parts.append("%d culture(s) morte(s) avec le changement de saison (seule la serre les protège)" % int(n.season))
 	if int(n.get("withered", 0)) > 0:
@@ -2414,7 +2686,7 @@ func _nature_report() -> void:
 	if parts.is_empty():
 		return
 	await get_tree().create_timer(2.5).timeout
-	show_toast("La nature reprend ses droits : " + ", ".join(parts) + ".")
+	show_toast("Cette nuit à la ferme : " + ", ".join(parts) + ".")
 
 
 # ------------------------------------------------------------ fêtes du village

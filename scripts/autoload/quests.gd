@@ -100,7 +100,7 @@ func offers() -> Array:
 
 
 func can_accept(index: int) -> bool:
-	return active.size() < MAX_ACTIVE and not taken_today.has(index)
+	return active.filter(func(q: Dictionary) -> bool: return not q.get("big", false)).size() < MAX_ACTIVE and not taken_today.has(index)
 
 
 func accept(index: int) -> bool:
@@ -146,7 +146,46 @@ func new_day() -> void:
 		q.days_left = int(q.days_left) - 1
 		if int(q.days_left) <= 0:
 			active.erase(q)
+	if TimeManager.weekday() == "Lun.":
+		weekly_order()
 	changed.emit()
+
+
+## Commande de la semaine (chaque lundi) : un commerçant passe une grosse
+## commande, à livrer en 7 jours ; bien mieux payée que l'expédition. Elle
+## s'ajoute aux demandes, même si elles sont déjà trois.
+const ORDER_FROM := {
+	"rosalie": "son épicerie", "margot": "la coopérative", "marius": "la taverne", "basile": "son comptoir",
+}
+
+
+func weekly_order() -> void:
+	for q: Dictionary in active:
+		if q.get("big", false):
+			return  # une seule à la fois
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["commande", TimeManager.year, TimeManager.season, TimeManager.day])
+	var pool := _pool().filter(func(p: Array) -> bool: return not str(p[0]) in ["wood", "stone"])
+	if pool.is_empty():
+		return
+	var pick: Array = pool[rng.randi() % pool.size()]
+	var npc: String = ORDER_FROM.keys()[rng.randi() % ORDER_FROM.size()]
+	if npc in ["marius", "basile"] and not PlayerState.flags.has("story_port"):
+		npc = "rosalie"
+	var item := str(pick[0])
+	var qty := int(pick[2]) * 3
+	var value := maxi(10, int(GameData.item(item).get("sell", 10)))
+	var what := "%d %s" % [qty, GameData.item_name(item).to_lower()]
+	var q := {
+		"npc": npc, "item": item, "qty": qty, "quality": 0, "big": true,
+		"gold": int(value * qty * 2.2 + 150), "points": 250, "days_left": 7,
+		"text": "Commande de la semaine pour %s : %s." % [ORDER_FROM[npc], what],
+	}
+	active.append(q)
+	Mail.send_custom("commande_%d_%d_%d" % [TimeManager.year, TimeManager.season, TimeManager.day], {
+		"from": str(GameData.npc(npc).get("name", npc)),
+		"text": "Bonjour ! J'ai une grosse commande pour %s cette semaine : %s, d'ici 7 jours. Je paie %d pièces d'or à la livraison, bien plus que l'expédition. Viens me voir quand tu as tout !" % [ORDER_FROM[npc], what, int(q.gold)],
+	})
 
 
 func to_dict() -> Dictionary:

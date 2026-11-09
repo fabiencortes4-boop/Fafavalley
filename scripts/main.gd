@@ -290,6 +290,8 @@ func _load_map(map_id: String) -> void:
 		_world = HomeMap.new()
 	elif map_id == "forest":
 		_world = ForestMap.new()
+	elif map_id == "cave":
+		_world = CaveMap.new()
 	elif map_id == "port":
 		_world = PortMap.new()
 	elif map_id == "sea":
@@ -362,8 +364,10 @@ func _announce(map_id: String, previous: String) -> void:
 		_hud.title_card("Chez toi", "La maison de Firmin", Color(1, 0.82, 0.6))
 	elif map_id == "port" and not previous.begins_with("in:"):
 		_hud.title_card("Port du Héron", "À l'est de Valfleur", Color(0.6, 0.85, 1.0))
-	elif map_id == "forest":
+	elif map_id == "forest" and previous != "cave":
 		_hud.title_card("Forêt de la source", "Au nord de la ferme", Color(0.6, 0.95, 0.7))
+	elif map_id == "cave":
+		_hud.title_card("Grotte des lucioles", "Un secret de Firmin", Color(0.75, 0.95, 0.6))
 	elif map_id == "sea":
 		_hud.title_card("Au large", "Thons, espadons... et peut-être une légende", Color(0.5, 0.75, 1.0))
 	elif map_id == "farm":

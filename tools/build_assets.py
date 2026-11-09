@@ -805,6 +805,87 @@ def draw_misc(kind):
             px[6 + i, 4 + i] = (120, 76, 40, 255)
         rect(2, 2, 7, 5, (110, 115, 130))
         rect(3, 2, 7, 3, (170, 176, 190))
+    elif kind == "purse":
+        for y in range(6, 15):
+            for x in range(3, 13):
+                if (x - 7.5) ** 2 / 25 + (y - 10) ** 2 / 20 <= 1:
+                    px[x, y] = ((150, 100, 60) if x + y < 17 else (120, 78, 46)) + (255,)
+        rect(5, 4, 11, 6, (110, 70, 40))
+        rect(7, 2, 9, 4, (200, 60, 50))
+        rect(6, 9, 10, 11, (250, 210, 80))
+    elif kind == "scarecrow":
+        rect(7, 4, 9, 15, (130, 90, 50))
+        rect(2, 7, 14, 9, (130, 90, 50))
+        rect(5, 7, 11, 12, (90, 130, 200))
+        rect(6, 2, 10, 6, (235, 210, 150))
+        rect(4, 1, 12, 3, (160, 110, 60))
+        px[7, 4], px[9, 4] = (40, 30, 20, 255), (40, 30, 20, 255)
+    elif kind == "hybrid_seed":
+        rect(3, 3, 13, 14, (235, 220, 180))
+        for i, c in enumerate([(230, 90, 90), (240, 200, 70), (110, 190, 90), (100, 140, 230), (180, 110, 210)]):
+            rect(4 + i * 2, 6, 6 + i * 2, 11, c)
+        rect(3, 3, 13, 5, (200, 160, 90))
+    elif kind.startswith("fossil"):
+        bone, dark = (236, 226, 200), (160, 145, 115)
+        if kind == "fossil_skull":
+            for y in range(3, 13):
+                for x in range(2, 14):
+                    if (x - 8) ** 2 / 30 + (y - 7) ** 2 / 16 <= 1:
+                        px[x, y] = bone + (255,)
+            rect(5, 6, 7, 8, dark)
+            rect(10, 9, 14, 13, bone)
+            for x in range(10, 14, 2):
+                px[x, 12] = dark + (255,)
+        elif kind == "fossil_ribs":
+            rect(2, 3, 14, 5, bone)
+            for x in range(3, 14, 3):
+                rect(x, 5, x + 1, 13, bone)
+                px[x, 12] = dark + (255,)
+        elif kind == "fossil_leg":
+            for i in range(10):
+                rect(4 + i // 2, 2 + i, 7 + i // 2, 3 + i, bone)
+            rect(8, 12, 14, 14, bone)
+            rect(3, 1, 7, 4, dark)
+        elif kind == "fossil_tail":
+            for i in range(6):
+                rect(2 + i * 2, 4 + i, 4 + i * 2, 7 + i, bone)
+                px[3 + i * 2, 6 + i] = dark + (255,)
+        else:
+            for y in range(2, 15):
+                for x in range(2, 15):
+                    d = ((x - 8) ** 2 + (y - 8) ** 2) ** 0.5
+                    if d <= 6:
+                        px[x, y] = ((190, 160, 110) if int(d) % 2 else (150, 120, 80)) + (255,)
+    elif kind == "garden_bench":
+        rect(2, 5, 14, 8, (150, 100, 60))
+        rect(2, 9, 14, 11, (170, 116, 70))
+        for x in (3, 12):
+            rect(x, 11, x + 1, 15, (90, 90, 96))
+    elif kind == "garden_lantern":
+        rect(7, 6, 9, 15, (60, 60, 66))
+        rect(5, 13, 11, 15, (60, 60, 66))
+        rect(5, 2, 11, 7, (60, 60, 66))
+        rect(6, 3, 10, 6, (255, 220, 120))
+    elif kind == "flower_bed":
+        rect(2, 9, 14, 14, (120, 80, 50))
+        rect(2, 8, 14, 10, (90, 60, 40))
+        for i, c in enumerate([(240, 90, 110), (250, 210, 80), (180, 120, 230), (255, 255, 255)]):
+            rect(3 + i * 3, 4 + (i % 2), 5 + i * 3, 7 + (i % 2), c)
+            px[4 + i * 3, 8] = (70, 150, 70, 255)
+    elif kind == "garden_fountain":
+        rect(2, 10, 14, 14, (170, 170, 176))
+        rect(3, 10, 13, 11, (110, 170, 230))
+        rect(7, 4, 9, 10, (170, 170, 176))
+        rect(5, 3, 11, 5, (190, 190, 196))
+        px[6, 2], px[9, 1], px[8, 2] = (150, 200, 250, 255), (150, 200, 250, 255), (150, 200, 250, 255)
+    elif kind == "camera":
+        rect(2, 5, 14, 13, (70, 70, 80))
+        rect(4, 3, 8, 5, (70, 70, 80))
+        for y in range(6, 12):
+            for x in range(5, 11):
+                if (x - 7.5) ** 2 + (y - 8.5) ** 2 <= 7:
+                    px[x, y] = (150, 190, 230, 255)
+        rect(11, 6, 13, 7, (250, 220, 120))
     elif kind == "plan":
         rect(3, 2, 13, 14, (235, 225, 195))
         for y in (5, 8, 11):
@@ -1018,6 +1099,12 @@ def extend_icons(sheet):
     extra += [crop_icon_pair(cid, data[cid]["art"])[0] for cid in FLOWER_CROPS]
     # 196 : icône du bouton Fabrication (marteau et scie croisés)
     extra.append(draw_misc("craft"))
+    # 197 bourse perdue, 198 épouvantail, 199 graines hybrides, 200-204 fossiles
+    # (crâne, côtes, patte, queue, ammonite), 205-208 décor du jardin (banc,
+    # lanterne, parterre, fontaine), 209 appareil photo
+    extra += [draw_misc(k) for k in ("purse", "scarecrow", "hybrid_seed", "fossil_skull", "fossil_ribs",
+                                     "fossil_leg", "fossil_tail", "fossil_shell", "garden_bench",
+                                     "garden_lantern", "flower_bed", "garden_fountain", "camera")]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

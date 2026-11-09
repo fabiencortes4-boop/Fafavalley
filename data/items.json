@@ -1960,5 +1960,123 @@
 		"stack": 99,
 		"buy": 30,
 		"sell": 15
+	},
+	"lost_purse": {
+		"name": "Bourse perdue",
+		"type": "treasure",
+		"icon": 197,
+		"stack": 1,
+		"sell": 0,
+		"description": "La bourse d'un colporteur, perdue dans l'herbe. Elle tinte."
+	},
+	"scarecrow": {
+		"name": "Épouvantail",
+		"type": "placeable",
+		"place": "scarecrow",
+		"icon": 198,
+		"stack": 99,
+		"sell": 30,
+		"description": "Éloigne les corbeaux des cultures à 4 cases autour de lui."
+	},
+	"seed_hybrid": {
+		"name": "Graines hybrides",
+		"type": "seed",
+		"crop": "@hybrid",
+		"icon": 199,
+		"stack": 99,
+		"buy": 400,
+		"sell": 60,
+		"description": "Nées du croisement de deux cultures voisines. Elles donnent une culture de saison au hasard, toujours de qualité cristal, et en double à la récolte."
+	},
+	"flower_honey": {
+		"name": "Miel de fleurs",
+		"type": "artisan",
+		"icon": 164,
+		"stack": 99,
+		"sell": 200,
+		"from": "Miel de %s",
+		"mult": 2.0,
+		"add": 90,
+		"edible": [
+			55,
+			25
+		],
+		"description": "Le miel des ruches posées près de fleurs cultivées : il en garde le parfum."
+	},
+	"fossil_skull": {
+		"name": "Crâne fossile",
+		"type": "fossil",
+		"icon": 200,
+		"stack": 99,
+		"sell": 120,
+		"description": "Un morceau d'un très ancien animal de la vallée. Donne-le au musée (Menu > Journal > Musée)."
+	},
+	"fossil_ribs": {
+		"name": "Côtes fossiles",
+		"type": "fossil",
+		"icon": 201,
+		"stack": 99,
+		"sell": 120,
+		"description": "Un morceau d'un très ancien animal de la vallée. Donne-le au musée (Menu > Journal > Musée)."
+	},
+	"fossil_leg": {
+		"name": "Patte fossile",
+		"type": "fossil",
+		"icon": 202,
+		"stack": 99,
+		"sell": 120,
+		"description": "Un morceau d'un très ancien animal de la vallée. Donne-le au musée (Menu > Journal > Musée)."
+	},
+	"fossil_tail": {
+		"name": "Queue fossile",
+		"type": "fossil",
+		"icon": 203,
+		"stack": 99,
+		"sell": 120,
+		"description": "Un morceau d'un très ancien animal de la vallée. Donne-le au musée (Menu > Journal > Musée)."
+	},
+	"fossil_shell": {
+		"name": "Ammonite",
+		"type": "fossil",
+		"icon": 204,
+		"stack": 99,
+		"sell": 120,
+		"description": "Un morceau d'un très ancien animal de la vallée. Donne-le au musée (Menu > Journal > Musée)."
+	},
+	"garden_bench": {
+		"name": "Banc de jardin",
+		"type": "placeable",
+		"place": "garden_bench",
+		"icon": 205,
+		"stack": 99,
+		"sell": 40,
+		"description": "À poser sur la ferme : on s'y assoit pour se reposer. Embellit la ferme."
+	},
+	"garden_lantern": {
+		"name": "Lanterne de jardin",
+		"type": "placeable",
+		"place": "garden_lantern",
+		"icon": 206,
+		"stack": 99,
+		"sell": 50,
+		"description": "Une lanterne qui brille la nuit. Embellit la ferme."
+	},
+	"flower_bed": {
+		"name": "Parterre de fleurs",
+		"type": "placeable",
+		"place": "flower_bed",
+		"icon": 207,
+		"stack": 99,
+		"sell": 40,
+		"description": "Un massif fleuri toute l'année (sauf l'hiver). Embellit la ferme."
+	},
+	"garden_fountain": {
+		"name": "Fontaine de jardin",
+		"type": "placeable",
+		"place": "garden_fountain",
+		"icon": 208,
+		"stack": 99,
+		"sell": 200,
+		"description": "Une fontaine qui chante : le plus beau décor de la ferme."
 	}
 }

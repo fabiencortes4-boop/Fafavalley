@@ -9,7 +9,7 @@ extends WorldMap
 ## source jaillit de nouveau à la fin de l'histoire.
 ##
 ## Plan : X ronces, S bassin de la source, j feu de camp, z tente de
-## Firmin, Q panneaux, l arbres à bois (clairière des bûcherons : pins à
+## Firmin, Q panneaux, G entrée de la grotte des lucioles, l arbres à bois (clairière des bûcherons : pins à
 ## l'est du chemin, platanes et chênes à l'ouest).
 
 const MAP := [
@@ -22,7 +22,7 @@ const MAP := [
 	"TTTTTTTTTTT.....Q..==...........TTTTTTTT",
 	"TTTTTTTTTTTTTXXXXXXXXXXXXXXXXXXXTTTTTTTT",
 	"TTTTTTTTTb.........==..........'..TTTTTT",
-	"TTTTTT..,....m.....==....,.........TTTTT",
+	"TTTTTTG.,....m.....==....,.........TTTTT",
 	"TTTT.........R.....==.........R.....TTTT",
 	"TTT....'..........====..............TTTT",
 	"TTT..h.......,.....==.......~~~~~....TTT",
@@ -71,6 +71,8 @@ func _ground_tile(cell: Vector2i, ch: String) -> int:
 			return WorldTiles.GRASS if brambles_cut() else int(DECOR.get("b", WorldTiles.GRASS))
 		"S", "j", "z", "l":
 			return WorldTiles.GRASS
+		"G":
+			return WorldTiles.ROCK
 	return super(cell, ch)
 
 
@@ -85,6 +87,8 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 			_add_sign(cell, "La source", "L'eau jaillit de nouveau, claire et fraîche. Elle sent la violette." if spring_flows() else "Un bassin de pierre, sec. On entend l'eau gronder sous la roche... Il faudrait la libérer, au fond de la mine.")
 		"j", "z":
 			block_cell(cell)
+		"G":
+			_interactables[cell] = "cave"
 		"Q":
 			if cell.y < 7:
 				_add_sign(cell, "Une pierre gravée", "« Ici naît la source de Valfleur. Que son eau ne cesse jamais de chanter. » - Les fondateurs")
@@ -93,6 +97,9 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 
 
 func _interact(kind: String, _cell: Vector2i) -> void:
+	if kind == "cave":
+		EventBus.map_change_requested.emit("cave", Vector2i(8, 8))
+		return
 	if kind == "gate":
 		EventBus.message_requested.emit("Des ronces", "Un mur de ronces épaisses. Derrière, on devine une clairière... Mathis aurait les outils pour les couper, quand la ferme sera bien lancée (chapitre 4 de l'histoire).")
 

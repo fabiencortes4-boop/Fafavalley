@@ -299,5 +299,48 @@
 		"ingredients": {
 			"stone": 3
 		}
+	},
+	"scarecrow": {
+		"station": "craft",
+		"category": "Ferme",
+		"ingredients": {
+			"wood": 15,
+			"fiber": 10
+		}
+	},
+	"garden_bench": {
+		"station": "craft",
+		"category": "Jardin",
+		"ingredients": {
+			"wood": 25,
+			"hardwood": 1
+		}
+	},
+	"garden_lantern": {
+		"station": "craft",
+		"category": "Jardin",
+		"ingredients": {
+			"wood": 5,
+			"iron_ore": 1,
+			"coal": 2
+		}
+	},
+	"flower_bed": {
+		"station": "craft",
+		"category": "Jardin",
+		"ingredients": {
+			"wood": 10,
+			"stone": 5,
+			"fiber": 10
+		}
+	},
+	"garden_fountain": {
+		"station": "craft",
+		"category": "Jardin",
+		"ingredients": {
+			"stone": 60,
+			"copper_ore": 5,
+			"quartz": 1
+		}
 	}
 }

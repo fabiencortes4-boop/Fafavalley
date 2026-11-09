@@ -519,6 +519,33 @@
 	],
 	"leon": [
 		{
+			"hearts": 0,
+			"title": "Les petits du ranch",
+			"pet": true,
+			"lines": [
+				"Léon te fait signe d'approcher d'un panier, au fond du ranch.",
+				"Regarde-moi ces deux-là : un chaton roux et un chiot tout rond. Leurs mères ne peuvent pas tout nourrir.",
+				"Une ferme sans compagnon, c'est triste. Choisis celui qui te plaît : il te suivra partout, et il dormira près de ton lit."
+			],
+			"choice": {
+				"prompt": "Qui adoptes-tu ?",
+				"options": [
+					[
+						"Le chaton roux (Caramel)",
+						30,
+						"Caramel ! Il ronronne déjà. Il adore le coin du feu, tu verras.",
+						"cat"
+					],
+					[
+						"Le chiot tout rond (Biscuit)",
+						30,
+						"Biscuit ! Un vrai chien de ferme : avec lui, les corbeaux n'oseront plus approcher de tes champs.",
+						"dog"
+					]
+				]
+			}
+		},
+		{
 			"hearts": 2,
 			"title": "La vache de Léon",
 			"lines": [

@@ -56,7 +56,7 @@ func items(id: String) -> Array:
 			var later: Array = []
 			for item_id: String in GameData.items:
 				var item := GameData.item(item_id)
-				if item.get("type") != "seed":
+				if item.get("type") != "seed" or not item.has("buy"):
 					continue
 				if GameData.crop_in_season(str(item.get("crop", "")), TimeManager.season):
 					out.append(item_id)
@@ -65,4 +65,7 @@ func items(id: String) -> Array:
 			out.append_array(later)
 		else:
 			out.append(str(entry))
+	# Le pont réparé : Basile fait venir des graines hybrides
+	if id == "comptoir" and Projects.done.has("bridge"):
+		out.append("seed_hybrid")
 	return out

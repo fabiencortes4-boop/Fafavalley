@@ -83,7 +83,7 @@ const SLIME_COLORS := {"slime": Color(0.45, 0.85, 0.5, 0.85), "frost_slime": Col
 func setup(world: WorldMap) -> void:
 	map = world
 	current = self
-	_is_mine = map is MineLevel
+	_is_mine = map is MineLevel or map is CaveMap
 	_is_home = map is HomeMap or map is InteriorMap
 	_build_environment()
 	_static = Node3D.new()
@@ -942,6 +942,97 @@ func _path_node(cell: Vector2i, kind: String) -> Node3D:
 	return _vc_mesh(st)
 
 
+## Décor du jardin : banc, lanterne (lueur la nuit), parterre, fontaine.
+func _garden_node(kind: String, cell: Vector2i) -> Node3D:
+	var root := Node3D.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wood := Color(0.6, 0.4, 0.24)
+	var iron := Color(0.24, 0.24, 0.27)
+	var stone := Color(0.7, 0.7, 0.72)
+	match kind:
+		"garden_bench":
+			for k in 3:
+				_st_box(st, Vector3(0, 0.3, -0.12 + k * 0.12), Vector3(0.9, 0.05, 0.1), wood.lightened(0.04 * k))
+			_st_box(st, Vector3(0, 0.55, -0.2), Vector3(0.9, 0.14, 0.05), wood)
+			for x: float in [-0.38, 0.38]:
+				_st_box(st, Vector3(x, 0.15, 0.0), Vector3(0.06, 0.3, 0.36), iron)
+				_st_box(st, Vector3(x, 0.45, -0.21), Vector3(0.05, 0.3, 0.05), iron)
+		"garden_lantern":
+			_st_cyl(st, Vector3(0, 0.05, 0), 0.12, 0.1, iron, 8)
+			_st_cyl(st, Vector3(0, 0.45, 0), 0.03, 0.8, iron, 8)
+			_st_cyl(st, Vector3(0, 0.98, 0), 0.12, 0.06, iron, 8, "y", 0.02)
+		"flower_bed":
+			_st_cyl(st, Vector3(0, 0.08, 0), 0.42, 0.16, Color(0.55, 0.4, 0.28), 14)
+			_st_cyl(st, Vector3(0, 0.165, 0), 0.38, 0.02, Color(0.36, 0.25, 0.16), 14)
+			if TimeManager.season != 3:
+				var colors := [Color(0.95, 0.35, 0.45), Color(0.98, 0.82, 0.3), Color(0.72, 0.48, 0.92), Color(1, 1, 1), Color(1, 0.55, 0.25)]
+				for k in 9:
+					var a := k * 2.39 + float(_hash(cell) % 7)
+					var r := 0.08 + 0.25 * float(k % 3) / 2.0
+					var p := Vector3(cos(a) * r, 0.24, sin(a) * r)
+					_st_cyl(st, p - Vector3(0, 0.04, 0), 0.015, 0.08, Color(0.3, 0.6, 0.3), 5)
+					_st_cyl(st, p + Vector3(0, 0.02, 0), 0.06, 0.05, colors[k % colors.size()], 7, "y", 0.03)
+		"garden_fountain":
+			_st_cyl(st, Vector3(0, 0.12, 0), 0.46, 0.24, stone, 16)
+			_st_cyl(st, Vector3(0, 0.235, 0), 0.4, 0.02, Color(0.45, 0.68, 0.88), 16)
+			_st_cyl(st, Vector3(0, 0.45, 0), 0.07, 0.5, stone, 10)
+			_st_cyl(st, Vector3(0, 0.7, 0), 0.2, 0.06, stone.lightened(0.05), 12)
+	root.add_child(_vc_mesh(st))
+	if kind == "garden_lantern":
+		var glow := MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.09
+		sphere.height = 0.18
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(1, 0.86, 0.55)
+		mat.emission_enabled = true
+		mat.emission = Color(1, 0.75, 0.4)
+		mat.emission_energy_multiplier = 1.6
+		sphere.material = mat
+		glow.mesh = sphere
+		glow.position = Vector3(0, 0.88, 0)
+		root.add_child(glow)
+	if kind == "garden_fountain" and Settings.quality > 0:
+		var jet := CPUParticles3D.new()
+		jet.amount = 18
+		jet.lifetime = 0.8
+		jet.position = Vector3(0, 0.75, 0)
+		jet.direction = Vector3.UP
+		jet.spread = 18.0
+		jet.initial_velocity_min = 0.8
+		jet.initial_velocity_max = 1.1
+		jet.gravity = Vector3(0, -3.5, 0)
+		var drop := SphereMesh.new()
+		drop.radius = 0.025
+		drop.height = 0.05
+		var dm := StandardMaterial3D.new()
+		dm.albedo_color = Color(0.75, 0.88, 1.0, 0.8)
+		dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		drop.material = dm
+		jet.mesh = drop
+		root.add_child(jet)
+	return root
+
+
+## Épouvantail : poteau, bras, chemise bleue, tête en sac et chapeau de paille.
+func _scarecrow_node() -> Node3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wood := Color(0.55, 0.38, 0.22)
+	_st_cyl(st, Vector3(0, 0.55, 0), 0.04, 1.1, wood, 8)
+	_st_cyl(st, Vector3(0, 0.82, 0), 0.03, 0.8, wood, 8, "x")
+	_st_box(st, Vector3(0, 0.72, 0), Vector3(0.34, 0.34, 0.16), Color(0.35, 0.5, 0.78))
+	_st_box(st, Vector3(0.25, 0.8, 0), Vector3(0.2, 0.1, 0.12), Color(0.35, 0.5, 0.78))
+	_st_box(st, Vector3(-0.25, 0.8, 0), Vector3(0.2, 0.1, 0.12), Color(0.35, 0.5, 0.78))
+	_st_cyl(st, Vector3(0, 1.02, 0), 0.12, 0.22, Color(0.88, 0.8, 0.58), 10)
+	_st_cyl(st, Vector3(0, 1.15, 0), 0.24, 0.03, Color(0.9, 0.76, 0.4), 12)
+	_st_cyl(st, Vector3(0, 1.22, 0), 0.12, 0.12, Color(0.9, 0.76, 0.4), 10, "y", 0.09)
+	for x: float in [-0.38, 0.38]:
+		_st_box(st, Vector3(x, 0.8, 0), Vector3(0.05, 0.12, 0.05), Color(0.92, 0.82, 0.45))  # paille aux poignets
+	return _vc_mesh(st)
+
+
 func _vc_mesh(st: SurfaceTool) -> MeshInstance3D:
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
@@ -1087,6 +1178,13 @@ func _build_props() -> void:
 				_place(batch, "nature", "fence_simple", c, 1.0, 0.0)
 			"P", "Q":
 				_place(batch, "nature", "sign", c, 2.2, 0.0)
+			"G":
+				if map is ForestMap:
+					# Entrée de la grotte des lucioles : un tas de rochers et une bouche sombre
+					_place(batch, "nature", "rock_largeA", c + Vector3(-0.45, 0, -0.2), 1.3, 0.4)
+					_place(batch, "nature", "rock_largeA", c + Vector3(0.45, 0, -0.25), 1.2, 2.1)
+					_place(batch, "nature", "rock_largeA", c + Vector3(0, 0.55, -0.35), 1.1, 1.0)
+					_put(_cyl(0.32, 0.02, Color(0.04, 0.04, 0.05), "z"), c + Vector3(0, 0.32, 0.05))
 			"n":
 				if map is Village or map is PortMap:
 					_street_lamp(cell)
@@ -3199,7 +3297,7 @@ func _build_mine() -> void:
 	_env.background_color = Color(0.02, 0.02, 0.03)
 	var batch := Models.Batch.new()
 	var chars: Dictionary = map.get("_ground_chars")
-	var theme := MineLevel.theme_for((map as MineLevel).level)
+	var theme := MineLevel.theme_for((map as MineLevel).level) if map is MineLevel else "deep"
 	var walls: Dictionary = {}  # [variante, morceau] -> Array[Transform3D]
 	for cell: Vector2i in chars:
 		var ch: String = chars[cell]
@@ -3237,12 +3335,97 @@ func _build_mine() -> void:
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
 		_static.add_child(mmi)
+	if map is CaveMap:
+		_build_cave_props()
+		(map as CaveMap).puzzle_changed.connect(_build_cave_props)
+		return
 	var mine := map as MineLevel
 	_mine_theme_decor(chars, MineLevel.theme_for(mine.level))
 	if mine.elevator_cell != Vector2i(-1, -1):
 		_elevator(_cell3d(mine.elevator_cell))
 	if mine.treasure_cell != Vector2i(-1, -1):
 		_build_treasure()
+
+
+## Grotte des lucioles : leviers gravés (baissés quand on les a tirés),
+## tablette, coffre derrière sa grille, champignons et lucioles qui brillent.
+var _cave_root: Node3D
+
+
+func _build_cave_props() -> void:
+	if _cave_root != null and is_instance_valid(_cave_root):
+		_cave_root.queue_free()
+	_cave_root = Node3D.new()
+	add_child(_cave_root)
+	var cave := map as CaveMap
+	var chars: Dictionary = map.get("_ground_chars")
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var glow := SurfaceTool.new()
+	glow.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var stone := Color(0.5, 0.52, 0.55)
+	var signs := {"e": Color(1.0, 0.95, 0.55), "l": Color(0.75, 0.85, 1.0), "s": Color(1.0, 0.65, 0.25)}
+	for cell: Vector2i in chars:
+		var c := _cell3d(cell)
+		var ch: String = chars[cell]
+		match ch:
+			"e", "l", "s":
+				_st_cyl(st, c + Vector3(0, 0.3, 0), 0.2, 0.6, stone, 10)
+				_st_cyl(glow, c + Vector3(0, 0.45, 0.205), 0.08, 0.02, signs[ch], 8, "z")
+				var down := ch in cave.pulled or CaveMap.solved()
+				var tip := Vector3(0, 0.85, 0.22) if not down else Vector3(0, 0.62, 0.42)
+				var base := c + Vector3(0, 0.6, 0)
+				for k in 5:
+					_st_cyl(st, base + tip * (float(k) / 5.0) + Vector3(0, 0, 0), 0.03, 0.08, Color(0.35, 0.3, 0.28), 6)
+				_st_cyl(st, base + tip, 0.07, 0.1, Color(0.7, 0.2, 0.2), 8)
+			"T":
+				_st_box(st, c + Vector3(0, 0.45, -0.1), Vector3(0.7, 0.9, 0.16), stone.darkened(0.1))
+				_st_box(glow, c + Vector3(0, 0.55, -0.015), Vector3(0.5, 0.4, 0.01), Color(0.6, 0.95, 0.7))
+			"C":
+				var chest := _fitted("survival", "box-open" if PlayerState.flags.has("cave_chest") else "chest", 0.7)
+				chest.position = c
+				_cave_root.add_child(chest)
+				if not CaveMap.solved():
+					for k in 5:
+						_st_cyl(st, c + Vector3(-0.36 + k * 0.18, 0.45, 0.42), 0.025, 0.9, Color(0.3, 0.3, 0.33), 6)
+					_st_box(st, c + Vector3(0, 0.88, 0.42), Vector3(0.8, 0.05, 0.05), Color(0.3, 0.3, 0.33))
+			".":
+				# Champignons lumineux et lucioles, çà et là
+				var h := _hash(cell)
+				if h % 9 == 0:
+					for k in 3:
+						var p := c + Vector3(-0.2 + k * 0.18, 0, -0.15 + (h + k) % 3 * 0.12)
+						_st_cyl(st, p + Vector3(0, 0.05, 0), 0.02, 0.1, Color(0.9, 0.9, 0.85), 5)
+						_st_cyl(glow, p + Vector3(0, 0.12, 0), 0.07, 0.04, Color(0.45, 0.95, 0.85), 8, "y", 0.02)
+				elif h % 11 == 0:
+					_st_box(glow, c + Vector3(0.1, 0.9 + (h % 5) * 0.12, 0.05), Vector3(0.04, 0.04, 0.04), Color(0.9, 1.0, 0.5))
+	for pair: Array in [[st, false], [glow, true]]:
+		var s: SurfaceTool = pair[0]
+		s.generate_normals()
+		var mesh := s.commit()
+		if mesh.get_surface_count() == 0:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.vertex_color_use_as_albedo = true
+		mat.vertex_color_is_srgb = true
+		if pair[1]:
+			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED  # lueur à sa propre couleur
+		mi.material_override = mat
+		_cave_root.add_child(mi)
+	# Quelques lumières vertes près des champignons
+	if Settings.quality > 0:
+		var k := 0
+		for cell: Vector2i in chars:
+			if chars[cell] == "." and _hash(cell) % 9 == 0 and k < 4:
+				var light := OmniLight3D.new()
+				light.light_color = Color(0.45, 0.95, 0.8)
+				light.omni_range = 3.0
+				light.light_energy = 0.9
+				light.position = _cell3d(cell) + Vector3(0, 0.5, 0)
+				_cave_root.add_child(light)
+				k += 1
 
 
 ## Décor propre à l'étage : stalactites de glace, coulées de lave, eau de la
@@ -3543,6 +3726,10 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 				node.add_child(_lumber_model_node(cell, "farm"))
 		"path_wood", "path_stone":
 			node.add_child(_path_node(cell, str(FarmState.objects[cell])))
+		"scarecrow":
+			node.add_child(_scarecrow_node())
+		"garden_bench", "garden_lantern", "flower_bed", "garden_fountain":
+			node.add_child(_garden_node(str(FarmState.objects[cell]), cell))
 		var other:
 			if Machines.is_machine(str(other)):
 				node.add_child(_machine_model(cell, str(other)))
@@ -4006,7 +4193,7 @@ func _process(delta: float) -> void:
 		_animate_wildlife(delta)
 	if not _is_mine and not _is_home:
 		_weather_fx(delta)
-	if _is_mine:
+	if map is MineLevel:
 		_sync_rocks()
 		_lantern.position = _player3d.position + Vector3(0, 1.2, 0.3)
 	# Curseur sur la case visée
@@ -4119,10 +4306,11 @@ func _build_cursor() -> void:
 func _update_light(_h: int, _m: int) -> void:
 	if _is_mine:
 		_sun.visible = false
-		var depth := clampf(float((map as MineLevel).level) / MineLevel.MAX_LEVEL, 0.0, 1.0)
+		var level := (map as MineLevel).level if map is MineLevel else 30
+		var depth := clampf(float(level) / MineLevel.MAX_LEVEL, 0.0, 1.0)
 		_env.ambient_light_color = Color(0.45, 0.42, 0.5).lerp(Color(0.12, 0.1, 0.16), depth)
 		# Couleur de l'étage : glace bleutée, lave rougeoyante, fond turquoise
-		match MineLevel.theme_for((map as MineLevel).level):
+		match MineLevel.theme_for(level):
 			"ice":
 				_env.ambient_light_color = Color(0.42, 0.55, 0.72)
 				_lantern.light_color = Color(0.85, 0.95, 1.0)
@@ -4133,6 +4321,11 @@ func _update_light(_h: int, _m: int) -> void:
 				_env.ambient_light_color = Color(0.15, 0.3, 0.32)
 				_lantern.light_color = Color(0.7, 1.0, 0.95)
 		_env.ambient_light_energy = 1.0
+		if map is CaveMap:
+			# La grotte des lucioles : une lueur verte douce, assez pour lire l'énigme
+			_env.ambient_light_color = Color(0.36, 0.48, 0.46)
+			_env.ambient_light_energy = 1.5
+			_lantern.omni_range = 7.0
 		return
 	if _is_home:
 		_sun.light_energy = 0.55

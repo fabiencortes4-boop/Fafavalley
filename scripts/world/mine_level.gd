@@ -501,6 +501,10 @@ func _break_rock(cell: Vector2i) -> Array:
 	var drops: Array = ROCKS[type][2]
 	if type == "gem":
 		drops = [[_gem_for_depth(), 1, 1, 1.0]]
+	if type in ["stone", "pebbles"]:
+		var fossil := Museum.roll_find(0.012)
+		if fossil != "":
+			drops = drops + [[fossil, 1, 1, 1.0]]
 	Skills.add_xp("mining", 3 if type in ["stone", "pebbles"] else 6)
 	if not type in ["stone", "pebbles"]:
 		Story.bump("ores")

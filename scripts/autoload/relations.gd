@@ -47,7 +47,7 @@ func talk(id: String) -> String:
 	if talked_today.has(id):
 		return _pick(lines.get("again", ["..."]))
 	talked_today[id] = true
-	add_points(id, TALK_POINTS)
+	add_points(id, int(TALK_POINTS * Projects.talk_factor()))
 	# Parfois, une remarque sur ce que le joueur a accompli
 	var remark := _remark(id)
 	if remark != "":
@@ -136,7 +136,7 @@ func give_gift(id: String, item_id: String) -> Dictionary:
 	# Un beau cadeau (argent, or, cristal) fait encore plus plaisir
 	var points: int = GIFT_POINTS[t] * (HeartEvents.BIRTHDAY_FACTOR if birthday and GIFT_POINTS[t] > 0 else 1)
 	if points > 0:
-		points = int(points * (1.0 + 0.1 * GameData.quality_of(item_id)))
+		points = int(points * (1.0 + 0.1 * GameData.quality_of(item_id))) * Rumors.gift_factor(id, item_id)
 	add_points(id, points)
 	if birthday:
 		return {"accepted": true, "taste": t, "text": "Pour mon anniversaire ? Oh, tu y as pensé ! " + str(lines.get("gift_" + t, "Merci."))}

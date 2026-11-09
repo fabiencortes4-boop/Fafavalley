@@ -165,13 +165,13 @@ func pick_fish(place: String) -> String:
 			continue
 		if weather == "sunny" and TimeManager.is_raining():
 			continue
-		total += int(f.get("weight", 1))
+		total += int(f.get("weight", 1)) * Rumors.fish_factor(id)
 		pool.append(id)
 	if pool.is_empty():
 		return "roach"
 	var roll := randi() % total
 	for id: String in pool:
-		roll -= int(fishes[id].get("weight", 1))
+		roll -= int(fishes[id].get("weight", 1)) * Rumors.fish_factor(id)
 		if roll < 0:
 			return id
 	return pool[0]

@@ -38,6 +38,8 @@ func mark_seen(npc_id: String, e: Dictionary) -> void:
 func choose(npc_id: String, e: Dictionary, option: int) -> String:
 	var opt: Array = e.choice.options[option]
 	Relations.add_points(npc_id, int(opt[1]))
+	if e.get("pet", false) and opt.size() > 3:
+		Pet.adopt(str(opt[3]), "Caramel" if str(opt[3]) == "cat" else "Biscuit")
 	mark_seen(npc_id, e)
 	return str(opt[2])
 

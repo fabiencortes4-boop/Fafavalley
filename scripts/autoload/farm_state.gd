@@ -102,11 +102,115 @@ func till(cell: Vector2i) -> void:
 		EventBus.farm_tile_changed.emit(cell)
 
 
+## Météo de la nuit : gel (pousses), orage d'été (cultures couchées). Renvoie
+## true si la culture a souffert (elle ne pousse pas cette nuit).
+func _weather_hurts(_cell: Vector2i, t: Dictionary, frost: bool) -> bool:
+	if frost and int(t.age) <= int(GameData.crop(str(t.crop)).get("stage_days", [1])[0]):
+		t.age = maxi(0, int(t.age) - 1)
+		last_night.frost += 1
+		return true
+	if weather_events and TimeManager.storm_yesterday and randf() < 0.1:
+		t.age = maxi(0, int(t.age) - 2)
+		last_night.storm += 1
+		return true
+	return false
+
+
+## Un objet (ruche, épouvantail...) à moins de `radius` cases (carré).
+func _near_object(cell: Vector2i, id: String, radius: int) -> bool:
+	for c: Vector2i in objects:
+		if objects[c] == id and absi(c.x - cell.x) <= radius and absi(c.y - cell.y) <= radius:
+			return true
+	return false
+
+
+## Corbeaux : sur une grande ferme, ils viennent parfois picorer une ou deux
+## cultures loin des épouvantails (rayon 4) ; le chien les fait fuir souvent.
+const SCARECROW_RADIUS := 4
+
+
+func _crows() -> void:
+	var exposed: Array = []
+	var total := 0
+	for cell: Vector2i in tiles:
+		if str(tiles[cell].crop) == "" or in_greenhouse(cell):
+			continue
+		total += 1
+		if not _near_object(cell, "scarecrow", SCARECROW_RADIUS):
+			exposed.append(cell)
+	if not weather_events or total < 12 or exposed.is_empty() or randf() > (0.25 if Pet.kind == "dog" else 0.5):
+		return
+	exposed.shuffle()
+	for i in mini(1 + total / 25, exposed.size()):
+		var t: Dictionary = tiles[exposed[i]]
+		t.crop = ""
+		t.age = 0
+		last_night.crows += 1
+
+
+## Croisements : deux cultures mûres et différentes, côte à côte, donnent
+## parfois des graines hybrides (cultures cristal, récolte double).
+func _crossbreed() -> void:
+	for cell: Vector2i in tiles:
+		if not is_mature(cell):
+			continue
+		for d: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+			var other := cell + d
+			if tiles.has(other) and is_mature(other) and get_crop(other) != get_crop(cell) and randf() < 0.05:
+				if Inventory.add_item("seed_hybrid", 1) == 0:
+					last_night.hybrid += 1
+
+
+## Beauté de la ferme : décor, chemins, clôtures, arbres et fleurs. Le
+## dimanche, une belle ferme attire des visiteurs du village.
+const BEAUTY := {
+	"garden_bench": 3, "garden_lantern": 3, "flower_bed": 4, "garden_fountain": 10, "scarecrow": 1,
+	"path_wood": 0.5, "path_stone": 0.5, "tree": 2, "wood_tree": 1, "beehive": 2,
+}
+const VISITOR_TIERS := [25, 60, 100]
+
+
+func beauty() -> int:
+	var score := 0.0
+	for cell: Vector2i in objects:
+		score += float(BEAUTY.get(objects[cell], 0))
+	score += fences.size() * 0.3
+	for cell: Vector2i in tiles:
+		if str(tiles[cell].crop) in FLOWER_CROPS:
+			score += 0.5
+	return int(score)
+
+
+## Nombre de visiteurs le dimanche selon la beauté.
+func visitors_count() -> int:
+	var n := 0
+	for t: int in VISITOR_TIERS:
+		if beauty() >= t:
+			n += 1
+	return n
+
+
+## Fleur cultivée près d'une case (pour le miel parfumé), "" sinon.
+const FLOWER_CROPS := ["sunflower", "daffodil", "poppy"]
+
+
+func flower_near(cell: Vector2i, radius: int = 4) -> String:
+	for c: Vector2i in tiles:
+		if str(tiles[c].crop) in FLOWER_CROPS and absi(c.x - cell.x) <= radius and absi(c.y - cell.y) <= radius:
+			return str(tiles[c].crop)
+	return ""
+
+
 func water(cell: Vector2i) -> void:
 	if tiles.has(cell):
 		tiles[cell].watered = true
+		tiles[cell].water_count = int(tiles[cell].get("water_count", 0)) + 1
 		EventBus.farm_tile_changed.emit(cell)
 
+
+## Aléas de la nuit (gel, orage, pollinisation) : coupés dans les tests
+## automatiques, qui comptent les jours de pousse au jour près.
+var weather_events: bool = DisplayServer.get_name() != "headless"
 
 ## Objets posés sur lesquels on marche (chemins)
 const WALKABLE_OBJECTS := ["path_wood", "path_stone"]
@@ -251,7 +355,7 @@ func sell_shipping(report: Dictionary) -> int:
 	var total := 0
 	var sold: Array = []
 	for entry: Dictionary in shipping:
-		var price := int(GameData.item(entry.id).get("sell", 0))
+		var price := int(int(GameData.item(entry.id).get("sell", 0)) * Projects.sell_factor(str(entry.id)))
 		var line_total: int = price * int(entry.qty)
 		total += line_total
 		sold.append({"id": entry.id, "qty": entry.qty, "total": line_total})
@@ -263,7 +367,10 @@ func sell_shipping(report: Dictionary) -> int:
 
 ## Simulation d'une nuit : croissance des cultures arrosées, fin de saison.
 func advance_day(new_season: int, raining: bool) -> void:
-	last_night = {"weeds": 0, "withered": 0, "spread": 0, "new": 0, "dried": 0, "season": 0}
+	last_night = {"weeds": 0, "withered": 0, "spread": 0, "new": 0, "dried": 0, "season": 0,
+		"frost": 0, "storm": 0, "heat": 0, "crows": 0, "hybrid": 0, "bees": 0}
+	# Gel des premières nuits de printemps (sans pluie) : les pousses perdent un jour
+	var frost := weather_events and new_season == 0 and TimeManager.day <= 8 and not raining and randf() < 0.25
 	var reclaimed: Array[Vector2i] = []
 	for cell: Vector2i in tiles:
 		var t: Dictionary = tiles[cell]
@@ -286,14 +393,24 @@ func advance_day(new_season: int, raining: bool) -> void:
 				t.crop = ""  # la culture meurt hors saison (sauf dans la serre)
 				t.age = 0
 				last_night.season += 1
-			elif t.watered:
-				t.age += 1
+			elif sheltered or not _weather_hurts(cell, t, frost):
+				if not t.watered:
+					pass
+				elif TimeManager.heat_yesterday and not sheltered and int(t.get("water_count", 1)) < 2:
+					last_night.heat += 1  # canicule : un seul arrosage n'a pas suffi
+				else:
+					t.age += 1
+					# Pollinisation : une ruche toute proche fait parfois pousser plus vite
+					if weather_events and _near_object(cell, "beehive", 3) and randf() < 0.25:
+						t.age += 1
+						last_night.bees += 1
 				if t.get("fert", false):
 					t.fert_progress = int(t.get("fert_progress", 0)) + 1
 					if t.fert_progress >= FERTILIZER_EVERY:
 						t.fert_progress = 0
 						t.age += 1
 		t.watered = raining and not sheltered  # la pluie n'entre pas dans la serre
+		t.water_count = 2 if t.watered else 0
 	# Sillons vides et secs depuis plusieurs nuits : les mauvaises herbes s'y
 	# installent (dans la serre, la terre redevient simplement nue).
 	for cell in reclaimed:
@@ -304,6 +421,8 @@ func advance_day(new_season: int, raining: bool) -> void:
 			debris[cell] = {"type": "weed", "hp": int(DEBRIS.weed.hp)}
 			last_night.weeds += 1
 	_wild_growth()
+	_crows()
+	_crossbreed()
 	# Les arbres grandissent ; adultes, ils donnent un fruit par jour en saison.
 	for cell: Vector2i in trees:
 		var tree: Dictionary = trees[cell]
@@ -315,6 +434,7 @@ func advance_day(new_season: int, raining: bool) -> void:
 		for offset: Vector2i in SPRINKLER_RANGE.get(objects[cell], []):
 			if tiles.has(cell + offset):
 				tiles[cell + offset].watered = true
+				tiles[cell + offset].water_count = int(tiles[cell + offset].get("water_count", 0)) + 1
 
 
 ## La nature gagne du terrain sur ce qui n'est pas entretenu : les mauvaises

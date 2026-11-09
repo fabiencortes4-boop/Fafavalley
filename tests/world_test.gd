@@ -56,7 +56,7 @@ func _ready() -> void:
 	Quests.accept(1)
 	for i in 3:
 		Quests.new_day()
-	_check(Quests.active.is_empty(), "une demande expire après 3 jours")
+	_check(Quests.active.filter(func(q: Dictionary) -> bool: return not q.get("big", false)).is_empty(), "une demande expire après 3 jours")
 	# ---- Scène de cœur à 2 cœurs
 	var scene_for := [""]
 	EventBus.heart_scene_requested.connect(func(id: String, _s: Dictionary) -> void: scene_for[0] = id)

@@ -127,6 +127,7 @@ func _after_build() -> void:
 	Mail.mail_changed.connect(_update_mail_alert)
 	_update_mail_alert()
 	_spawn_animals()
+	_spawn_visitors()
 	if Marriage.spouse_place() == "farm":
 		_spawn_spouse(Vector2i(9, 8))
 
@@ -238,6 +239,13 @@ func act_on(cell: Vector2i) -> void:
 		return
 	if Machines.is_machine(str(FarmState.objects.get(cell, ""))) and _holding_tool() != "pickaxe" and not fishing.busy():
 		_use_machine(cell)
+		return
+	if FarmState.objects.get(cell) == "garden_bench" and _holding_tool() == "pickaxe":
+		_use_pickaxe(cell, 0)
+		return
+	var visitor := _visitor_at(cell)
+	if visitor != null:
+		_talk_visitor(visitor)
 		return
 	if FarmState.objects.get(cell) == "chest" and _holding_tool() != "pickaxe" and not fishing.busy():
 		EventBus.chest_requested.emit(cell)
@@ -383,6 +391,63 @@ func _refresh_fences() -> void:
 		line.width = 3.0
 		line.default_color = Color(0.6, 0.42, 0.26)
 		_fence_layer.add_child(line)
+
+
+# ------------------------------------------------------------ visiteurs du dimanche
+var _visitors: Array[Npc] = []
+var _visitors_greeted: Dictionary = {}
+
+
+## Le dimanche, une belle ferme attire des habitants (voir FarmState.beauty).
+func _spawn_visitors() -> void:
+	if TimeManager.weekday() != "Dim." or TimeManager.season == 3:
+		return
+	var n := FarmState.visitors_count()
+	if n == 0:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(["visite", TimeManager.year, TimeManager.season, TimeManager.day])
+	var ids: Array = GameData.npcs.keys().filter(func(i: String) -> bool: return i != Marriage.spouse)
+	var spots: Array = []
+	for cell: Vector2i in FarmState.objects:
+		if str(FarmState.objects[cell]) in ["garden_bench", "garden_fountain", "flower_bed", "garden_lantern"]:
+			for d: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+				if is_walkable(cell + d):
+					spots.append(cell + d)
+					break
+	if spots.is_empty():
+		spots = [Vector2i(9, 9), Vector2i(12, 9), Vector2i(15, 10)]
+	for i in n:
+		var npc := Npc.new()
+		npc.id = ids[rng.randi() % ids.size()]
+		ids.erase(npc.id)
+		npc.position = cell_center(spots[i % spots.size()])
+		_entities.add_child(npc)
+		_visitors.append(npc)
+
+
+func _visitor_at(cell: Vector2i) -> Npc:
+	for v: Npc in _visitors:
+		if is_instance_valid(v) and v.position.distance_to(cell_center(cell)) < TILE * 0.8:
+			return v
+	return null
+
+
+func _talk_visitor(v: Npc) -> void:
+	v.face(player.position)
+	if _visitors_greeted.has(v.id):
+		talk_to_npc(v)
+		return
+	_visitors_greeted[v.id] = true
+	Relations.talked_today[v.id] = true
+	Relations.met[v.id] = true
+	Relations.add_points(v.id, 60)
+	var lines := [
+		"Quelle belle ferme ! On m'avait dit qu'elle valait le détour, c'est encore mieux en vrai.",
+		"Je me suis assis(e) un moment près de tes fleurs. Ça fait du bien, un endroit pareil.",
+		"Tout le village parle de ta ferme. Je comprends pourquoi !",
+	]
+	EventBus.dialogue_requested.emit(v.id, lines[hash(v.id) % lines.size()])
 
 
 ## Arbre à bois planté à la ferme (pin, platane, chêne).
@@ -678,6 +743,11 @@ func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
 				return
 			_deferring = true
 			FarmState.till(cell)
+			# Parfois, la houe met au jour un fossile
+			var fossil := Museum.roll_find(0.015)
+			if fossil != "":
+				_drop(fossil, cell_center(cell))
+				EventBus.toast("Un fossile dans la terre : %s ! (Le musée est dans Menu > Journal.)" % GameData.item_name(fossil))
 			_gesture("strike", cell, func() -> void:
 				Sfx.play("dig")
 				Fx.burst(_entities, _cell_fx_point(cell), Fx.DIRT, 14, 65.0)
@@ -739,6 +809,14 @@ func _can_till(cell: Vector2i) -> bool:
 func _plant(cell: Vector2i, crop_id: String) -> void:
 	if crop_id == "" or not FarmState.is_tilled(cell) or FarmState.get_crop(cell) != "":
 		return
+	var hybrid := crop_id == "@hybrid"
+	if hybrid:
+		# Graine hybride : une culture de la saison (ou n'importe laquelle en serre)
+		var choices: Array = GameData.crops.keys().filter(func(c: String) -> bool: return FarmState.in_greenhouse(cell) or GameData.crop_in_season(c, TimeManager.season))
+		if choices.is_empty():
+			EventBus.toast("Rien ne pousse dehors en cette saison : sème-la dans la serre.")
+			return
+		crop_id = choices[randi() % choices.size()]
 	if not GameData.crop_in_season(crop_id, TimeManager.season) and not FarmState.in_greenhouse(cell):
 		EventBus.toast("Ce n'est pas la saison pour planter ça (sauf dans une serre).")
 		return
@@ -747,6 +825,9 @@ func _plant(cell: Vector2i, crop_id: String) -> void:
 		_deferring = false
 	else:
 		Inventory.remove_from_slot(Inventory.selected, 1)
+		if hybrid:
+			FarmState.tiles[cell].hybrid = true
+			EventBus.toast("Graine hybride : ce sera %s, de qualité cristal !" % str(GameData.crop(crop_id).get("name", crop_id)).to_lower())
 		# Semé trop tard : la culture mourra au changement de saison avant d'être mûre
 		var need := 0
 		for d: Variant in GameData.crop(crop_id).get("stage_days", []):
@@ -768,12 +849,13 @@ func _harvest(cell: Vector2i) -> void:
 	_deferring = true
 	# Qualité : compétence d'agriculture, et l'engrais aide beaucoup
 	var fertilized := FarmState.is_fertilized(cell)
+	var hybrid: bool = FarmState.tiles.get(cell, {}).get("hybrid", false)
 	var got := FarmState.harvest(cell)
 	if got == "":
 		_deferring = false
 	if got != "":
-		got = GameData.with_quality(got, GameData.roll_quality(Skills.level("farming"), 0.5 if fertilized else 0.0))
-		var count := 2 if Skills.roll("farming", 5.0) and Inventory.can_add(got, 2) else 1
+		got = GameData.with_quality(got, 3 if hybrid else GameData.roll_quality(Skills.level("farming"), 0.5 if fertilized else 0.0))
+		var count := 2 if (hybrid or Skills.roll("farming", 5.0)) and Inventory.can_add(got, 2) else 1
 		Inventory.add_item(got, count)
 		Skills.add_xp("farming", maxi(3, int(GameData.item(got).get("sell", 30)) / 8))
 		Story.bump("harvest", count)
@@ -874,6 +956,13 @@ func _refresh_cell(cell: Vector2i) -> void:
 
 
 func _refresh_object(cell: Vector2i) -> void:
+	# Banc de jardin : un siège (on s'y assoit) ; retiré, le siège disparaît
+	if FarmState.objects.get(cell, "") == "garden_bench":
+		if not seats.has(cell):
+			add_seat(cell, Vector2i.DOWN)
+	elif seats.has(cell):
+		seats.erase(cell)
+		_interactables.erase(cell)
 	match str(FarmState.objects.get(cell, "")):
 		"sprinkler":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.SPRINKLER))
@@ -883,6 +972,10 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.CHEST))
 		"path_wood", "path_stone":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.COBBLES))
+		"scarecrow", "garden_lantern":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.SIGN))
+		"garden_bench", "flower_bed", "garden_fountain":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.BARREL if FarmState.objects[cell] == "garden_fountain" else WorldTiles.BUSH))
 		"wood_tree":
 			var wt := 0 if not Woods.farm.has(cell) else (WorldTiles.STUMP if Woods.is_stump(cell, "farm") else (WorldTiles.BUSH if Woods.stage(cell, "farm") < 3 else (WorldTiles.PINE if Woods.farm[cell].type == "pine" else WorldTiles.ROUND_TREE)))
 			if wt != 0:

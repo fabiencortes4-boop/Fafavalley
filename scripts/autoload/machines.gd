@@ -184,6 +184,11 @@ func new_day() -> void:
 		if int(state[cell].days) > 0:
 			state[cell].days = int(state[cell].days) - 1
 			if int(state[cell].days) == 0:
+				# Ruche près de fleurs cultivées : un miel parfumé, plus cher
+				if str(state[cell].machine) == "beehive":
+					var flower := FarmState.flower_near(cell)
+					if flower != "":
+						state[cell].output = GameData.with_quality("flower_honey:" + flower, GameData.quality_of(str(state[cell].output)))
 				changed.emit(cell)
 
 

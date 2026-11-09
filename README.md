@@ -347,6 +347,32 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - **Coffres** (fabriqués ou achetés, posés à la ferme) : 36 places. Toucher un objet le fait
   passer du coffre au sac et inversement ; « Ranger les piles » complète les piles déjà
   présentes. Un coffre vide se ramasse à la pioche.
+- **Saisons marquées** : gel de printemps (début de saison, les semis perdent un jour),
+  orages d'été (cultures abîmées), canicule (il faut arroser deux fois). Le matin, un
+  message résume ce qui s'est passé à la ferme pendant la nuit.
+- **Corbeaux et épouvantails** : une grande parcelle attire les corbeaux ; un épouvantail
+  protège 4 cases autour de lui, et le chien les fait fuir une fois sur deux.
+- **Croisements** : deux cultures mûres différentes côte à côte donnent parfois une
+  graine hybride (aussi au comptoir une fois le pont rénové) : récolte double, qualité cristal.
+- **Ruches et fleurs** : une ruche près de fleurs donne un miel parfumé (« Miel de
+  tournesol »...) et ses abeilles font pousser plus vite les cultures voisines.
+- **Défi du jour** (Journal) : un petit objectif quotidien payé en or, avec une série
+  qui augmente la récompense.
+- **Commande de la semaine** : chaque lundi, un commerçant commande une grande quantité
+  à livrer en 7 jours, bien mieux payée que l'expédition.
+- **Rumeurs de la taverne** : Marius raconte un banc de poissons (plus de prises), une
+  bourse perdue en forêt (à ramasser) ou l'envie d'un habitant (cadeau doublé).
+- **Rénovations du village** (Journal) : moulin (blé et maïs mieux vendus), kiosque à
+  musique (bavarder rapporte plus d'amitié), pont (graines hybrides au comptoir).
+- **Fossiles et musée** : des fossiles en labourant ou en minant ; les 5 pièces données
+  au musée reconstituent le squelette (récompense).
+- **Compagnon** : Léon propose d'adopter un chat ou un chien, qui suit le joueur ;
+  le caresser chaque jour redonne de l'énergie.
+- **Mode photo** (Menu → Photo) : 5 filtres, photos enregistrées et album dans le Journal.
+- **Jardin** (Fabrication → Jardin) : bancs, lanternes, massifs fleuris, fontaine. La
+  beauté de la ferme attire des visiteurs le dimanche (bavarder rapporte de l'amitié).
+- **Grotte des lucioles** (forêt, sous les rochers) : actionner les leviers dans l'ordre
+  indiqué par la tablette ouvre la grille du trésor.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
 - Contrôles tactiles : joystick flottant, bouton Action, toucher une tuile voisine, barre rapide (multitouch).
@@ -416,6 +442,7 @@ godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mar
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/woods_test.tscn      # arbres à bois : abattage, souche, replantation, pousse
 godot --headless res://tests/year_test.tscn       # bilan de l'année, hiver, scènes de cœur, volumes, copie de secours
+godot --headless res://tests/fun_test.tscn        # défi, commande, rumeurs, météo, hybrides, musée, compagnon, jardin, grotte
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
