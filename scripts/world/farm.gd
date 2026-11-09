@@ -174,6 +174,10 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 func _act_on_ground(cell: Vector2i) -> bool:
 	if FarmState.is_mature(cell):
 		_harvest(cell)
+		# La grande faux moissonne aussi les cultures mûres à gauche et à droite
+		for c in _scythe_sides(cell):
+			if FarmState.is_mature(c):
+				_harvest(c, true)
 		return true
 	var slot: Variant = Inventory.get_selected()
 	if slot == null:
@@ -733,7 +737,17 @@ func _use_tool(tool: String, item: Dictionary, cell: Vector2i) -> void:
 	if tool == "axe" and FarmState.objects.get(cell) == "wood_tree":
 		_chop_wood_tree(cell, item)
 		return
+	var swept := false
+	if tool == "scythe":
+		# La grande faux fauche aussi les herbes des cases voisines
+		for c in _scythe_sides(cell):
+			if FarmState.debris.get(c, {}).get("type") == "weed":
+				_hit_debris(c, "weapon", 0)
+				swept = true
 	if _hit_debris(cell, tool, energy):
+		return
+	if swept:
+		_gesture("sweep", cell, func() -> void: Sfx.play("swish"))
 		return
 	match tool:
 		"hoe":
@@ -852,7 +866,24 @@ func _plant(cell: Vector2i, crop_id: String) -> void:
 			Fx.puff(_entities, cell_center(cell), Color(0.62, 0.45, 0.3, 0.7), 0.9))
 
 
-func _harvest(cell: Vector2i) -> void:
+## Cases à gauche et à droite de la case visée, si l'outil en main est une
+## faux qui travaille en largeur (grande faux).
+func _scythe_sides(cell: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var slot: Variant = Inventory.get_selected()
+	if slot == null or player.facing == Vector2i.ZERO:
+		return out
+	var item := GameData.item(slot.id)
+	if str(item.get("tool", "")) != "scythe" or int(item.get("area", 1)) < 3:
+		return out
+	var side := Vector2i(-player.facing.y, player.facing.x)
+	out.append(cell + side)
+	out.append(cell - side)
+	return out
+
+
+## `quiet` : récolte sans geste du personnage (cases voisines de la grande faux).
+func _harvest(cell: Vector2i, quiet: bool = false) -> void:
 	var harvest_id := str(GameData.crop(FarmState.get_crop(cell)).get("harvest", ""))
 	if not Inventory.can_add(harvest_id):
 		EventBus.toast("Inventaire plein !")
@@ -871,13 +902,18 @@ func _harvest(cell: Vector2i) -> void:
 		Skills.add_xp("farming", maxi(3, int(GameData.item(got).get("sell", 30)) / 8))
 		Story.bump("harvest", count)
 		EventBus.toast("+%d %s" % [count, GameData.item_name(got)])
-		_gesture("bend", cell, func() -> void:
+		var effect := func() -> void:
 			Sfx.play("harvest")
 			Settings.vibrate(18)
 			Fx.burst(_entities, _cell_fx_point(cell), Fx.GRASS, 10, 50.0)
 			for i in count:
 				Fx.item_pop(_entities, _cell_fx_point(cell), GameData.item_icon(got), player)
-			get_tree().create_timer(0.5).timeout.connect(func() -> void: Sfx.play("pickup")))
+			get_tree().create_timer(0.5).timeout.connect(func() -> void: Sfx.play("pickup"))
+		if quiet:
+			_refresh_cell(cell)
+			effect.call()
+		else:
+			_gesture("sweep" if _holding_tool() == "scythe" else "bend", cell, effect)
 
 
 ## Machine de transformation : récupérer le produit prêt, ou y déposer

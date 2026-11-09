@@ -61,7 +61,7 @@ const ITEM_MODELS := {
 const TOOL_MODELS := {
 	"hoe": ["survival", "tool-hoe"], "axe": ["survival", "tool-axe"], "pickaxe": ["survival", "tool-pickaxe"],
 	"steel_pickaxe": ["survival", "tool-pickaxe-upgraded"], "watering_can": ["survival", "bucket"],
-	"copper_can": ["survival", "bucket"], "copper_hoe": ["survival", "tool-hoe"], "scythe": ["survival", "tool-shovel"],
+	"copper_can": ["survival", "bucket"], "copper_hoe": ["survival", "tool-hoe"], "scythe": ["survival", "tool-shovel"], "great_scythe": ["survival", "tool-shovel"],
 	"rusty_sword": ["dungeon", "weapon-sword"], "iron_sword": ["dungeon", "weapon-sword"], "war_axe": ["survival", "tool-axe-upgraded"],
 	"steel_sword": ["dungeon", "weapon-sword"], "firmin_blade": ["dungeon", "weapon-sword"],
 }
@@ -235,6 +235,75 @@ func _blob(size: float = 0.7) -> MeshInstance3D:
 	mi.position.y = 0.015
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi
+
+
+# ------------------------------------------------------------ ombres et halos au sol
+var _decal_shadows: Array = []  # [centre, demi-axe u, demi-axe v, couleur]
+var _decal_glows: Array = []
+var _decal_tex: Texture2D
+
+
+## Ombre de contact, douce et ronde, sous un arbre ou un objet du décor.
+func _shade(at: Vector3, radius: float, strength: float = 0.34) -> void:
+	_decal_shadows.append([at + Vector3(0, 0.022, 0), Vector3(radius, 0, 0), Vector3(0, 0, radius), Color(0.05, 0.08, 0.12, strength)])
+
+
+## Halo de lumière chaude au sol (allumé le soir avec les lanternes).
+func _glow(at: Vector3, radius: float, color: Color = Color(1.0, 0.72, 0.36, 0.5)) -> void:
+	_decal_glows.append([at + Vector3(0, 0.03, 0), Vector3(radius, 0, 0), Vector3(0, 0, radius), color])
+
+
+## Lueur d'une fenêtre éclairée (panneau vertical, face au sud).
+func _window_glow(at: Vector3, w: float, h: float) -> void:
+	_decal_glows.append([at, Vector3(w, 0, 0), Vector3(0, -h, 0), Color(1.0, 0.74, 0.38, 0.75)])
+
+
+func _decal_mesh(list: Array, additive: bool) -> MeshInstance3D:
+	if _decal_tex == null:
+		var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+		for y in 32:
+			for x in 32:
+				var d := clampf(1.0 - Vector2(x - 15.5, y - 15.5).length() / 15.5, 0.0, 1.0)
+				img.set_pixel(x, y, Color(1, 1, 1, d * d * (3.0 - 2.0 * d)))
+		_decal_tex = ImageTexture.create_from_image(img)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for e: Array in list:
+		var c: Vector3 = e[0]
+		var u: Vector3 = e[1]
+		var v: Vector3 = e[2]
+		var corners := [[c - u - v, Vector2(0, 0)], [c + u - v, Vector2(1, 0)], [c + u + v, Vector2(1, 1)], [c - u + v, Vector2(0, 1)]]
+		for k: int in [0, 1, 2, 0, 2, 3]:
+			st.set_color(e[3])
+			st.set_uv(corners[k][1])
+			st.add_vertex(corners[k][0])
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = _decal_tex
+	mat.vertex_color_use_as_albedo = true
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if additive:
+		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		mat.render_priority = 1
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_static.add_child(mi)
+	return mi
+
+
+## Regroupe toutes les ombres (un seul maillage) et tous les halos (un autre).
+func _finish_decals() -> void:
+	if not _decal_shadows.is_empty():
+		_decal_mesh(_decal_shadows, false)
+	if not _decal_glows.is_empty():
+		var glow := _decal_mesh(_decal_glows, true)
+		glow.visible = false
+		_lantern_glows.append(glow)
+	_decal_shadows.clear()
+	_decal_glows.clear()
 
 
 func _place(batch: Models.Batch, pack: String, model: String, at: Vector3, scale: float, rot: float = 0.0) -> void:
@@ -1065,6 +1134,9 @@ func _sync_lumber() -> void:
 			model = _model("nature", spec[0], float(spec[1]) * LUMBER_SCALE[Woods.stage(cell)])
 		model.rotation.y = float(_hash(cell) % 628) / 100.0
 		root.add_child(model)
+		var shade := _blob(0.9 if Woods.is_stump(cell) else [0.5, 0.9, 1.4, 1.9][clampi(Woods.stage(cell), 0, 3)])
+		shade.name = "Shade"
+		root.add_child(shade)
 		add_child(root)
 		_lumber[cell] = [root, _lumber_sig(cell)]
 
@@ -1104,6 +1176,8 @@ func _on_lumber_felled(cell: Vector2i, type: String, from: Vector2i, place: Stri
 	elif _lumber.has(cell):
 		root = _lumber[cell][0]
 		_lumber.erase(cell)  # la synchronisation posera la souche
+		if root.has_node("Shade"):
+			root.get_node("Shade").visible = false
 	else:
 		return
 	var away := Vector2(cell - from)
@@ -1153,12 +1227,16 @@ func _build_props() -> void:
 		match ch:
 			"T":
 				_place(batch, "nature", _tree_model(cell), c, (1.5 + float(_hash(cell) % 30) / 100.0) * (0.8 if near_house else 1.0), rot)
+				_shade(c, 0.78 if not near_house else 0.6)
 			"R":
 				_place(batch, "nature", "tree_oak" if TimeManager.season != 2 else "tree_oak_fall", c, 1.9 * (0.8 if near_house else 1.0), rot)
+				_shade(c, 0.95 if not near_house else 0.7)
 			"b":
 				_place(batch, "nature", "plant_bushLarge", c, 2.4, rot)
+				_shade(c, 0.55, 0.28)
 			"o":
 				_place(batch, "nature", "rock_largeA", c, 0.9, rot)
+				_shade(c, 0.55, 0.3)
 			"f":
 				_place(batch, "nature", "flower_yellowB", c, 3.0, rot)
 			"m":
@@ -1168,6 +1246,7 @@ func _build_props() -> void:
 				_place(batch, "nature", "log_stack", c, 1.2 if near_house else 1.6, (PI / 2.0 if _house_cells.has(cell + Vector2i.LEFT) or _house_cells.has(cell + Vector2i.RIGHT) else 0.0) if near_house else rot)
 			"k":
 				_place(batch, "survival", "barrel", c, 2.6, rot)
+				_shade(c, 0.4, 0.3)
 			",":
 				for k in 3:
 					var off := Vector3(float(_hash(cell + Vector2i(k, 7)) % 60) / 100.0 - 0.3, 0, float(_hash(cell + Vector2i(7, k)) % 60) / 100.0 - 0.3)
@@ -1196,6 +1275,7 @@ func _build_props() -> void:
 				_put(_cyl(0.37, 0.06, Color(0.56, 0.33, 0.2)), c + Vector3(0, 0.39, 0))
 				_put(_cyl(0.3, 0.04, Color(0.33, 0.24, 0.16)), c + Vector3(0, 0.41, 0))
 				_place(batch, "nature", "tree_default" if TimeManager.season != 2 else "tree_default_fall", c + Vector3(0, 0.4, 0), 0.9, rot)
+				_shade(c, 0.55, 0.3)
 			"i":
 				# Borne d'amarrage, avec un bout de corde
 				_put(_cyl(0.11, 0.4, Color(0.2, 0.2, 0.23)), c + Vector3(0, 0.2, 0))
@@ -1349,6 +1429,7 @@ func _build_props() -> void:
 		_build_event_decor()
 		_build_gardens()
 		_build_projects()
+	_finish_decals()
 	if not map is SeaMap:
 		_build_puddles()
 		_build_fireflies()
@@ -1523,6 +1604,7 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 		var cx := x0 + i + 0.5
 		var fz := z0 + d + 0.02
 		if i == door_col:
+			_glow(Vector3(cx + 0.2, 0.0, fz + 0.75), 1.25, Color(1.0, 0.72, 0.36, 0.42))
 			_st_cyl(st, Vector3(cx, 0.04, fz + 0.06), 0.36, 0.08, Color(0.62, 0.6, 0.58), 14)
 			_st_rbox(st, Vector3(cx, 0.085, fz + 0.16), Vector3(0.42, 0.01, 0.22), 0.06, Color(0.7, 0.28, 0.24))
 			_st_cyl(st, Vector3(cx, base + 0.88, fz + 0.1), 0.11, 0.74, roof_color.darkened(0.08), 10, "x")
@@ -1530,6 +1612,9 @@ func _house(cell: Vector2i, size: Vector2i, door_col: int, wall: String, roof_co
 				_st_cyl(st, Vector3(cx + side, base + 0.78, fz + 0.05), 0.025, 0.14, beam, 6, "z")
 			continue
 		_st_rbox(st, Vector3(cx, base + 0.36, fz + 0.06), Vector3(0.5, 0.1, 0.15), 0.05, Color(0.48, 0.32, 0.2))
+		if (cell.x + i) % 3 != 0:  # quelques fenêtres restent sombres
+			_window_glow(Vector3(cx, base + 0.66, fz + 0.03), 0.3, 0.3)
+			_glow(Vector3(cx, 0.0, fz + 0.55), 0.8, Color(1.0, 0.72, 0.36, 0.26))
 		for k in 3:
 			var col: Color = flowers[(k + cell.x + i) % flowers.size()]
 			_st_cyl(st, Vector3(cx - 0.15 + k * 0.15, base + 0.45, fz + 0.06), 0.05, 0.07, col, 7, "y", 0.03)
@@ -1824,6 +1909,8 @@ func _street_lamp(cell: Vector2i) -> void:
 		_st_box(_lamp_st, top + corner, Vector3(0.03, 0.3, 0.03), iron)
 	_st_box(_lamp_glow_st, top, Vector3(0.2, 0.26, 0.2), Color(1.0, 0.86, 0.5))
 	_lamp_count += 1
+	_shade(c, 0.28, 0.3)
+	_glow(c, 2.3)
 	# Lumière : toutes en qualité élevée, une sur deux en normale, aucune en économie
 	if Settings.quality == 0 or (Settings.quality == 1 and _lamp_count % 2 == 0):
 		return
@@ -2289,7 +2376,8 @@ static func snow_cover() -> float:
 				return [0.8, 0.6, 0.42, 0.28][d - 25]
 			return 1.0
 		0:
-			return [0.18, 0.08][d - 1] if d <= 2 else 0.0
+			# Dernières plaques au début du printemps (pas la toute première année)
+			return [0.18, 0.08][d - 1] if d <= 2 and TimeManager.year > 1 else 0.0
 	return 0.0
 
 
@@ -2310,6 +2398,10 @@ static func snow_at(cell: Vector2i) -> bool:
 func _grass_color(cell: Vector2i, colors: Dictionary) -> Color:
 	var col: Color = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
 	var snow := snow_cover()
+	if snow < 1.0:
+		# De grandes plages un peu plus claires ou plus sombres : le pré respire
+		var tone := sin(cell.x * 0.23 + cell.y * 0.11) + cos(cell.y * 0.19 - cell.x * 0.07) + sin((cell.x - cell.y) * 0.31) * 0.5
+		col = col.lightened(tone * 0.035) if tone > 0.0 else col.darkened(-tone * 0.045)
 	if snow <= 0.0:
 		return col
 	if TimeManager.season == 3 and snow < 1.0:
@@ -3266,6 +3358,7 @@ func _village_lantern(cell: Vector2i) -> void:
 	glow.visible = false
 	_static.add_child(glow)
 	_lantern_glows.append(glow)
+	_glow(c + Vector3(0, _ground_y(cell), 0), 1.7)
 	if Settings.quality == 0:
 		return  # économie : la lanterne brille, sans éclairer autour
 	var light := OmniLight3D.new()
@@ -4305,6 +4398,7 @@ func _fruit_tree(cell: Vector2i) -> Node3D:
 	tree.rotation.y = float(_hash(cell) % 628) / 100.0
 	var holder := Node3D.new()
 	holder.add_child(tree)
+	holder.add_child(_blob([0.6, 1.1, 1.8][stage]))
 	# Fleurs blanches au printemps pour le cerisier, fruits mûrs sinon
 	var count := int(t.fruits) * 3
 	var color := Color(str(info.color))
@@ -4890,6 +4984,13 @@ func _update_light(_h: int, _m: int) -> void:
 		_sun.light_color = Color(1.0, 0.92, 0.78).lerp(Color(0.6, 0.55, 0.9), night)
 		_env.ambient_light_color = Color(0.7, 0.64, 0.66).lerp(Color(0.2, 0.18, 0.34), night)
 	var sky := Color(0.55, 0.75, 0.92).lerp(Color(0.05, 0.07, 0.15), night)
+	# Heure dorée : le soleil rasant du soir (et, plus discret, celui de l'aube)
+	var warm := maxf(clampf(1.0 - absf(hours - 18.3) / 1.7, 0.0, 1.0), clampf(1.0 - absf(hours - 6.2) / 1.0, 0.0, 1.0) * 0.6)
+	if rain:
+		warm = 0.0
+	_sun.light_color = _sun.light_color.lerp(Color(1.0, 0.62, 0.36), warm * 0.5)
+	_env.ambient_light_color = _env.ambient_light_color.lerp(Color(0.86, 0.56, 0.5), warm * 0.4)
+	sky = sky.lerp(Color(0.98, 0.62, 0.42), warm * 0.5)
 	_env.background_color = sky.darkened(0.25) if rain else sky
 	if TimeManager.is_storm():
 		_env.background_color = sky.darkened(0.45)

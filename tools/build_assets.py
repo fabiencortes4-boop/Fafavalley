@@ -1137,6 +1137,16 @@ def extend_icons(sheet):
                 l = (r + g + b) / 765.0
                 hp[x, y] = (int(120 + 135 * l), int(40 + 150 * l), int(20 + 120 * l), a)
     extra.append(hoe)
+    # 213 grande faux (la faux de base, lame d'acier bleuté et plus claire)
+    sc = sheet.crop((54 * T, 0, 55 * T, T)).copy()
+    sp = sc.load()
+    for y in range(T):
+        for x in range(T):
+            r, g, b, a = sp[x, y]
+            if a and max(r, g, b) - min(r, g, b) < 60 and (r + g + b) > 330:
+                l = (r + g + b) / 765.0
+                sp[x, y] = (int(90 + 150 * l), int(140 + 115 * l), int(190 + 65 * l), a)
+    extra.append(sc)
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

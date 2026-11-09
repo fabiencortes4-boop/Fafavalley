@@ -147,6 +147,8 @@ func _ready() -> void:
 				Tips.show("challenge")
 		if TimeManager.is_storm() or TimeManager.heatwave:
 			Tips.show("weather")
+		if Forage.rain_mushrooms_today():
+			Tips.show("rain_mushrooms")
 		_nature_report())
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:

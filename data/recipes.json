@@ -52,6 +52,16 @@
 		},
 		"unlock": "ch3"
 	},
+	"great_scythe": {
+		"station": "forge",
+		"upgrade": "scythe",
+		"gold": 400,
+		"ingredients": {
+			"iron_ore": 8,
+			"hardwood": 3
+		},
+		"unlock": "ch3"
+	},
 	"steel_pickaxe": {
 		"station": "forge",
 		"upgrade": "pickaxe",

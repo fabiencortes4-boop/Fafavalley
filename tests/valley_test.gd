@@ -223,6 +223,70 @@ func _ready() -> void:
 	await get_tree().process_frame
 	mm.refresh()
 	_check(_near(mm._image.get_pixelv(Projects.SITES.bridge.position + Vector2i(2, 0)), Color(0.62, 0.44, 0.27)), "le pont rénové se voit au-dessus de l'étang")
+	# ---- Grande faux : trois cases de large
+	_check(Crafting.recipes.has("great_scythe") and int(GameData.item("great_scythe").get("area", 1)) == 3, "la grande faux se forge et fauche sur 3 cases")
+	_main.call("_switch_to", "farm")
+	await get_tree().process_frame
+	var gfarm: Farm = _main.call("current_map")
+	var mid := Vector2i(15, 14)
+	var swath: Array[Vector2i] = [mid + Vector2i.UP, mid, mid + Vector2i.DOWN]
+	gfarm.player.position = gfarm.cell_center(mid + Vector2i.LEFT)
+	gfarm.player.facing = Vector2i.RIGHT
+	Inventory.add_item("great_scythe", 1)
+	_select("great_scythe")
+	for c: Vector2i in swath:
+		FarmState.objects.erase(c)
+		FarmState.tiles.erase(c)
+		FarmState.debris[c] = {"type": "weed", "hp": int(FarmState.DEBRIS.weed.hp)}
+		gfarm.call("_refresh_object", c)
+	for i in 4:
+		if FarmState.debris.has(mid):
+			gfarm.act_on(mid)
+	_check(not FarmState.debris.has(swath[0]) and not FarmState.debris.has(mid) and not FarmState.debris.has(swath[2]), "la grande faux coupe les herbes des cases voisines")
+	for c: Vector2i in swath:
+		FarmState.debris.erase(c)
+		FarmState.till(c)
+		FarmState.plant(c, "carrot")
+		FarmState.tiles[c].age = GameData.crop_total_days("carrot")
+	var carrots := _count_base("carrot")
+	gfarm.act_on(mid)
+	_check(not FarmState.is_mature(swath[0]) and not FarmState.is_mature(mid) and not FarmState.is_mature(swath[2]), "elle récolte trois cultures mûres d'un coup")
+	_check(_count_base("carrot") >= carrots + 3, "les trois récoltes arrivent dans le sac")
+	for c: Vector2i in swath:
+		FarmState.tiles.erase(c)
+	await get_tree().create_timer(1.0).timeout
+	# ---- Champignons après la pluie
+	_check(Tips.tips.has("rain_mushrooms"), "astuce « rain_mushrooms »")
+	var cells: Array = []
+	for x in 30:
+		for y in 10:
+			cells.append(Vector2i(x, y))
+	TimeManager.season = 1
+	TimeManager.rain_yesterday = false
+	Forage.spots.erase("forest")
+	Forage._last_day.erase("forest")
+	var dry: Dictionary = Forage.ensure_spawned("forest", cells.duplicate())
+	TimeManager.rain_yesterday = true
+	Forage.spots.erase("forest")
+	Forage._last_day.erase("forest")
+	var wet: Dictionary = Forage.ensure_spawned("forest", cells.duplicate())
+	_check(wet.size() == dry.size() + int(Forage.RAIN_MUSHROOMS.forest), "la pluie de la veille fait sortir %d champignons en forêt" % int(Forage.RAIN_MUSHROOMS.forest))
+	TimeManager.season = 3
+	_check(not Forage.rain_mushrooms_today(), "pas de champignons de pluie en hiver")
+	TimeManager.rain_yesterday = false
+	Forage.spots.erase("forest")
+	Forage._last_day.erase("forest")
+	# ---- Neige : aucune plaque au tout premier printemps
+	TimeManager.season = 0
+	var keep_day := TimeManager.day
+	var keep_year := TimeManager.year
+	TimeManager.day = 1
+	TimeManager.year = 1
+	_check(View3D.snow_cover() == 0.0, "pas de neige au premier printemps")
+	TimeManager.year = 2
+	_check(View3D.snow_cover() > 0.0, "quelques plaques au printemps des années suivantes")
+	TimeManager.day = keep_day
+	TimeManager.year = keep_year
 	# ---- La ferme parfaite
 	_check(Perfection.percent() < 100 and not Perfection.check(), "la ferme n'est pas encore parfaite (%d %%)" % Perfection.percent())
 	for id: String in Collections._category_of:
@@ -244,6 +308,25 @@ func _ready() -> void:
 	hud.call("close_modal")
 	print("RÉSULTAT : ", "OK" if _failures == 0 else "%d échec(s)" % _failures)
 	get_tree().quit(_failures)
+
+
+func _select(id: String) -> void:
+	for i in Inventory.slots.size():
+		if Inventory.slots[i] != null and Inventory.slots[i].id == id:
+			if i >= Inventory.HOTBAR:
+				Inventory.swap(i, Inventory.HOTBAR - 1)
+				i = Inventory.HOTBAR - 1
+			Inventory.select(i)
+			return
+
+
+## Nombre d'objets d'un type, toutes qualités confondues.
+func _count_base(id: String) -> int:
+	var n := 0
+	for slot: Variant in Inventory.slots:
+		if slot != null and str(slot.id).begins_with(id):
+			n += int(slot.qty)
+	return n
 
 
 ## Couleurs de la mini-carte (stockées sur 8 bits) : à peu près égales.

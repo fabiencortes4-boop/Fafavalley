@@ -532,6 +532,16 @@
 		"energy": 0,
 		"description": "Fauche les herbes folles, sans se fatiguer."
 	},
+	"great_scythe": {
+		"name": "Grande faux",
+		"type": "tool",
+		"tool": "scythe",
+		"area": 3,
+		"icon": 213,
+		"stack": 1,
+		"energy": 0,
+		"description": "Fauche et moissonne 3 cases de large d'un seul geste."
+	},
 	"wood": {
 		"name": "Bois",
 		"type": "material",

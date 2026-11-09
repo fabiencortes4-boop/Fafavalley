@@ -64,6 +64,8 @@ func _paint() -> void:
 		var color: Color = COLORS.get(ch, grass)
 		if snowy and (not COLORS.has(ch) or ch in ["T", "R", "b", "g"]) and View3D.snow_at(cell):
 			color = Color(0.93, 0.95, 0.98) if not COLORS.has(ch) else Color(0.74, 0.82, 0.84)
+			if TimeManager.season != 3:
+				color = grass.lerp(color, 0.45)  # dernières plaques du printemps : discrètes
 		if blocked.has(cell) and not COLORS.has(ch):
 			color = BUILDING
 		if map is MineLevel and ch != "#":

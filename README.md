@@ -309,6 +309,13 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Boîte aux lettres : lettres des habitants (bienvenue avec hache et faux, conseils de saison,
   cadeaux, récompenses).
 - Cueillette : 8 plantes sauvages (2 par saison) à ramasser à la ferme et au village.
+  Au lendemain d'une pluie (sauf en hiver), des champignons en plus sortent à la ferme, au
+  village et surtout en forêt.
+- **Grande faux** (forge, chapitre 3) : fauche les herbes et récolte les cultures mûres sur
+  trois cases de large.
+- Ambiance : ombres de contact sous les arbres, rochers et buissons ; le soir, halos de
+  lumière chaude au pied des lampadaires, devant les portes et sous les fenêtres ; heure
+  dorée au lever et au coucher du soleil ; herbe aux tons légèrement variés.
 - Compétences (Menu → Compétences) : agriculture, minage, pêche, combat, cueillette ;
   10 niveaux chacune, avec un bonus (récolte double, minerai en plus, filet plus large,
   vie max, cueillette double).

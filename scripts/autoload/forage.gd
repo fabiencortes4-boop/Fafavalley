@@ -3,6 +3,9 @@ extends Node
 ## saison, sur l'herbe de la ferme et du village.
 
 const PER_MAP := {"farm": 4, "village": 6, "forest": 10}
+## Après une journée de pluie, des champignons sortent en plus (pour un jour)
+const RAIN_MUSHROOMS := {"farm": 1, "village": 2, "forest": 5}
+const RAIN_ITEM := "mushroom"
 
 var spots: Dictionary = {}  # map_id -> {"x,y": item_id}
 var _last_day: Dictionary = {}  # map_id -> numéro de jour du dernier remplissage
@@ -42,8 +45,22 @@ func ensure_spawned(map_id: String, free_cells: Array) -> Dictionary:
 			var key := "%d,%d" % [cell.x, cell.y]
 			if not map_spots.has(key):
 				map_spots[key] = pool[randi() % pool.size()]
+		if rain_mushrooms_today():
+			var extra := int(RAIN_MUSHROOMS.get(map_id, 0))
+			for cell: Vector2i in free_cells:
+				if extra <= 0:
+					break
+				var key := "%d,%d" % [cell.x, cell.y]
+				if not map_spots.has(key):
+					map_spots[key] = RAIN_ITEM
+					extra -= 1
 		spots[map_id] = map_spots
 	return map_spots
+
+
+## Il a plu hier (hors hiver) : les champignons sortent ce matin.
+func rain_mushrooms_today() -> bool:
+	return TimeManager.rain_yesterday and TimeManager.season != 3
 
 
 func take(map_id: String, cell: Vector2i) -> String:
