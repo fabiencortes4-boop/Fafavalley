@@ -66,6 +66,17 @@ func _ready() -> void:
 		if HeartEvents.events.get(id, []).size() < 3:
 			few.append(id)
 	_check(few.is_empty(), "chaque habitant a trois scènes de cœur %s" % str(few))
+	# ---- Bouton Fabrication en haut de l'écran : nombre de recettes faisables
+	var hud: Node = _main.get("_hud")
+	var badge: Label = hud.get("_craft_badge")
+	Inventory.add_item("wood", 60)
+	await get_tree().process_frame
+	_check(hud.get("_craft_button") != null and badge.text != "" and int(badge.text) >= 1, "le bouton Fabrication indique les recettes faisables (%s)" % badge.text)
+	hud.call("open_journal_menu")
+	_check(hud.get("_modal").find_children("*", "Button", true, false).any(func(b: Button) -> bool: return b.text == "Album"), "le Journal regroupe l'album, les succès...")
+	hud.call("open_settings", "sound")
+	_check(hud.get("_modal").find_children("*", "Button", true, false).any(func(b: Button) -> bool: return b.text.begins_with("Musique")), "les réglages du son ont leur rubrique")
+	hud.close_modal()
 	# ---- Volumes séparés
 	var mv := Settings.music_volume
 	Settings.cycle_music_volume()

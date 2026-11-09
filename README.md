@@ -156,6 +156,11 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   Rosalie ; elles poussent sur la terre labourée et donnent les mêmes fleurs que la
   cueillette. Une culture qui meurt au changement de saison est signalée au réveil, et un
   semis trop tardif pour mûrir avant la fin de la saison est signalé tout de suite.
+- **Menu en rubriques** : Menu → Ma ferme (sac, fabrication, compétences), Journal
+  (histoire, habitants, demandes, carnet de pêche, album, succès), Aide (guide, tutoriel),
+  Réglages (Affichage, Son, Accessibilité, Partie), avec icônes et retour à chaque niveau.
+  Bouton **Fabrication** à icône (marteau et scie) en haut de l'écran, avec le nombre de
+  recettes faisables tout de suite.
 - **Tous les écrans** : interface de référence 480x270 en paysage (l'aspect s'étend sur
   les tablettes 4:3 comme sur les téléphones très allongés) et 360x640 quand l'écran est
   tenu en hauteur (navigateur d'un téléphone) ; caméra 3D qui garde la largeur de champ en

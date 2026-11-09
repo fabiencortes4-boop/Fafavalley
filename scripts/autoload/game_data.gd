@@ -211,6 +211,17 @@ func item_name(id: String) -> String:
 	return str(item(id).get("name", id))
 
 
+## Icône de la planche par son numéro (boutons de l'interface).
+func icon_at(index: int) -> Texture2D:
+	var key := "#%d" % index
+	if not _icon_cache.has(key):
+		var tex := AtlasTexture.new()
+		tex.atlas = _icons_texture
+		tex.region = Rect2(index * ICON_SIZE, 0, ICON_SIZE, ICON_SIZE)
+		_icon_cache[key] = tex
+	return _icon_cache[key]
+
+
 func item_icon(id: String) -> Texture2D:
 	if _icon_cache.has(id):
 		return _icon_cache[id]

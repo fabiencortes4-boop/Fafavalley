@@ -790,6 +790,21 @@ def draw_misc(kind):
         rect(12, 4, 14, 7, (220, 170, 50))
         rect(7, 9, 9, 12, (220, 170, 50))
         rect(4, 12, 12, 15, (120, 80, 50))
+    elif kind == "craft":
+        # Scie : lame en diagonale (bas gauche -> haut droite), dents, poignée
+        for i in range(9):
+            x, y = 3 + i, 12 - i
+            px[x, y] = (205, 215, 230, 255)
+            px[x + 1, y] = (160, 172, 190, 255)
+            if i % 2 == 0:
+                px[x, y + 1] = (120, 130, 150, 255)
+        rect(1, 12, 4, 15, (176, 110, 60))
+        # Marteau : manche dans l'autre diagonale, tête en fer en haut à gauche
+        for i in range(9):
+            px[5 + i, 4 + i] = (150, 96, 52, 255)
+            px[6 + i, 4 + i] = (120, 76, 40, 255)
+        rect(2, 2, 7, 5, (110, 115, 130))
+        rect(3, 2, 7, 3, (170, 176, 190))
     elif kind == "plan":
         rect(3, 2, 13, 14, (235, 225, 195))
         for y in (5, 8, 11):
@@ -1001,6 +1016,8 @@ def extend_icons(sheet):
     extra.append(draw_misc("trophy"))
     data = json.load(open(os.path.join(ROOT, "data", "crops.json")))
     extra += [crop_icon_pair(cid, data[cid]["art"])[0] for cid in FLOWER_CROPS]
+    # 196 : icône du bouton Fabrication (marteau et scie croisés)
+    extra.append(draw_misc("craft"))
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

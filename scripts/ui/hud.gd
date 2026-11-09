@@ -23,6 +23,9 @@ var _top_panel: PanelContainer
 var _menu_button: Button
 var _bag_button: Button
 var _story_button: Button
+var _craft_button: Button
+var _craft_badge: Label
+const CRAFT_ICON := 196  # marteau et scie (assets/sprites/icons.png)
 var _tutorial_panel: PanelContainer
 var _tutorial_label: Label
 var _closing_silently: bool = false
@@ -238,6 +241,22 @@ func _build_menu_button() -> void:
 	_story_button.text = "Histoire"
 	_story_button.pressed.connect(open_story)
 	_root.add_child(_story_button)
+	# Fabrication : bouton à icône, avec le nombre de recettes faisables
+	_craft_button = Button.new()
+	_craft_button.icon = GameData.icon_at(CRAFT_ICON)
+	_craft_button.tooltip_text = "Fabrication"
+	_craft_button.add_theme_constant_override("icon_max_width", 16)
+	_craft_button.pressed.connect(open_crafting.bind("craft"))
+	_root.add_child(_craft_button)
+	_craft_badge = Label.new()
+	_craft_badge.add_theme_font_size_override("font_size", 8)
+	_craft_badge.add_theme_color_override("font_color", Color(1, 0.95, 0.6))
+	_craft_badge.add_theme_color_override("font_outline_color", Color(0.25, 0.12, 0.05))
+	_craft_badge.add_theme_constant_override("outline_size", 3)
+	_craft_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_craft_button.add_child(_craft_badge)
+	EventBus.inventory_changed.connect(_refresh_craft_badge)
+	_refresh_craft_badge()
 
 
 func _build_hotbar() -> void:
@@ -335,6 +354,10 @@ func _layout() -> void:
 	_menu_button.position = Vector2(4, 4)
 	_bag_button.position = Vector2(8 + _menu_button.get_combined_minimum_size().x, 4)
 	_story_button.position = Vector2(_bag_button.position.x + _bag_button.get_combined_minimum_size().x + 4, 4)
+	var story_h := _story_button.get_combined_minimum_size().y
+	_craft_button.size = Vector2(story_h + 2, story_h)
+	_craft_button.position = Vector2(_story_button.position.x + _story_button.get_combined_minimum_size().x + 4, 4)
+	_craft_badge.position = Vector2(_craft_button.size.x - 7, _craft_button.size.y - 11)
 	var clock := _top_panel.get_combined_minimum_size()
 	_top_panel.size = Vector2(maxf(clock.x, 84), clock.y)
 	_top_panel.position = Vector2(vp.x - _top_panel.size.x - 4, 4)
@@ -700,7 +723,7 @@ func is_over_ui(event: InputEvent) -> bool:
 	# Le toucher qui vient de fermer une fenêtre ne doit pas agir sur le monde.
 	if _modal != null or Time.get_ticks_msec() - _modal_closed_at < 300:
 		return true
-	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _story_button, _tutorial_panel, _hotbar, _joystick, _energy_bar, _health_bar, _minimap]:
+	for c: Control in [_top_panel, _gold_panel, _menu_button, _bag_button, _story_button, _craft_button, _tutorial_panel, _hotbar, _joystick, _energy_bar, _health_bar, _minimap]:
 		if c.get_global_rect().has_point(point):
 			return true
 	return Rect2(_action_button.position, Vector2(ACTION_SIZE, ACTION_SIZE)).has_point(point)
@@ -832,23 +855,16 @@ func _add_label(box: Container, text: String) -> Label:
 	return l
 
 
+## Menu principal : quelques grandes rubriques, chacune ouvre son sous-menu.
 func open_pause_menu() -> void:
-	var outer := _open_modal("Pause")
-	# Trois colonnes : tout tient sur l'écran d'un téléphone en paysage
+	var outer := _open_modal("Menu")
 	var box := _menu_grid(outer)
-	_add_button(box, "Reprendre", close_modal)
-	_add_button(box, "Sac", open_bag)
-	_add_button(box, "Histoire", open_story)
-	_add_button(box, "Fabrication", open_crafting.bind("craft"))
-	_add_button(box, "Compétences", open_skills)
-	_add_button(box, "Habitants", open_relations)
-	_add_button(box, "Demandes", open_requests)
-	_add_button(box, "Carnet de pêche", open_fish_log)
-	_add_button(box, "Album", open_collections.bind(""))
-	_add_button(box, "Succès", open_achievements)
-	_add_button(box, "Guide", open_guide.bind(0))
-	_add_button(box, "Réglages", open_settings)
-	_add_button(box, "Sauvegarder", func() -> void:
+	_add_menu_entry(box, "Reprendre", -1, close_modal)
+	_add_menu_entry(box, "Ma ferme", GameData.item("carrot").get("icon", 0), open_farm_menu)
+	_add_menu_entry(box, "Journal", GameData.item("house_upgrade").get("icon", 0), open_journal_menu)
+	_add_menu_entry(box, "Aide", GameData.item("sign").get("icon", -1) if GameData.items.has("sign") else -1, open_help_menu)
+	_add_menu_entry(box, "Réglages", -1, open_settings.bind(""))
+	_add_menu_entry(box, "Sauvegarder", -1, func() -> void:
 		SaveManager.save_game()
 		show_toast("Partie sauvegardée"))
 	_size_menu(box)
@@ -858,52 +874,130 @@ func open_pause_menu() -> void:
 			get_tree().quit())
 
 
-func open_settings() -> void:
-	var outer := _open_modal("Réglages")
+## Ma ferme : sac, fabrication, compétences.
+func open_farm_menu() -> void:
+	var outer := _open_modal("Ma ferme")
 	var box := _menu_grid(outer)
-	_add_button(box, "Zoom : x%s" % str(Settings.zoom), func() -> void:
-		Settings.cycle_zoom()
-		open_settings())
-	_add_button(box, "Vue : %s" % ("3D" if Settings.view_3d else "2D"), func() -> void:
-		Settings.toggle_view()
-		open_settings())
-	_add_button(box, "Taille du texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
-		Settings.cycle_text_size()
-		open_settings())
-	_add_button(box, "Graphismes : %s" % Settings.QUALITY_NAMES[Settings.quality], func() -> void:
-		Settings.cycle_quality()
-		open_settings())
-	_add_button(box, "Bruitages : %s" % ("%d %%" % Settings.sound_volume if Settings.sound_volume > 0 else "coupés"), func() -> void:
-		Settings.cycle_sound_volume()
-		Sfx.play("click")
-		open_settings())
-	_add_button(box, "Musique : %s" % ("%d %%" % Settings.music_volume if Settings.music_volume > 0 else "coupée"), func() -> void:
-		Settings.cycle_music_volume()
-		open_settings())
-	_add_button(box, "Vibrations : %s" % ("oui" if Settings.vibration else "non"), func() -> void:
-		Settings.toggle_vibration()
-		open_settings())
-	_add_button(box, "Défilement : %s" % Settings.TEXT_SPEEDS[Settings.text_speed], func() -> void:
-		Settings.cycle_text_speed()
-		open_settings())
-	_add_button(box, "Qualité des objets : %s" % ("étoile + points" if Settings.colorblind else "étoile"), func() -> void:
-		Settings.toggle_colorblind()
-		_refresh_hotbar()
-		open_settings())
-	_add_button(box, "Apparence", open_appearance)
-	_add_button(box, "Exporter la partie", func() -> void:
-		var text := SaveManager.export_text()
-		DisplayServer.clipboard_set(text)
-		show_message("Partie exportée", "La partie est copiée dans le presse-papiers (%d caractères). Colle-la où tu veux pour la garder ; pour la retrouver, copie-la puis choisis « Importer une partie » sur l'écran titre." % text.length()))
-	_add_button(box, "Écran titre", func() -> void:
-		SaveManager.save_game()
-		get_tree().paused = false
-		get_tree().reload_current_scene())
-	_add_button(box, "Revoir le tutoriel", func() -> void:
+	_add_menu_entry(box, "Sac", GameData.item("chest").get("icon", 0), open_bag)
+	_add_menu_entry(box, "Fabrication", CRAFT_ICON, open_crafting.bind("craft"))
+	_add_menu_entry(box, "Compétences", GameData.item("steel_pickaxe").get("icon", 0), open_skills)
+	_size_menu(box)
+	_add_button(outer, "Retour", open_pause_menu)
+
+
+## Journal : l'histoire, les gens, les collections.
+func open_journal_menu() -> void:
+	var outer := _open_modal("Journal")
+	var box := _menu_grid(outer)
+	_add_menu_entry(box, "Histoire", GameData.item("house_upgrade").get("icon", 0), open_story)
+	_add_menu_entry(box, "Habitants", GameData.item("daffodil").get("icon", 0), open_relations)
+	_add_menu_entry(box, "Demandes", GameData.item("wood").get("icon", 0), open_requests)
+	_add_menu_entry(box, "Carnet de pêche", GameData.item("fishing_rod").get("icon", 0), open_fish_log)
+	_add_menu_entry(box, "Album", GameData.item("emerald").get("icon", 0), open_collections.bind(""))
+	_add_menu_entry(box, "Succès", GameData.item("valfleur_trophy").get("icon", 0), open_achievements)
+	_size_menu(box)
+	_add_button(outer, "Retour", open_pause_menu)
+
+
+## Aide : le guide et le tutoriel.
+func open_help_menu() -> void:
+	var outer := _open_modal("Aide")
+	var box := _menu_grid(outer)
+	_add_menu_entry(box, "Guide", -1, open_guide.bind(0))
+	_add_menu_entry(box, "Revoir le tutoriel", -1, func() -> void:
 		Tutorial.restart()
 		close_modal())
 	_size_menu(box)
 	_add_button(outer, "Retour", open_pause_menu)
+
+
+## Bouton de menu, avec son icône à gauche (-1 : sans icône).
+func _add_menu_entry(box: Container, text: String, icon: int, callback: Callable) -> Button:
+	var b := _add_button(box, text, callback)
+	if icon >= 0:
+		b.icon = GameData.icon_at(icon)
+		b.expand_icon = false
+		b.add_theme_constant_override("icon_max_width", 16)
+		b.add_theme_constant_override("h_separation", 4)
+	return b
+
+
+const SETTINGS_PAGES := [["display", "Affichage"], ["sound", "Son"], ["access", "Accessibilité"], ["game", "Partie"]]
+
+
+## Réglages en rubriques : Affichage, Son, Accessibilité, Partie.
+func open_settings(page: String = "") -> void:
+	if page == "":
+		var root := _open_modal("Réglages")
+		var cats := _menu_grid(root)
+		for p: Array in SETTINGS_PAGES:
+			_add_button(cats, str(p[1]), open_settings.bind(str(p[0])))
+		_size_menu(cats)
+		_add_button(root, "Retour", open_pause_menu)
+		return
+	var title := "Réglages"
+	for p: Array in SETTINGS_PAGES:
+		if p[0] == page:
+			title = "Réglages - %s" % p[1]
+	var outer := _open_modal(title)
+	var box := _menu_grid(outer)
+	var again := open_settings.bind(page)
+	match page:
+		"display":
+			_add_button(box, "Zoom : x%s" % str(Settings.zoom), func() -> void:
+				Settings.cycle_zoom()
+				again.call())
+			_add_button(box, "Vue : %s" % ("3D" if Settings.view_3d else "2D"), func() -> void:
+				Settings.toggle_view()
+				again.call())
+			_add_button(box, "Graphismes : %s" % Settings.QUALITY_NAMES[Settings.quality], func() -> void:
+				Settings.cycle_quality()
+				again.call())
+		"sound":
+			_add_button(box, "Bruitages : %s" % ("%d %%" % Settings.sound_volume if Settings.sound_volume > 0 else "coupés"), func() -> void:
+				Settings.cycle_sound_volume()
+				Sfx.play("click")
+				again.call())
+			_add_button(box, "Musique : %s" % ("%d %%" % Settings.music_volume if Settings.music_volume > 0 else "coupée"), func() -> void:
+				Settings.cycle_music_volume()
+				again.call())
+			_add_button(box, "Vibrations : %s" % ("oui" if Settings.vibration else "non"), func() -> void:
+				Settings.toggle_vibration()
+				again.call())
+		"access":
+			_add_button(box, "Défilement : %s" % Settings.TEXT_SPEEDS[Settings.text_speed], func() -> void:
+				Settings.cycle_text_speed()
+				again.call())
+			_add_button(box, "Qualité des objets : %s" % ("étoile + points" if Settings.colorblind else "étoile"), func() -> void:
+				Settings.toggle_colorblind()
+				_refresh_hotbar()
+				again.call())
+			_add_button(box, "Taille du texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
+				Settings.cycle_text_size()
+				again.call())
+		"game":
+			_add_button(box, "Apparence", open_appearance)
+			_add_button(box, "Exporter la partie", func() -> void:
+				var text := SaveManager.export_text()
+				DisplayServer.clipboard_set(text)
+				show_message("Partie exportée", "La partie est copiée dans le presse-papiers (%d caractères). Colle-la où tu veux pour la garder ; pour la retrouver, copie-la puis choisis « Importer une partie » sur l'écran titre." % text.length()))
+			_add_button(box, "Écran titre", func() -> void:
+				SaveManager.save_game()
+				get_tree().paused = false
+				get_tree().reload_current_scene())
+	_size_menu(box)
+	_add_button(outer, "Retour", open_settings.bind(""))
+
+
+## Nombre de recettes faisables tout de suite, en pastille sur le bouton.
+func _refresh_craft_badge() -> void:
+	if _craft_badge == null:
+		return
+	var n := 0
+	for id: String in Crafting.for_station("craft"):
+		if Crafting.can_craft(id):
+			n += 1
+	_craft_badge.text = str(n) if n > 0 else ""
 
 
 func _menu_grid(outer: Container) -> GridContainer:
@@ -2195,7 +2289,7 @@ func open_appearance() -> void:
 			line.add_child(b)
 			if d < 0:
 				line.add_child(value)
-	_add_button(box, "Retour", open_settings)
+	_add_button(box, "Retour", open_settings.bind("game"))
 
 
 ## Guide du jeu : une rubrique à la fois.

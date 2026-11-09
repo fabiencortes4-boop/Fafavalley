@@ -96,6 +96,11 @@ func _ready() -> void:
 				sm.sit_down(Vector2i(int(sxy[0]), int(sxy[1])))
 			if a.begins_with("--shopid="):
 				main.get("_hud").open_shop(a.trim_prefix("--shopid="))
+		for a in args:
+			if a.begins_with("--menu="):
+				main.get("_hud").call("open_%s_menu" % a.trim_prefix("--menu="))
+			if a.begins_with("--settings="):
+				main.get("_hud").call("open_settings", a.trim_prefix("--settings="))
 		if "--pause" in args:
 			main.get("_hud").open_pause_menu()
 		for a in args:
