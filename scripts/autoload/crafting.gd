@@ -32,7 +32,7 @@ func missing(id: String) -> Dictionary:
 		var lack := int(ingredients[item]) - Inventory.count_of(item)
 		if lack > 0:
 			out[item] = lack
-	var gold := int(r.get("gold", 0))
+	var gold := gold_cost(id)
 	if Inventory.gold < gold:
 		out["or"] = gold - Inventory.gold
 	var upgrade := str(r.get("upgrade", ""))
@@ -43,7 +43,15 @@ func missing(id: String) -> Dictionary:
 
 ## Recette débloquée par l'histoire ?
 func is_unlocked(id: String) -> bool:
-	return Story.is_unlocked(str(recipes.get(id, {}).get("unlock", "")))
+	var r: Dictionary = recipes.get(id, {})
+	return Story.is_unlocked(str(r.get("unlock", ""))) and Soul.recipe_unlocked(r)
+
+
+## Or demandé (à la forge, il suit les prix du village).
+func gold_cost(id: String) -> int:
+	var r: Dictionary = recipes.get(id, {})
+	var gold := float(r.get("gold", 0))
+	return int(round(gold * Soul.price_factor("forge"))) if r.get("station", "craft") == "forge" else int(gold)
 
 
 func can_craft(id: String) -> bool:
@@ -75,8 +83,11 @@ func craft(id: String) -> bool:
 				quality_count += 1
 		Inventory.remove_item(item, int(ingredients[item]))
 	var dish_quality := quality_sum / quality_count if quality_count > 0 else 0
-	if int(r.get("gold", 0)) > 0:
-		Inventory.spend_gold(int(r.gold))
+	var gold := gold_cost(id)
+	if gold > 0:
+		Inventory.spend_gold(gold)
+		if r.get("station", "craft") == "forge":
+			Soul.record("forge", gold)
 	if r.has("upgrade"):
 		Inventory.replace_item(str(r.upgrade), id)
 	else:

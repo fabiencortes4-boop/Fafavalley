@@ -362,5 +362,46 @@
 			"copper_ore": 5,
 			"quartz": 1
 		}
+	},
+	"steel_hoe": {
+		"station": "forge",
+		"upgrade": "copper_hoe",
+		"gold": 600,
+		"ingredients": {
+			"iron_ore": 10,
+			"hardwood": 4
+		},
+		"soul": 1
+	},
+	"steel_can": {
+		"station": "forge",
+		"upgrade": "copper_can",
+		"gold": 600,
+		"ingredients": {
+			"iron_ore": 10,
+			"copper_ore": 5
+		},
+		"soul": 1
+	},
+	"master_axe": {
+		"station": "forge",
+		"upgrade": "steel_axe",
+		"gold": 900,
+		"ingredients": {
+			"iron_ore": 15,
+			"hardwood": 8,
+			"gold_ore": 2
+		},
+		"soul": 2
+	},
+	"master_pickaxe": {
+		"station": "forge",
+		"upgrade": "steel_pickaxe",
+		"gold": 900,
+		"ingredients": {
+			"iron_ore": 15,
+			"gold_ore": 3
+		},
+		"soul": 2
 	}
 }

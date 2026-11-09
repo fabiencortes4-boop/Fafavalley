@@ -185,7 +185,26 @@ func pick_fish(place: String) -> String:
 
 
 func npc(id: String) -> Dictionary:
-	return npcs.get(id, newcomers.get(id, {}))
+	return npcs.get(id, newcomers.get(id, absent.get(id, {})))
+
+
+## Un habitant quitte le village pour de bon (ou revient, le temps d'une
+## fête ou d'une nouvelle partie). Ses données restent consultables.
+var absent: Dictionary = {}
+
+
+func depart(id: String) -> void:
+	if not npcs.has(id):
+		return
+	if not newcomers.has(id):
+		absent[id] = npcs[id]
+	npcs.erase(id)
+
+
+func come_back(id: String) -> void:
+	if absent.has(id):
+		npcs[id] = absent[id]
+		absent.erase(id)
 
 
 ## Un nouvel habitant s'installe (ou repart, pour une nouvelle partie).

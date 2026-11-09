@@ -61,7 +61,10 @@ const ITEM_MODELS := {
 const TOOL_MODELS := {
 	"hoe": ["survival", "tool-hoe"], "axe": ["survival", "tool-axe"], "pickaxe": ["survival", "tool-pickaxe"],
 	"steel_pickaxe": ["survival", "tool-pickaxe-upgraded"], "watering_can": ["survival", "bucket"],
-	"copper_can": ["survival", "bucket"], "copper_hoe": ["survival", "tool-hoe"], "scythe": ["survival", "tool-shovel"], "great_scythe": ["survival", "tool-shovel"],
+	"copper_can": ["survival", "bucket"], "copper_hoe": ["survival", "tool-hoe"],
+	"steel_hoe": ["survival", "tool-hoe"], "rotary_hoe": ["survival", "tool-hoe"], "steel_can": ["survival", "bucket"], "pump_can": ["survival", "bucket"],
+	"master_axe": ["survival", "tool-axe-upgraded"], "chainsaw": ["survival", "tool-axe-upgraded"], "steel_axe": ["survival", "tool-axe-upgraded"],
+	"master_pickaxe": ["survival", "tool-pickaxe-upgraded"], "jackhammer": ["survival", "tool-pickaxe-upgraded"], "scythe": ["survival", "tool-shovel"], "great_scythe": ["survival", "tool-shovel"],
 	"rusty_sword": ["dungeon", "weapon-sword"], "iron_sword": ["dungeon", "weapon-sword"], "war_axe": ["survival", "tool-axe-upgraded"],
 	"steel_sword": ["dungeon", "weapon-sword"], "firmin_blade": ["dungeon", "weapon-sword"],
 }
@@ -1042,6 +1045,13 @@ func _garden_node(kind: String, cell: Vector2i) -> Node3D:
 					var p := Vector3(cos(a) * r, 0.24, sin(a) * r)
 					_st_cyl(st, p - Vector3(0, 0.04, 0), 0.015, 0.08, Color(0.3, 0.6, 0.3), 5)
 					_st_cyl(st, p + Vector3(0, 0.02, 0), 0.06, 0.05, colors[k % colors.size()], 7, "y", 0.03)
+		"design_sculpture":
+			# Sculpture contemporaine : socle clair, blocs colorés en équilibre
+			_st_cyl(st, Vector3(0, 0.06, 0), 0.36, 0.12, Color(0.92, 0.92, 0.9), 16)
+			_st_box(st, Vector3(-0.06, 0.34, 0), Vector3(0.3, 0.44, 0.3), Color(0.9, 0.42, 0.3))
+			_st_box(st, Vector3(0.1, 0.7, 0.04), Vector3(0.22, 0.3, 0.22), Color(0.95, 0.78, 0.25))
+			_st_cyl(st, Vector3(-0.04, 0.98, 0), 0.14, 0.28, Color(0.25, 0.5, 0.62), 14, "y", 0.14)
+			_st_cyl(st, Vector3(0.22, 0.4, -0.12), 0.03, 0.9, Color(0.2, 0.2, 0.22), 6)
 		"garden_fountain":
 			_st_cyl(st, Vector3(0, 0.12, 0), 0.46, 0.24, stone, 16)
 			_st_cyl(st, Vector3(0, 0.235, 0), 0.4, 0.02, Color(0.45, 0.68, 0.88), 16)
@@ -1427,6 +1437,7 @@ func _build_props() -> void:
 	_wall_batch = null
 	if map is Village:
 		_build_event_decor()
+		_build_soul_decor()
 		_build_gardens()
 		_build_projects()
 	_finish_decals()
@@ -1486,8 +1497,13 @@ func _build_buildings(chars: Dictionary) -> void:
 			# Le décor autour des maisons vient des jardins (Village.gardens) et
 			# du plan : rien n'est posé contre les façades (pas de chevauchement)
 			match str(b[0]):
-				"store", "mairie", "gaston", "menuiserie", "cooperative", "ranch", "odette", "lina", "jules":
-					_house(cell, size, b[3], {"store": "wall", "mairie": "wall", "gaston": "wall", "cooperative": "wall"}.get(str(b[0]), "wall-wood"), HOUSE_ROOFS[str(b[0])])
+				"store", "mairie", "gaston", "menuiserie", "cooperative", "ranch", "odette", "lina", "jules", "bocal", "outils", "studio":
+					# L'âme de Valfleur : une maison reprise change de façade et d'enseigne
+					var look: Dictionary = Soul.house_look(str(b[0]))
+					var wall: String = look.get("wall", {"store": "wall", "mairie": "wall", "gaston": "wall", "cooperative": "wall"}.get(str(b[0]), "wall-wood"))
+					_house(cell, size, b[3], wall, look.get("roof", HOUSE_ROOFS.get(str(b[0]), Color(0.3, 0.3, 0.34))))
+					if str(look.get("sign", "")) != "":
+						_shop_sign(front + Vector3(size.x / 2.0 - 0.5, 1.12, -0.02), str(look.sign), size.x - 0.4)
 				"fountain":
 					var f := _fitted("town", "fountain-round-detail", 2.2)
 					_put(f, Vector3(cell.x + 1.0, 0, cell.y + 1.0))
@@ -3221,6 +3237,71 @@ func _well(c: Vector3) -> void:
 
 
 ## Décor des événements : stand, guirlandes de fanions, lanternes volantes.
+## Enseigne claire au-dessus d'une porte (boutiques des Hauts de Valfleur).
+func _shop_sign(at: Vector3, text: String, width: float) -> void:
+	_panel(at, Vector2(width, 0.42), Color(0.95, 0.95, 0.93), text, Color(0.15, 0.17, 0.2), 0.0052)
+
+
+## Panneau incliné vers la caméra (lisible vu d'en haut), avec son texte.
+func _panel(at: Vector3, size: Vector2, color: Color, text: String, ink: Color, pixel: float) -> Node3D:
+	var pivot := Node3D.new()
+	pivot.position = at
+	pivot.rotation.x = -0.8
+	_static.add_child(pivot)
+	var board := _box(Vector3(size.x, size.y, 0.05), color)
+	pivot.add_child(board)
+	var label := Label3D.new()
+	label.text = text
+	label.font = UiTheme.title_font()
+	label.font_size = 40
+	label.pixel_size = minf(pixel, (size.x - 0.15) / maxf(1.0, text.length() * 24.0)) if not "\n" in text else pixel
+	label.line_spacing = -8.0
+	label.modulate = ink
+	label.position = Vector3(0, 0, 0.03)
+	pivot.add_child(label)
+	return pivot
+
+
+## L'âme de Valfleur : affiches de la nouvelle mairie, terrasse du Bocal,
+## étals et fanions des artisans.
+func _build_soul_decor() -> void:
+	for d: Array in Soul.decor():
+		var c := _cell3d(d[0])
+		match str(d[1]):
+			"billboard":
+				for sx: float in [-0.42, 0.42]:
+					_put(_box(Vector3(0.07, 1.5, 0.07), Color(0.25, 0.25, 0.28)), c + Vector3(sx, 0.75, 0))
+				_panel(c + Vector3(0, 1.75, -0.1), Vector2(2.0, 1.15), Color(0.95, 0.95, 0.93), "", Color.WHITE, 0.004).position.z -= 0.02
+				_panel(c + Vector3(0, 1.75, -0.1), Vector2(1.88, 1.03), d[3], str(d[2]), Color(1, 1, 0.96), 0.0042)
+				_shade(c, 0.5, 0.25)
+			"terrace":
+				# Table ronde, deux chaises et un parasol rayé
+				_put(_cyl(0.26, 0.04, Color(0.95, 0.95, 0.93)), c + Vector3(0, 0.42, 0))
+				_put(_cyl(0.03, 0.42, Color(0.3, 0.3, 0.33)), c + Vector3(0, 0.21, 0))
+				for sx: float in [-0.36, 0.36]:
+					_put(_box(Vector3(0.18, 0.04, 0.18), Color(0.85, 0.45, 0.3)), c + Vector3(sx, 0.26, 0.05))
+					_put(_box(Vector3(0.04, 0.26, 0.04), Color(0.3, 0.3, 0.33)), c + Vector3(sx, 0.13, 0.05))
+				_put(_cyl(0.02, 1.3, Color(0.3, 0.3, 0.33)), c + Vector3(0, 0.65, 0))
+				_put(_cyl(0.5, 0.12, Color(0.95, 0.93, 0.85) if (d[0] as Vector2i).x % 2 == 0 else Color(0.25, 0.55, 0.5)), c + Vector3(0, 1.32, 0))
+				_shade(c, 0.5, 0.22)
+			"stall":
+				_put(_fitted("town", "stall-green" if (d[0] as Vector2i).x % 2 == 0 else "stall-red", 1.0), c)
+				_shade(c, 0.5, 0.25)
+	if Soul.bunting():
+		# Fanions permanents au-dessus de la rue des artisans
+		var colors := [Color(0.85, 0.3, 0.25), Color(0.95, 0.8, 0.3), Color(0.35, 0.6, 0.4), Color(0.9, 0.9, 0.85)]
+		for seg: Array in [[Vector3(16.0, 0, 9.5), Vector3(18.0, 0, 9.5)], [Vector3(16.0, 0, 14.5), Vector3(18.0, 0, 14.5)], [Vector3(16.0, 0, 18.5), Vector3(18.0, 0, 18.5)]]:
+			var a: Vector3 = seg[0]
+			var b: Vector3 = seg[1]
+			for end: Vector3 in [a, b]:
+				_put(_box(Vector3(0.07, 2.3, 0.07), Color(0.5, 0.35, 0.2)), end + Vector3(0, 1.15, 0))
+			for k in 7:
+				var t := (k + 0.5) / 7.0
+				var flag := _box(Vector3(0.2, 0.2, 0.02), colors[k % colors.size()])
+				_put(flag, a.lerp(b, t) + Vector3(0, 2.2 - sin(t * PI) * 0.25, 0))
+				flag.rotation.z = PI / 4.0
+
+
 func _build_event_decor() -> void:
 	var activity := Events.booth_activity()
 	if activity == "":
@@ -4265,7 +4346,7 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 		"chest":
 			var chest := _model("survival", "chest", 2.4)
 			node.add_child(chest)
-		"sprinkler", "quality_sprinkler":
+		"sprinkler", "quality_sprinkler", "smart_sprinkler":
 			var s := _billboard(GameData.item_icon(str(FarmState.objects[cell])), 0.04)
 			s.position.y = 0.32
 			node.add_child(s)
@@ -4278,7 +4359,7 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 			node.add_child(_path_node(cell, str(FarmState.objects[cell])))
 		"scarecrow":
 			node.add_child(_scarecrow_node())
-		"garden_bench", "garden_lantern", "flower_bed", "garden_fountain":
+		"garden_bench", "garden_lantern", "flower_bed", "garden_fountain", "design_sculpture":
 			node.add_child(_garden_node(str(FarmState.objects[cell]), cell))
 		"golden_statue":
 			node.add_child(_golden_statue())

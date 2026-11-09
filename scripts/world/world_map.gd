@@ -538,6 +538,13 @@ func talk_to_npc(npc: Npc) -> void:
 	if life != "":
 		EventBus.dialogue_requested.emit(id, life)
 		return
+	var held: Variant = Inventory.get_selected()
+	var gifting: bool = held != null and GameData.item(held.id).get("type") in ["crop", "fish", "forage", "animal", "food", "gift_special"]
+	if not gifting and id != Marriage.spouse and HeartEvents.pending(id).is_empty():
+		var mood := Soul.talk(id)
+		if mood != "":
+			EventBus.dialogue_requested.emit(id, mood)
+			return
 	var slot0: Variant = Inventory.get_selected()
 	if slot0 != null and GameData.item(slot0.id).get("type") == "gift_special":
 		var res := Marriage.give(id, str(slot0.id))

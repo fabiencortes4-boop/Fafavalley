@@ -92,7 +92,7 @@ func offers() -> Array:
 			what += " de qualité %s (ou mieux)" % GameData.QUALITY_NAMES[quality]
 		out.append({
 			"npc": npc, "item": item, "qty": qty, "quality": quality,
-			"gold": int((value * qty * 1.3 + 40) * QUALITY_REWARD[quality]), "points": 120 + 40 * quality,
+			"gold": int((value * qty * 1.3 + 40) * QUALITY_REWARD[quality] * Soul.request_factor()), "points": 120 + 40 * quality,
 			"days_left": 3,
 			"text": LINES[rng.randi() % LINES.size()] % [what, reasons[rng.randi() % reasons.size()]],
 		})

@@ -415,7 +415,7 @@ func _spawn_visitors() -> void:
 	var ids: Array = GameData.npcs.keys().filter(func(i: String) -> bool: return i != Marriage.spouse)
 	var spots: Array = []
 	for cell: Vector2i in FarmState.objects:
-		if str(FarmState.objects[cell]) in ["garden_bench", "garden_fountain", "flower_bed", "garden_lantern", "golden_statue"]:
+		if str(FarmState.objects[cell]) in ["garden_bench", "garden_fountain", "flower_bed", "garden_lantern", "golden_statue", "design_sculpture"]:
 			for d: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 				if is_walkable(cell + d):
 					spots.append(cell + d)
@@ -1000,9 +1000,9 @@ func minimap_color(cell: Vector2i) -> Color:
 				return MAP_COLORS.tree if Woods.stage(cell, "farm") >= 3 else MAP_COLORS.sapling
 			"path_wood", "path_stone", "scarecrow":
 				return MAP_COLORS[obj]
-			"sprinkler", "quality_sprinkler":
+			"sprinkler", "quality_sprinkler", "smart_sprinkler":
 				return MAP_COLORS.sprinkler
-			"garden_bench", "garden_lantern", "flower_bed", "garden_fountain":
+			"garden_bench", "garden_lantern", "flower_bed", "garden_fountain", "design_sculpture":
 				return MAP_COLORS.decor
 			"golden_statue":
 				return MAP_COLORS.statue
@@ -1076,7 +1076,7 @@ func _refresh_object(cell: Vector2i) -> void:
 	match str(FarmState.objects.get(cell, "")):
 		"sprinkler":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.SPRINKLER))
-		"quality_sprinkler":
+		"quality_sprinkler", "smart_sprinkler":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.QUALITY_SPRINKLER))
 		"chest":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.CHEST))
@@ -1084,8 +1084,8 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.COBBLES))
 		"scarecrow", "garden_lantern":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.SIGN))
-		"garden_bench", "flower_bed", "garden_fountain", "golden_statue":
-			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.BARREL if FarmState.objects[cell] in ["garden_fountain", "golden_statue"] else WorldTiles.BUSH))
+		"garden_bench", "flower_bed", "garden_fountain", "golden_statue", "design_sculpture":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.BARREL if FarmState.objects[cell] in ["garden_fountain", "golden_statue", "design_sculpture"] else WorldTiles.BUSH))
 		"wood_tree":
 			var wt := 0 if not Woods.farm.has(cell) else (WorldTiles.STUMP if Woods.is_stump(cell, "farm") else (WorldTiles.BUSH if Woods.stage(cell, "farm") < 3 else (WorldTiles.PINE if Woods.farm[cell].type == "pine" else WorldTiles.ROUND_TREE)))
 			if wt != 0:

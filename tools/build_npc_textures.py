@@ -55,6 +55,17 @@ LOOKS = {
     "player_3": ("f", [(BODY, "58bd98", "c0453c"), (BODY, "8494c9", "3a3a4a")]),
     # La meunière (nouvelle venue) : cheveux caramel, blouse blanche farinée
     "pauline": ("e", [(HEAD, "995a41", "c48a4a"), (BODY, "995a41", "c48a4a"), (BODY, "a878e8", "f0ece0")]),
+    # Les nouveaux venus des Hauts de Valfleur
+    # Capucine (le Bocal) : cheveux roux, tablier vert d'eau
+    "capucine": ("e", [(HEAD, "995a41", "c8643a"), (BODY, "995a41", "c8643a"), (BODY, "a878e8", "5fb8a8")]),
+    # Hugo (Atelier Néo) : bleu de travail anthracite, pantalon noir
+    "hugo": ("a", [(BODY, "b56544", "3a4250"), (BODY, "37a177", "2e2e36"), (BODY, "1e835a", "22222a")]),
+    # Élise (Studio Lin) : tunique de lin écru, pantalon noir
+    "elise": ("f", [(BODY, "58bd98", "e8dcc4"), (BODY, "8494c9", "2e2e36")]),
+    # Sacha (prof de yoga) : sweat corail
+    "sacha": ("c", [(BODY, "44ae7d", "e8826a")]),
+    # Inès (galeriste) : cheveux noirs, veste noire
+    "ines": ("e", [(HEAD, "995a41", "2d2a30"), (BODY, "995a41", "2d2a30"), (BODY, "a878e8", "34343e")]),
     # La musicienne : cheveux blonds, tunique violette de scène
     "celeste": ("e", [(HEAD, "995a41", "e6c060"), (BODY, "995a41", "e6c060"), (BODY, "a878e8", "8a3ab0")]),
 }

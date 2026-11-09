@@ -44,14 +44,25 @@ const MAP := [
 	"TT........==n...b....w..n============n..==.,.~~~~~~~~~~~.TTT",
 	"TTT..b....==............................==...~~~~~~~~~~~.TTT",
 	"TT.......n============......,...........=====~~~~~~~~~~~.TTT",
+	"TT......R.============.1....2....3......=====~~~~~~~~~~~..TT",
+	"TT........==......,........x....x.......==.n.~~~~~~~~~~~.TTT",
+	"TTT...b...==n.FFFFFFF................n..==...~~~~~~~~~~~..TT",
+	"TT....,...================================....~~~~~~~~~~..TT",
+	"TTT.......================================................TT",
+	"TTTTT....T.TTTT.....T..T.T.....TT.'TTTT....T...TTT...T.TTTTT",
+	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+]
+
+## Le pré du sud avant l'arrivée des nouveaux venus (lignes 34 à 38) :
+## le lotissement des Hauts de Valfleur n'est pas encore construit.
+const MEADOW_Y := 34
+const MEADOW := [
 	"TT......R.============..................=====~~~~~~~~~~~..TT",
 	"TT........==......,......,.....b...........n.~~~~~~~~~~~.TTT",
 	"TTT...b...==n.FFFFFFF.....R.........f.R......~~~~~~~~~~~..TT",
 	"TT....,...==.......................,....b.....~~~~~~~~~~..TT",
 	"TTT.......................................................TT",
-	"TTTTT....T.TTTT.....T..T.T.....TT.'TTTT....T...TTT...T.TTTTT",
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-	"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 ]
 
 ## Bâtiments : caractère -> [identifiant, taille, image, colonne de la porte]
@@ -67,14 +78,19 @@ const BUILDINGS := {
 	"J": ["jules", Vector2i(3, 3), "res://assets/sprites/house_gray.png", 1],
 	"M": ["mine", Vector2i(3, 2), "res://assets/sprites/mine_entrance.png", 1],
 	"O": ["fountain", Vector2i(2, 2), "res://assets/sprites/well.png", -1],
+	# Les Hauts de Valfleur : le Bocal, l'Atelier Néo, le Studio Lin
+	"1": ["bocal", Vector2i(3, 3), "res://assets/sprites/house_gray.png", 1],
+	"2": ["outils", Vector2i(3, 3), "res://assets/sprites/house_gray.png", 1],
+	"3": ["studio", Vector2i(3, 3), "res://assets/sprites/house_gray.png", 1],
 }
 ## Bâtiment -> boutique
-const SHOP_DOORS := {"store": "store", "cooperative": "cooperative", "ranch": "ranch", "menuiserie": "carpenter"}
+const SHOP_DOORS := {"store": "store", "cooperative": "cooperative", "ranch": "ranch", "menuiserie": "carpenter", "bocal": "bocal", "outils": "outils", "studio": "studio"}
 const ZONES := [
 	["Chemin de la mine", Rect2i(26, 2, 10, 11)],
 	["Quartier des artisans", Rect2i(2, 2, 21, 17)],
 	["Ranch de Léon", Rect2i(41, 2, 17, 17)],
 	["Les résidences", Rect2i(2, 21, 21, 19)],
+	["Les Hauts de Valfleur", Rect2i(22, 33, 20, 6)],
 	["Parc de l'étang", Rect2i(38, 21, 20, 19)],
 	["Place de Valfleur", Rect2i(22, 12, 18, 28)],
 ]
@@ -92,7 +108,12 @@ func _init() -> void:
 
 
 func _map_rows() -> Array:
-	return MAP
+	if Soul.arrived:
+		return MAP
+	var rows := MAP.duplicate()
+	for i in MEADOW.size():
+		rows[MEADOW_Y + i] = MEADOW[i]
+	return rows
 
 
 func display_name() -> String:
@@ -171,6 +192,14 @@ func _after_build() -> void:
 					_interactables[c] = "project:" + id
 				elif Projects.state("bridge") != "done":
 					_interactables[c] = "project:bridge"
+	# L'âme de Valfleur : affiches, terrasse, étals d'artisans
+	for d: Array in Soul.decor():
+		var dc: Vector2i = d[0]
+		if is_walkable(dc):
+			_blocked[dc] = true
+			_add_static_block(dc)
+			if str(d[1]) == "billboard":
+				_add_sign(dc, "Affiche de la mairie", str(d[2]).replace("\n", " - "))
 	# Jour de fête ou de marché : un stand sur la place
 	if Events.booth_activity() != "":
 		_blocked[Events.BOOTH] = true
@@ -186,7 +215,7 @@ func _after_build() -> void:
 	_doors["mill"] = Vector2i(mill.position.x + mill.size.x / 2, mill.end.y - 1)
 	var wedding := not VillageLife.wedding_today().is_empty()
 	for id: String in GameData.npcs:
-		var guest: bool = wedding and id in VillageLife.COUPLE and GameData.npc(id).get("map", "") == "port"
+		var guest: bool = (wedding and id in VillageLife.COUPLE and GameData.npc(id).get("map", "") == "port") or Soul.is_visitor(id)
 		if id == Marriage.spouse or (GameData.npc(id).get("map", "") == "port" and not guest):
 			continue  # vit à la ferme, ou au port
 		var npc := Npc.new()
@@ -371,7 +400,8 @@ func _process(delta: float) -> void:
 		for npc in npcs:
 			if not npc.is_inside() and npc.position.distance_to(player.position) < TILE * 5:
 				var event := Events.happening_now()
-				var line: String = BUBBLES[randi() % BUBBLES.size()]
+				var chatter: Array = BUBBLES + Soul.bubbles()
+				var line: String = chatter[randi() % chatter.size()]
 				if not event.is_empty() and randf() < 0.6:
 					line = str(event.get("bubble", "Vive la fête !"))
 				EventBus.npc_bubble.emit(npc.id, line)
@@ -482,16 +512,19 @@ func _interact(kind: String, _cell: Vector2i) -> void:
 	if building == "mine":
 		_enter_mine()
 		return
+	if Soul.door_note(building) != "":
+		EventBus.message_requested.emit(InteriorMap.name_of(building), Soul.door_note(building))
+		return
 	if InteriorMap.LAYOUTS.has(building):
 		if Events.gathering_now():
-			EventBus.message_requested.emit(InteriorMap.LAYOUTS[building].name, "Fermé pour la fête ! Tout le monde est sur la place.")
+			EventBus.message_requested.emit(InteriorMap.name_of(building), "Fermé pour la fête ! Tout le monde est sur la place.")
 		elif InteriorMap.is_open(building):
 			Sfx.play("door")
 			var rows: Array = InteriorMap.LAYOUTS[building].rows
 			var door_x := String(rows[rows.size() - 1]).find("D")
 			EventBus.map_change_requested.emit("in:" + building, Vector2i(door_x, rows.size() - 2))
 		else:
-			EventBus.message_requested.emit(InteriorMap.LAYOUTS[building].name, InteriorMap.closed_text(building))
+			EventBus.message_requested.emit(InteriorMap.name_of(building), InteriorMap.closed_text(building))
 
 
 ## L'entrée de la mine est-elle dégagée ? (Gaston, fin du chapitre 2)

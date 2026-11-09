@@ -316,6 +316,33 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - Ambiance : ombres de contact sous les arbres, rochers et buissons ; le soir, halos de
   lumière chaude au pied des lampadaires, devant les portes et sous les fenêtres ; heure
   dorée au lever et au coucher du soleil ; herbe aux tons légèrement variés.
+- **L'âme de Valfleur** (à partir du chapitre 3) : trois nouveaux venus de la ville ouvrent
+  boutique au sud de la place, dans un lotissement neuf, « Les Hauts de Valfleur » : le
+  Bocal (café-épicerie bio de Capucine), l'Atelier Néo (outils modernes de Hugo) et le
+  Studio Lin (design d'Élise). Chaque pièce d'or dépensée chez eux ou chez les artisans
+  (épicerie, forge, menuiserie, coopérative, ranch, taverne, comptoir) fait pencher une
+  balance (Menu → Journal → Âme de Valfleur ; 1 point = 200 or ; paliers à 30, 60 et 90).
+  Quand elle penche assez, l'habitant concerné s'inquiète, donne un préavis de 3 jours,
+  puis le village change si la balance n'est pas revenue. Le village ne change que
+  **trois fois en tout**, et chaque changement est définitif. Aucun choix n'est mauvais :
+  - *Voie des nouveaux venus* : outils puissants mais chers (motobineuse, arrosoir à pompe,
+    tronçonneuse, marteau-piqueur, arroseur connecté de 24 cases), plats très nourrissants,
+    mobilier et sculpture design ; les produits de qualité et transformés se vendent 10 %
+    plus cher par palier. Le revers : les prix des artisans montent de 10 % par palier et
+    un habitant part à chaque fois (Odette et Théo, puis Lina, puis Gaston), remplacé par
+    un nouveau venu (Sacha, Inès ; Hugo reprend la forge, bien plus chère). Au 3e palier,
+    Capucine est élue maire à la place de Bertrand : affiches en ville, fêtes rebaptisées
+    et transformées (le concours des semis devient un marché de créateurs), prix des
+    concours doublés mais deux fois moins d'amitié gagnée aux fêtes.
+  - *Voie des artisans* : prix des artisans en baisse de 5 % par palier, nouveaux outils
+    forgés par Gaston (houe et arrosoir d'acier, hache et pioche du maître), voisins qui
+    arrosent parfois les cultures et déposent un panier le dimanche, demandes mieux
+    payées, fanions et étals en ville, fêtes deux fois plus chaleureuses au 3e palier. Le
+    revers : un nouveau venu ferme boutique à chaque palier (Élise, Capucine, Hugo), et
+    leurs objets ne sont plus en vente.
+  - *Partage* (2 paliers d'un côté, 1 de l'autre) : une troisième fin, « Valfleur partagée ».
+  Un·e habitant·e marié·e au joueur ne part jamais. Ceux qui sont partis reviennent une
+  journée par an, pour la Fête des récoltes. Une lettre conclut chacune des trois fins.
 - Compétences (Menu → Compétences) : agriculture, minage, pêche, combat, cueillette ;
   10 niveaux chacune, avec un bonus (récolte double, minerai en plus, filet plus large,
   vie max, cueillette double).
@@ -466,6 +493,7 @@ godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mar
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/woods_test.tscn      # arbres à bois : abattage, souche, replantation, pousse
 godot --headless res://tests/year_test.tscn       # bilan de l'année, hiver, scènes de cœur, volumes, copie de secours
+godot --headless res://tests/soul_test.tscn       # l'âme de Valfleur : nouveaux venus, balance, départs, maire, fins
 godot --headless res://tests/valley_test.tscn     # rénovations visibles, malade, mariage, meunière, nuits, saisons, perfection
 godot --headless res://tests/fun_test.tscn        # défi, commande, rumeurs, météo, hybrides, musée, compagnon, jardin, grotte
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées

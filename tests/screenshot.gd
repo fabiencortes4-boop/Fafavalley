@@ -81,6 +81,14 @@ func _ready() -> void:
 					PlayerState.flags["story_" + str(Story.chapters[i].id)] = true
 					Story.chapter = i + 1
 				Story.bump("harvest", 9)
+		for a in args:
+			if a.begins_with("--soul="):
+				# L'âme de Valfleur : --soul=<paliers nouveaux venus>,<paliers artisans>
+				var sv := a.trim_prefix("--soul=").split(",")
+				Soul.arrived = true
+				Soul.modern_tier = int(sv[0])
+				Soul.artisan_tier = int(sv[1]) if sv.size() > 1 else 0
+				Soul._apply()
 		if "--shop" in args:
 			EventBus.shop_requested.emit()
 		if "--village" in args:
@@ -338,6 +346,14 @@ func _ready() -> void:
 			Inventory.add_item("melon", 1)
 		if "--journal" in args:
 			main.get("_hud").open_story()
+		if "--soulpage" in args:
+			Soul.tilt = 24.0
+			main.get("_hud").open_soul()
+		for a in args:
+			if a.begins_with("--openshop="):
+				TimeManager.minutes = 11 * 60
+				Inventory.add_gold(9000)
+				main.get("_hud").open_shop(a.trim_prefix("--openshop="))
 		if "--recipes" in args:
 			main.get("_hud").open_crafting("craft")
 		if "--bigmap" in args:

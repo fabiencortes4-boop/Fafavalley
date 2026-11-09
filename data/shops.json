@@ -125,5 +125,65 @@
 			"iron_ore": 220,
 			"bouquet": 250
 		}
+	},
+	"bocal": {
+		"name": "Le Bocal (café-épicerie bio)",
+		"owner": "capucine",
+		"open": [
+			8,
+			18
+		],
+		"closed_days": [],
+		"items": [
+			"oat_latte",
+			"buddha_bowl",
+			"kombucha"
+		],
+		"tiers": {
+			"kombucha": 1
+		}
+	},
+	"outils": {
+		"name": "Atelier Néo (outils modernes)",
+		"owner": "hugo",
+		"open": [
+			9,
+			17
+		],
+		"closed_days": [
+			6
+		],
+		"items": [
+			"rotary_hoe",
+			"pump_can",
+			"chainsaw",
+			"jackhammer",
+			"smart_sprinkler"
+		],
+		"tiers": {
+			"chainsaw": 1,
+			"jackhammer": 1,
+			"smart_sprinkler": 2
+		}
+	},
+	"studio": {
+		"name": "Studio Lin (design)",
+		"owner": "elise",
+		"open": [
+			10,
+			17
+		],
+		"closed_days": [
+			0
+		],
+		"items": [
+			"design_lamp",
+			"abstract_painting",
+			"design_chair",
+			"design_sculpture"
+		],
+		"tiers": {
+			"design_sculpture": 1
+		}
 	}
 }

@@ -20,13 +20,15 @@ func info(id: String) -> Dictionary:
 ## Prix d'achat (certaines boutiques ont leurs propres prix).
 func price(shop_id: String, item_id: String) -> int:
 	var prices: Dictionary = info(shop_id).get("prices", {})
-	return int(prices.get(item_id, GameData.item(item_id).get("buy", 0)))
+	return int(round(float(prices.get(item_id, GameData.item(item_id).get("buy", 0))) * Soul.price_factor(shop_id)))
 
 
 func is_open(id: String) -> bool:
 	if id != "market" and Events.gathering_now():
 		return false  # tout le monde est à la fête
 	var s := info(id)
+	if Soul.MODERN_SHOPS.has(id) and (not Soul.arrived or Soul.is_gone(str(Soul.MODERN_SHOPS[id]))):
+		return false  # pas encore ouverte, ou fermée pour de bon
 	var hours: Array = s.get("open", [9, 17])
 	var weekday := (TimeManager.day - 1) % 7
 	if float(weekday) in s.get("closed_days", []):
@@ -63,7 +65,7 @@ func items(id: String) -> Array:
 				else:
 					later.append(item_id)
 			out.append_array(later)
-		else:
+		elif Soul.in_stock(id, str(entry)):
 			out.append(str(entry))
 	# Le pont réparé : Basile fait venir des graines hybrides
 	if id == "comptoir" and Projects.done.has("bridge"):

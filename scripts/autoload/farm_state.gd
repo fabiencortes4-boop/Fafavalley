@@ -24,6 +24,14 @@ const SPRINKLER_RANGE := {
 		Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0),
 		Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1),
 	],
+	# L'arroseur connecté de l'Atelier Néo : un carré de 5 cases de côté
+	"smart_sprinkler": [
+		Vector2i(-2, -2), Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(2, -2),
+		Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1),
+		Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(2, 0),
+		Vector2i(-2, 1), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1),
+		Vector2i(-2, 2), Vector2i(-1, 2), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2),
+	],
 }
 const FERTILIZER_EVERY := 3  # une nuit de croissance bonus toutes les 3 nuits arrosées
 
@@ -166,7 +174,7 @@ func _crossbreed() -> void:
 ## Beauté de la ferme : décor, chemins, clôtures, arbres et fleurs. Le
 ## dimanche, une belle ferme attire des visiteurs du village.
 const BEAUTY := {
-	"garden_bench": 3, "garden_lantern": 3, "flower_bed": 4, "garden_fountain": 10, "scarecrow": 1, "golden_statue": 40,
+	"garden_bench": 3, "garden_lantern": 3, "flower_bed": 4, "garden_fountain": 10, "design_sculpture": 14, "scarecrow": 1, "golden_statue": 40,
 	"path_wood": 0.5, "path_stone": 0.5, "tree": 2, "wood_tree": 1, "beehive": 2,
 }
 const VISITOR_TIERS := [25, 60, 100]
@@ -357,7 +365,7 @@ func sell_shipping(report: Dictionary) -> int:
 	var total := 0
 	var sold: Array = []
 	for entry: Dictionary in shipping:
-		var price := int(int(GameData.item(entry.id).get("sell", 0)) * Projects.sell_factor(str(entry.id)))
+		var price := int(int(GameData.item(entry.id).get("sell", 0)) * Projects.sell_factor(str(entry.id)) * Soul.sell_factor(str(entry.id)))
 		var line_total: int = price * int(entry.qty)
 		total += line_total
 		sold.append({"id": entry.id, "qty": entry.qty, "total": line_total})

@@ -57,6 +57,8 @@ func check() -> void:
 			var f: Array = when.flag_min
 			if int(PlayerState.flags.get(str(f[0]), 0)) < int(f[1]):
 				continue
+		if Soul.silent(str(letters[id].get("from", ""))):
+			continue  # cet habitant a quitté Valfleur : il n'écrit plus d'ici
 		received[id] = true
 		pending.append(id)
 	mail_changed.emit()

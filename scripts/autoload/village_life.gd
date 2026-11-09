@@ -75,7 +75,7 @@ func new_day() -> void:
 	if not arrived and arrival_day == 0 and Projects.state("mill") == "done":
 		arrival_day = today + 2
 		Mail.send_custom("newcomer_news", {
-			"from": "Bertrand, maire de Valfleur",
+			"from": Soul.mayor_from(),
 			"text": "Le moulin tourne à peine qu'une lettre m'arrive de la ville : une jeune meunière, Pauline, demande à s'y installer ! Elle arrivera dans deux jours. Une nouvelle habitante à Valfleur, ça ne s'était pas vu depuis des années.",
 		})
 	if not arrived and arrival_day > 0 and today >= arrival_day:

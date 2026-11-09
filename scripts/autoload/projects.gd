@@ -64,7 +64,7 @@ func new_day() -> void:
 			done[id] = Marriage.day_number()
 			var p: Dictionary = PROJECTS[id]
 			Mail.send_custom("projet_" + id, {
-				"from": "Bertrand, maire de Valfleur",
+				"from": Soul.mayor_from(),
 				"text": "%s est terminé ! Tout le village est venu voir. %s Merci pour ta générosité : Valfleur ne serait pas ce qu'elle est sans toi." % [p.name, p.text],
 			})
 	changed.emit()

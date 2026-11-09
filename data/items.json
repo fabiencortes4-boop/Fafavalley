@@ -2115,5 +2115,185 @@
 		"stack": 1,
 		"sell": 0,
 		"description": "Le cadeau de tout Valfleur pour une ferme parfaite. À poser à la ferme : elle brille au soleil comme sous la lune."
+	},
+	"oat_latte": {
+		"name": "Latte à l'avoine",
+		"type": "food",
+		"icon": 214,
+		"stack": 99,
+		"buy": 180,
+		"sell": 40,
+		"edible": [
+			70,
+			10
+		],
+		"description": "Le café du Bocal : cher, mousseux, et il réveille pour de bon."
+	},
+	"buddha_bowl": {
+		"name": "Bol du Bocal",
+		"type": "food",
+		"icon": 215,
+		"stack": 99,
+		"buy": 480,
+		"sell": 110,
+		"edible": [
+			170,
+			120
+		],
+		"description": "Céréales, légumes rôtis, graines : le plat le plus nourrissant de la vallée."
+	},
+	"kombucha": {
+		"name": "Kombucha maison",
+		"type": "food",
+		"icon": 216,
+		"stack": 99,
+		"buy": 260,
+		"sell": 60,
+		"edible": [
+			110,
+			45
+		],
+		"description": "Un thé fermenté qui pique un peu. Capucine jure que ça fait du bien."
+	},
+	"rotary_hoe": {
+		"name": "Motobineuse",
+		"type": "tool",
+		"tool": "hoe",
+		"area": 5,
+		"icon": 217,
+		"stack": 1,
+		"energy": 1,
+		"buy": 4000,
+		"sell": 0,
+		"description": "Laboure 5 cases d'un coup, presque sans effort. Fabriquée à l'Atelier Néo."
+	},
+	"pump_can": {
+		"name": "Arrosoir à pompe",
+		"type": "tool",
+		"tool": "watering_can",
+		"capacity": 150,
+		"area": 5,
+		"icon": 218,
+		"stack": 1,
+		"energy": 1,
+		"buy": 4500,
+		"sell": 0,
+		"description": "Contient 150 doses et arrose 5 cases d'un coup, presque sans effort."
+	},
+	"chainsaw": {
+		"name": "Tronçonneuse",
+		"type": "tool",
+		"tool": "axe",
+		"power": 4,
+		"icon": 219,
+		"stack": 1,
+		"energy": 1,
+		"buy": 6000,
+		"sell": 0,
+		"description": "Abat un arbre quatre fois plus vite qu'une hache, et sans se fatiguer."
+	},
+	"jackhammer": {
+		"name": "Marteau-piqueur",
+		"type": "tool",
+		"tool": "pickaxe",
+		"power": 4,
+		"icon": 220,
+		"stack": 1,
+		"energy": 1,
+		"buy": 6500,
+		"sell": 0,
+		"description": "Casse les rochers quatre fois plus vite qu'une pioche."
+	},
+	"smart_sprinkler": {
+		"name": "Arroseur connecté",
+		"type": "placeable",
+		"place": "smart_sprinkler",
+		"icon": 221,
+		"stack": 99,
+		"buy": 3500,
+		"sell": 400,
+		"description": "Arrose chaque matin les 24 cases autour de lui."
+	},
+	"design_lamp": {
+		"name": "Lampe d'architecte",
+		"type": "furniture",
+		"furniture": "lamp",
+		"icon": 222,
+		"stack": 99,
+		"buy": 900,
+		"sell": 220,
+		"description": "Une lampe dessinée par Élise. Tiens-la en main chez toi et touche le sol."
+	},
+	"abstract_painting": {
+		"name": "Toile abstraite",
+		"type": "furniture",
+		"furniture": "painting",
+		"icon": 223,
+		"stack": 99,
+		"buy": 1200,
+		"sell": 300,
+		"description": "Trois aplats de couleur. Élise dit que c'est un champ vu du ciel."
+	},
+	"design_chair": {
+		"name": "Fauteuil Lin",
+		"type": "furniture",
+		"furniture": "armchair",
+		"seat": true,
+		"icon": 224,
+		"stack": 99,
+		"buy": 1500,
+		"sell": 380,
+		"description": "Un fauteuil dessiné au Studio Lin : on s'y assoit pour se reposer (l'énergie remonte doucement)."
+	},
+	"design_sculpture": {
+		"name": "Sculpture contemporaine",
+		"type": "placeable",
+		"place": "design_sculpture",
+		"icon": 225,
+		"stack": 99,
+		"buy": 3000,
+		"sell": 700,
+		"description": "Une grande sculpture à poser à la ferme. Elle embellit beaucoup... et fait parler les voisins."
+	},
+	"steel_hoe": {
+		"name": "Houe d'acier",
+		"type": "tool",
+		"tool": "hoe",
+		"area": 5,
+		"icon": 226,
+		"stack": 1,
+		"energy": 2,
+		"description": "Forgée par Gaston : laboure 5 cases d'un coup."
+	},
+	"steel_can": {
+		"name": "Arrosoir d'acier",
+		"type": "tool",
+		"tool": "watering_can",
+		"capacity": 100,
+		"area": 5,
+		"icon": 227,
+		"stack": 1,
+		"energy": 2,
+		"description": "Forgé par Gaston : contient 100 doses et arrose 5 cases d'un coup."
+	},
+	"master_axe": {
+		"name": "Hache du maître",
+		"type": "tool",
+		"tool": "axe",
+		"power": 3,
+		"icon": 228,
+		"stack": 1,
+		"energy": 2,
+		"description": "Le chef-d'œuvre de Gaston : abat les arbres trois fois plus vite."
+	},
+	"master_pickaxe": {
+		"name": "Pioche du maître",
+		"type": "tool",
+		"tool": "pickaxe",
+		"power": 3,
+		"icon": 229,
+		"stack": 1,
+		"energy": 2,
+		"description": "Le chef-d'œuvre de Gaston : casse les rochers trois fois plus vite."
 	}
 }

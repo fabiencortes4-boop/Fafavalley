@@ -1,6 +1,7 @@
 {
 	"tips": {
 		"hold": ["Garde le doigt appuyé", "Inutile de toucher le bouton à chaque case : garde le bouton Action appuyé et avance. Tu laboures, arroses, sèmes ou fauches case après case, et la pioche ou la hache frappent en rythme. À la forge, la houe et l'arrosoir en cuivre travaillent 3 cases d'un coup."],
+		"soul": ["L'âme de Valfleur", "De nouveaux commerçants venus de la ville se sont installés au sud de la place. Chaque achat fait pencher le village : vers eux (objets puissants mais chers, beaux produits mieux vendus, mais les loyers montent et des habitants partent) ou vers les artisans (prix plus doux, entraide, mais pas de machines). Aucun choix n'est mauvais, et chaque changement est définitif. Suis la balance dans Menu > Journal > Âme de Valfleur."],
 		"rain_mushrooms": ["Après la pluie...", "Il a plu hier : des champignons des bois sont sortis ce matin, surtout en forêt (quelques-uns au village et à la ferme). Ils ne tiennent qu'une journée : ramasse-les vite !"],
 		"meteor": ["Une météorite !", "Les nuits d'étoiles filantes, une météorite tombe parfois à la ferme. Casse-la à la pioche (plusieurs coups) : fragments de météorite, fer, or... de quoi faire un beau bénéfice."],
 		"perfection": ["La ferme parfaite", "Journal > Ferme parfaite : album, amitiés, histoire, musée, rénovations, compétences, grotte et bilan de l'année. À 100 %, Valfleur t'offre une statue dorée."],
@@ -40,6 +41,7 @@
 		["Défis et commandes", "Un défi chaque matin (Journal > Défi du jour) et, chaque lundi, une grosse commande d'un commerçant à livrer en 7 jours : bien mieux payée que l'expédition."],
 		["Le village change", "Les rénovations (moulin, kiosque, pont) se financent dans le Journal et prennent 3 jours de travaux. Les habitants ont leur vie : on tombe malade, on se marie, de nouvelles têtes arrivent."],
 		["Musée et grotte", "Les fossiles vont au musée (Journal > Musée). Dans la forêt, sous les rochers, la grotte des lucioles cache une énigme de leviers et un trésor."],
-		["Compagnon, photos, jardin", "Léon propose d'adopter un chat ou un chien. Menu > Photo pour les souvenirs. Le jardin (bancs, lanternes, fontaine) rend la ferme belle et attire des visiteurs le dimanche."]
+		["Compagnon, photos, jardin", "Léon propose d'adopter un chat ou un chien. Menu > Photo pour les souvenirs. Le jardin (bancs, lanternes, fontaine) rend la ferme belle et attire des visiteurs le dimanche."],
+		["L'âme de Valfleur", "Au chapitre 3, des commerçants de la ville s'installent au sud de la place. Tes achats font pencher le village : vers eux (objets puissants et chers, beaux produits mieux vendus, mais les prix montent et des habitants partent) ou vers les artisans (prix plus doux, entraide, nouveaux outils de forge, mais leurs boutiques ferment). Trois changements en tout, tous définitifs. Suis la balance dans Journal > Âme de Valfleur."]
 	]
 }

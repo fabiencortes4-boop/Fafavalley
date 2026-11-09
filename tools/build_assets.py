@@ -1138,7 +1138,7 @@ def extend_icons(sheet):
                 hp[x, y] = (int(120 + 135 * l), int(40 + 150 * l), int(20 + 120 * l), a)
     extra.append(hoe)
     # 213 grande faux (la faux de base, lame d'acier bleuté et plus claire)
-    sc = sheet.crop((54 * T, 0, 55 * T, T)).copy()
+    sc = extra[54 - sheet.width // T].copy()
     sp = sc.load()
     for y in range(T):
         for x in range(T):
@@ -1147,6 +1147,41 @@ def extend_icons(sheet):
                 l = (r + g + b) / 765.0
                 sp[x, y] = (int(90 + 150 * l), int(140 + 115 * l), int(190 + 65 * l), a)
     extra.append(sc)
+    # 214-229 : l'âme de Valfleur. Objets des nouveaux venus (teintes vives,
+    # acier bleuté) et outils d'artisan (acier sombre, or), tirés d'icônes existantes.
+    def tinted(index, tint, only_metal=False):
+        first = sheet.width // T  # les icônes suivantes sont dans `extra`
+        tile = (sheet.crop((index * T, 0, (index + 1) * T, T)) if index < first else extra[index - first]).copy()
+        tp = tile.load()
+        for y in range(T):
+            for x in range(T):
+                r, g, b, a = tp[x, y]
+                if not a or (r + g + b) < 150:
+                    continue  # contours sombres inchangés
+                metal = max(r, g, b) - min(r, g, b) < 70
+                if only_metal and not metal:
+                    continue
+                l = (r + g + b) / 765.0
+                tp[x, y] = (min(255, int(tint[0] * (0.35 + 0.9 * l))), min(255, int(tint[1] * (0.35 + 0.9 * l))), min(255, int(tint[2] * (0.35 + 0.9 * l))), a)
+        return tile
+    extra += [
+        draw_bottle((214, 180, 140), (245, 232, 210)),  # 214 latte à l'avoine
+        draw_bowl((120, 170, 80), (240, 200, 90)),  # 215 bol du Bocal
+        draw_bottle((230, 150, 60), (250, 200, 120)),  # 216 kombucha
+        tinted(0, (250, 120, 60), True),  # 217 motobineuse
+        tinted(49, (90, 200, 190)),  # 218 arrosoir à pompe
+        tinted(53, (250, 130, 50), True),  # 219 tronçonneuse
+        tinted(48, (250, 200, 60), True),  # 220 marteau-piqueur
+        tinted(42, (110, 220, 200)),  # 221 arroseur connecté
+        tinted(171, (235, 235, 230)),  # 222 lampe d'architecte
+        tinted(174, (240, 120, 100)),  # 223 toile abstraite
+        tinted(183, (120, 190, 185)),  # 224 fauteuil Lin
+        tinted(211, (245, 150, 90)),  # 225 sculpture contemporaine
+        tinted(0, (150, 165, 190), True),  # 226 houe d'acier
+        tinted(49, (150, 165, 190)),  # 227 arrosoir d'acier
+        tinted(181, (240, 205, 110), True),  # 228 hache du maître
+        tinted(48, (240, 205, 110), True),  # 229 pioche du maître
+    ]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

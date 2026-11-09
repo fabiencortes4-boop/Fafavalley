@@ -1413,5 +1413,492 @@
 			2,
 			12
 		]
+	},
+	"capucine": {
+		"name": "Capucine",
+		"title": "la patronne du Bocal",
+		"voice": 1.25,
+		"sprite": 0,
+		"home": "bocal",
+		"arrival": true,
+		"loves": [
+			"honey",
+			"strawberry",
+			"kale",
+			"flower_honey"
+		],
+		"likes": [
+			"salad",
+			"blueberry",
+			"juice",
+			"veg_juice",
+			"hazelnut",
+			"goat_milk"
+		],
+		"dislikes": [
+			"smoked_fish",
+			"coal"
+		],
+		"schedule": [
+			{
+				"time": "07:00",
+				"cell": [
+					25,
+					37
+				]
+			},
+			{
+				"time": "18:30",
+				"cell": [
+					26,
+					27
+				]
+			},
+			{
+				"time": "20:30",
+				"place": "tavern"
+			},
+			{
+				"time": "23:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Oh, bonjour ! Capucine. J'ai quitté un bureau au douzième étage pour ouvrir le Bocal : café, bols, bocaux. Tu es la personne de la ferme ? On va s'entendre : j'adore tout ce qui pousse.",
+			"stranger": [
+				"Le Bocal ouvre à 8h. Le latte à l'avoine est cher, je sais. Mais goûte-le avant de râler !",
+				"Je ne savais pas qu'un village pouvait être aussi silencieux le matin. Au début, ça m'empêchait de dormir.",
+				"Rosalie me regarde de travers. Je la comprends : j'ai ouvert une épicerie en face de la sienne, en quelque sorte."
+			],
+			"friend": [
+				"En ville, je vendais des yaourts que je n'avais jamais goûtés. Ici, je connais le prénom de la vache.",
+				"Tu sais ce qui me plaît ? Personne ne me demande ce que je fais « dans la vie ». Je sers du café, ça se voit.",
+				"Je voudrais que les anciens viennent au Bocal. Marius m'a dit : « commence par baisser tes prix, petite ». Il n'a pas tort."
+			],
+			"close": [
+				"Je sais ce qu'on dit : que des gens comme moi font monter les loyers. C'est vrai. Je ne l'avais pas vu venir, et maintenant je ne sais pas comment le défaire.",
+				"Si un jour le Bocal ferme, je ne regretterai rien. J'aurai appris à faire du pain et à me taire devant un coucher de soleil."
+			],
+			"spring": [
+				"Le printemps ici, c'est indécent. Tout fleurit sans demander la permission."
+			],
+			"summer": [
+				"Thé glacé maison au Bocal ! Avec les herbes du jardin... enfin, du jardin d'Odette, à l'origine."
+			],
+			"autumn": [
+				"Bol d'automne : courge rôtie, noisettes, miel. C'est ma meilleure vente."
+			],
+			"winter": [
+				"L'hiver, le Bocal sent la cannelle. Viens te réchauffer."
+			],
+			"rain": [
+				"La pluie sur une verrière, c'est quand même autre chose que sur un pare-brise."
+			],
+			"again": [
+				"Je retourne à mes bocaux ! À tout à l'heure.",
+				"Passe au Bocal, je te garde une place près de la vitre."
+			],
+			"gift_loved": "Non ! C'est pour moi ? Ça, c'est le vrai luxe. Merci, vraiment.",
+			"gift_disliked": "Ah. Euh. C'est... très authentique. Merci.",
+			"gift_again": "Encore ? Tu vas me gêner. Demain, d'accord ?",
+			"gift_liked": "Merci, c'est très gentil !",
+			"gift_neutral": "Merci, je vais trouver quoi en faire."
+		},
+		"shop": "bocal",
+		"birthday": [
+			0,
+			9
+		]
+	},
+	"hugo": {
+		"name": "Hugo",
+		"title": "l'ingénieur de l'Atelier Néo",
+		"voice": 0.88,
+		"sprite": 0,
+		"home": "outils",
+		"arrival": true,
+		"loves": [
+			"omelette",
+			"miner_stew",
+			"corn",
+			"potato"
+		],
+		"likes": [
+			"egg",
+			"cheese",
+			"pumpkin",
+			"grilled_fish"
+		],
+		"dislikes": [
+			"daffodil",
+			"poppy"
+		],
+		"schedule": [
+			{
+				"time": "07:30",
+				"cell": [
+					30,
+					37
+				]
+			},
+			{
+				"time": "17:30",
+				"cell": [
+					36,
+					27
+				]
+			},
+			{
+				"time": "20:00",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Salut. Hugo. Je conçois des outils : pompes, moteurs, capteurs. Avant, je faisais ça pour des usines. Ici, au moins, je vois à quoi ça sert.",
+			"stranger": [
+				"L'arrosoir à pompe arrose cinq cases d'un coup. Ce n'est pas de la triche, c'est de la mécanique des fluides.",
+				"Gaston est venu voir mon atelier. Il n'a rien dit pendant dix minutes. Puis : « Ça tiendra pas l'hiver. » Il a peut-être raison.",
+				"Mes machines coûtent cher parce que je les fabrique une par une. Oui, je sais, c'est aussi ce que dit Gaston des siennes."
+			],
+			"friend": [
+				"Je croyais qu'un outil devait surtout aller vite. Mathis m'a montré une varlope de son grand-père. Elle va lentement depuis quatre-vingts ans.",
+				"Je rêve d'un arroseur qui sait quand il va pleuvoir. Pauline dit que son moulin le sait déjà.",
+				"Le soir, la taverne est le seul endroit où personne ne me parle de rendement. Ça repose."
+			],
+			"close": [
+				"Si mes machines font le travail de trois voisins, qu'est-ce que deviennent les trois voisins ? Je n'avais jamais eu à me poser la question avant de les connaître.",
+				"Tu es la seule personne ici qui achète mes outils ET ceux de Gaston. Ne choisis pas trop vite. Ou choisis, mais sache pourquoi."
+			],
+			"spring": [
+				"Au printemps, tout le monde laboure. C'est ma haute saison, et celle de Gaston aussi."
+			],
+			"summer": [
+				"Par cette chaleur, un moteur chauffe vite. Moi aussi."
+			],
+			"autumn": [
+				"L'automne, je révise les machines. Une vis desserrée et c'est la récolte qui attend."
+			],
+			"winter": [
+				"L'hiver, je dessine. Les meilleurs outils naissent quand il n'y a rien à faire dehors."
+			],
+			"rain": [
+				"Il pleut : test d'étanchéité grandeur nature."
+			],
+			"again": [
+				"Je retourne à l'établi.",
+				"Si ça fait un bruit bizarre, ramène-le-moi."
+			],
+			"gift_loved": "Sérieusement ? C'est exactement ce que je mange quand personne ne regarde. Merci.",
+			"gift_disliked": "Hm. Je ne sais pas quoi faire de ça. Merci quand même.",
+			"gift_again": "Deux cadeaux le même jour, c'est un bug. Reviens demain.",
+			"gift_liked": "Merci, c'est très gentil !",
+			"gift_neutral": "Merci, je vais trouver quoi en faire."
+		},
+		"shop": "outils",
+		"birthday": [
+			1,
+			5
+		]
+	},
+	"elise": {
+		"name": "Élise",
+		"title": "la designer du Studio Lin",
+		"voice": 1.12,
+		"sprite": 0,
+		"home": "studio",
+		"arrival": true,
+		"loves": [
+			"sunflower",
+			"poppy",
+			"wool",
+			"blueberry_tart"
+		],
+		"likes": [
+			"daffodil",
+			"peach",
+			"cherry",
+			"holly",
+			"angora_wool"
+		],
+		"dislikes": [
+			"garlic",
+			"onion"
+		],
+		"schedule": [
+			{
+				"time": "08:30",
+				"cell": [
+					35,
+					37
+				]
+			},
+			{
+				"time": "17:30",
+				"cell": [
+					33,
+					24
+				]
+			},
+			{
+				"time": "20:30",
+				"place": "tavern"
+			},
+			{
+				"time": "23:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Bonjour. Élise. Je dessine des objets : une chaise, une lampe, parfois juste une poignée de porte. Je suis venue ici pour regarder comment les choses vieillissent.",
+			"stranger": [
+				"Mes meubles sont chers, oui. On paie le temps que j'ai mis à enlever ce qui ne servait à rien.",
+				"Les enseignes de ce village sont peintes à la main. En ville, on appellerait ça du luxe.",
+				"Je ne suis pas sûre que Valfleur ait besoin de moi. Mais moi, j'ai besoin de Valfleur."
+			],
+			"friend": [
+				"Lina m'a montré ses toiles. Elle peint ce qui est là. Moi, je dessine ce qui manque. On ne s'est pas comprises tout de suite.",
+				"Tu as remarqué ? Ici, on répare. Là d'où je viens, on remplace. Je commence à douter de mon métier.",
+				"Mathis m'a laissé toucher à son tour à bois. J'ai fait une quille tordue. Je l'ai gardée."
+			],
+			"close": [
+				"Un village, c'est un objet très bien dessiné : rien de trop, tout sert. J'ai peur d'y ajouter quelque chose de trop.",
+				"Si le Studio ferme un jour, ce ne sera pas un échec. Ce sera que le village n'avait pas de place vide, et c'est plutôt un compliment pour lui."
+			],
+			"spring": [
+				"Le vert du printemps n'existe dans aucun nuancier. J'ai essayé."
+			],
+			"summer": [
+				"En été, je travaille volets clos. La lumière est trop belle, elle me distrait."
+			],
+			"autumn": [
+				"L'automne a toutes mes couleurs préférées, et il les donne gratuitement."
+			],
+			"winter": [
+				"La neige simplifie tout. C'est le meilleur designer que je connaisse."
+			],
+			"rain": [
+				"Écoute la pluie sur les tuiles. Aucun toit plat ne chante comme ça."
+			],
+			"again": [
+				"Je retourne à mes croquis.",
+				"À plus tard. Regarde bien les portes en rentrant."
+			],
+			"gift_loved": "Oh... Regarde cette forme. Merci, je vais la poser sur mon bureau et ne plus rien dessiner de la journée.",
+			"gift_disliked": "C'est... odorant. Merci pour l'intention.",
+			"gift_again": "Un seul cadeau par jour. Le reste, c'est de l'encombrement.",
+			"gift_liked": "Merci, c'est très gentil !",
+			"gift_neutral": "Merci, je vais trouver quoi en faire."
+		},
+		"shop": "studio",
+		"birthday": [
+			3,
+			6
+		]
+	},
+	"sacha": {
+		"name": "Sacha",
+		"title": "le prof de yoga",
+		"voice": 1.0,
+		"sprite": 0,
+		"home": "odette",
+		"arrival": true,
+		"loves": [
+			"kale",
+			"salad",
+			"hazelnut",
+			"ratatouille"
+		],
+		"likes": [
+			"carrot",
+			"apple",
+			"berries",
+			"leek",
+			"mushroom"
+		],
+		"dislikes": [
+			"grilled_fish",
+			"cheese"
+		],
+		"schedule": [
+			{
+				"time": "08:00",
+				"cell": [
+					7,
+					29
+				]
+			},
+			{
+				"time": "12:00",
+				"cell": [
+					26,
+					38
+				]
+			},
+			{
+				"time": "17:00",
+				"cell": [
+					35,
+					29
+				]
+			},
+			{
+				"time": "20:30",
+				"place": "tavern"
+			},
+			{
+				"time": "23:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Salut ! Sacha. J'ai repris la maison des résidences. Je travaille à distance le matin, je donne des cours de yoga sur la place le soir. On m'a dit que la dame d'avant était très aimée... je marche sur des œufs.",
+			"stranger": [
+				"Le potager était magnifique quand je suis arrivé. J'essaie de ne pas le tuer.",
+				"Les gens me disent bonjour, mais ils regardent la maison en le disant. Je comprends.",
+				"Tu connaissais bien Odette ? Parle-moi d'elle, un jour. J'habite chez elle sans la connaître."
+			],
+			"friend": [
+				"J'ai trouvé un carnet de semis dans le grenier. Tout est noté, année après année. Je le suis à la lettre.",
+				"Rosalie m'a vendu des graines en me disant « celles-là, elle les aimait ». C'était sa façon de m'accepter, je crois.",
+				"Margot est venue à mon cours. Elle a ri pendant toute la posture de l'arbre. Elle est revenue le lendemain."
+			],
+			"close": [
+				"Je ne remplacerai personne. Mais j'aimerais qu'un jour quelqu'un dise « chez Sacha » sans ajouter « l'ancienne maison d'Odette ».",
+				"Quand elle revient pour la fête, je lui laisse la clé du jardin. C'est toujours le sien."
+			],
+			"spring": [
+				"Les tournesols d'Odette repoussent tout seuls. Je n'y suis pour rien."
+			],
+			"summer": [
+				"Cours de yoga à l'aube, sur la place. Viens, c'est gratuit pour les voisins."
+			],
+			"autumn": [
+				"Première récolte de courges de ma vie. J'ai pleuré, un peu."
+			],
+			"winter": [
+				"L'hiver, je télétravaille au coin du feu. Mes collègues de la ville sont jaloux."
+			],
+			"rain": [
+				"Respire. Écoute la pluie. Voilà, tu viens de faire du yoga."
+			],
+			"again": [
+				"Je retourne au jardin !",
+				"Namasté... pardon, à plus tard."
+			],
+			"gift_loved": "Ça vient de ta ferme ? C'est exactement ce que je cuisine. Merci du fond du cœur.",
+			"gift_disliked": "Oh. Je... ne mange pas trop de ça. Mais merci !",
+			"gift_again": "Garde-le pour demain, tu veux bien ?",
+			"gift_liked": "Merci, c'est très gentil !",
+			"gift_neutral": "Merci, je vais trouver quoi en faire."
+		},
+		"birthday": [
+			1,
+			21
+		]
+	},
+	"ines": {
+		"name": "Inès",
+		"title": "la galeriste",
+		"voice": 1.18,
+		"sprite": 0,
+		"home": "lina",
+		"arrival": true,
+		"loves": [
+			"grape",
+			"cherry",
+			"truffle",
+			"pumpkin_soup"
+		],
+		"likes": [
+			"orange",
+			"peach",
+			"poppy",
+			"melon",
+			"daffodil"
+		],
+		"dislikes": [
+			"turnip",
+			"potato"
+		],
+		"schedule": [
+			{
+				"time": "09:00",
+				"cell": [
+					16,
+					29
+				]
+			},
+			{
+				"time": "13:00",
+				"cell": [
+					35,
+					38
+				]
+			},
+			{
+				"time": "17:30",
+				"cell": [
+					25,
+					29
+				]
+			},
+			{
+				"time": "20:30",
+				"place": "tavern"
+			},
+			{
+				"time": "23:30",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Enchantée ! Inès. J'ai repris l'atelier de la peintre pour ouvrir une galerie. Murs blancs, parquet clair... et un seul tableau accroché : un des siens. Je n'ai pas pu l'enlever.",
+			"stranger": [
+				"Il vient deux visiteurs par semaine. En ville on dirait que c'est un échec. Ici, on me dit que c'est beaucoup.",
+				"Les gens entrent, regardent le tableau de Lina, et repartent sans un mot. Je crois qu'ils viennent la voir, elle.",
+				"J'expose des artistes de la ville. Bertrand a dit « c'est intéressant ». Je sais ce que ça veut dire."
+			],
+			"friend": [
+				"J'ai écrit à Lina. Elle m'a répondu avec un dessin de la fontaine. Il est dans la vitrine.",
+				"Jules a posé un filet de pêche dans un coin de la galerie « pour faire joli ». C'est la pièce que tout le monde préfère.",
+				"Je croyais apporter l'art au village. Il y était déjà, sur les enseignes et dans les jardins."
+			],
+			"close": [
+				"J'occupe la place de quelqu'un. Je ne peux pas le défaire, alors j'essaie de la mériter.",
+				"Un jour, j'aimerais exposer Lina. Chez elle. Ce serait la moindre des choses."
+			],
+			"spring": [
+				"La lumière du printemps entre par la grande vitre. Les tableaux n'ont plus besoin de lampes."
+			],
+			"summer": [
+				"Vernissage ce soir ! Enfin... il y aura moi, Capucine, et peut-être Marius."
+			],
+			"autumn": [
+				"L'automne ferait un très bon peintre. Un peu trop de roux, peut-être."
+			],
+			"winter": [
+				"L'hiver, je chauffe la galerie pour les voisins. On y boit du thé en regardant les murs."
+			],
+			"rain": [
+				"Jour de pluie : les gens entrent pour s'abriter et restent pour regarder. Merci, la pluie."
+			],
+			"again": [
+				"Je retourne accrocher mes toiles.",
+				"Passe à la galerie, l'entrée est libre !"
+			],
+			"gift_loved": "Mais c'est une nature morte à elle toute seule ! Merci, c'est magnifique.",
+			"gift_disliked": "Ah. C'est très... rustique. Merci.",
+			"gift_again": "Deux fois dans la journée ? Tu me gâtes trop. Demain !",
+			"gift_liked": "Merci, c'est très gentil !",
+			"gift_neutral": "Merci, je vais trouver quoi en faire."
+		},
+		"birthday": [
+			2,
+			19
+		]
 	}
 }

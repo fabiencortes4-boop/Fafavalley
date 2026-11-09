@@ -34,7 +34,7 @@ func donate(id: String) -> bool:
 		Inventory.add_gold(REWARD)
 		PlayerState.flags["museum_complete"] = true
 		Mail.send_custom("musee_complet", {
-			"from": "Bertrand, maire de Valfleur",
+			"from": Soul.mayor_from(),
 			"text": "Le squelette est complet ! Les savants de la ville n'en reviennent pas : un ancien cerf géant, qui vivait dans la vallée il y a des milliers d'années. Le musée t'offre %d pièces d'or. Viens l'admirer à la mairie !" % REWARD,
 		})
 	changed.emit()

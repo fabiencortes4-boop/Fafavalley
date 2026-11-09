@@ -57,7 +57,7 @@ func _in_hours(e: Dictionary) -> bool:
 func festival_today() -> Dictionary:
 	for f: Dictionary in festivals:
 		if int(f.season) == TimeManager.season and int(f.day) == TimeManager.day:
-			return f
+			return Soul.festival(f)
 	return VillageLife.wedding_today()
 
 
@@ -144,7 +144,7 @@ static func contest_score(item_id: String) -> int:
 func rivals() -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(["concours", TimeManager.year, TimeManager.season])
-	var pool := RIVALS.duplicate()
+	var pool := RIVALS.filter(func(r: Array) -> bool: return GameData.npcs.has(str(r[0])))
 	var out: Array = []
 	for i in 3:
 		var pick: Array = pool.pop_at(rng.randi() % pool.size())
@@ -167,11 +167,12 @@ func enter_contest(item_id: String) -> Dictionary:
 			rank = i
 	var prize: Array = RANK_PRIZES[rank]
 	Inventory.remove_item(item_id, 1)
-	Inventory.add_gold(int(prize[0]))
+	var gold := int(int(prize[0]) * Soul.prize_factor())
+	Inventory.add_gold(gold)
 	mark_done(str(f.id))
 	for id: String in GameData.npcs:
-		Relations.add_points(id, 20 if rank > 0 else 40)
-	return {"title": str(prize[1]), "gold": int(prize[0]), "rank": rank + 1, "score": mine, "table": table}
+		Relations.add_points(id, int((20 if rank > 0 else 40) * Soul.fete_factor()))
+	return {"title": str(prize[1]), "gold": gold, "rank": rank + 1, "score": mine, "table": table}
 
 
 ## Danse de la Nuit des lanternes avec un habitant.
@@ -179,7 +180,7 @@ func dance_with(npc_id: String) -> void:
 	var f := festival_today()
 	if f.is_empty() or is_done(str(f.id)):
 		return
-	Relations.add_points(npc_id, 250)
+	Relations.add_points(npc_id, int(250 * Soul.fete_factor()))
 	mark_done(str(f.id))
 
 
@@ -187,12 +188,13 @@ func dance_with(npc_id: String) -> void:
 func calendar_text() -> String:
 	var seasons := ["printemps", "été", "automne", "hiver"]
 	var lines: Array = []
-	for f: Dictionary in festivals:
+	for raw: Dictionary in festivals:
+		var f := Soul.festival(raw)
 		lines.append("%s : %d %s, %dh-%dh." % [f.name, int(f.day), seasons[int(f.season)], int(f.start), int(f.end)])
 	var days := ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 	var w := weekly_today()
 	var today := "" if w.is_empty() else " Aujourd'hui (%s) : %s, %dh-%dh." % [days[weekday()].to_lower(), w.name, int(w.start), int(w.end)]
-	return "Fêtes de Valfleur - " + " ".join(lines) + " Chaque samedi matin : marché sur la place." + today
+	return ("Événements de Valfleur - " if Soul.modern_mayor() else "Fêtes de Valfleur - ") + " ".join(lines) + " Chaque samedi matin : marché sur la place." + today
 
 
 func to_dict() -> Dictionary:

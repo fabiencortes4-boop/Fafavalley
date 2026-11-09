@@ -110,6 +110,42 @@ const LAYOUTS := {
 			"####D######",
 		],
 	},
+	"bocal": {
+		"name": "Le Bocal", "floor": "light", "wall": "green",
+		"rows": [
+			"############",
+			"#SS_SS_P_SS#",
+			"#____o_____#",
+			"#_CCCC__tc_#",
+			"#__________#",
+			"#P_tc__tc_P#",
+			"#####D######",
+		],
+	},
+	"outils": {
+		"name": "Atelier Néo", "floor": "stone", "wall": "stone",
+		"rows": [
+			"############",
+			"#WW_SS_SS_W#",
+			"#____o_____#",
+			"#_CCCC___b_#",
+			"#__________#",
+			"#b___rr___P#",
+			"#####D######",
+		],
+	},
+	"studio": {
+		"name": "Studio Lin", "floor": "light", "wall": "cream",
+		"rows": [
+			"############",
+			"#K_P_SS_P_K#",
+			"#____o_____#",
+			"#_CCCC_____#",
+			"#______tc__#",
+			"#P__rrrr__P#",
+			"#####D######",
+		],
+	},
 	"taverne": {
 		"name": "Taverne du Héron", "floor": "dark", "wall": "wood", "map": "port", "open": [16, 24],
 		"rows": [
@@ -184,6 +220,7 @@ const READINGS := {
 	"taverne": ["Le livre d'or de la taverne", "« Marius, ta soupe guérit tout, même le mal de mer. - Firmin » L'écriture date de dix ans. Juste en dessous : « Je reviendrai quand le phare brillera. »"],
 	"celeste": ["Partitions", "« La chanson de la fontaine » - le dernier couplet est encore blanc."],
 	"phare": ["Journal du gardien", "Mille deux cent quarante-trois bateaux guidés. La dernière ligne : « Ce soir, la lanterne s'éteint. Plus d'huile, plus de lentille. Que quelqu'un la rallume un jour. »"],
+	"studio": ["Carnet de croquis", "Des granges, des enseignes, des poignées de porte de Valfleur, dessinées une à une. En marge : « Ne rien ajouter qui ne serve pas. »"],
 	"lina": ["Journal de Lina", "« Un jour je peindrai la fontaine qui coule. Grand-mère dit qu'au printemps, l'eau sentait la violette. »"],
 }
 
@@ -211,7 +248,12 @@ func _map_rows() -> Array:
 
 
 func display_name() -> String:
-	return str(LAYOUTS.get(building, {}).get("name", "Intérieur"))
+	return name_of(building)
+
+
+## Nom du lieu (il change quand la maison change de mains).
+static func name_of(id: String) -> String:
+	return Soul.building_name(id, str(LAYOUTS.get(id, {}).get("name", "Intérieur")))
 
 
 ## Boutique tenue dans ce bâtiment ("" si aucune).
@@ -323,7 +365,7 @@ func _spawn_residents() -> void:
 			continue
 		var data := GameData.npc(id)
 		var lives_here := str(data.get("home", "")) == building
-		if not lives_here or id == Marriage.spouse or not Npc.is_home_at(id, TimeManager.minutes):
+		if not lives_here or id == Marriage.spouse or Soul.is_visitor(id) or not Npc.is_home_at(id, TimeManager.minutes):
 			continue
 		var npc := Npc.new()
 		npc.id = id

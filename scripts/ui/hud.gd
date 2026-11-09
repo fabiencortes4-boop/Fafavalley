@@ -149,6 +149,10 @@ func _ready() -> void:
 			Tips.show("weather")
 		if Forage.rain_mushrooms_today():
 			Tips.show("rain_mushrooms")
+		if Soul.note != "":
+			show_toast(Soul.note)
+		if Soul.arrived:
+			Tips.show("soul")
 		_nature_report())
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
@@ -930,8 +934,63 @@ func open_journal_menu() -> void:
 	_add_menu_entry(box, "Musée", GameData.item("fossil_skull").get("icon", 0), open_museum)
 	_add_menu_entry(box, "Photos", PHOTO_ICON, open_photo_album)
 	_add_menu_entry(box, "Ferme parfaite", GameData.item("golden_statue").get("icon", 0), open_perfection)
+	if Soul.arrived:
+		_add_menu_entry(box, "Âme de Valfleur", GameData.item("oat_latte").get("icon", 0), open_soul)
 	_size_menu(box)
 	_add_button(outer, "Retour", open_pause_menu)
+
+
+## L'âme de Valfleur : la balance entre artisans et nouveaux venus.
+func open_soul() -> void:
+	Tips.show("soul")
+	var box := _open_modal("L'âme de Valfleur")
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(row)
+	var left := Label.new()
+	left.text = "Artisans"
+	left.add_theme_font_size_override("font_size", 9)
+	row.add_child(left)
+	var bar := ProgressBar.new()
+	bar.custom_minimum_size = Vector2(170, 10)
+	bar.min_value = -1.0
+	bar.max_value = 1.0
+	bar.value = Soul.balance()
+	bar.show_percentage = false
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(bar)
+	var right := Label.new()
+	right.text = "Nouveaux venus"
+	right.add_theme_font_size_override("font_size", 9)
+	row.add_child(right)
+	_add_label(box, Soul.balance_text() + (" " + Soul.notice_text() if Soul.notice_text() != "" else ""))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(330, 120)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 4)
+	scroll.add_child(list)
+	var small := func(text: String, color: Color = Color(1, 1, 1)) -> void:
+		var l := _add_label(list, text)
+		l.add_theme_font_size_override("font_size", 9)
+		l.add_theme_color_override("font_color", color)
+	if Soul.settled():
+		small.call({"artisan": "Valfleur des artisans : le village a choisi ses ateliers.", "modern": "Valfleur nouvelle : le village a changé de visage.", "shared": "Valfleur partagée : anciens et nouveaux ont trouvé leur place."}[Soul.outcome()], UiTheme.ACCENT)
+	else:
+		small.call("Chaque achat fait pencher le village : vers les artisans (épicerie, forge, menuiserie, coopérative, ranch, taverne, comptoir) ou vers les Hauts de Valfleur (le Bocal, l'Atelier Néo, le Studio Lin). Le village changera %d fois en tout, et chaque changement est définitif." % Soul.MAX_CHANGES)
+		small.call("Changements : %d/%d. Balance : %+d points (1 point = %d or d'achats). Prochain palier : %d points côté artisans, +%d côté nouveaux venus, tenus %d jours." % [Soul.changes(), Soul.MAX_CHANGES, int(round(Soul.tilt)), int(Soul.GOLD_PER_POINT), -int(Soul.THRESHOLDS[Soul.artisan_tier]), int(Soul.THRESHOLDS[Soul.modern_tier]), Soul.NOTICE_DAYS], UiTheme.ACCENT)
+		var later := func(text: String) -> String:
+			return text.replace("sont partis", "partiront").replace("est partie", "partira").replace("est parti", "partira").replace("a fermé", "fermera")
+		small.call("Si les artisans l'emportent : %s Mais : %s" % [Soul.ARTISAN_PERKS[Soul.artisan_tier], later.call(Soul.ARTISAN_COSTS[Soul.artisan_tier])], Color(0.85, 0.95, 0.75))
+		small.call("Si les nouveaux venus l'emportent : %s Mais : %s" % [Soul.MODERN_PERKS[Soul.modern_tier], later.call(Soul.MODERN_COSTS[Soul.modern_tier])], Color(0.8, 0.9, 1.0))
+	for i in Soul.artisan_tier:
+		small.call("Acquis, artisans %d : %s Le revers : %s" % [i + 1, Soul.ARTISAN_PERKS[i], Soul.ARTISAN_COSTS[i]], Color(0.85, 0.8, 0.7))
+	for i in Soul.modern_tier:
+		small.call("Acquis, nouveaux venus %d : %s Le revers : %s" % [i + 1, Soul.MODERN_PERKS[i], Soul.MODERN_COSTS[i]], Color(0.85, 0.8, 0.7))
+	_add_button(box, "Retour", open_journal_menu)
 
 
 ## La ferme parfaite : l'avancement dans chaque domaine.
@@ -1416,6 +1475,11 @@ func _item_row(id: String) -> HBoxContainer:
 	var row := _shop_row(GameData.item_icon(id), "%s - %d or%s" % [item.name, price, "" if in_season else " (hors saison)"])
 	# Graines : temps de pousse jusqu'à la récolte, repousse, prix de vente
 	var details := _seed_details(item)
+	if details == "" and Soul.MODERN_SHOPS.has(_current_shop):
+		# Aux Hauts de Valfleur, on explique ce que fait chaque objet
+		details = str(item.get("description", ""))
+		if item.has("edible"):
+			details += " (+%d énergie, +%d vie)" % [int(item.edible[0]), int(item.edible[1])]
 	if details != "":
 		var label: Label = row.get_child(1)
 		var col := VBoxContainer.new()
@@ -1556,6 +1620,7 @@ func _buy(id: String, qty: int = 1) -> void:
 		if PlayerState.flags.has("house_big"):
 			return
 		if Inventory.spend_gold(price):
+			Soul.record(_current_shop, price)
 			Sfx.play("coins")
 			PlayerState.flags["house_big"] = true
 			show_message("Menuiserie de Mathis", "« Marché conclu ! Ce soir, ta maison aura une grande pièce en plus. Pense à la meubler ! »")
@@ -1566,6 +1631,7 @@ func _buy(id: String, qty: int = 1) -> void:
 		if Inventory.capacity >= target or Inventory.capacity < target - Inventory.HOTBAR:
 			return
 		if Inventory.spend_gold(price):
+			Soul.record(_current_shop, price)
 			Sfx.play("coins")
 			Inventory.set_capacity(int(item.capacity))
 			show_toast("Ton sac a maintenant %d places !" % Inventory.capacity)
@@ -1575,6 +1641,7 @@ func _buy(id: String, qty: int = 1) -> void:
 		show_toast("Inventaire plein !")
 		return
 	if Inventory.spend_gold(price * qty):
+		Soul.record(_current_shop, price * qty)
 		Sfx.play("coins")
 		Inventory.add_item(id, qty)
 		show_toast("+%d %s" % [qty, GameData.item_name(id)])
@@ -2249,6 +2316,8 @@ func open_crafting(station: String) -> void:
 	var category := ""
 	for id: String in Crafting.for_station(station):
 		var recipe: Dictionary = Crafting.recipes[id]
+		if int(recipe.get("soul", 0)) > 0 and (not Soul.arrived or Soul.forge_taken()):
+			continue  # savoir-faire d'artisan : pas encore connu, ou parti avec Gaston
 		var cat := str(recipe.get("category", ""))
 		if cat != "" and cat != category:
 			category = cat
@@ -2285,10 +2354,10 @@ func _recipe_row(id: String, recipe: Dictionary, station: String) -> HBoxContain
 		needs.add_child(_ingredient(str(recipe.upgrade), 1))
 	for item: String in ingredients:
 		needs.add_child(_ingredient(item, int(ingredients[item])))
-	if int(recipe.get("gold", 0)) > 0:
+	if Crafting.gold_cost(id) > 0:
 		var gold := Label.new()
-		gold.text = "%d or" % int(recipe.gold)
-		gold.add_theme_color_override("font_color", INGREDIENT_OK if Inventory.gold >= int(recipe.gold) else INGREDIENT_MISSING)
+		gold.text = "%d or" % Crafting.gold_cost(id)
+		gold.add_theme_color_override("font_color", INGREDIENT_OK if Inventory.gold >= Crafting.gold_cost(id) else INGREDIENT_MISSING)
 		needs.add_child(gold)
 	var button := Button.new()
 	button.text = "Améliorer" if recipe.has("upgrade") else ("Cuisiner" if recipe.get("category") == "Cuisine" else "Fabriquer")
@@ -2300,7 +2369,10 @@ func _recipe_row(id: String, recipe: Dictionary, station: String) -> HBoxContain
 		for child in needs.get_children():
 			child.queue_free()
 		var hint := Label.new()
-		hint.text = "Débloquée par l'histoire : " + Story.chapter_title(str(recipe.unlock))
+		if not Soul.recipe_unlocked(recipe):
+			hint.text = "Savoir-faire d'artisan : il faut soutenir les ateliers (palier %d)." % int(recipe.get("soul", 1))
+		else:
+			hint.text = "Débloquée par l'histoire : " + Story.chapter_title(str(recipe.get("unlock", "")))
 		hint.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
 		needs.add_child(hint)
 		button.text = "Verrouillée"

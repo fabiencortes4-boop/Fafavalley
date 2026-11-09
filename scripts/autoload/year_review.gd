@@ -75,7 +75,7 @@ func new_year(year_ended: int) -> void:
 	][stars]]
 	text += "\n\nJe joins %d pièces d'or et le Trophée de Valfleur." % (stars * GOLD_PER_STAR)
 	Mail.send_custom("year_review_%d" % year_ended, {
-		"from": "Bertrand, maire de Valfleur",
+		"from": Soul.mayor_from(),
 		"text": text,
 		"items": [["gold", stars * GOLD_PER_STAR], ["valfleur_trophy", 1]],
 	})

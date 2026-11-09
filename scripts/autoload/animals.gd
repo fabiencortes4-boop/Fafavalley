@@ -87,6 +87,7 @@ func start_construction(id: String) -> bool:
 		return false
 	var info := building_info(id)
 	Inventory.spend_gold(int(info.price))
+	Soul.record("carpenter", int(info.price))
 	var mats: Dictionary = info.get("materials", {})
 	for item: String in mats:
 		Inventory.remove_item(item, int(mats[item]))
@@ -101,6 +102,7 @@ func buy(type: String) -> bool:
 	var building := str(info.get("building", ""))
 	if not has_room(building) or not Inventory.spend_gold(int(info.get("price", 0))):
 		return false
+	Soul.record("ranch", int(info.get("price", 0)))
 	var names: Array = data.get("names", ["Noisette"])
 	var used := {}
 	for a: Dictionary in animals:
