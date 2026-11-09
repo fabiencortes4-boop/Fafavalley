@@ -405,12 +405,13 @@ func _spawn_visitors() -> void:
 	var n := FarmState.visitors_count()
 	if n == 0:
 		return
+	Tips.show("photo")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(["visite", TimeManager.year, TimeManager.season, TimeManager.day])
 	var ids: Array = GameData.npcs.keys().filter(func(i: String) -> bool: return i != Marriage.spouse)
 	var spots: Array = []
 	for cell: Vector2i in FarmState.objects:
-		if str(FarmState.objects[cell]) in ["garden_bench", "garden_fountain", "flower_bed", "garden_lantern"]:
+		if str(FarmState.objects[cell]) in ["garden_bench", "garden_fountain", "flower_bed", "garden_lantern", "golden_statue"]:
 			for d: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 				if is_walkable(cell + d):
 					spots.append(cell + d)
@@ -617,7 +618,7 @@ func _hit_debris(cell: Vector2i, tool: String, energy: int) -> bool:
 	var d: Dictionary = FarmState.debris[cell]
 	var info: Dictionary = FarmState.DEBRIS[d.type]
 	if not tool in info.tools:
-		var hint: String = {"twig": "la hache", "stump": "la hache", "stone": "la pioche"}.get(d.type, "un outil")
+		var hint: String = {"twig": "la hache", "stump": "la hache", "stone": "la pioche", "meteorite": "la pioche"}.get(d.type, "un outil")
 		EventBus.toast("Il faut %s pour ça." % hint)
 		return true
 	if energy > 0 and not spend_energy(energy):
@@ -653,7 +654,7 @@ func _hit_debris(cell: Vector2i, tool: String, energy: int) -> bool:
 					Settings.vibrate(60)
 					shake(3.0, 0.25)
 					Fx.puff(_entities, cell_center(cell), Color(0.9, 0.85, 0.75, 0.9), 2.0)
-			"stone":
+			"stone", "meteorite":
 				Sfx.play("clink")
 				Fx.burst(_entities, at, Fx.STONE, 10, 60.0)
 				if broken:
@@ -974,8 +975,8 @@ func _refresh_object(cell: Vector2i) -> void:
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.COBBLES))
 		"scarecrow", "garden_lantern":
 			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.SIGN))
-		"garden_bench", "flower_bed", "garden_fountain":
-			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.BARREL if FarmState.objects[cell] == "garden_fountain" else WorldTiles.BUSH))
+		"garden_bench", "flower_bed", "garden_fountain", "golden_statue":
+			_objects.set_cell(cell, 0, WorldTiles.coords(WorldTiles.BARREL if FarmState.objects[cell] in ["garden_fountain", "golden_statue"] else WorldTiles.BUSH))
 		"wood_tree":
 			var wt := 0 if not Woods.farm.has(cell) else (WorldTiles.STUMP if Woods.is_stump(cell, "farm") else (WorldTiles.BUSH if Woods.stage(cell, "farm") < 3 else (WorldTiles.PINE if Woods.farm[cell].type == "pine" else WorldTiles.ROUND_TREE)))
 			if wt != 0:
@@ -990,7 +991,7 @@ func _refresh_object(cell: Vector2i) -> void:
 	if FarmState.debris.has(cell):
 		var tile: int = {
 			"weed": WorldTiles.WEED if _hash(cell) % 2 == 0 else WorldTiles.WEED_2,
-			"twig": WorldTiles.TWIG, "stone": WorldTiles.DEBRIS_STONE, "stump": WorldTiles.DEAD_TREE,
+			"twig": WorldTiles.TWIG, "stone": WorldTiles.DEBRIS_STONE, "stump": WorldTiles.DEAD_TREE, "meteorite": WorldTiles.DEBRIS_STONE,
 		}[FarmState.debris[cell].type]
 		_objects.set_cell(cell, 0, WorldTiles.coords(tile))
 

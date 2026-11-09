@@ -12,7 +12,11 @@ func _ready() -> void:
 	if "--looks" in args:
 		await _looks(args[args.find("--looks") + 1])
 	elif "--portraits" in args:
-		await _portraits()
+		var only: Array = []
+		for a in args:
+			if a.begins_with("--only="):
+				only = a.trim_prefix("--only=").split(",")
+		await _portraits(only)
 	else:
 		await _sheet(args[0] if args.size() > 0 and not args[0].begins_with("--") else "res://characters.png")
 	get_tree().quit()
@@ -79,11 +83,13 @@ func _sheet(out: String) -> void:
 
 ## Portraits 64x64 (tête et épaules) tirés des vrais modèles 3D :
 ## assets/sprites/portraits/<habitant>.png
-func _portraits() -> void:
+func _portraits(only: Array = []) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/sprites/portraits"))
 	var vp := _viewport(Vector2i(64, 64))
 	var cam: Camera3D = vp.get_meta("cam")
-	for id: String in GameData.npcs:
+	for id: String in GameData.npcs.keys() + GameData.newcomers.keys():
+		if not only.is_empty() and not id in only:
+			continue
 		var model := npc_model(id)
 		vp.add_child(model)
 		model.rotation_degrees.y = 22

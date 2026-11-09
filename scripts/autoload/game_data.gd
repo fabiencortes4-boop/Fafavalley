@@ -8,6 +8,9 @@ const ICON_SIZE := 16
 var items: Dictionary = {}
 var crops: Dictionary = {}
 var npcs: Dictionary = {}
+## Habitants qui n'arrivent qu'en cours de partie ("arrival" dans npcs.json) :
+## absents de `npcs` tant qu'ils ne se sont pas installés.
+var newcomers: Dictionary = {}
 var fishes: Dictionary = {}
 var monsters: Dictionary = {}
 var _icon_cache: Dictionary = {}
@@ -18,6 +21,10 @@ func _ready() -> void:
 	items = _load_json("res://data/items.json")
 	crops = _load_json("res://data/crops.json")
 	npcs = _load_json("res://data/npcs.json")
+	for id: String in npcs.keys():
+		if npcs[id].get("arrival", false):
+			newcomers[id] = npcs[id]
+			npcs.erase(id)
 	fishes = _load_json("res://data/fish.json")
 	monsters = _load_json("res://data/monsters.json")
 	_icons_texture = load(ICONS_PATH)
@@ -178,7 +185,18 @@ func pick_fish(place: String) -> String:
 
 
 func npc(id: String) -> Dictionary:
-	return npcs.get(id, {})
+	return npcs.get(id, newcomers.get(id, {}))
+
+
+## Un nouvel habitant s'installe (ou repart, pour une nouvelle partie).
+func welcome(id: String) -> void:
+	if newcomers.has(id):
+		npcs[id] = newcomers[id]
+
+
+func unwelcome(id: String) -> void:
+	if newcomers.has(id):
+		npcs.erase(id)
 
 
 ## Portrait d'un habitant (sprite 16x16 de assets/sprites/npcs.png).

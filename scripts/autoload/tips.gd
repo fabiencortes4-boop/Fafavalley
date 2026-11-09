@@ -56,6 +56,17 @@ func _watch_inventory() -> void:
 			show("machine")
 		if GameData.item(id).get("type") == "tree_seed":
 			show("woods")
+		var base := GameData.base_id(id)
+		if base == "scarecrow":
+			show("scarecrow")
+		elif base == "seed_hybrid":
+			show("hybrid")
+		elif base == "beehive":
+			show("bees")
+		elif base.begins_with("fossil_"):
+			show("fossil")
+		elif base.begins_with("garden_") or base == "flower_bed":
+			show("garden")
 		if id == "bait":
 			show("bait")
 		elif id == "crab_pot":

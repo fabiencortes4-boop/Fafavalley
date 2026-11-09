@@ -58,7 +58,7 @@ func festival_today() -> Dictionary:
 	for f: Dictionary in festivals:
 		if int(f.season) == TimeManager.season and int(f.day) == TimeManager.day:
 			return f
-	return {}
+	return VillageLife.wedding_today()
 
 
 ## L'animation de la semaine pour aujourd'hui.

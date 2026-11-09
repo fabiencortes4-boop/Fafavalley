@@ -100,6 +100,8 @@ func save_game() -> void:
 		"pet": Pet.to_dict(),
 		"projects": Projects.to_dict(),
 		"museum": Museum.to_dict(),
+		"village_life": VillageLife.to_dict(),
+		"night_sky": NightSky.to_dict(),
 		"tips": Tips.to_dict(),
 		"achievements": Achievements.to_dict(),
 	}
@@ -181,6 +183,8 @@ func load_game() -> bool:
 	Pet.from_dict(data.get("pet", {}))
 	Projects.from_dict(data.get("projects", {}))
 	Museum.from_dict(data.get("museum", {}))
+	VillageLife.from_dict(data.get("village_life", {}))
+	NightSky.from_dict(data.get("night_sky", {}))
 	Machines.from_dict(data.get("machines", {}))
 	Tips.from_dict(data.get("tips", {}))
 	HeartEvents.from_dict(data.get("hearts_seen", {}))

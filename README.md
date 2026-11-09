@@ -363,7 +363,12 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
 - **Rumeurs de la taverne** : Marius raconte un banc de poissons (plus de prises), une
   bourse perdue en forêt (à ramasser) ou l'envie d'un habitant (cadeau doublé).
 - **Rénovations du village** (Journal) : moulin (blé et maïs mieux vendus), kiosque à
-  musique (bavarder rapporte plus d'amitié), pont (graines hybrides au comptoir).
+  musique (bavarder rapporte plus d'amitié), pont de l'étang (graines hybrides au comptoir).
+  On les voit au village : ruines, puis 3 jours de chantier (échafaudages, matériaux),
+  puis le bâtiment rénové (les ailes du moulin tournent, le pont se traverse).
+- **Vie du village** : un habitant tombe parfois malade et garde le lit (un plat
+  cuisiné apporté chez lui le remet sur pied) ; Jules et Nina se marient sur la place
+  (cadeau au stand) ; Pauline, la meunière, s'installe au moulin rénové.
 - **Fossiles et musée** : des fossiles en labourant ou en minant ; les 5 pièces données
   au musée reconstituent le squelette (récompense).
 - **Compagnon** : Léon propose d'adopter un chat ou un chien, qui suit le joueur ;
@@ -373,6 +378,13 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   beauté de la ferme attire des visiteurs le dimanche (bavarder rapporte de l'amitié).
 - **Grotte des lucioles** (forêt, sous les rochers) : actionner les leviers dans l'ordre
   indiqué par la tablette ouvre la grille du trésor.
+- **Saisons visibles** : feuilles mortes en automne, pétales au printemps, neige qui
+  tient peu à peu puis fond, flaques après la pluie et arc-en-ciel quand le soleil revient.
+- **Nuits spéciales** : pluie d'étoiles filantes (une météorite tombe souvent à la
+  ferme : à casser à la pioche), nuits des lucioles en été au bord de l'eau.
+- **Ferme parfaite** (Journal) : huit domaines à compléter ; à 100 %, le village offre
+  une statue dorée à poser à la ferme.
+- **Astuces** : chaque nouveauté s'explique la première fois qu'on la rencontre.
 - Dormir dans la maison → bilan de journée + sauvegarde. Évanouissement à 2h.
 - Sauvegarde automatique quand l'app passe en arrière-plan.
 - Contrôles tactiles : joystick flottant, bouton Action, toucher une tuile voisine, barre rapide (multitouch).
@@ -442,6 +454,7 @@ godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mar
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/woods_test.tscn      # arbres à bois : abattage, souche, replantation, pousse
 godot --headless res://tests/year_test.tscn       # bilan de l'année, hiver, scènes de cœur, volumes, copie de secours
+godot --headless res://tests/valley_test.tscn     # rénovations visibles, malade, mariage, meunière, nuits, saisons, perfection
 godot --headless res://tests/fun_test.tscn        # défi, commande, rumeurs, météo, hybrides, musée, compagnon, jardin, grotte
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte

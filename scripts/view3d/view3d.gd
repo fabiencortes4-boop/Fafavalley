@@ -377,11 +377,11 @@ func _build_ground() -> void:
 			"#":
 				col = Color(0.16, 0.2, 0.24)  # ombre sous les planches du ponton
 			_:
-				col = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
+				col = _grass_color(cell, colors)
 		var v := (float(_hash(cell) % 100) / 100.0 - 0.5) * 0.04
 		land[cell] = col.lightened(v) if v > 0 else col.darkened(-v)
 	for cell: Vector2i in ([] as Array[Vector2i] if map is SeaMap else _outskirts()):
-		land[cell] = Color(0.86, 0.69, 0.47) if _outskirt_road(cell) else (colors.grass if _hash(cell) % 3 != 0 else colors.grass2)
+		land[cell] = Color(0.86, 0.69, 0.47) if _outskirt_road(cell) else _grass_color(cell, colors)
 	# Sol lisse : chaque coin prend la moyenne des cases qui le touchent
 	var corner := func(x: int, y: int) -> Color:
 		var sum := Color(0, 0, 0, 0)
@@ -1307,7 +1307,7 @@ func _build_props() -> void:
 						var food := _fitted("food", ["tomato", "carrot", "cabbage", "corn", "leek"][(_hash(cell) + k) % 5], 0.22)
 						_put(food, c + Vector3(0.1 + k * 0.32, 0.42, 0.12))
 			".":
-				if TimeManager.season != 3 and _hash(cell) % 9 == 0:
+				if TimeManager.season != 3 and _hash(cell) % 9 == 0 and not _house_cells.has(cell):
 					_place(batch, "nature", "grass", c, 1.4, rot)
 	# Forêt dense autour de la carte, en laissant la route dégagée
 	if map is SeaMap:
@@ -1348,6 +1348,10 @@ func _build_props() -> void:
 	if map is Village:
 		_build_event_decor()
 		_build_gardens()
+		_build_projects()
+	if not map is SeaMap:
+		_build_puddles()
+		_build_fireflies()
 
 
 func _build_buildings(chars: Dictionary) -> void:
@@ -1445,6 +1449,12 @@ func _collect_house_cells() -> void:
 			for dy in size.y:
 				for dx in size.x:
 					_house_cells[cell + Vector2i(dx, dy)] = true
+	if map is Village:
+		for id: String in ["mill", "bandstand"]:
+			var r: Rect2i = Projects.SITES[id]
+			for y in range(r.position.y, r.end.y):
+				for x in range(r.position.x, r.end.x):
+					_house_cells[Vector2i(x, y)] = true
 
 
 ## Décalage qui éloigne un objet des bâtiments voisins (côtés, puis coins).
@@ -2090,6 +2100,387 @@ func _build_gardens() -> void:
 	batch.build(_static)
 
 
+# ------------------------------------------------------------ rénovations
+## Les ailes du moulin (elles tournent une fois le moulin rénové).
+var _mill_blades: Node3D
+
+
+## Moulin, kiosque et pont du village : à l'abandon, en chantier
+## (échafaudages, piles de planches) ou rénovés.
+func _build_projects() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var stone := Color(0.66, 0.63, 0.58)
+	var plaster := Color(0.95, 0.92, 0.85)
+	var wood := Color(0.58, 0.4, 0.24)
+	var dark := Color(0.4, 0.27, 0.16)
+	var pole := Color(0.75, 0.6, 0.4)
+	# ---- Le moulin
+	var mill := _rect_center(Projects.SITES.mill)
+	match Projects.state("mill"):
+		"ruin":
+			_st_cyl(st, mill + Vector3(0, 0.4, 0), 1.0, 0.8, stone, 12, "y", 0.95)
+			for k in 5:
+				var a := TAU * k / 5.0
+				_st_box(st, mill + Vector3(cos(a) * 0.85, 0.85 + 0.1 * (k % 3), sin(a) * 0.85), Vector3(0.35, 0.25 + 0.12 * (k % 2), 0.3), stone.darkened(0.08))
+			_st_box(st, mill + Vector3(0.6, 0.06, 1.35), Vector3(1.5, 0.08, 0.14), dark)  # une aile tombée
+			_st_box(st, mill + Vector3(0.4, 0.07, 1.35), Vector3(0.12, 0.06, 0.5), dark)
+			_st_box(st, mill + Vector3(-0.9, 0.05, 1.2), Vector3(0.5, 0.06, 0.12), dark)
+		"works":
+			_st_cyl(st, mill + Vector3(0, 0.8, 0), 1.0, 1.6, plaster.darkened(0.1), 12, "y", 0.9)
+			_scaffold(st, mill, 1.15, 2.6, wood, pole)
+			_supplies(st, mill + Vector3(-0.6, 0, 1.75), wood, stone, dark)
+		_:
+			_st_cyl(st, mill + Vector3(0, 0.15, 0), 1.1, 0.3, stone, 12)
+			_st_cyl(st, mill + Vector3(0, 1.55, 0), 1.0, 2.5, plaster, 12, "y", 0.78)
+			_st_cyl(st, mill + Vector3(0, 3.2, 0), 0.98, 0.8, Color(0.62, 0.3, 0.22), 12, "y", 0.05)
+			_st_box(st, mill + Vector3(0, 0.55, 1.0), Vector3(0.45, 0.8, 0.12), dark)  # porte
+			for wy: float in [1.4, 2.2]:
+				_st_box(st, mill + Vector3(0, wy, 0.92 - (wy - 1.4) * 0.09), Vector3(0.24, 0.28, 0.1), Color(0.3, 0.45, 0.6))
+			# Sacs de farine devant la porte
+			for k in 2:
+				_st_cyl(st, mill + Vector3(0.7 + k * 0.3, 0.2, 1.15), 0.14, 0.4, Color(0.92, 0.88, 0.78), 8, "y", 0.1)
+			_mill_blades = Node3D.new()
+			var bst := SurfaceTool.new()
+			bst.begin(Mesh.PRIMITIVE_TRIANGLES)
+			_st_cyl(bst, Vector3(0, 0, 0.05), 0.14, 0.25, dark, 10, "z")
+			for k in 4:
+				var basis := Basis(Vector3.BACK, TAU * k / 4.0)
+				_st_box_basis(bst, basis, Vector3(0, 0.85, 0.12), Vector3(0.08, 1.6, 0.05), dark)
+				_st_box_basis(bst, basis, Vector3(0.2, 1.0, 0.12), Vector3(0.32, 1.15, 0.02), Color(0.96, 0.94, 0.88))
+			_mill_blades.add_child(_vc_mesh(bst))
+			_mill_blades.position = mill + Vector3(0, 2.75, 1.05)
+			_static.add_child(_mill_blades)
+	# ---- Le kiosque à musique
+	var band := _rect_center(Projects.SITES.bandstand)
+	match Projects.state("bandstand"):
+		"ruin":
+			_st_cyl(st, band + Vector3(0, 0.12, 0), 1.5, 0.24, stone.darkened(0.1), 8)
+			for k: int in [0, 2, 3, 6]:
+				var a := TAU * k / 8.0 + PI / 8.0
+				var h := 0.4 + 0.3 * (k % 3)
+				_st_box(st, band + Vector3(cos(a) * 1.3, 0.24 + h / 2.0, sin(a) * 1.3), Vector3(0.1, h, 0.1), Color(0.82, 0.8, 0.75))
+			_st_box_rotated(st, band + Vector3(0.3, 0.3, -0.2), 0.3, Vector3(1.2, 0.06, 0.7), Color(0.4, 0.55, 0.5))  # bout de toit tombé
+		"works":
+			_st_cyl(st, band + Vector3(0, 0.15, 0), 1.6, 0.3, stone, 8)
+			for k in 8:
+				var a := TAU * k / 8.0 + PI / 8.0
+				_st_box(st, band + Vector3(cos(a) * 1.4, 1.1, sin(a) * 1.4), Vector3(0.1, 1.6, 0.1), plaster)
+			_scaffold(st, band, 1.6, 2.2, wood, pole)
+			_supplies(st, band + Vector3(2.4, 0, 0.6), wood, stone, dark)
+		_:
+			_st_cyl(st, band + Vector3(0, 0.17, 0), 1.65, 0.34, Color(0.85, 0.82, 0.76), 8)
+			_st_box(st, band + Vector3(0, 0.08, 1.75), Vector3(0.9, 0.16, 0.3), Color(0.8, 0.77, 0.7))  # marche
+			var posts: Array[Vector3] = []
+			for k in 8:
+				var a := TAU * k / 8.0 + PI / 8.0
+				posts.append(band + Vector3(cos(a) * 1.42, 0, sin(a) * 1.42))
+				_st_cyl(st, posts[k] + Vector3(0, 1.14, 0), 0.06, 1.6, plaster, 8)
+			for k in 8:
+				var a2: Vector3 = posts[k]
+				var b2: Vector3 = posts[(k + 1) % 8]
+				if (a2 + b2).z / 2.0 > band.z + 1.2:
+					continue  # l'entrée, face au sud
+				_st_box_rotated(st, (a2 + b2) / 2.0 + Vector3(0, 0.75, 0), atan2(b2.x - a2.x, b2.z - a2.z) + PI / 2.0, Vector3(a2.distance_to(b2), 0.05, 0.05), plaster)
+			_st_cyl(st, band + Vector3(0, 2.0, 0), 1.75, 0.12, Color(0.95, 0.93, 0.88), 8)
+			_st_cyl(st, band + Vector3(0, 2.45, 0), 1.7, 0.8, Color(0.33, 0.6, 0.55), 8, "y", 0.12)
+			_st_cyl(st, band + Vector3(0, 2.95, 0), 0.08, 0.25, Color(0.95, 0.8, 0.3), 6)
+			# Pupitres des musiciens
+			for k in 3:
+				var at := band + Vector3(-0.6 + k * 0.6, 0.34, -0.4)
+				_st_box(st, at + Vector3(0, 0.3, 0), Vector3(0.03, 0.6, 0.03), dark)
+				_st_box(st, at + Vector3(0, 0.62, 0.02), Vector3(0.3, 0.2, 0.02), dark)
+	# ---- Le pont de l'étang (tablier au ras du chemin, juste au-dessus de l'eau)
+	var br: Rect2i = Projects.SITES.bridge
+	var x0 := float(br.position.x) - 0.4
+	var x1 := float(br.end.x) + 0.4
+	var z := br.position.y + 0.5
+	match Projects.state("bridge"):
+		"ruin":
+			for x in range(br.position.x, br.end.x, 2):
+				_st_cyl(st, Vector3(x + 0.5, -0.05 + 0.08 * (x % 3), z - 0.42), 0.07, 0.6, dark, 8)
+				_st_cyl(st, Vector3(x + 0.5, -0.1, z + 0.42), 0.07, 0.45, dark, 8)
+			_st_box_rotated(st, Vector3(x0 + 0.8, -0.02, z), 0.15, Vector3(1.6, 0.06, 0.8), wood.darkened(0.15))
+			_st_box_rotated(st, Vector3(x1 - 0.7, -0.06, z), -0.2, Vector3(1.2, 0.06, 0.8), wood.darkened(0.15))
+		"works":
+			for x in range(br.position.x, br.end.x, 2):
+				for sz: float in [-0.42, 0.42]:
+					_st_cyl(st, Vector3(x + 0.5, -0.12, z + sz), 0.07, 0.4, dark, 8)
+			_st_box(st, Vector3(x0 + 3.0, -0.03, z), Vector3(6.0, 0.06, 0.9), wood)
+			_supplies(st, Vector3(br.position.x - 1.5, 0, z - 1.3), wood, stone, dark)
+		_:
+			var n := int((x1 - x0) / 0.26)
+			for k in n:
+				var px := x0 + (k + 0.5) * (x1 - x0) / n
+				_st_box(st, Vector3(px, -0.03, z), Vector3((x1 - x0) / n - 0.02, 0.07, 1.0), wood if k % 2 == 0 else wood.darkened(0.08))
+			for sz: float in [-0.5, 0.5]:
+				_st_box(st, Vector3((x0 + x1) / 2.0, -0.09, z + sz), Vector3(x1 - x0, 0.1, 0.06), dark)
+			for x in range(br.position.x, br.end.x + 1):
+				for sz: float in [-0.47, 0.47]:
+					_st_box(st, Vector3(x, 0.24, z + sz), Vector3(0.08, 0.6, 0.08), dark)
+					if x % 3 == 0:
+						_st_cyl(st, Vector3(x, -0.3, z + sz), 0.08, 0.5, dark, 8)
+			for sz: float in [-0.47, 0.47]:
+				_st_box(st, Vector3((br.position.x + br.end.x) / 2.0, 0.52, z + sz), Vector3(br.size.x, 0.06, 0.08), wood)
+	_static.add_child(_vc_mesh(st))
+
+
+func _rect_center(r: Rect2i) -> Vector3:
+	return Vector3(r.position.x + r.size.x / 2.0, 0.0, r.position.y + r.size.y / 2.0)
+
+
+## Échafaudage : 4 montants, des planches à deux hauteurs et une échelle.
+func _scaffold(st: SurfaceTool, c: Vector3, half: float, height: float, wood: Color, pole: Color) -> void:
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_st_box(st, c + Vector3(sx * half, height / 2.0, sz * half), Vector3(0.07, height, 0.07), pole)
+	for hy: float in [height * 0.4, height * 0.8]:
+		for sz: float in [-1.0, 1.0]:
+			_st_box(st, c + Vector3(0, hy, sz * half), Vector3(half * 2.0 + 0.1, 0.05, 0.22), wood)
+		for sx: float in [-1.0, 1.0]:
+			_st_box(st, c + Vector3(sx * half, hy, 0), Vector3(0.22, 0.05, half * 2.0 + 0.1), wood)
+	# Échelle sur la façade
+	for sx: float in [-0.18, 0.18]:
+		_st_box(st, c + Vector3(half * 0.5 + sx, height * 0.4, half + 0.12), Vector3(0.05, height * 0.8, 0.05), pole)
+	for k in 6:
+		_st_box(st, c + Vector3(half * 0.5, 0.2 + k * height * 0.13, half + 0.12), Vector3(0.36, 0.04, 0.04), pole)
+
+
+## Matériaux d'un chantier : planches empilées, pierres, brouette.
+func _supplies(st: SurfaceTool, at: Vector3, wood: Color, stone: Color, dark: Color) -> void:
+	for k in 4:
+		_st_box(st, at + Vector3(0, 0.04 + k * 0.08, 0), Vector3(0.9, 0.07, 0.2 + 0.02 * (k % 2)), wood.lightened(0.05 * k))
+	for k in 3:
+		_st_box(st, at + Vector3(0.75 + k * 0.18, 0.08, 0.15 - k * 0.12), Vector3(0.18, 0.16, 0.16), stone.darkened(0.1 * k))
+	_st_box(st, at + Vector3(-0.2, 0.3, 0.45), Vector3(0.4, 0.18, 0.28), Color(0.45, 0.45, 0.5))
+	_st_cyl(st, at + Vector3(-0.45, 0.12, 0.45), 0.12, 0.05, dark, 10, "x")
+
+
+## Boîte tournée par une base quelconque (ailes du moulin).
+func _st_box_basis(st: SurfaceTool, basis: Basis, center: Vector3, size: Vector3, color: Color) -> void:
+	var h := size / 2.0
+	var corners: Array[Vector3] = []
+	for v: Vector3 in [Vector3(-h.x, -h.y, -h.z), Vector3(h.x, -h.y, -h.z), Vector3(h.x, h.y, -h.z), Vector3(-h.x, h.y, -h.z),
+			Vector3(-h.x, -h.y, h.z), Vector3(h.x, -h.y, h.z), Vector3(h.x, h.y, h.z), Vector3(-h.x, h.y, h.z)]:
+		corners.append(basis * (center + v))
+	var faces := [[0, 1, 2, 3], [5, 4, 7, 6], [4, 0, 3, 7], [1, 5, 6, 2], [3, 2, 6, 7], [4, 5, 1, 0]]
+	st.set_color(color)
+	for f: Array in faces:
+		for idx: int in [f[0], f[1], f[2], f[0], f[2], f[3]]:
+			st.add_vertex(corners[idx])
+
+
+# ------------------------------------------------------------ saisons et nuits
+var _puddles: Node3D
+var _fireflies: CPUParticles3D
+var _rainbow: MeshInstance3D
+var _meteor_timer: float = 1.0
+
+
+## Neige au sol : elle tient peu à peu au début de l'hiver, fond à la fin,
+## et laisse quelques plaques les premiers jours du printemps (0 à 1).
+static func snow_cover() -> float:
+	var d := TimeManager.day
+	match TimeManager.season:
+		3:
+			if d <= 3:
+				return [0.35, 0.6, 0.85][d - 1]
+			if d >= 25:
+				return [0.8, 0.6, 0.42, 0.28][d - 25]
+			return 1.0
+		0:
+			return [0.18, 0.08][d - 1] if d <= 2 else 0.0
+	return 0.0
+
+
+## Couleur de l'herbe d'une case (avec la neige en plaques).
+func _grass_color(cell: Vector2i, colors: Dictionary) -> Color:
+	var col: Color = colors.grass if _hash(cell) % 3 != 0 else colors.grass2
+	var snow := snow_cover()
+	if snow <= 0.0:
+		return col
+	if TimeManager.season == 3 and snow < 1.0:
+		col = Color(0.46, 0.58, 0.37) if _hash(cell) % 3 != 0 else Color(0.42, 0.54, 0.34)  # herbe d'hiver
+	# Plaques : un bruit doux (les cases voisines se ressemblent)
+	var n := (sin(cell.x * 0.61) + cos(cell.y * 0.73) + sin((cell.x + cell.y) * 0.37) + 3.0) / 6.0
+	n = n * 0.8 + float(_hash(cell) % 100) / 500.0
+	if n < snow:
+		return Color(0.93, 0.95, 0.98) if _hash(cell) % 3 != 0 else Color(0.86, 0.9, 0.96)
+	return col
+
+
+## Flaques sur les chemins et l'herbe (visibles quand il pleut, et le matin après).
+func _build_puddles() -> void:
+	_puddles = Node3D.new()
+	_static.add_child(_puddles)
+	var chars: Dictionary = map.get("_ground_chars")
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := 0
+	for cell: Vector2i in chars:
+		var ch: String = chars[cell]
+		if not (ch == "=" and _hash(cell) % 7 == 0) and not (ch == "." and _hash(cell) % 29 == 0):
+			continue
+		if _house_cells.has(cell) or not map.is_walkable(cell):
+			continue
+		if map is Farm and (FarmState.objects.has(cell) or FarmState.tiles.has(cell)):
+			continue
+		var c := _cell3d(cell) + Vector3(float(_hash(cell) % 30) / 100.0 - 0.15, _ground_y(cell) + 0.014, float(_hash(cell + Vector2i(3, 1)) % 30) / 100.0 - 0.15)
+		var rx := 0.22 + float(_hash(cell) % 15) / 100.0
+		var rz := rx * (0.55 + float(_hash(cell + Vector2i(1, 0)) % 30) / 100.0)
+		for k in 14:
+			var a0 := TAU * k / 14.0
+			var a1 := TAU * (k + 1) / 14.0
+			st.set_color(Color.WHITE)
+			st.add_vertex(c)
+			st.add_vertex(c + Vector3(cos(a1) * rx, 0, sin(a1) * rz))
+			st.add_vertex(c + Vector3(cos(a0) * rx, 0, sin(a0) * rz))
+		n += 1
+		if n > 220:
+			break
+	if n == 0:
+		return
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.42, 0.6, 0.86, 0.55)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.roughness = 0.05
+	mat.metallic_specular = 1.0
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_puddles.add_child(mi)
+
+
+## Lucioles : de petites lueurs qui dansent au-dessus des rives.
+func _build_fireflies() -> void:
+	var points := PackedVector3Array()
+	for cell: Vector2i in _shore:
+		if _water_cells.has(cell):
+			continue
+		points.append(_cell3d(cell) + Vector3(float(_hash(cell) % 50) / 100.0 - 0.25, 0.3 + float(_hash(cell) % 70) / 100.0, 0))
+	if points.is_empty():
+		return
+	_fireflies = CPUParticles3D.new()
+	var dot := SphereMesh.new()
+	dot.radius = 0.055
+	dot.height = 0.11
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.85, 1.0, 0.45)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.emission_enabled = true
+	mat.emission = Color(0.8, 1.0, 0.35)
+	mat.emission_energy_multiplier = 2.0
+	dot.material = mat
+	_fireflies.mesh = dot
+	_fireflies.emission_shape = CPUParticles3D.EMISSION_SHAPE_POINTS
+	_fireflies.emission_points = points
+	_fireflies.amount = mini(260, points.size() * 2) if Settings.quality > 0 else mini(110, points.size())
+	_fireflies.lifetime = 4.0
+	_fireflies.preprocess = 4.0
+	_fireflies.gravity = Vector3.ZERO
+	_fireflies.direction = Vector3(0, 1, 0)
+	_fireflies.spread = 180.0
+	_fireflies.initial_velocity_min = 0.1
+	_fireflies.initial_velocity_max = 0.35
+	var fade := Curve.new()
+	fade.add_point(Vector2(0, 0))
+	fade.add_point(Vector2(0.3, 1))
+	fade.add_point(Vector2(0.7, 1))
+	fade.add_point(Vector2(1, 0))
+	_fireflies.scale_amount_curve = fade
+	_fireflies.emitting = false
+	_fireflies.visible = false
+	_static.add_child(_fireflies)
+
+
+## Arc-en-ciel : un arc translucide en haut de l'écran (attaché à la caméra).
+func _make_rainbow() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var bands := [Color(0.95, 0.3, 0.3), Color(1, 0.6, 0.2), Color(1, 0.92, 0.3), Color(0.4, 0.85, 0.4), Color(0.35, 0.65, 1), Color(0.45, 0.4, 0.9), Color(0.7, 0.4, 0.9)]
+	var radius := 8.0
+	var width := 0.22
+	var steps := 48
+	for b in bands.size():
+		var r0 := radius - b * width
+		var r1 := r0 - width
+		for k in steps:
+			var a0 := lerpf(0.12, PI - 0.12, float(k) / steps)
+			var a1 := lerpf(0.12, PI - 0.12, float(k + 1) / steps)
+			# Les pieds de l'arc s'effacent
+			var f0 := clampf((sin(a0) - 0.4) * 2.2, 0.0, 1.0) * 0.26
+			var f1 := clampf((sin(a1) - 0.4) * 2.2, 0.0, 1.0) * 0.26
+			var c0: Color = bands[b]
+			var c1: Color = bands[b]
+			c0.a = f0
+			c1.a = f1
+			var p00 := Vector3(cos(a0) * r0, sin(a0) * r0, 0)
+			var p01 := Vector3(cos(a0) * r1, sin(a0) * r1, 0)
+			var p10 := Vector3(cos(a1) * r0, sin(a1) * r0, 0)
+			var p11 := Vector3(cos(a1) * r1, sin(a1) * r1, 0)
+			for v: Array in [[p00, c0], [p10, c1], [p11, c1], [p00, c0], [p11, c1], [p01, c0]]:
+				st.set_color(v[1])
+				st.add_vertex(v[0])
+	_rainbow = MeshInstance3D.new()
+	_rainbow.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.no_depth_test = true
+	mat.render_priority = 1
+	_rainbow.material_override = mat
+	_rainbow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_rainbow.position = Vector3(1.5, -3.6, -14.0)
+	camera.add_child(_rainbow)
+
+
+## Flaques, lucioles, arc-en-ciel : selon l'heure et le temps.
+func _update_sky_fx() -> void:
+	if _puddles != null and is_instance_valid(_puddles):
+		_puddles.visible = TimeManager.puddles_now()
+	if _fireflies != null and is_instance_valid(_fireflies):
+		var on := NightSky.fireflies_now()
+		if on != _fireflies.emitting:
+			_fireflies.emitting = on
+			_fireflies.visible = on
+	var bow := TimeManager.rainbow_now() and not _is_mine and not _is_home
+	if bow and _rainbow == null:
+		_make_rainbow()
+	if _rainbow != null:
+		_rainbow.visible = bow
+
+
+## Étoile filante : un trait lumineux qui file en haut de l'écran.
+func _shooting_star() -> void:
+	var streak := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(1.8, 0.06, 0.01)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1, 1, 0.92, 0.95)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.no_depth_test = true
+	mat.render_priority = 2
+	box.material = mat
+	streak.mesh = box
+	var side := -1.0 if randf() < 0.5 else 1.0
+	var start := Vector3(randf_range(-5.0, 5.0) - side * 2.0, randf_range(2.6, 4.2), -14.0)
+	var dir := Vector3(side, -randf_range(0.35, 0.6), 0).normalized()
+	streak.position = start
+	streak.rotation.z = atan2(dir.y, dir.x)
+	camera.add_child(streak)
+	var tw := streak.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(streak, "position", start + dir * randf_range(4.0, 6.5), 0.75)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.75).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(streak.queue_free)
+
+
 ## Bateau de pêche : coque en bois, banc, mât et voile roulée.
 func _boat(c: Vector3, rot: float, h: int) -> void:
 	var boat := Node3D.new()
@@ -2248,6 +2639,12 @@ func _weather_fx(delta: float) -> void:
 			tw.tween_property(_env, "ambient_light_energy", base + 1.5, 0.05)
 			tw.tween_property(_env, "ambient_light_energy", base, 0.25)
 			get_tree().create_timer(randf_range(0.3, 1.2)).timeout.connect(func() -> void: Sfx.play("thunder", -2.0, 0.15))
+	# Pluie d'étoiles filantes, la nuit venue
+	if NightSky.meteors_now():
+		_meteor_timer -= delta
+		if _meteor_timer <= 0.0:
+			_meteor_timer = randf_range(0.4, 2.2)
+			_shooting_star()
 	# Feu d'artifice sur la place, le soir de la fête
 	var fest := Events.festival_today()
 	if map is Village and not fest.is_empty() and str(fest.activity) == "fireworks" and Events.gathering_now():
@@ -2309,7 +2706,8 @@ func _build_wildlife(chars: Dictionary) -> void:
 		var spots: Array[Vector2i] = []
 		for cell: Vector2i in chars:
 			if chars[cell] == "~" and chars.get(cell + Vector2i(2, 0), "") == "~" and chars.get(cell + Vector2i(-2, 0), "") == "~" and chars.get(cell + Vector2i(0, 2), "") == "~" and chars.get(cell + Vector2i(0, -2), "") == "~":
-				spots.append(cell)
+				if not (map is Village and absi(cell.y - Projects.SITES.bridge.position.y) < 3):  # pas sous le pont
+					spots.append(cell)
 		if not spots.is_empty():
 			for i in mini(3, spots.size()):
 				var spot: Vector2i = spots[(i * 7919) % spots.size()]
@@ -2748,7 +3146,18 @@ func _build_event_decor() -> void:
 			var flag := _box(Vector3(0.22, 0.22, 0.02), colors[k % colors.size()])
 			_put(flag, p, atan2(b.x - a.x, b.z - a.z) + PI / 2.0)
 			flag.rotation.z = PI / 4.0
-	if str(fest.id) == "lantern_night":
+	if str(fest.id) == "wedding":
+		# Arche de fleurs blanches et roses devant la fontaine
+		var arch := Vector3(31.0, 0, 30.0)
+		for sx: float in [-0.9, 0.9]:
+			_put(_box(Vector3(0.1, 1.9, 0.1), Color(0.97, 0.96, 0.92)), arch + Vector3(sx, 0.95, 0))
+		for k in 13:
+			var a := PI * k / 12.0
+			var p := arch + Vector3(cos(a) * 0.9, 1.9 + sin(a) * 0.55, 0)
+			_put(_box(Vector3(0.2, 0.2, 0.2), [Color(1, 1, 1), Color(1, 0.72, 0.8), Color(0.95, 0.9, 0.98)][k % 3]), p, float(k))
+		for k in 6:
+			_put(_fitted("nature", "flower_redA" if k % 2 == 0 else "flower_purpleA", 0.4), arch + Vector3(-1.3 + (k % 2) * 2.6, 0, -0.3 + (k / 2) * 0.3))
+	elif str(fest.id) == "lantern_night":
 		for k in 18:
 			var glow := MeshInstance3D.new()
 			var sphere := SphereMesh.new()
@@ -3730,6 +4139,8 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 			node.add_child(_scarecrow_node())
 		"garden_bench", "garden_lantern", "flower_bed", "garden_fountain":
 			node.add_child(_garden_node(str(FarmState.objects[cell]), cell))
+		"golden_statue":
+			node.add_child(_golden_statue())
 		var other:
 			if Machines.is_machine(str(other)):
 				node.add_child(_machine_model(cell, str(other)))
@@ -3749,6 +4160,8 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 				rmi.mesh = RockMesh.mesh("stone", "farm", _hash(cell) % 4)
 				debris.add_child(rmi)
 				debris.scale = Vector3.ONE * 0.85
+			"meteorite":
+				debris = _meteorite()
 			_:
 				debris = _model("nature", "stump_old", 2.4)
 		debris.rotation.y = rot
@@ -3758,6 +4171,76 @@ func _refresh_farm_cell(cell: Vector2i) -> void:
 		return
 	add_child(node)
 	_cells[cell] = node
+
+
+## Météorite tombée la nuit : roche sombre veinée de violet qui luit
+## doucement, dans un petit cratère de terre brûlée.
+func _meteorite() -> Node3D:
+	var root := Node3D.new()
+	var crater := _cyl(0.48, 0.02, Color(0.24, 0.2, 0.18))
+	crater.position.y = 0.01
+	root.add_child(crater)
+	var rock := MeshInstance3D.new()
+	rock.mesh = RockMesh.mesh("magma", "farm", 1)
+	rock.scale = Vector3.ONE * 0.75
+	root.add_child(rock)
+	var glow := StandardMaterial3D.new()
+	glow.albedo_color = Color(0.8, 0.5, 1.0)
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for k in 5:
+		var a := TAU * k / 5.0 + 0.4
+		var shard := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(0.06, 0.12, 0.06)
+		box.material = glow
+		shard.mesh = box
+		shard.position = Vector3(cos(a) * 0.22, 0.18 + 0.08 * (k % 2), sin(a) * 0.22)
+		shard.rotation = Vector3(0.5, a, 0.3)
+		root.add_child(shard)
+	var light := OmniLight3D.new()
+	light.light_color = Color(0.75, 0.5, 1.0)
+	light.omni_range = 1.6
+	light.light_energy = 0.8
+	light.position.y = 0.5
+	root.add_child(light)
+	return root
+
+
+## Statue dorée de la ferme parfaite : un fermier brandissant sa fourche,
+## sur un socle de pierre.
+func _golden_statue() -> Node3D:
+	var root := Node3D.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_st_box(st, Vector3(0, 0.12, 0), Vector3(0.8, 0.24, 0.8), Color(0.72, 0.7, 0.66))
+	_st_box(st, Vector3(0, 0.3, 0), Vector3(0.62, 0.12, 0.62), Color(0.8, 0.78, 0.74))
+	root.add_child(_vc_mesh(st))
+	var gold := StandardMaterial3D.new()
+	gold.albedo_color = Color(1.0, 0.78, 0.25)
+	gold.metallic = 0.85
+	gold.roughness = 0.25
+	gold.emission_enabled = true
+	gold.emission = Color(0.45, 0.32, 0.05)
+	var gst := SurfaceTool.new()
+	gst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_st_box(gst, Vector3(-0.08, 0.56, 0), Vector3(0.1, 0.4, 0.14), Color.WHITE)  # jambes
+	_st_box(gst, Vector3(0.08, 0.56, 0), Vector3(0.1, 0.4, 0.14), Color.WHITE)
+	_st_box(gst, Vector3(0, 0.92, 0), Vector3(0.32, 0.36, 0.2), Color.WHITE)  # buste
+	_st_box(gst, Vector3(0, 1.22, 0), Vector3(0.24, 0.24, 0.22), Color.WHITE)  # tête
+	_st_cyl(gst, Vector3(0, 1.36, 0), 0.22, 0.04, Color.WHITE, 12)  # chapeau
+	_st_cyl(gst, Vector3(0, 1.42, 0), 0.12, 0.1, Color.WHITE, 10)
+	_st_box(gst, Vector3(-0.22, 1.0, 0), Vector3(0.08, 0.3, 0.1), Color.WHITE)  # bras
+	_st_box(gst, Vector3(0.22, 1.2, 0), Vector3(0.08, 0.34, 0.1), Color.WHITE)  # bras levé
+	_st_box(gst, Vector3(0.26, 1.35, 0.02), Vector3(0.03, 0.9, 0.03), Color.WHITE)  # fourche
+	for dx: float in [-0.06, 0.0, 0.06]:
+		_st_box(gst, Vector3(0.26 + dx, 1.86, 0.02), Vector3(0.02, 0.14, 0.02), Color.WHITE)
+	_st_box(gst, Vector3(0.26, 1.8, 0.02), Vector3(0.15, 0.02, 0.02), Color.WHITE)
+	gst.generate_normals()
+	var fig := MeshInstance3D.new()
+	fig.mesh = gst.commit()
+	fig.material_override = gold
+	root.add_child(fig)
+	return root
 
 
 ## Plante en 3D selon son stade et son apparence (data/crops.json, « look »).
@@ -4230,13 +4713,16 @@ func _process(delta: float) -> void:
 	_bite_alert.position = _player3d.position + Vector3(0, 1.45, 0)
 	if _water_mat != null:
 		_water_mat.uv1_offset.x += delta * 0.02
+	if _mill_blades != null:
+		_mill_blades.rotation.z -= delta * 0.6
 	if _lighthouse_beam != null:
 		_lighthouse_beam.rotation.y += delta * 0.8
 		var hour := TimeManager.minutes / 60
 		_lighthouse_beam.visible = hour >= 19 or hour < 6
 	_update_camera(false, delta)
 	if _weather != null:
-		_weather.position = _cam_target + Vector3(0, 6, 0)
+		# Les feuilles tombent lentement : elles naissent plus bas (dans le champ)
+		_weather.position = _cam_target + Vector3(0, 2.6 if _weather_kind in ["leaves", "petals"] else 6.0, 0)
 
 
 func _update_camera(snap: bool = false, delta: float = 0.016) -> void:
@@ -4367,6 +4853,7 @@ func _update_light(_h: int, _m: int) -> void:
 		_env.fog_light_color = Color(0.72, 0.78, 0.84).lerp(Color(0.12, 0.14, 0.2), night)
 		_env.fog_density = 0.035 if hours < 10.0 else 0.02
 		_env.fog_sky_affect = 0.0
+	_update_sky_fx()
 
 
 func _on_day_started(_d: int, _s: int, _y: int) -> void:
@@ -4385,6 +4872,9 @@ func _on_day_started(_d: int, _s: int, _y: int) -> void:
 
 func _update_weather() -> void:
 	var kind := "rain" if TimeManager.is_raining() else ("snow" if TimeManager.is_snowing() else "")
+	# Feuilles mortes en automne, pétales au printemps (par beau temps)
+	if kind == "" and not map is SeaMap:
+		kind = {2: "leaves", 0: "petals"}.get(TimeManager.season, "")
 	if _is_mine or _is_home:
 		kind = ""
 	if kind == _weather_kind:
@@ -4396,6 +4886,10 @@ func _update_weather() -> void:
 	if kind == "":
 		return
 	_weather = CPUParticles3D.new()
+	if kind == "leaves" or kind == "petals":
+		_falling_leaves(kind == "petals")
+		add_child(_weather)
+		return
 	var drop: Mesh
 	if kind == "rain":
 		var box := BoxMesh.new()
@@ -4424,6 +4918,38 @@ func _update_weather() -> void:
 	_weather.initial_velocity_max = 8.0 if kind == "rain" else 0.9
 	_weather.local_coords = false
 	add_child(_weather)
+
+
+## Feuilles qui tombent en tourbillonnant (ou pétales de printemps).
+func _falling_leaves(petals: bool) -> void:
+	var leaf := BoxMesh.new()
+	leaf.size = Vector3(0.12, 0.012, 0.08) if not petals else Vector3(0.07, 0.008, 0.05)
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 1.0
+	leaf.material = mat
+	_weather.mesh = leaf
+	var ramp := Gradient.new()
+	if petals:
+		ramp.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+		ramp.colors = PackedColorArray([Color(1, 0.8, 0.88), Color(1, 1, 1), Color(1, 0.7, 0.82)])
+	else:
+		ramp.offsets = PackedFloat32Array([0.0, 0.35, 0.7, 1.0])
+		ramp.colors = PackedColorArray([Color(0.9, 0.35, 0.15), Color(0.95, 0.6, 0.15), Color(0.85, 0.75, 0.25), Color(0.6, 0.35, 0.18)])
+	_weather.color_initial_ramp = ramp
+	_weather.amount = int((40 if petals else 60) * [0.4, 0.7, 1.0][Settings.quality])
+	_weather.lifetime = 8.0
+	_weather.preprocess = 8.0
+	_weather.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	_weather.emission_box_extents = Vector3(9, 1.2, 7)
+	_weather.direction = Vector3(0.6, -0.3, 0.2)
+	_weather.spread = 40.0
+	_weather.gravity = Vector3(0, -0.06, 0)
+	_weather.angular_velocity_min = -90.0
+	_weather.angular_velocity_max = 90.0
+	_weather.initial_velocity_min = 0.2
+	_weather.initial_velocity_max = 0.6
+	_weather.local_coords = false
 
 
 # ------------------------------------------------------------ pêche (3D)

@@ -1312,5 +1312,106 @@
 			0,
 			25
 		]
+	},
+	"pauline": {
+		"name": "Pauline",
+		"title": "la meunière",
+		"voice": 1.1,
+		"sprite": 0,
+		"home": "mill",
+		"arrival": true,
+		"loves": [
+			"wheat",
+			"corn",
+			"honey",
+			"blueberry_tart"
+		],
+		"likes": [
+			"sunflower",
+			"apple",
+			"pumpkin",
+			"milk",
+			"egg"
+		],
+		"dislikes": [
+			"eel",
+			"coal"
+		],
+		"schedule": [
+			{
+				"time": "07:30",
+				"cell": [
+					49,
+					6
+				]
+			},
+			{
+				"time": "12:30",
+				"cell": [
+					33,
+					30
+				]
+			},
+			{
+				"time": "17:00",
+				"cell": [
+					42,
+					32
+				]
+			},
+			{
+				"time": "20:30",
+				"place": "tavern"
+			},
+			{
+				"time": "23:00",
+				"home": true
+			}
+		],
+		"dialogue": {
+			"intro": "Bonjour ! Pauline, la nouvelle meunière. J'ai lu dans le journal du port qu'un vieux moulin venait d'être remis en état... je n'ai pas hésité une seconde !",
+			"stranger": [
+				"Les ailes tournent depuis l'aube. Écoute ce grincement : c'est la plus belle musique du monde.",
+				"Apporte-moi ton blé, ton maïs : à Valfleur, plus rien ne part en ville sans être moulu ici.",
+				"Je ne connais encore personne. Tout le monde a l'air si gentil !"
+			],
+			"friend": [
+				"J'ai fait du pain avec la farine de ton blé. Il avait un goût de soleil.",
+				"Avant, je vivais en ville. Ici, le vent me raconte des choses.",
+				"Tu sais que les meuniers sont les premiers à savoir quand il va pleuvoir ? Les ailes le sentent."
+			],
+			"close": [
+				"Sans toi, ce moulin serait encore une ruine. Et moi, je serais encore en ville, à m'ennuyer.",
+				"Quand je vois ta ferme depuis la plateforme du moulin, je me dis que j'ai bien fait de venir."
+			],
+			"spring": [
+				"Le printemps : je nettoie les meules, je huile les engrenages. Le moulin se réveille avec moi."
+			],
+			"summer": [
+				"En été, le vent est paresseux. Les ailes aussi !"
+			],
+			"autumn": [
+				"L'automne, c'est la saison du grain. Je mouds du matin au soir, et j'adore ça."
+			],
+			"winter": [
+				"L'hiver, le moulin se repose. Moi, je fais des tartes."
+			],
+			"rain": [
+				"Pas de vent, de la pluie : jour de repos pour les ailes."
+			],
+			"again": [
+				"Le moulin m'attend ! À plus tard.",
+				"J'ai de la farine jusque dans les cheveux, ne fais pas attention."
+			],
+			"gift_loved": "Oh ! C'est exactement ce que j'aime. Tu as déjà compris comment je fonctionne !",
+			"gift_liked": "Merci, c'est très gentil !",
+			"gift_neutral": "Merci, je vais trouver quoi en faire.",
+			"gift_disliked": "Euh... merci. Je vais le ranger quelque part.",
+			"gift_again": "Encore un cadeau ? Garde-le pour demain, voyons !"
+		},
+		"birthday": [
+			2,
+			12
+		]
 	}
 }

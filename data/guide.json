@@ -1,5 +1,7 @@
 {
 	"tips": {
+		"meteor": ["Une météorite !", "Les nuits d'étoiles filantes, une météorite tombe parfois à la ferme. Casse-la à la pioche (plusieurs coups) : fragments de météorite, fer, or... de quoi faire un beau bénéfice."],
+		"perfection": ["La ferme parfaite", "Journal > Ferme parfaite : album, amitiés, histoire, musée, rénovations, compétences, grotte et bilan de l'année. À 100 %, Valfleur t'offre une statue dorée."],
 		"quality": ["Qualité", "Ce produit a une étoile : il est de qualité argent, or ou cristal ! Il se vend plus cher, nourrit mieux et fait plus plaisir en cadeau. L'engrais, ta compétence, l'âge des arbres et le bonheur des animaux améliorent la qualité."],
 		"machine": ["Machines", "Pose cette machine à la ferme, puis touche-la avec un ingrédient en main. Quelques nuits plus tard, le produit est prêt et garde la qualité de l'ingrédient."],
 		"bait": ["Appâts", "Garde des appâts dans ton sac : un appât est utilisé à chaque lancer, le poisson mord deux fois plus vite et la prise est souvent plus belle."],
@@ -8,7 +10,19 @@
 		"seat": ["Se reposer", "Touche un banc ou une chaise pour t'asseoir : l'énergie remonte doucement (jusqu'à 80 %). Bouge pour te relever."],
 		"festival": ["Jour de fête", "Aujourd'hui, c'est la fête au village ! Au stand de la place, présente ton plus bel objet au concours : le jury adore les produits de qualité."],
 		"cask": ["Tonneau de vieillissement", "Mets-y un fromage, un jus ou une confiture : chaque semaine, sa qualité monte d'un cran (jusqu'au cristal)."],
-		"woods": ["Le bois de la forêt", "Au sud de la forêt, la clairière des bûcherons : pins à l'est du chemin, platanes et chênes à l'ouest. Abats-les à la hache pour beaucoup de bois (le chêne donne aussi du bois dur), arrache la souche, puis replante la graine tombée (pomme de pin, boule de platane, gland) sur l'herbe libre. Une souche oubliée repousse toute seule."]
+		"woods": ["Le bois de la forêt", "Au sud de la forêt, la clairière des bûcherons : pins à l'est du chemin, platanes et chênes à l'ouest. Abats-les à la hache pour beaucoup de bois (le chêne donne aussi du bois dur), arrache la souche, puis replante la graine tombée (pomme de pin, boule de platane, gland) sur l'herbe libre. Une souche oubliée repousse toute seule."],
+		"weather": ["Les caprices du temps", "Chaque saison a son humeur : gel au début du printemps (les semis prennent du retard), orages en été (des cultures couchées), canicule (arrose deux fois ce jour-là). Chaque matin, un message résume la nuit à la ferme."],
+		"scarecrow": ["Les corbeaux", "Les grandes parcelles attirent les corbeaux, qui picorent les cultures la nuit. Un épouvantail (Fabrication > Ferme) protège 4 cases tout autour ; un chien fait fuir la moitié des corbeaux."],
+		"hybrid": ["Graine hybride", "Plante-la comme une graine normale : elle donne une culture de saison au hasard, récoltée en double et en qualité cristal. Deux cultures mûres différentes, côte à côte, en font parfois naître une."],
+		"bees": ["Les ruches", "Pose ta ruche près de fleurs (tournesol, tulipe, rose...) : le miel prend leur parfum et vaut bien plus cher. Les abeilles font aussi pousser plus vite les cultures voisines."],
+		"challenge": ["Défi du jour", "Chaque matin, un petit défi (Journal > Défi du jour). Réussi avant la nuit, il rapporte de l'or ; plusieurs jours d'affilée, la récompense augmente."],
+		"rumor": ["Les rumeurs", "Marius, le tavernier, entend tout. Parle-lui le soir : un banc de poissons, une bourse perdue en forêt, l'envie d'un habitant... Profite de ses tuyaux le jour même !"],
+		"projects": ["Rénovations", "Le vieux moulin, le kiosque de la place et le pont de l'étang tombent en ruine. Finance leur rénovation (Journal > Rénovations) : après 3 jours de travaux, chacun apporte un avantage durable."],
+		"fossil": ["Un fossile !", "Les fossiles se trouvent en labourant la terre ou en cassant la pierre de la mine. Donne-les au musée (Journal > Musée) : les 5 morceaux reconstituent un grand squelette."],
+		"pet": ["Ton compagnon", "Ton compagnon te suit partout dehors. Caresse-le (bouton Action) une fois par jour : il t'aime un peu plus et tu retrouves de l'énergie."],
+		"garden": ["Le jardin", "Bancs, lanternes, massifs fleuris et fontaine embellissent la ferme (Ma ferme > Beauté). Plus elle est belle, plus les habitants viennent la visiter le dimanche."],
+		"photo": ["Mode photo", "Menu > Photo : choisis un filtre et immortalise ta ferme. Les photos sont rangées dans le Journal, rubrique Photos."],
+		"cave": ["La grotte des lucioles", "Une tablette donne l'ordre des leviers. Actionne-les dans le bon ordre pour ouvrir la grille du trésor ; une erreur, et tout est à recommencer."]
 	},
 	"guide": [
 		["La ferme", "Laboure avec la houe, sème, arrose chaque jour (ou pose des arroseurs). Les récoltes s'expédient dans le coffre près de la maison : payées la nuit. Une terre laissée à l'abandon se couvre d'herbes folles."],
@@ -19,6 +33,11 @@
 		["Les habitants", "Parle-leur chaque jour, offre un cadeau par jour. Les cœurs débloquent des souvenirs. Le tableau de la place propose des demandes, parfois de qualité. Le soir, tout le monde est à la taverne du port."],
 		["La maison", "Mathis agrandit ta maison et vend des meubles. Pose-les en les tenant en main chez toi ; la pioche les reprend."],
 		["Se reposer", "Bancs et chaises : touche-les pour t'asseoir et récupérer un peu d'énergie. Dormir reste le meilleur repos."],
-		["Le bois", "Au sud de la forêt, la clairière des bûcherons : pins à l'est du chemin, platanes et chênes à l'ouest. Abats-les à la hache pour beaucoup de bois (le chêne donne aussi du bois dur), arrache la souche, puis replante la graine tombée (pomme de pin, boule de platane, gland) sur l'herbe libre. Une souche oubliée repousse toute seule. Mathis vend aussi des graines d'arbres."]
+		["Le bois", "Au sud de la forêt, la clairière des bûcherons : pins à l'est du chemin, platanes et chênes à l'ouest. Abats-les à la hache pour beaucoup de bois (le chêne donne aussi du bois dur), arrache la souche, puis replante la graine tombée (pomme de pin, boule de platane, gland) sur l'herbe libre. Une souche oubliée repousse toute seule. Mathis vend aussi des graines d'arbres."],
+		["La météo", "Gel en début de printemps (les jeunes pousses perdent un jour), orages d'été (cultures couchées), canicule (il faut arroser deux fois). Les épouvantails éloignent les corbeaux des grandes parcelles."],
+		["Défis et commandes", "Un défi chaque matin (Journal > Défi du jour) et, chaque lundi, une grosse commande d'un commerçant à livrer en 7 jours : bien mieux payée que l'expédition."],
+		["Le village change", "Les rénovations (moulin, kiosque, pont) se financent dans le Journal et prennent 3 jours de travaux. Les habitants ont leur vie : on tombe malade, on se marie, de nouvelles têtes arrivent."],
+		["Musée et grotte", "Les fossiles vont au musée (Journal > Musée). Dans la forêt, sous les rochers, la grotte des lucioles cache une énigme de leviers et un trésor."],
+		["Compagnon, photos, jardin", "Léon propose d'adopter un chat ou un chien. Menu > Photo pour les souvenirs. Le jardin (bancs, lanternes, fontaine) rend la ferme belle et attire des visiteurs le dimanche."]
 	]
 }

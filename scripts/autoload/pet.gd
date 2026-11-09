@@ -19,6 +19,7 @@ func reset() -> void:
 func adopt(k: String, n: String) -> void:
 	kind = k
 	pet_name = n
+	Tips.show("pet")
 
 
 func new_day() -> void:

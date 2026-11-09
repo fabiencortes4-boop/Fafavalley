@@ -158,6 +158,19 @@ static func bench_facing(cell: Vector2i) -> Vector2i:
 
 func _after_build() -> void:
 	_spawn_cell = Vector2i(2, 19)
+	# Chantiers de rénovation : moulin et kiosque occupent leurs cases ; le
+	# pont, une fois réparé, se traverse (on peut pêcher depuis le tablier).
+	for id: String in Projects.SITES:
+		var r: Rect2i = Projects.SITES[id]
+		for y in range(r.position.y, r.end.y):
+			for x in range(r.position.x, r.end.x):
+				var c := Vector2i(x, y)
+				if id != "bridge":
+					_blocked[c] = true
+					_add_static_block(c)
+					_interactables[c] = "project:" + id
+				elif Projects.state("bridge") != "done":
+					_interactables[c] = "project:bridge"
 	# Jour de fête ou de marché : un stand sur la place
 	if Events.booth_activity() != "":
 		_blocked[Events.BOOTH] = true
@@ -166,14 +179,22 @@ func _after_build() -> void:
 	_build_navigation()
 	if Story.chapter >= 1:
 		Tips.show("seat")
+	if Story.chapter >= 2:
+		Tips.show("projects")
+	# La meunière vit au moulin (sa porte : au pied de la façade)
+	var mill: Rect2i = Projects.SITES.mill
+	_doors["mill"] = Vector2i(mill.position.x + mill.size.x / 2, mill.end.y - 1)
+	var wedding := not VillageLife.wedding_today().is_empty()
 	for id: String in GameData.npcs:
-		if id == Marriage.spouse or GameData.npc(id).get("map", "") == "port":
+		var guest: bool = wedding and id in VillageLife.COUPLE and GameData.npc(id).get("map", "") == "port"
+		if id == Marriage.spouse or (GameData.npc(id).get("map", "") == "port" and not guest):
 			continue  # vit à la ferme, ou au port
 		var npc := Npc.new()
 		npc.id = id
 		npc.village = self
+		npc.guest = guest
 		var home := str(GameData.npc(id).get("home", ""))
-		npc.home_cell = _doors.get(home, Vector2i(2, 19)) + Vector2i.DOWN
+		npc.home_cell = (tavern_cell() + Vector2i.LEFT) if guest else _doors.get(home, Vector2i(2, 19)) + Vector2i.DOWN
 		_entities.add_child(npc)
 		npcs.append(npc)
 	TimeManager.time_changed.connect(_on_time_changed)
@@ -408,7 +429,33 @@ func _talk_to(npc: Npc) -> void:
 	talk_to_npc(npc)
 
 
+## Le pont réparé : ses cases ne sont plus de l'eau.
+func _bridge(cell: Vector2i) -> bool:
+	return Projects.state("bridge") == "done" and (Projects.SITES.bridge as Rect2i).has_point(cell)
+
+
+func _ground_tile(cell: Vector2i, ch: String) -> int:
+	if _bridge(cell):
+		return WorldTiles.PATH_INNER
+	return super(cell, ch)
+
+
+func is_water(cell: Vector2i) -> bool:
+	return super(cell) and not _bridge(cell)
+
+
 func _interact(kind: String, _cell: Vector2i) -> void:
+	if kind.begins_with("project:"):
+		var id := kind.trim_prefix("project:")
+		var p: Dictionary = Projects.PROJECTS[id]
+		match Projects.state(id):
+			"works":
+				EventBus.message_requested.emit(str(p.name), "Les ouvriers de Mathis sont à pied d'œuvre. Encore %d jour%s de travaux." % [Projects.days_left(id), "s" if Projects.days_left(id) > 1 else ""])
+			"done":
+				EventBus.message_requested.emit(str(p.name), str(p.text))
+			_:
+				EventBus.message_requested.emit(str(p.name) + " (à l'abandon)", "%s\n\nLe chantier se finance depuis le Journal, rubrique Rénovations." % p.text)
+		return
 	if kind == "forge":
 		EventBus.forge_requested.emit()
 		return

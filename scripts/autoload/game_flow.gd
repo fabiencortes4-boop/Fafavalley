@@ -40,6 +40,8 @@ func new_game() -> void:
 	Pet.reset()
 	Projects.reset()
 	Museum.reset()
+	VillageLife.reset()
+	NightSky.reset()
 	Tips.reset()
 	Achievements.reset()
 	for entry: Array in STARTING_ITEMS:
@@ -81,9 +83,13 @@ func end_day(passed_out: bool = false) -> void:
 	Forage.new_day()
 	Machines.new_day()
 	Woods.new_day()
+	Projects.new_day()
+	VillageLife.new_day()
+	NightSky.new_day()
 	var ranch := Animals.new_day(TimeManager.season)
 	Marriage.new_day()
 	report["animals"] = ranch
+	Perfection.check()
 	Mail.check()
 	TimeManager.start_day()
 	SaveManager.save_game()

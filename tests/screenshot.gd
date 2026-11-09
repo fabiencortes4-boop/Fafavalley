@@ -7,6 +7,7 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		out = args[0]
+	Tips.enabled = "--tips" in args  # pas d'astuce surprise sur les captures
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame
@@ -33,6 +34,37 @@ func _ready() -> void:
 				TimeManager.day = int(a.trim_prefix("--day="))
 			if a.begins_with("--season="):
 				TimeManager.season = int(a.trim_prefix("--season="))
+			if a == "--rainbow":
+				TimeManager.rain_yesterday = true
+				TimeManager.weather = "sunny"
+				TimeManager.minutes = 9 * 60
+			if a == "--meteor":
+				NightSky.meteor_night = true
+				TimeManager.minutes = 22 * 60
+			if a == "--fireflies":
+				TimeManager.season = 1
+				NightSky.firefly_night = true
+				TimeManager.minutes = 21 * 60 + 30
+			if a.begins_with("--meteorite="):
+				var mxy := a.trim_prefix("--meteorite=").split(",")
+				FarmState.debris[Vector2i(int(mxy[0]), int(mxy[1]))] = {"type": "meteorite", "hp": 6}
+			if a.begins_with("--statue="):
+				var sxy2 := a.trim_prefix("--statue=").split(",")
+				FarmState.objects[Vector2i(int(sxy2[0]), int(sxy2[1]))] = "golden_statue"
+			if a in ["--rainbow", "--meteor", "--fireflies"] or a.begins_with("--meteorite=") or a.begins_with("--statue="):
+				TimeManager.time_changed.emit(TimeManager.minutes / 60, 0)
+				TimeManager.day_started.emit(TimeManager.day, TimeManager.season, TimeManager.year)
+				if main.call("current_map") is Farm:
+					main.call("current_map").call("_refresh_all")
+			if a == "--wedding":
+				VillageLife.wedding_day = Marriage.day_number()
+			if a == "--pauline":
+				VillageLife.arrive()
+			if a.begins_with("--projects="):
+				for id: String in Projects.PROJECTS:
+					match a.trim_prefix("--projects="):
+						"works": Projects.works[id] = Marriage.day_number()
+						"done": Projects.done[id] = 1
 			if a.begins_with("--time="):
 				TimeManager.minutes = int(a.trim_prefix("--time=")) * 60
 			if a.begins_with("--interior="):
@@ -55,6 +87,10 @@ func _ready() -> void:
 			if not " ".join(args).contains("--time="):
 				TimeManager.minutes = 13 * 60 + 30
 			PlayerState.position = Vector2(19 * 16 + 8, 17 * 16 + 12)
+			for a in args:
+				if a.begins_with("--at="):
+					var vxy := a.trim_prefix("--at=").split(",")
+					PlayerState.position = Vector2(int(vxy[0]) * 16 + 8, int(vxy[1]) * 16 + 12)
 			PlayerState.has_position = true
 			main.call("_switch_to", "village")
 			await get_tree().process_frame

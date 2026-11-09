@@ -886,6 +886,26 @@ def draw_misc(kind):
                 if (x - 7.5) ** 2 + (y - 8.5) ** 2 <= 7:
                     px[x, y] = (150, 190, 230, 255)
         rect(11, 6, 13, 7, (250, 220, 120))
+    elif kind == "meteorite":
+        for y in range(3, 14):
+            for x in range(3, 14):
+                d = ((x - 8) ** 2 + ((y - 8.5) * 1.15) ** 2) ** 0.5
+                if d <= 5.4:
+                    px[x, y] = ((70, 58, 74) if (x * 3 + y * 5) % 7 else (95, 80, 100)) + (255,)
+        for x, y in ((6, 6), (9, 8), (7, 10), (10, 11), (5, 9)):
+            px[x, y] = (200, 140, 255, 255)
+        px[6, 5], px[10, 7] = (255, 230, 255, 255), (255, 230, 255, 255)
+    elif kind == "statue":
+        gold, shade, hi = (235, 190, 60), (180, 130, 30), (255, 240, 150)
+        rect(4, 12, 12, 15, (150, 146, 140))
+        rect(5, 11, 11, 12, (180, 176, 170))
+        rect(6, 6, 10, 11, gold)
+        rect(9, 6, 10, 11, shade)
+        rect(6, 2, 10, 6, gold)
+        rect(7, 3, 8, 4, hi)
+        rect(10, 4, 13, 5, gold)
+        rect(12, 1, 13, 4, shade)
+        rect(3, 6, 6, 7, gold)
     elif kind == "plan":
         rect(3, 2, 13, 14, (235, 225, 195))
         for y in (5, 8, 11):
@@ -1105,6 +1125,8 @@ def extend_icons(sheet):
     extra += [draw_misc(k) for k in ("purse", "scarecrow", "hybrid_seed", "fossil_skull", "fossil_ribs",
                                      "fossil_leg", "fossil_tail", "fossil_shell", "garden_bench",
                                      "garden_lantern", "flower_bed", "garden_fountain", "camera")]
+    # 210 fragment de météorite, 211 statue dorée (ferme parfaite)
+    extra += [draw_misc(k) for k in ("meteorite", "statue")]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

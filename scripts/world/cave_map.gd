@@ -68,6 +68,7 @@ func _place_special(cell: Vector2i, ch: String) -> void:
 func _after_build() -> void:
 	_spawn_cell = Vector2i(8, 8)
 	_place_player()
+	Tips.show("cave")
 
 
 func _warp_for(cell: Vector2i) -> Dictionary:

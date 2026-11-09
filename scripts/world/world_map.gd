@@ -392,7 +392,7 @@ const KIND_HINTS := {
 	"sign": "Lire", "exit": "Sortir", "bed": "Dormir", "kitchen": "Cuisiner", "counter": "Acheter",
 	"forge": "Forge", "booth": "Stand", "elevator": "Ascenseur", "treasure": "Ouvrir", "ladder_up": "Monter",
 	"ladder_down": "Descendre", "mailbox": "Courrier", "bin": "Expédier", "door": "Entrer",
-	"board": "Demandes", "cave": "Entrer", "cave_chest": "Ouvrir", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "boat": "En mer", "child": "Jouer",
+	"board": "Demandes", "cave": "Entrer", "cave_chest": "Ouvrir", "gate": "Voir", "log_gate": "Voir", "seat": "S'asseoir", "project:mill": "Voir", "project:bandstand": "Voir", "project:bridge": "Voir", "boat": "En mer", "child": "Jouer",
 }
 const TOOL_HINTS := {
 	"hoe": "Labourer", "watering_can": "Arroser", "axe": "Couper", "pickaxe": "Piocher", "scythe": "Faucher",
@@ -484,6 +484,10 @@ func talk_to_npc(npc: Npc) -> void:
 		var praise := " Et quelle qualité !" if int(q.get("quality", 0)) > 0 else ""
 		EventBus.dialogue_requested.emit(id, "Oh, %d %s ! C'est exactement ce qu'il me fallait.%s Merci mille fois ! (+%d or)" % [int(q.qty), GameData.item_name(str(q.item)).to_lower(), praise, int(q.gold)])
 		return
+	var life := VillageLife.talk(id)
+	if life != "":
+		EventBus.dialogue_requested.emit(id, life)
+		return
 	var slot0: Variant = Inventory.get_selected()
 	if slot0 != null and GameData.item(slot0.id).get("type") == "gift_special":
 		var res := Marriage.give(id, str(slot0.id))
@@ -508,6 +512,7 @@ func talk_to_npc(npc: Npc) -> void:
 		return
 	var rumor := Rumors.try_hear(id)
 	if rumor != "":
+		Tips.show("rumor")
 		Relations.talked_today[id] = true
 		Relations.add_points(id, Relations.TALK_POINTS)
 		EventBus.dialogue_requested.emit(id, rumor)

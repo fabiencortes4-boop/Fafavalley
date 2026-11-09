@@ -2078,5 +2078,22 @@
 		"stack": 99,
 		"sell": 200,
 		"description": "Une fontaine qui chante : le plus beau décor de la ferme."
+	},
+	"meteorite_fragment": {
+		"name": "Fragment de météorite",
+		"type": "material",
+		"icon": 210,
+		"stack": 99,
+		"sell": 350,
+		"description": "Un éclat d'étoile filante, encore tiède, qui scintille de violet. Très recherché par les collectionneurs."
+	},
+	"golden_statue": {
+		"name": "Statue dorée",
+		"type": "placeable",
+		"place": "golden_statue",
+		"icon": 211,
+		"stack": 1,
+		"sell": 0,
+		"description": "Le cadeau de tout Valfleur pour une ferme parfaite. À poser à la ferme : elle brille au soleil comme sous la lune."
 	}
 }

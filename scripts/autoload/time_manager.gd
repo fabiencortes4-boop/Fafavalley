@@ -30,6 +30,7 @@ func reset() -> void:
 	season = 0
 	year = 1
 	weather = "sunny"
+	rain_yesterday = false
 	_accumulator = 0.0
 
 
@@ -83,6 +84,15 @@ func is_storm() -> bool:
 	return weather == "storm"
 
 
+## Flaques : pendant la pluie, et le matin qui suit.
+func puddles_now() -> bool:
+	return season != 3 and (is_raining() or (rain_yesterday and minutes < 13 * 60))
+
+
+## Arc-en-ciel : le soleil revient après un jour de pluie (le matin).
+func rainbow_now() -> bool:
+	return rain_yesterday and weather == "sunny" and season != 3 and minutes >= 7 * 60 and minutes < 12 * 60
+
 ## Passe au jour suivant (sans émettre de signal : GameFlow s'en charge
 ## une fois que tous les systèmes ont traité la nuit).
 ## Canicule (été, jour sans pluie) : il faut arroser deux fois les cultures.
@@ -90,11 +100,13 @@ var heatwave: bool = false
 ## Le temps de la journée qui s'achève (pour ce que la nuit fait aux cultures)
 var storm_yesterday: bool = false
 var heat_yesterday: bool = false
+var rain_yesterday: bool = false  # flaques le matin, arc-en-ciel si le soleil revient
 const HEAT_CHANCE := 0.2
 
 
 func advance_day() -> void:
 	storm_yesterday = weather == "storm"
+	rain_yesterday = is_raining()
 	heat_yesterday = heatwave
 	day += 1
 	if day > DAYS_PER_SEASON:
@@ -122,7 +134,7 @@ func start_day() -> void:
 
 
 func to_dict() -> Dictionary:
-	return {"minutes": minutes, "day": day, "season": season, "year": year, "weather": weather, "heat": heatwave}
+	return {"minutes": minutes, "day": day, "season": season, "year": year, "weather": weather, "heat": heatwave, "rain_y": rain_yesterday}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -132,4 +144,5 @@ func from_dict(data: Dictionary) -> void:
 	year = int(data.get("year", 1))
 	weather = str(data.get("weather", "sunny"))
 	heatwave = bool(data.get("heat", false))
+	rain_yesterday = bool(data.get("rain_y", false))
 	_accumulator = 0.0

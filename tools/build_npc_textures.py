@@ -53,6 +53,8 @@ LOOKS = {
     "player_1": ("a", [(BODY, "37a177", "3f5fa8"), (BODY, "1e835a", "2d4680"), (BODY, "b56544", "7a4a2a")]),
     "player_2": ("e", [(BODY, "a878e8", "d9a43a"), (HEAD, "995a41", "3a2a22"), (BODY, "995a41", "3a2a22")]),
     "player_3": ("f", [(BODY, "58bd98", "c0453c"), (BODY, "8494c9", "3a3a4a")]),
+    # La meunière (nouvelle venue) : cheveux caramel, blouse blanche farinée
+    "pauline": ("e", [(HEAD, "995a41", "c48a4a"), (BODY, "995a41", "c48a4a"), (BODY, "a878e8", "f0ece0")]),
     # La musicienne : cheveux blonds, tunique violette de scène
     "celeste": ("e", [(HEAD, "995a41", "e6c060"), (BODY, "995a41", "e6c060"), (BODY, "a878e8", "8a3ab0")]),
 }

@@ -133,12 +133,20 @@ func _ready() -> void:
 			show_toast("Orage aujourd'hui : la pluie arrose tout, mais il peut coucher quelques cultures cette nuit.")
 		elif TimeManager.heatwave:
 			show_toast("Canicule aujourd'hui : arrose tes cultures deux fois, sinon elles ne pousseront pas cette nuit !")
+		elif NightSky.meteor_night:
+			show_toast("Ciel dégagé ce soir : une pluie d'étoiles filantes est annoncée après 21h ! Fais un vœu...")
+		elif NightSky.firefly_night:
+			show_toast("Nuit chaude et calme : ce soir après 20h, les lucioles danseront au bord de l'eau.")
 		elif bday != "":
 			show_toast("C'est l'anniversaire de %s aujourd'hui ! Un cadeau lui ferait plaisir." % GameData.npc(bday).name)
 		elif Marriage.last_help != "":
 			show_toast(Marriage.last_help)
 		else:
 			show_toast("Défi du jour : " + Challenges.summary())
+			if TimeManager.day > 2 or TimeManager.season > 0:
+				Tips.show("challenge")
+		if TimeManager.is_storm() or TimeManager.heatwave:
+			Tips.show("weather")
 		_nature_report())
 	EventBus.npc_bubble.connect(func(npc_id: String, text: String) -> void:
 		if View3D.current == null:
@@ -919,8 +927,38 @@ func open_journal_menu() -> void:
 	_add_menu_entry(box, "Rénovations", GameData.item("house_upgrade").get("icon", 0), open_projects)
 	_add_menu_entry(box, "Musée", GameData.item("fossil_skull").get("icon", 0), open_museum)
 	_add_menu_entry(box, "Photos", PHOTO_ICON, open_photo_album)
+	_add_menu_entry(box, "Ferme parfaite", GameData.item("golden_statue").get("icon", 0), open_perfection)
 	_size_menu(box)
 	_add_button(outer, "Retour", open_pause_menu)
+
+
+## La ferme parfaite : l'avancement dans chaque domaine.
+func open_perfection() -> void:
+	Tips.show("perfection")
+	var box := _open_modal("Ferme parfaite : %d %%" % Perfection.percent())
+	_add_label(box, "Le grand objectif de Valfleur. À 100 %, tout le village t'offre une statue dorée." if not Perfection.achieved() else "Ta ferme est parfaite ! La statue dorée est le cadeau de tout Valfleur.")
+	for e: Array in Perfection.criteria():
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		box.add_child(row)
+		var name := Label.new()
+		name.text = str(e[0])
+		name.custom_minimum_size = Vector2(150, 0)
+		name.add_theme_font_size_override("font_size", 9)
+		row.add_child(name)
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(90, 9)
+		bar.max_value = 1.0
+		bar.value = float(e[1])
+		bar.show_percentage = false
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(bar)
+		var detail := Label.new()
+		detail.text = str(e[2])
+		detail.add_theme_font_size_override("font_size", 8)
+		detail.add_theme_color_override("font_color", Color(1, 0.85, 0.4) if float(e[1]) >= 1.0 else Color(0.85, 0.8, 0.7))
+		row.add_child(detail)
+	_add_button(box, "Retour", open_journal_menu)
 
 
 ## Rénovations du village : chantiers à financer.
@@ -935,10 +973,12 @@ func open_projects() -> void:
 	scroll.add_child(list)
 	for id: String in Projects.PROJECTS:
 		var p: Dictionary = Projects.PROJECTS[id]
-		var title := _add_label(list, str(p.name) + ("  (terminé)" if Projects.done.has(id) else ""))
+		var st := Projects.state(id)
+		var tag: String = {"done": "  (terminé)", "works": "  (travaux : encore %d j)" % Projects.days_left(id), "ruin": ""}[st]
+		var title := _add_label(list, str(p.name) + tag)
 		title.add_theme_color_override("font_color", UiTheme.ACCENT)
 		_add_label(list, str(p.text))
-		if Projects.done.has(id):
+		if st != "ruin":
 			continue
 		var cost: Array = ["%d or" % int(p.gold)]
 		for item: String in p.materials:
@@ -947,7 +987,7 @@ func open_projects() -> void:
 		var b := _add_button(list, "Financer le chantier", func() -> void:
 			if Projects.fund(id):
 				Sfx.play("achievement")
-				show_toast("%s : le chantier est terminé !" % p.name)
+				show_toast("%s : les ouvriers commencent ! (%d jours)" % [p.name, Projects.WORK_DAYS])
 			open_projects())
 		b.disabled = not Projects.missing(id).is_empty()
 	_add_button(box, "Retour", open_journal_menu)
@@ -2671,6 +2711,8 @@ func _nature_report() -> void:
 		parts.append("l'orage a couché %d culture(s) (elles repartent, avec du retard)" % int(n.storm))
 	if int(n.get("heat", 0)) > 0:
 		parts.append("%d culture(s) n'ont pas poussé : pendant la canicule, il faut arroser deux fois" % int(n.heat))
+	if int(n.get("meteorite", 0)) > 0:
+		parts.append("une météorite est tombée dans un coin de la ferme (casse-la à la pioche !)")
 	if int(n.get("crows", 0)) > 0:
 		parts.append("les corbeaux ont picoré %d culture(s) (un épouvantail les éloigne)" % int(n.crows))
 	if int(n.get("hybrid", 0)) > 0:
@@ -2685,6 +2727,12 @@ func _nature_report() -> void:
 		parts.append("les mauvaises herbes gagnent du terrain")
 	if parts.is_empty():
 		return
+	if int(n.get("crows", 0)) > 0:
+		Tips.show("scarecrow")
+	if int(n.get("meteorite", 0)) > 0:
+		Tips.show("meteor")
+	if int(n.get("frost", 0)) + int(n.get("storm", 0)) + int(n.get("heat", 0)) > 0:
+		Tips.show("weather")
 	await get_tree().create_timer(2.5).timeout
 	show_toast("Cette nuit à la ferme : " + ", ".join(parts) + ".")
 
@@ -2730,6 +2778,17 @@ func open_booth() -> void:
 					"" if GameData.quality_of(id) > 0 else " (Astuce : le jury adore les produits de qualité ★.)"]))
 			var preview := _add_label(box, "Note estimée du jury : %d points. Concurrents : %s." % [Events.contest_score(id), ", ".join(Events.rivals().map(func(e: Dictionary) -> String: return "%s (%s)" % [GameData.npc(str(e.npc)).name, e.entry]))])
 			preview.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+	elif activity == "wedding":
+		var slot: Variant = Inventory.get_selected()
+		if slot == null or int(GameData.item(slot.id).get("sell", 0)) <= 0 or GameData.item(slot.id).get("type") in ["tool", "weapon"]:
+			_add_label(box, "Prends en main ce que tu veux offrir aux mariés (un produit de ta ferme, un plat, une fleur...), puis reviens au stand.")
+		else:
+			var gid := str(slot.id)
+			_add_button(box, "Offrir aux mariés : %s" % GameData.item_name(gid), func() -> void:
+				if VillageLife.give_wedding_gift(gid):
+					Sfx.play("achievement")
+					close_modal()
+					title_card("Vive les mariés !", "Jules et Nina te remercient de tout cœur", Color(1, 0.85, 0.9)))
 	elif activity == "fireworks":
 		_add_button(box, "Profiter du spectacle", func() -> void:
 			Events.mark_done(str(fest.id))

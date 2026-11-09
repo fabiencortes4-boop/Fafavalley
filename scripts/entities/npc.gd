@@ -8,6 +8,8 @@ const SPEED := 30.0
 var id: String = ""
 var village: WorldMap  # carte où l'habitant se déplace (village, port), ou null
 var home_cell: Vector2i  # case devant la porte de sa maison
+## Invité venu d'ailleurs (le port) pour une fête : il repart ensuite
+var guest: bool = false
 
 var _schedule: Array = []  # [{"minutes": int, "cell": Vector2i, "home": bool}]
 var _sprite: Sprite2D
@@ -86,6 +88,8 @@ func _works_now() -> bool:
 
 ## Est-ce que l'habitant est chez lui (ou dans sa boutique) à cette heure ?
 static func is_home_at(npc_id: String, minutes: int) -> bool:
+	if VillageLife.sick == npc_id:
+		return true  # malade : au lit toute la journée
 	var data := GameData.npc(npc_id)
 	var shop := str(data.get("shop", ""))
 	if Shops.shops.has(shop) and Shops.is_open(shop):
@@ -123,12 +127,20 @@ func _entry_at(minutes: int) -> int:
 func sync_to_time() -> void:
 	_entry_index = _entry_at(TimeManager.minutes)
 	_path.clear()
+	if VillageLife.sick == id:
+		position = village.cell_center(home_cell)
+		_set_inside(true)
+		return
 	_working = _works_now()
 	var gather := _event_spot()
 	if gather != Vector2i(-1, -1) and not _working:
 		_gather_target = gather
 		position = village.cell_center(gather)
 		_set_inside(false)
+		return
+	if guest:
+		position = village.cell_center(home_cell)
+		_set_inside(true)
 		return
 	if _working or _entry_index < 0 or _schedule[_entry_index].home or _schedule[_entry_index].place != "":
 		position = village.cell_center(home_cell)
@@ -140,6 +152,8 @@ func sync_to_time() -> void:
 
 ## Appelé à chaque changement d'heure : part vers la prochaine étape.
 func on_time_changed() -> void:
+	if VillageLife.sick == id:
+		return
 	var index := _entry_at(TimeManager.minutes)
 	var working := _works_now()
 	var gather := _event_spot()
@@ -152,6 +166,11 @@ func on_time_changed() -> void:
 	if _gather_target != Vector2i(-1, -1):
 		_gather_target = Vector2i(-1, -1)
 		_entry_index = -2  # fin de l'événement : on reprend l'emploi du temps
+		if guest and village is Village:
+			_walk_to((village as Village).tavern_cell(), true)  # rentre au port
+			return
+	if guest:
+		return
 	if working != _working:
 		_working = working
 		_entry_index = -2

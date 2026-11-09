@@ -111,7 +111,12 @@ func _ready() -> void:
 	Inventory.add_gold(20000)
 	for e: Array in [["wood", 150], ["stone", 80], ["hardwood", 10]]:
 		Inventory.add_item(e[0], e[1])
-	_check(Projects.fund("mill") and Projects.sell_factor("wheat") == 1.5, "le moulin rénové : le blé se vend 50 % plus cher")
+	_check(Projects.fund("mill") and Projects.state("mill") == "works" and Projects.sell_factor("wheat") == 1.0, "le moulin : d'abord des travaux")
+	for i in Projects.WORK_DAYS:
+		TimeManager.day += 1
+		Projects.new_day()
+	TimeManager.day -= Projects.WORK_DAYS
+	_check(Projects.state("mill") == "done" and Projects.sell_factor("wheat") == 1.5, "le moulin rénové : le blé se vend 50 % plus cher")
 	# ---- Musée
 	for p: String in Museum.PIECES:
 		Inventory.add_item(p, 1)

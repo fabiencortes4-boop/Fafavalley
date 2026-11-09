@@ -13,6 +13,8 @@ const DEBRIS := {
 	"twig": {"hp": 1, "tools": ["axe"], "drops": [["wood", 1, 2, 1.0]], "xp": 2},
 	"stone": {"hp": 1, "tools": ["pickaxe"], "drops": [["stone", 1, 1, 1.0]], "xp": 2},
 	"stump": {"hp": 5, "tools": ["axe"], "drops": [["wood", 8, 12, 1.0]], "xp": 12},
+	# Tombée du ciel une nuit d'étoiles filantes
+	"meteorite": {"hp": 6, "tools": ["pickaxe"], "drops": [["meteorite_fragment", 2, 3, 1.0], ["iron_ore", 3, 5, 1.0], ["gold_ore", 1, 2, 0.6], ["amethyst", 1, 1, 0.3]], "xp": 30},
 }
 const CHEST_SIZE := 36
 
@@ -164,7 +166,7 @@ func _crossbreed() -> void:
 ## Beauté de la ferme : décor, chemins, clôtures, arbres et fleurs. Le
 ## dimanche, une belle ferme attire des visiteurs du village.
 const BEAUTY := {
-	"garden_bench": 3, "garden_lantern": 3, "flower_bed": 4, "garden_fountain": 10, "scarecrow": 1,
+	"garden_bench": 3, "garden_lantern": 3, "flower_bed": 4, "garden_fountain": 10, "scarecrow": 1, "golden_statue": 40,
 	"path_wood": 0.5, "path_stone": 0.5, "tree": 2, "wood_tree": 1, "beehive": 2,
 }
 const VISITOR_TIERS := [25, 60, 100]
