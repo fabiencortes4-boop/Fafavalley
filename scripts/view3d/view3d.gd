@@ -3664,6 +3664,16 @@ func _crop_model(crop: String, stage: int) -> Node3D:
 		"ground":
 			var spec: Array = look.get("model", ["nature", "crop_pumpkin"])
 			return _model(spec[0], spec[1], 1.3)
+		"flower":
+			# Fleurs semées : une touffe de trois fleurs au-dessus des feuilles
+			var spec: Array = look.get("model", ["nature", "flower_yellowA"])
+			var tuft := _model("nature", "crops_leafsStageA", 1.0)
+			for k in 3:
+				var f := _model(spec[0], spec[1], 2.2 + 0.3 * float(k % 2))
+				f.position = Vector3(cos(k * 2.1) * 0.12, 0, sin(k * 2.1) * 0.12)
+				f.rotation.y = k * 1.3
+				tuft.add_child(f)
+			return tuft
 		"bush":
 			var bush := _model("nature", "crops_leafsStageB", 1.3)
 			var fruit_spec: Array = look.get("model", [])
@@ -4053,6 +4063,12 @@ func _update_camera(snap: bool = false, delta: float = 0.016) -> void:
 		target = center + (target - center) * 0.5
 	_cam_target = target if snap else _cam_target.lerp(target, minf(1.0, delta * 6.0))
 	var distance := 17.0 / Settings.zoom
+	# Écran en hauteur : on garde la largeur de champ (sinon on ne verrait
+	# qu'une bande étroite du monde), un peu plus ouverte
+	var vp := get_viewport().get_visible_rect().size
+	var portrait := vp.y > vp.x
+	camera.keep_aspect = Camera3D.KEEP_WIDTH if portrait else Camera3D.KEEP_HEIGHT
+	camera.fov = 48.0 if portrait else 38.0
 	var offset := Vector3(0, sin(CAMERA_PITCH), cos(CAMERA_PITCH)) * distance
 	camera.position = _cam_target + offset
 	camera.look_at(_cam_target, Vector3.UP)

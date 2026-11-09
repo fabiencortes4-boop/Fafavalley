@@ -46,6 +46,20 @@ func _ready() -> void:
 	_check(seeds.has("seed_brussels_sprout") and seeds.has("seed_winter_leek"), "Rosalie vend des graines d'hiver")
 	_check(GameData.crop_in_season("brussels_sprout", 3) and GameData.crop_in_season("winter_leek", 3), "choux de Bruxelles et poireaux poussent en hiver")
 	_check(Collections.items_of("crops").has("brussels_sprout"), "les cultures d'hiver sont dans l'album")
+	# ---- Fleurs semées et cultures mortes au changement de saison
+	TimeManager.season = 0
+	var bed := Vector2i(20, 16)
+	FarmState.till(bed)
+	_check(FarmState.plant(bed, "daffodil"), "on sème des bulbes de jonquille sur la terre labourée")
+	for d in 5:
+		FarmState.water(bed)
+		FarmState.advance_day(0, false)
+	_check(FarmState.is_mature(bed) and FarmState.harvest(bed) == "daffodil", "la jonquille pousse et se cueille")
+	FarmState.till(bed)
+	FarmState.plant(bed, "carrot")
+	FarmState.water(bed)
+	FarmState.advance_day(1, false)
+	_check(FarmState.get_crop(bed) == "" and int(FarmState.last_night.season) == 1, "une culture morte au changement de saison est signalée")
 	# ---- Scènes de cœur : au moins trois par habitant
 	var few: Array = []
 	for id: String in GameData.npcs:
@@ -61,6 +75,8 @@ func _ready() -> void:
 	_check(not Settings.music and Music.current() == "", "à 0 %, la musique est coupée")
 	Settings.cycle_music_volume()
 	_check(Settings.music, "et elle revient")
+	while Settings.music_volume != mv:  # on remet le réglage du joueur
+		Settings.cycle_music_volume()
 	# ---- Sauvegarde sûre
 	SaveManager.save_game()
 	SaveManager.save_game()

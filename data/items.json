@@ -1942,5 +1942,23 @@
 		"stack": 99,
 		"sell": 0,
 		"description": "Remis par le maire au bilan de l'année : la preuve qu'une ferme fait revivre la vallée. À poser dans la maison."
+	},
+	"seed_daffodil": {
+		"name": "Bulbes de jonquille",
+		"type": "seed",
+		"crop": "daffodil",
+		"icon": 194,
+		"stack": 99,
+		"buy": 20,
+		"sell": 10
+	},
+	"seed_poppy": {
+		"name": "Graines de coquelicot",
+		"type": "seed",
+		"crop": "poppy",
+		"icon": 195,
+		"stack": 99,
+		"buy": 30,
+		"sell": 15
 	}
 }

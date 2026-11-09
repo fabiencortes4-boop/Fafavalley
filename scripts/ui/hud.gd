@@ -313,6 +313,10 @@ func _layout() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var hb := _hotbar.get_combined_minimum_size()
 	_hotbar.size = hb
+	# Écran étroit (téléphone tenu en hauteur) : la barre rétrécit pour tenir
+	var k := minf(1.0, (vp.x - 6.0) / hb.x)
+	_hotbar.scale = Vector2(k, k)
+	hb *= k
 	_hotbar.position = Vector2((vp.x - hb.x) / 2.0, vp.y - hb.y - 3)
 	# Bouton Action au-dessus de la barre, à droite ; jauges au-dessus
 	_action_button.position = Vector2(vp.x - ACTION_SIZE - 10, _hotbar.position.y - ACTION_SIZE - 8)
@@ -703,6 +707,27 @@ func is_over_ui(event: InputEvent) -> bool:
 
 
 # ------------------------------------------------------------ fenêtres
+## Une fenêtre s'adapte à l'écran : en hauteur (portrait), ses listes
+## s'allongent pour profiter de la place ; si elle déborde (écran étroit),
+## elle rétrécit, centrée.
+func _fit_panel(panel: PanelContainer) -> void:
+	if not is_instance_valid(panel):
+		return
+	var vp := get_viewport().get_visible_rect().size
+	if vp.y > vp.x * 1.2 and not panel.has_meta("grown"):
+		panel.set_meta("grown", true)
+		var scrolls := panel.find_children("*", "ScrollContainer", true, false)
+		var room := vp.y * 0.86 - panel.size.y
+		if room > 20.0 and not scrolls.is_empty():
+			for sc: Node in scrolls:
+				var c := sc as Control
+				c.custom_minimum_size.y += room / scrolls.size()
+			return  # la fenêtre va se redimensionner : on revient ici
+	var k := minf(1.0, minf((vp.x - 8.0) / maxf(panel.size.x, 1.0), (vp.y - 8.0) / maxf(panel.size.y, 1.0)))
+	panel.pivot_offset = panel.size / 2.0
+	panel.scale = Vector2(k, k)
+
+
 func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 	# Une bannière en cours est remise en file : elle reviendra après le menu
 	if _banner != null and _banner.is_inside_tree() and _banner.has_meta("data"):
@@ -734,6 +759,8 @@ func _open_modal(title: String, closable: bool = true) -> VBoxContainer:
 	_modal.add_child(center)
 	var panel := PanelContainer.new()
 	center.add_child(panel)
+	panel.resized.connect(_fit_panel.bind(panel))
+	get_tree().process_frame.connect(_fit_panel.bind(panel), CONNECT_ONE_SHOT)
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(220, 0)
 	box.add_theme_constant_override("separation", 4)
@@ -881,7 +908,8 @@ func open_settings() -> void:
 
 func _menu_grid(outer: Container) -> GridContainer:
 	var box := GridContainer.new()
-	box.columns = 3
+	var vp := get_viewport().get_visible_rect().size
+	box.columns = 2 if vp.y > vp.x else 3  # écran en hauteur : deux colonnes
 	box.add_theme_constant_override("h_separation", 6)
 	box.add_theme_constant_override("v_separation", 6)
 	outer.add_child(box)
@@ -2281,6 +2309,8 @@ func _refresh_tutorial() -> void:
 func _nature_report() -> void:
 	var n: Dictionary = FarmState.last_night
 	var parts: Array = []
+	if int(n.get("season", 0)) > 0:
+		parts.append("%d culture(s) morte(s) avec le changement de saison (seule la serre les protège)" % int(n.season))
 	if int(n.get("withered", 0)) > 0:
 		parts.append("%d culture(s) fanée(s) faute d'arrosage" % int(n.withered))
 	if int(n.get("weeds", 0)) > 0:

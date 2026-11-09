@@ -152,6 +152,15 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   écrit à la ferme. Six domaines notés sur 4 (ventes et récoltes de l'année, amitiés,
   album, élevage, histoire), note finale de 1 à 5 étoiles, 600 or par étoile et le
   Trophée de Valfleur à poser dans la maison. Succès « Ferme modèle » pour 5 étoiles.
+- **Fleurs semées** : bulbes de jonquille (printemps) et graines de coquelicot (été) chez
+  Rosalie ; elles poussent sur la terre labourée et donnent les mêmes fleurs que la
+  cueillette. Une culture qui meurt au changement de saison est signalée au réveil, et un
+  semis trop tardif pour mûrir avant la fin de la saison est signalé tout de suite.
+- **Tous les écrans** : interface de référence 480x270 en paysage (l'aspect s'étend sur
+  les tablettes 4:3 comme sur les téléphones très allongés) et 360x640 quand l'écran est
+  tenu en hauteur (navigateur d'un téléphone) ; caméra 3D qui garde la largeur de champ en
+  portrait ; barre rapide et fenêtres qui rétrécissent si elles débordent, listes qui
+  s'allongent en portrait, réglages sur deux colonnes.
 - **Hiver** : choux de Bruxelles et poireaux d'hiver chez Rosalie ; le bois abattu en
   hiver est plus sec : moitié plus de bûches.
 - **Scènes de cœur** : chaque habitant en a désormais trois (2, 5 et 8 cœurs).

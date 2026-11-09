@@ -138,6 +138,9 @@ SEEDED = 7  # petite butte de terre semée
 
 # Cultures d'hiver ajoutées plus tard : icônes 189-192 (fin de planche)
 LATE_CROPS = ["brussels_sprout", "winter_leek"]
+# Fleurs semées (jonquille, coquelicot) : seulement le sachet (194-195), la
+# récolte garde l'icône de la fleur cueillie
+FLOWER_CROPS = ["daffodil", "poppy"]
 
 
 def new_crops():
@@ -216,7 +219,7 @@ def crop_icons():
     ne pas décaler les icônes existantes)."""
     icons = []
     for cid, art in new_crops():
-        if cid in LATE_CROPS:
+        if cid in LATE_CROPS or cid in FLOWER_CROPS:
             continue
         icons += crop_icon_pair(cid, art)
     return icons
@@ -996,6 +999,8 @@ def extend_icons(sheet):
     # 189-192 : cultures d'hiver (graines, récolte) ; 193 : trophée de Valfleur
     extra += late_crop_icons()
     extra.append(draw_misc("trophy"))
+    data = json.load(open(os.path.join(ROOT, "data", "crops.json")))
+    extra += [crop_icon_pair(cid, data[cid]["art"])[0] for cid in FLOWER_CROPS]
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

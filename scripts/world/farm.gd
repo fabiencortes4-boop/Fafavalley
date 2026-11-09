@@ -747,6 +747,14 @@ func _plant(cell: Vector2i, crop_id: String) -> void:
 		_deferring = false
 	else:
 		Inventory.remove_from_slot(Inventory.selected, 1)
+		# Semé trop tard : la culture mourra au changement de saison avant d'être mûre
+		var need := 0
+		for d: Variant in GameData.crop(crop_id).get("stage_days", []):
+			need += int(d)
+		var left := TimeManager.DAYS_PER_SEASON - TimeManager.day + 1
+		var next_ok := GameData.crop_in_season(crop_id, (TimeManager.season + 1) % 4)
+		if need > left and not next_ok and not FarmState.in_greenhouse(cell):
+			EventBus.toast("Attention : il faut %d jours à cette culture, il n'en reste que %d dans la saison." % [need, left])
 		_gesture("bend", cell, func() -> void:
 			Sfx.play("plant")
 			Fx.puff(_entities, cell_center(cell), Color(0.62, 0.45, 0.3, 0.7), 0.9))

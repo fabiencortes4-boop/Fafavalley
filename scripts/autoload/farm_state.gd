@@ -263,7 +263,7 @@ func sell_shipping(report: Dictionary) -> int:
 
 ## Simulation d'une nuit : croissance des cultures arrosées, fin de saison.
 func advance_day(new_season: int, raining: bool) -> void:
-	last_night = {"weeds": 0, "withered": 0, "spread": 0, "new": 0, "dried": 0}
+	last_night = {"weeds": 0, "withered": 0, "spread": 0, "new": 0, "dried": 0, "season": 0}
 	var reclaimed: Array[Vector2i] = []
 	for cell: Vector2i in tiles:
 		var t: Dictionary = tiles[cell]
@@ -285,6 +285,7 @@ func advance_day(new_season: int, raining: bool) -> void:
 			if not sheltered and not GameData.crop_in_season(t.crop, new_season):
 				t.crop = ""  # la culture meurt hors saison (sauf dans la serre)
 				t.age = 0
+				last_night.season += 1
 			elif t.watered:
 				t.age += 1
 				if t.get("fert", false):

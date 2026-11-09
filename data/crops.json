@@ -652,5 +652,61 @@
 			],
 			"color": "#eef4dc"
 		}
+	},
+	"daffodil": {
+		"name": "Jonquille",
+		"seasons": [
+			0
+		],
+		"stage_days": [
+			1,
+			2,
+			2
+		],
+		"harvest": "daffodil",
+		"regrow": 0,
+		"sprite_row": 26,
+		"art": {
+			"base": 2,
+			"hue": 52,
+			"sat": 0.95,
+			"light": 0.1,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "flower",
+			"model": [
+				"nature",
+				"flower_yellowA"
+			]
+		}
+	},
+	"poppy": {
+		"name": "Coquelicot",
+		"seasons": [
+			1
+		],
+		"stage_days": [
+			1,
+			2,
+			2
+		],
+		"harvest": "poppy",
+		"regrow": 0,
+		"sprite_row": 27,
+		"art": {
+			"base": 2,
+			"hue": 2,
+			"sat": 0.9,
+			"light": 0.0,
+			"mode": "fruit"
+		},
+		"look": {
+			"type": "flower",
+			"model": [
+				"nature",
+				"flower_redA"
+			]
+		}
 	}
 }

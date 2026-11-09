@@ -8,7 +8,25 @@ var _arrival: Vector2 = Vector2.INF
 var _view: View3D
 
 
+## Tous les écrans : la taille de référence de l'interface suit l'orientation.
+## En paysage 480x270 (téléphones, tablettes, ordinateurs : l'aspect « expand »
+## agrandit le côté libre). Tenu en hauteur (navigateur d'un téléphone en
+## portrait), 360x640 : l'interface reste à une taille lisible au doigt au
+## lieu de rétrécir de moitié, et les fenêtres profitent de la hauteur.
+const BASE_LANDSCAPE := Vector2i(480, 270)
+const BASE_PORTRAIT := Vector2i(360, 640)
+
+
+func _fit_screen() -> void:
+	var win := get_tree().root
+	var want := BASE_PORTRAIT if win.size.y > win.size.x else BASE_LANDSCAPE
+	if win.content_scale_size != want:
+		win.content_scale_size = want
+
+
 func _ready() -> void:
+	get_tree().root.size_changed.connect(_fit_screen)
+	_fit_screen()
 	_title_layer = CanvasLayer.new()
 	add_child(_title_layer)
 	var root := Control.new()
