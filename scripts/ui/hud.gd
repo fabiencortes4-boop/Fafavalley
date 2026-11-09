@@ -840,25 +840,26 @@ func open_settings() -> void:
 	_add_button(box, "Vue : %s" % ("3D" if Settings.view_3d else "2D"), func() -> void:
 		Settings.toggle_view()
 		open_settings())
-	_add_button(box, "Texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
+	_add_button(box, "Taille du texte : %s" % Settings.TEXT_NAMES[Settings.text_size], func() -> void:
 		Settings.cycle_text_size()
 		open_settings())
-	_add_button(box, "Qualité : %s" % Settings.QUALITY_NAMES[Settings.quality], func() -> void:
+	_add_button(box, "Graphismes : %s" % Settings.QUALITY_NAMES[Settings.quality], func() -> void:
 		Settings.cycle_quality()
 		open_settings())
-	_add_button(box, "Son : %s" % ("oui" if Settings.sound else "non"), func() -> void:
-		Settings.toggle_sound()
+	_add_button(box, "Bruitages : %s" % ("%d %%" % Settings.sound_volume if Settings.sound_volume > 0 else "coupés"), func() -> void:
+		Settings.cycle_sound_volume()
+		Sfx.play("click")
 		open_settings())
-	_add_button(box, "Musique : %s" % ("oui" if Settings.music else "non"), func() -> void:
-		Settings.toggle_music()
+	_add_button(box, "Musique : %s" % ("%d %%" % Settings.music_volume if Settings.music_volume > 0 else "coupée"), func() -> void:
+		Settings.cycle_music_volume()
 		open_settings())
 	_add_button(box, "Vibrations : %s" % ("oui" if Settings.vibration else "non"), func() -> void:
 		Settings.toggle_vibration()
 		open_settings())
-	_add_button(box, "Texte : %s" % Settings.TEXT_SPEEDS[Settings.text_speed], func() -> void:
+	_add_button(box, "Défilement : %s" % Settings.TEXT_SPEEDS[Settings.text_speed], func() -> void:
 		Settings.cycle_text_speed()
 		open_settings())
-	_add_button(box, "Qualité : %s" % ("étoile + points" if Settings.colorblind else "étoile"), func() -> void:
+	_add_button(box, "Qualité des objets : %s" % ("étoile + points" if Settings.colorblind else "étoile"), func() -> void:
 		Settings.toggle_colorblind()
 		_refresh_hotbar()
 		open_settings())

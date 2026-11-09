@@ -1893,5 +1893,54 @@
 		"stack": 99,
 		"sell": 2,
 		"description": "Des pavés posés sur l'herbe de la ferme : on y marche, les herbes folles n'y poussent pas. La pioche les reprend."
+	},
+	"seed_brussels_sprout": {
+		"name": "Graines de chou de Bruxelles",
+		"type": "seed",
+		"crop": "brussels_sprout",
+		"icon": 189,
+		"stack": 99,
+		"buy": 70,
+		"sell": 35
+	},
+	"brussels_sprout": {
+		"name": "Chou de Bruxelles",
+		"type": "crop",
+		"icon": 190,
+		"stack": 99,
+		"sell": 160,
+		"edible": [
+			30,
+			15
+		]
+	},
+	"seed_winter_leek": {
+		"name": "Graines de poireau d'hiver",
+		"type": "seed",
+		"crop": "winter_leek",
+		"icon": 191,
+		"stack": 99,
+		"buy": 40,
+		"sell": 20
+	},
+	"winter_leek": {
+		"name": "Poireau d'hiver",
+		"type": "crop",
+		"icon": 192,
+		"stack": 99,
+		"sell": 90,
+		"edible": [
+			25,
+			12
+		]
+	},
+	"valfleur_trophy": {
+		"name": "Trophée de Valfleur",
+		"type": "furniture",
+		"furniture": "trophy",
+		"icon": 193,
+		"stack": 99,
+		"sell": 0,
+		"description": "Remis par le maire au bilan de l'année : la preuve qu'une ferme fait revivre la vallée. À poser dans la maison."
 	}
 }

@@ -12,6 +12,7 @@ Les index des tuiles ci-dessous correspondent à la numérotation Kenney
 Les index de world.png sont repris dans scripts/world/world_tiles.gd :
 garder les deux fichiers synchronisés.
 """
+import json
 import os
 
 from PIL import Image
@@ -135,6 +136,10 @@ CROP_ROWS = [0, 1, 2, 3, 4, 5]
 SEEDED = 7  # petite butte de terre semée
 
 
+# Cultures d'hiver ajoutées plus tard : icônes 189-192 (fin de planche)
+LATE_CROPS = ["brussels_sprout", "winter_leek"]
+
+
 def new_crops():
     """Cultures ajoutées (data/crops.json, champ « art ») : dessinées en
     recolorant une culture d'origine du pack Tiny Farm."""
@@ -206,9 +211,24 @@ SUNFLOWER = 6 * 12 + 11  # tournesol du pack Tiny Farm
 
 
 def crop_icons():
-    """Icônes des cultures ajoutées : sachet de graines, puis récolte."""
+    """Icônes des cultures ajoutées : sachet de graines, puis récolte. Les
+    cultures marquées « late_icons » ont leurs icônes en fin de planche (pour
+    ne pas décaler les icônes existantes)."""
     icons = []
     for cid, art in new_crops():
+        if cid in LATE_CROPS:
+            continue
+        icons += crop_icon_pair(cid, art)
+    return icons
+
+
+def late_crop_icons():
+    data = json.load(open(os.path.join(ROOT, "data", "crops.json")))
+    return [icon for cid in LATE_CROPS for icon in crop_icon_pair(cid, data[cid]["art"])]
+
+
+def crop_icon_pair(cid, art):
+    if True:
         harvest = tile(FARM, SUNFLOWER) if cid == "sunflower" else recolor_hue(tile(FARM, art["base"] * 12 + 8), art)
         packet = tile(FARM, 9)  # sachet (celui des carottes), image remplacée
         px = packet.load()
@@ -219,8 +239,7 @@ def crop_icons():
                     px[x, y] = paper
         small = harvest.resize((8, 8), Image.NEAREST)
         packet.alpha_composite(small, (4, 5))
-        icons += [packet, harvest]
-    return icons
+        return [packet, harvest]
 
 
 def icons():
@@ -759,6 +778,15 @@ def draw_misc(kind):
                 for x in range(cx - r, cx + r):
                     if (x - cx + 0.5) ** 2 + (y - cy + 0.5) ** 2 <= r * r:
                         px[x, y] = c + (255,)
+    elif kind == "trophy":
+        rect(4, 3, 12, 4, (250, 215, 90))
+        for y in range(4, 9):
+            w = 4 - (y - 4) // 2
+            rect(8 - w, y, 8 + w, y + 1, (240, 190, 60) if y % 2 else (255, 225, 110))
+        rect(2, 4, 4, 7, (220, 170, 50))
+        rect(12, 4, 14, 7, (220, 170, 50))
+        rect(7, 9, 9, 12, (220, 170, 50))
+        rect(4, 12, 12, 15, (120, 80, 50))
     elif kind == "plan":
         rect(3, 2, 13, 14, (235, 225, 195))
         for y in (5, 8, 11):
@@ -965,6 +993,9 @@ def extend_icons(sheet):
     extra += [draw_misc(k) for k in ("oak_cask", "armchair", "wardrobe", "clock")]
     # 186-188 : clôture en bois, chemin de planches, chemin pavé
     extra += [draw_misc(k) for k in ("fence", "path_wood", "path_stone")]
+    # 189-192 : cultures d'hiver (graines, récolte) ; 193 : trophée de Valfleur
+    extra += late_crop_icons()
+    extra.append(draw_misc("trophy"))
     out = new_img(sheet.width + T * len(extra), T)
     out.alpha_composite(sheet, (0, 0))
     for k, img in enumerate(extra):

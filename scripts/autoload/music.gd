@@ -48,6 +48,14 @@ func _refresh() -> void:
 	if _map_id == "":
 		return
 	play(track_for(_map_id) if Settings.music else "")
+	# Volume réglé dans le menu : appliqué tout de suite au morceau en cours
+	var p := _players[_active]
+	if _track != "" and p.playing and p.volume_db > -39.0:
+		p.volume_db = _target_db()
+
+
+func _target_db() -> float:
+	return VOLUME_DB + Settings.volume_db(Settings.music_volume)
 
 
 func play(track: String) -> void:
@@ -65,7 +73,7 @@ func play(track: String) -> void:
 		return
 	p.volume_db = -40.0
 	p.play()
-	_fade(p, VOLUME_DB, false)
+	_fade(p, _target_db(), false)
 
 
 func current() -> String:

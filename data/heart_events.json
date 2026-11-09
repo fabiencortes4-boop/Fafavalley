@@ -121,6 +121,30 @@
 					]
 				]
 			}
+		},
+		{
+			"hearts": 8,
+			"title": "Le marteau réparé",
+			"lines": [
+				"Gaston te tend le vieux marteau de son père. Le manche est neuf, en chêne clair.",
+				"J'ai refait le manche avec du bois de ta clairière. La tête, je l'ai reforgée cette nuit.",
+				"Il est à toi maintenant. Mon père aurait voulu qu'il serve à reconstruire, pas à prendre la poussière."
+			],
+			"choice": {
+				"prompt": "Que réponds-tu ?",
+				"options": [
+					[
+						"Je le garderai précieusement.",
+						150,
+						"Garde-le surtout en main. Un marteau, ça vit quand on s'en sert."
+					],
+					[
+						"Il est trop précieux, garde-le.",
+						60,
+						"Têtu, hein ? ...Bon. Il sera accroché ici, et il t'attendra."
+					]
+				]
+			}
 		}
 	],
 	"odette": [
@@ -168,6 +192,30 @@
 						"Où est-il aujourd'hui ?",
 						60,
 						"Personne ne le sait. Mais je suis sûre qu'il nous regarde."
+					]
+				]
+			}
+		},
+		{
+			"hearts": 8,
+			"title": "Les graines de Firmin",
+			"lines": [
+				"Odette ouvre une petite boîte en fer, pleine de sachets écrits à la main.",
+				"Les graines de Firmin. Il me les a confiées avant de partir : « Pour celui qui reprendra la ferme. »",
+				"J'ai attendu longtemps de savoir à qui les donner. Je crois que je le sais, maintenant."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"Je les sèmerai au printemps, promis.",
+						150,
+						"Il serait si fier... Et moi aussi, mon trésor."
+					],
+					[
+						"Plantons-les ensemble, dans ton jardin.",
+						130,
+						"Dans mon jardin ? Oh... Avec plaisir. Mes genoux t'en remercient d'avance."
 					]
 				]
 			}
@@ -292,6 +340,30 @@
 						"Ajoute une blague.",
 						80,
 						"Une blague... « Pourquoi la fontaine est triste ? » Hum. J'y travaille."
+					]
+				]
+			}
+		},
+		{
+			"hearts": 8,
+			"title": "Le registre rouvert",
+			"lines": [
+				"Bertrand ouvre le registre de la mairie à une page blanche, la plume tremblante d'émotion.",
+				"Pour la première fois depuis dix ans, je n'écris pas un départ. J'écris une arrivée : une famille qui revient s'installer.",
+				"Il y a ton nom en haut de la page. C'est toi qui as rallumé ce village."
+			],
+			"choice": {
+				"prompt": "Que dis-tu ?",
+				"options": [
+					[
+						"C'est tout le village qui l'a fait.",
+						150,
+						"Modeste, en plus... Valfleur a de la chance."
+					],
+					[
+						"Mets aussi le nom de Firmin.",
+						120,
+						"Firmin... Oui. Tu as raison. Il l'a mérité."
 					]
 				]
 			}
@@ -493,6 +565,30 @@
 					]
 				]
 			}
+		},
+		{
+			"hearts": 8,
+			"title": "Le premier agneau",
+			"lines": [
+				"Léon te réveille presque à l'aube, les yeux brillants, devant l'étable.",
+				"Elle a eu son petit cette nuit ! Le premier agneau né à Valfleur depuis des années.",
+				"Il lui faut un nom. Je voulais que ce soit toi qui le choisisses."
+			],
+			"choice": {
+				"prompt": "Quel nom ?",
+				"options": [
+					[
+						"Firmin, en souvenir.",
+						140,
+						"Firmin... Il aurait ri. Et il aurait été touché. C'est parfait."
+					],
+					[
+						"Printemps, comme un nouveau départ.",
+						140,
+						"Printemps. Oui. Le printemps de la vallée. Je l'aime déjà."
+					]
+				]
+			}
 		}
 	],
 	"theo": [
@@ -540,6 +636,30 @@
 						"Quand tu seras plus grand.",
 						50,
 						"Je grandis vite, tu sais ! Déjà deux centimètres cette année !"
+					]
+				]
+			}
+		},
+		{
+			"hearts": 8,
+			"title": "L'assistant officiel",
+			"lines": [
+				"Théo arrive en courant, un badge en carton épinglé sur sa chemise : « ASSISTANT DE LA FERME ».",
+				"Je l'ai fabriqué moi-même ! Mamie a dit que je pouvais venir t'aider le samedi, si tu veux bien.",
+				"Je sais déjà arroser, et je n'ai presque plus peur des poules."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"Bienvenue dans l'équipe, assistant !",
+						160,
+						"OUAIS ! Je vais le dire à tout le monde ! ...Je peux avoir un chapeau aussi ?"
+					],
+					[
+						"Seulement si tu fais tes devoirs d'abord.",
+						90,
+						"Rooh... D'accord. Mais après, c'est la ferme !"
 					]
 				]
 			}
@@ -667,6 +787,30 @@
 					]
 				]
 			}
+		},
+		{
+			"hearts": 8,
+			"title": "La soupe retrouvée",
+			"lines": [
+				"Marius pose devant toi un bol fumant, sans un mot, et attend.",
+				"J'ai suivi ton conseil. J'ai mis des légumes de ta ferme, cueillis le matin même.",
+				"C'est elle. C'est exactement sa soupe. Je n'aurais jamais cru la goûter de nouveau."
+			],
+			"choice": {
+				"prompt": "Que dis-tu ?",
+				"options": [
+					[
+						"Elle serait fière de toi, Marius.",
+						150,
+						"...Tu vas me faire pleurer devant les clients. Celle-là, elle est pour la maison. Toujours."
+					],
+					[
+						"Il faut la mettre sur la carte !",
+						110,
+						"« La soupe d'Hélène ». Oui. Comme ça, tout le monde se souviendra d'elle."
+					]
+				]
+			}
 		}
 	],
 	"nina": [
@@ -714,6 +858,30 @@
 						"C'est juste une vieille carte.",
 						-20,
 						"Pour toi, peut-être."
+					]
+				]
+			}
+		},
+		{
+			"hearts": 8,
+			"title": "Le mille deux cent quarante-quatrième",
+			"lines": [
+				"Nina t'attend en haut du phare, le vieux carnet ouvert sur une page neuve.",
+				"Cette nuit, un bateau de pêche s'est perdu dans la brume. Il a suivi la lumière jusqu'au port. Sain et sauf.",
+				"J'ai enfin écrit le mille deux cent quarante-quatrième. Et c'est grâce à toi que la lumière brillait."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"C'est toi qui veillais, Nina.",
+						150,
+						"Tous les deux, alors. Je vais écrire ton nom à côté du sien."
+					],
+					[
+						"Ton grand-père serait fier.",
+						130,
+						"Je crois qu'il l'est. Ce matin, la mer était si calme..."
 					]
 				]
 			}
@@ -767,6 +935,30 @@
 					]
 				]
 			}
+		},
+		{
+			"hearts": 8,
+			"title": "Le coffre ouvert",
+			"lines": [
+				"Basile pose le vieux coffre sur le comptoir. Ses mains hésitent sur le fermoir.",
+				"J'ai décidé de l'ouvrir. Mais pas tout seul. Tu restes à côté de moi ?",
+				"Le couvercle grince : dedans, des lettres, liées par un ruban. Celles d'un marin à sa famille, jamais envoyées."
+			],
+			"choice": {
+				"prompt": "Que proposes-tu ?",
+				"options": [
+					[
+						"Retrouvons sa famille et rendons-les.",
+						160,
+						"Un marchand qui donne au lieu de vendre... C'est la meilleure affaire de ma vie. Merci."
+					],
+					[
+						"Ce trésor-là vaut plus que de l'or.",
+						120,
+						"Tu as raison. Trente ans que j'attendais d'être déçu... et je ne le suis pas du tout."
+					]
+				]
+			}
 		}
 	],
 	"celeste": [
@@ -814,6 +1006,30 @@
 						"Je n'ai pas le temps.",
 						-20,
 						"Oh... Une autre fois, alors."
+					]
+				]
+			}
+		},
+		{
+			"hearts": 8,
+			"title": "Le dernier couplet",
+			"lines": [
+				"Céleste t'entraîne jusqu'à la fontaine de la place, sa guitare sur le dos.",
+				"Je l'ai écrit, le dernier couplet. Celui où l'eau revient. Je voulais que tu l'entendes en premier.",
+				"Elle joue doucement. Le bruit de l'eau se mêle à la chanson, comme s'il avait toujours fait partie de la mélodie."
+			],
+			"choice": {
+				"prompt": "Ta réponse :",
+				"options": [
+					[
+						"C'est la plus belle chanson du monde.",
+						150,
+						"Du monde, carrément ? ...Je la jouerai à la prochaine fête. Pour toi."
+					],
+					[
+						"Joue-la encore une fois.",
+						140,
+						"Avec plaisir. Autant de fois que tu voudras."
 					]
 				]
 			}

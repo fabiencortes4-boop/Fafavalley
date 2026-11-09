@@ -18,9 +18,25 @@ func _ready() -> void:
 			letters = data
 
 
+## Lettres écrites pendant la partie (bilan de l'année...), sauvegardées
+var custom: Dictionary = {}
+
+
 func reset() -> void:
 	received.clear()
 	pending.clear()
+	for id: String in custom:
+		letters.erase(id)
+	custom.clear()
+
+
+## Dépose une lettre écrite à la volée.
+func send_custom(id: String, letter: Dictionary) -> void:
+	custom[id] = letter
+	letters[id] = letter
+	received[id] = true
+	pending.append(id)
+	mail_changed.emit()
 
 
 ## Dépose les lettres dont les conditions sont remplies (chaque matin).
@@ -72,11 +88,15 @@ func open_next() -> Dictionary:
 
 
 func to_dict() -> Dictionary:
-	return {"received": received.keys(), "pending": pending.duplicate()}
+	return {"received": received.keys(), "pending": pending.duplicate(), "custom": custom.duplicate(true)}
 
 
 func from_dict(data: Dictionary) -> void:
 	reset()
+	var saved: Dictionary = data.get("custom", {})
+	for id: String in saved:
+		custom[id] = saved[id]
+		letters[id] = saved[id]
 	for id: Variant in data.get("received", []):
 		received[str(id)] = true
 	for id: Variant in data.get("pending", []):

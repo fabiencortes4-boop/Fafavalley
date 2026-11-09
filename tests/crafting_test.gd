@@ -87,8 +87,13 @@ func _ready() -> void:
 	_check(row.all(func(c: Vector2i) -> bool: return FarmState.is_watered(c)), "il arrose 3 cases d'un coup")
 	# Pioche renforcée dans la mine : 2 dégâts par coup
 	EventBus.map_change_requested.emit("mine:12", Vector2i.ZERO)
-	for i in 3:
+	# On attend que la mine soit vraiment chargée (machine chargée : parfois
+	# plus de quelques images), au plus 3 secondes
+	for i in 180:
 		await get_tree().process_frame
+		if _main.call("current_map") is MineLevel:
+			break
+	await get_tree().process_frame
 	_main.get("_hud").close_modal()
 	var mine: MineLevel = _main.call("current_map")
 	var rocks: Dictionary = mine.get("_rock_data")

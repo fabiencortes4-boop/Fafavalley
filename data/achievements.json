@@ -189,6 +189,15 @@
 		"gold": 400
 	},
 	{
+		"id": "five_stars",
+		"name": "Ferme modèle",
+		"text": "Obtenir 5 étoiles au bilan de l'année",
+		"stat": "flag:farm_5_stars",
+		"goal": 1,
+		"icon": "valfleur_trophy",
+		"gold": 1000
+	},
+	{
 		"id": "met_all",
 		"name": "Tout le monde se connaît",
 		"text": "Rencontrer les 14 habitants",

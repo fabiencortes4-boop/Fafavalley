@@ -21,18 +21,16 @@ static func slot_path(s: int) -> String:
 
 
 func has_save(s: int = -1) -> bool:
-	return FileAccess.file_exists(slot_path(slot if s < 0 else s))
+	var path := slot_path(slot if s < 0 else s)
+	return FileAccess.file_exists(path) or FileAccess.file_exists(path + ".bak")
 
 
 ## Résumé d'une sauvegarde pour l'écran titre : {} si l'emplacement est vide.
 func summary(s: int) -> Dictionary:
 	if not has_save(s):
 		return {}
-	var file := FileAccess.open(slot_path(s), FileAccess.READ)
-	if file == null:
-		return {}
-	var data: Variant = JSON.parse_string(file.get_as_text())
-	if not data is Dictionary:
+	var data := _read(slot_path(s))
+	if data.is_empty():
 		return {}
 	var p: Dictionary = data.get("player", {})
 	var t: Dictionary = data.get("time", {})
@@ -96,24 +94,56 @@ func save_game() -> void:
 		"collections": Collections.to_dict(),
 		"machines": Machines.to_dict(),
 		"woods": Woods.to_dict(),
+		"year_review": YearReview.to_dict(),
 		"tips": Tips.to_dict(),
 		"achievements": Achievements.to_dict(),
 	}
-	var file := FileAccess.open(slot_path(slot), FileAccess.WRITE)
+	# Écriture sûre : fichier temporaire, puis l'ancienne sauvegarde devient
+	# la copie de secours (.bak) et la nouvelle prend sa place. Une coupure
+	# (batterie, appli fermée) pendant l'écriture n'abîme jamais la partie.
+	var path := slot_path(slot)
+	var tmp := path + ".tmp"
+	var file := FileAccess.open(tmp, FileAccess.WRITE)
 	if file == null:
 		push_error("Sauvegarde impossible : %s" % FileAccess.get_open_error())
 		return
 	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+	if FileAccess.file_exists(path):
+		if FileAccess.file_exists(path + ".bak"):
+			DirAccess.remove_absolute(path + ".bak")
+		DirAccess.rename_absolute(path, path + ".bak")
+	DirAccess.rename_absolute(tmp, path)
+
+
+## La dernière partie chargée venait de la copie de secours
+var recovered: bool = false
+
+
+## Contenu d'une sauvegarde ({} si illisible) : la copie de secours prend le
+## relais si le fichier principal est abîmé.
+func _read(path: String) -> Dictionary:
+	for p: String in [path, path + ".bak"]:
+		if not FileAccess.file_exists(p):
+			continue
+		var f := FileAccess.open(p, FileAccess.READ)
+		if f == null:
+			continue
+		var data: Variant = JSON.parse_string(f.get_as_text())
+		if data is Dictionary:
+			if p != path:
+				push_warning("Sauvegarde abîmée : partie récupérée depuis la copie de secours")
+				recovered = true
+			return data
+	return {}
 
 
 func load_game() -> bool:
 	if not has_save():
 		return false
-	var file := FileAccess.open(slot_path(slot), FileAccess.READ)
-	if file == null:
-		return false
-	var data: Variant = JSON.parse_string(file.get_as_text())
-	if not data is Dictionary:
+	recovered = false
+	var data := _read(slot_path(slot))
+	if data.is_empty():
 		push_error("Sauvegarde corrompue")
 		return false
 	TimeManager.from_dict(data.get("time", {}))
@@ -140,6 +170,7 @@ func load_game() -> bool:
 			Collections.discover(id)
 	Achievements.from_dict(data.get("achievements", {}))
 	Woods.from_dict(data.get("woods", {}))
+	YearReview.from_dict(data.get("year_review", {}))
 	Machines.from_dict(data.get("machines", {}))
 	Tips.from_dict(data.get("tips", {}))
 	HeartEvents.from_dict(data.get("hearts_seen", {}))

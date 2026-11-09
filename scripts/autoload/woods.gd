@@ -130,6 +130,8 @@ func chop(cell: Vector2i, power: int, from: Vector2i, place: String = "forest") 
 		var wood := randi_range(int(info.wood[0]), int(info.wood[1]))
 		if Skills.roll("foraging", 6.0):
 			wood += wood / 2
+		if TimeManager.season == 3:
+			wood += wood / 2  # bois d'hiver : la sève est descendue, le bois est sec et dense
 		for i in wood:
 			out.drops.append("wood")
 		for i in randi_range(int(info.seeds[0]), int(info.seeds[1])):

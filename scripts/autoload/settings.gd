@@ -13,6 +13,10 @@ var zoom: float = DEFAULT_ZOOM
 var sound: bool = true
 var view_3d: bool = true
 var music: bool = true
+## Volumes séparés (en %) : musique et bruitages, par crans
+const VOLUME_STEPS := [0, 25, 50, 75, 100]
+var music_volume: int = 75
+var sound_volume: int = 100
 ## Vibrations du téléphone (récolte, coups, récompenses)
 var vibration: bool = true
 ## Accessibilité : qualité marquée par 1, 2 ou 3 points (pas seulement la
@@ -39,6 +43,10 @@ func _ready() -> void:
 		sound = bool(cfg.get_value("son", "actif", true))
 		view_3d = bool(cfg.get_value("affichage", "vue_3d", true))
 		music = bool(cfg.get_value("son", "musique", true))
+		music_volume = int(cfg.get_value("son", "volume_musique", 75 if music else 0))
+		sound_volume = int(cfg.get_value("son", "volume_bruitages", 100 if sound else 0))
+		music = music_volume > 0
+		sound = sound_volume > 0
 		vibration = bool(cfg.get_value("son", "vibrations", true))
 		colorblind = bool(cfg.get_value("accessibilite", "formes", false))
 		text_speed = clampi(int(cfg.get_value("accessibilite", "vitesse_texte", 1)), 0, 3)
@@ -66,8 +74,29 @@ func toggle_view() -> void:
 
 func toggle_sound() -> void:
 	sound = not sound
+	sound_volume = 100 if sound else 0
 	_save()
 	changed.emit()
+
+
+## Volume suivant (0, 25, 50, 75, 100 %) : 0 coupe complètement.
+func cycle_music_volume() -> void:
+	music_volume = VOLUME_STEPS[(VOLUME_STEPS.find(music_volume) + 1) % VOLUME_STEPS.size()]
+	music = music_volume > 0
+	_save()
+	changed.emit()
+
+
+func cycle_sound_volume() -> void:
+	sound_volume = VOLUME_STEPS[(VOLUME_STEPS.find(sound_volume) + 1) % VOLUME_STEPS.size()]
+	sound = sound_volume > 0
+	_save()
+	changed.emit()
+
+
+## Gain en dB d'un volume en % (0 % : silence).
+static func volume_db(percent: int) -> float:
+	return linear_to_db(maxf(percent, 0.1) / 100.0)
 
 
 ## Qualité conseillée pour cet appareil.
@@ -98,6 +127,7 @@ func apply_quality() -> void:
 
 func toggle_music() -> void:
 	music = not music
+	music_volume = 75 if music else 0
 	_save()
 	changed.emit()
 
@@ -153,6 +183,8 @@ func _save() -> void:
 	cfg.set_value("son", "actif", sound)
 	cfg.set_value("affichage", "vue_3d", view_3d)
 	cfg.set_value("son", "musique", music)
+	cfg.set_value("son", "volume_musique", music_volume)
+	cfg.set_value("son", "volume_bruitages", sound_volume)
 	cfg.set_value("son", "vibrations", vibration)
 	cfg.set_value("accessibilite", "formes", colorblind)
 	cfg.set_value("accessibilite", "vitesse_texte", text_speed)

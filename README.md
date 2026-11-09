@@ -148,6 +148,19 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   le joueur et la case visée (poteaux aux coins, partagés entre tronçons ; collision fine le
   long du bord, la case reste libre), chemin de planches et chemin pavé (on y marche,
   les herbes folles n'y poussent pas) ; la pioche les reprend.
+- **Bilan de l'année** (`scripts/autoload/year_review.gd`) : le 1er printemps, Bertrand
+  écrit à la ferme. Six domaines notés sur 4 (ventes et récoltes de l'année, amitiés,
+  album, élevage, histoire), note finale de 1 à 5 étoiles, 600 or par étoile et le
+  Trophée de Valfleur à poser dans la maison. Succès « Ferme modèle » pour 5 étoiles.
+- **Hiver** : choux de Bruxelles et poireaux d'hiver chez Rosalie ; le bois abattu en
+  hiver est plus sec : moitié plus de bûches.
+- **Scènes de cœur** : chaque habitant en a désormais trois (2, 5 et 8 cœurs).
+- **Réglages** : volume de la musique et des bruitages séparés (0 à 100 %, par crans),
+  libellés clarifiés (taille du texte, défilement, graphismes, qualité des objets).
+- **Sauvegarde sûre** : écriture dans un fichier temporaire puis échange, copie de secours
+  de la sauvegarde précédente (`.bak`) reprise automatiquement si la partie est abîmée.
+- **Symboles** (★ ☆ ♥ → ✓) : petite police de secours (sous-ensemble renommé de DejaVu
+  Sans, `assets/fonts/fafa_symbols.ttf`) ; sans elle, la version web affichait des carrés.
 - **Moins cubique, suite** : parois de la mine en roche irrégulière (plus sombres que les
   rochers à miner), cristaux de glace pointus, animaux à l'ombrage lisse, lits et tables de
   chevet qui ne rentrent plus dans les murs, herbes et petites plantes d'un vert naturel
@@ -388,6 +401,7 @@ godot --headless res://tests/port_test.tscn       # port, taverne du soir, chapi
 godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mariage
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/woods_test.tscn      # arbres à bois : abattage, souche, replantation, pousse
+godot --headless res://tests/year_test.tscn       # bilan de l'année, hiver, scènes de cœur, volumes, copie de secours
 godot --headless res://tests/world_test.tscn      # demandes, scènes de cœur, anniversaires, zones débloquées
 godot --headless res://tests/tutorial_test.tscn   # tutoriel, musique selon le lieu, taille du texte
 godot --headless res://tests/events_test.tscn     # fêtes, marché, animations, intérieurs
@@ -439,5 +453,7 @@ iOS : même principe, mais il faut un Mac avec Xcode et un compte Apple Develope
 
 Graphismes et police : **Kenney** (www.kenney.nl), licence CC0. Détails dans
 [`assets/LICENSE.md`](assets/LICENSE.md).
+Symboles de secours : sous-ensemble de **DejaVu Sans** renommé « Fafa Symboles » (licence
+Bitstream Vera / domaine public, voir `assets/fonts/fafa_symbols_LICENSE.txt`).
 Police des textes : **Nunito** (The Nunito Project Authors), SIL Open Font License 1.1,
 voir [`assets/fonts/nunito_OFL.txt`](assets/fonts/nunito_OFL.txt).

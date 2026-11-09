@@ -3128,6 +3128,15 @@ func _build_furniture() -> void:
 				_st_box(st, c + Vector3(0, 0.75, 0.04), Vector3(0.62, 0.5, 0.04), Color(0.75, 0.6, 0.3))
 				_st_box(st, c + Vector3(0, 0.8, 0.065), Vector3(0.54, 0.24, 0.01), Color(0.55, 0.78, 0.95))
 				_st_box(st, c + Vector3(0, 0.63, 0.065), Vector3(0.54, 0.14, 0.01), Color(0.4, 0.68, 0.38))
+			"trophy":
+				# Trophée de Valfleur : coupe dorée sur un socle de chêne
+				var gold := Color(0.95, 0.76, 0.3)
+				_st_box(st, c + Vector3(0, 0.3, -0.1), Vector3(0.4, 0.6, 0.4), Color(0.42, 0.26, 0.15))
+				_st_cyl(st, c + Vector3(0, 0.64, -0.1), 0.1, 0.08, gold.darkened(0.15), 10)
+				_st_cyl(st, c + Vector3(0, 0.74, -0.1), 0.03, 0.14, gold, 8)
+				_st_cyl(st, c + Vector3(0, 0.92, -0.1), 0.15, 0.24, gold, 12, "y", 0.2)
+				for x: float in [-0.21, 0.21]:
+					_st_cyl(st, c + Vector3(x, 0.95, -0.1), 0.04, 0.12, gold.darkened(0.1), 8)
 			"armchair":
 				# Fauteuil en chêne, coussin rouge, tourné vers la pièce
 				var oak := Color(0.42, 0.26, 0.15)

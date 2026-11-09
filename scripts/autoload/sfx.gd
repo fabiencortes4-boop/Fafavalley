@@ -50,7 +50,7 @@ func play(name: String, volume_db: float = 0.0, pitch_spread: float = 0.08, pitc
 	var p := _players[_next]
 	_next = (_next + 1) % _players.size()
 	p.stream = variants[randi() % variants.size()]
-	p.volume_db = float(VOLUME.get(name, 0.0)) + volume_db
+	p.volume_db = float(VOLUME.get(name, 0.0)) + volume_db + Settings.volume_db(Settings.sound_volume)
 	p.pitch_scale = pitch * (1.0 + randf_range(-pitch_spread, pitch_spread))
 	p.play()
 

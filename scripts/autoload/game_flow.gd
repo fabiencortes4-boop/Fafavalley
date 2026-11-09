@@ -34,6 +34,7 @@ func new_game() -> void:
 	Collections.reset()
 	Machines.reset()
 	Woods.reset()
+	YearReview.reset()
 	Tips.reset()
 	Achievements.reset()
 	for entry: Array in STARTING_ITEMS:
@@ -64,6 +65,8 @@ func end_day(passed_out: bool = false) -> void:
 		shipped += int(line.qty)
 	Story.bump("shipped", shipped)
 	TimeManager.advance_day()
+	if TimeManager.season == 0 and TimeManager.day == 1 and TimeManager.year > 1:
+		YearReview.new_year(TimeManager.year - 1)
 	FarmState.advance_day(TimeManager.season, TimeManager.is_raining())
 	PlayerState.restore(passed_out)
 	Relations.new_day()

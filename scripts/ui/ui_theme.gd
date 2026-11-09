@@ -23,13 +23,26 @@ static func font() -> FontFile:
 		_font.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
 		_font.hinting = TextServer.HINTING_LIGHT
 		_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
+		_font.fallbacks = [symbols()]
 	return _font
+
+
+static var _symbols: FontFile
+
+## Police de secours pour les symboles que Nunito n'a pas (★ ☆ ♥ → ← ✓) :
+## sans elle, la version web afficherait des carrés vides.
+static func symbols() -> FontFile:
+	if _symbols == null:
+		_symbols = load("res://assets/fonts/fafa_symbols.ttf")
+		_symbols.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+	return _symbols
 
 
 ## Police des titres (fenêtres, horloge, grands titres) : capitales pixel.
 static func title_font() -> FontFile:
 	if _title_font == null:
 		_title_font = _pixel(TITLE_FONT_PATH)
+		_title_font.fallbacks = [symbols()]
 	return _title_font
 
 
