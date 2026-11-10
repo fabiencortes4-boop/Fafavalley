@@ -151,6 +151,10 @@ func _ready() -> void:
 			Tips.show("rain_mushrooms")
 		if Soul.note != "":
 			show_toast(Soul.note)
+		if Partners.note != "":
+			show_toast(Partners.note)
+		if not Partners.known().is_empty():
+			Tips.show("partners")
 		if Soul.arrived:
 			Tips.show("soul")
 		_nature_report())
@@ -990,7 +994,70 @@ func open_soul() -> void:
 		small.call("Acquis, artisans %d : %s Le revers : %s" % [i + 1, Soul.ARTISAN_PERKS[i], Soul.ARTISAN_COSTS[i]], Color(0.85, 0.8, 0.7))
 	for i in Soul.modern_tier:
 		small.call("Acquis, nouveaux venus %d : %s Le revers : %s" % [i + 1, Soul.MODERN_PERKS[i], Soul.MODERN_COSTS[i]], Color(0.85, 0.8, 0.7))
+	if not Partners.known().is_empty():
+		_add_button(box, "Partenariats (%d signé%s)" % [Partners.signed.size(), "s" if Partners.signed.size() > 1 else ""], open_partners)
 	_add_button(box, "Retour", open_journal_menu)
+
+
+## Partenariats proposés par les nouveaux venus : signer, livrer, rompre.
+func open_partners() -> void:
+	Tips.show("partners")
+	var box := _open_modal("Partenariats")
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(340, 160)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	_remember_scroll(scroll, "partners")
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 3)
+	scroll.add_child(list)
+	for id: String in Partners.known():
+		var d: Dictionary = Partners.DEALS[id]
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 6)
+		list.add_child(head)
+		head.add_child(_portrait(str(d.partner), 28))
+		var title := Label.new()
+		title.text = str(d.name)
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title.add_theme_color_override("font_color", UiTheme.ACCENT)
+		head.add_child(title)
+		if Partners.is_signed(id):
+			if id == "bocal" and not Partners.order.is_empty() and not Partners.order.done:
+				var give := Button.new()
+				give.text = "Livrer"
+				give.disabled = not Partners.can_deliver()
+				give.pressed.connect(func() -> void:
+					if Partners.deliver():
+						Sfx.play("coins")
+						show_toast("Capucine est ravie ! +%d or" % int(Partners.order.gold))
+					open_partners())
+				head.add_child(give)
+			var stop := Button.new()
+			stop.text = "Rompre"
+			stop.pressed.connect(func() -> void:
+				Partners.cancel(id)
+				show_toast("%s : contrat rompu. %s le prend mal." % [d.name, GameData.npc(str(d.partner)).name])
+				open_partners())
+			head.add_child(stop)
+		else:
+			var go := Button.new()
+			go.text = "Signer"
+			go.disabled = not Partners.can_sign(id)
+			go.pressed.connect(func() -> void:
+				if Partners.sign(id):
+					Sfx.play("levelup")
+					show_toast("%s : c'est signé !" % d.name)
+				open_partners())
+			head.add_child(go)
+		for line: Array in [[Partners.status(id), Color(1, 1, 1)], ["+ " + str(d.perk), Color(0.85, 0.95, 0.75)], ["- " + str(d.cost), Color(1.0, 0.8, 0.7)]]:
+			var l := _add_label(list, str(line[0]))
+			l.add_theme_font_size_override("font_size", 9)
+			l.add_theme_color_override("font_color", line[1])
+		list.add_child(HSeparator.new())
+	_add_label(box, "Chaque partenariat fait aussi pencher la balance vers les nouveaux venus.").add_theme_font_size_override("font_size", 9)
+	_add_button(box, "Retour", open_soul)
 
 
 ## La ferme parfaite : l'avancement dans chaque domaine.
@@ -1398,6 +1465,8 @@ func show_summary(report: Dictionary) -> void:
 		_add_label(box, "Rien n'a été expédié.")
 	for line: Dictionary in sold:
 		_add_label(box, "%d x %s : %d or" % [line.qty, GameData.item_name(line.id), line.total])
+	if int(report.get("fee", 0)) > 0:
+		_add_label(box, "Part de l'Atelier Néo (ferme pilote) : -%d or" % int(report.fee))
 	var total := _add_label(box, "Total : %d or" % int(report.get("earned", 0)))
 	total.add_theme_color_override("font_color", UiTheme.ACCENT)
 	_add_label(box, "Nouveau jour : %s (%s)" % [TimeManager.date_string(), TimeManager.weather_string()])

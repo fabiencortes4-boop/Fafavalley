@@ -365,7 +365,7 @@ func sell_shipping(report: Dictionary) -> int:
 	var total := 0
 	var sold: Array = []
 	for entry: Dictionary in shipping:
-		var price := int(int(GameData.item(entry.id).get("sell", 0)) * Projects.sell_factor(str(entry.id)) * Soul.sell_factor(str(entry.id)))
+		var price := int(int(GameData.item(entry.id).get("sell", 0)) * Projects.sell_factor(str(entry.id)) * Soul.sell_factor(str(entry.id)) * Partners.sell_factor())
 		var line_total: int = price * int(entry.qty)
 		total += line_total
 		sold.append({"id": entry.id, "qty": entry.qty, "total": line_total})

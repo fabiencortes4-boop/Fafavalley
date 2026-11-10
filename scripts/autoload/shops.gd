@@ -20,7 +20,7 @@ func info(id: String) -> Dictionary:
 ## Prix d'achat (certaines boutiques ont leurs propres prix).
 func price(shop_id: String, item_id: String) -> int:
 	var prices: Dictionary = info(shop_id).get("prices", {})
-	return int(round(float(prices.get(item_id, GameData.item(item_id).get("buy", 0))) * Soul.price_factor(shop_id)))
+	return int(round(float(prices.get(item_id, GameData.item(item_id).get("buy", 0))) * Soul.price_factor(shop_id) * Partners.price_factor(shop_id)))
 
 
 func is_open(id: String) -> bool:

@@ -43,6 +43,7 @@ func new_game() -> void:
 	Museum.reset()
 	VillageLife.reset()
 	Soul.reset()
+	Partners.reset()
 	NightSky.reset()
 	Tips.reset()
 	Achievements.reset()
@@ -67,6 +68,12 @@ func end_day(passed_out: bool = false) -> void:
 	TimeManager.running = false
 	var report := {"passed_out": passed_out, "date": TimeManager.date_string()}
 	var earned := FarmState.sell_shipping(report)
+	# Ferme pilote : Hugo prélève sa part des ventes
+	var fee := Partners.take_fee(earned)
+	if fee > 0:
+		earned -= fee
+		report["earned"] = earned
+		report["fee"] = fee
 	if earned > 0:
 		Inventory.add_gold(earned)
 		Story.bump("earned", earned)
@@ -89,6 +96,7 @@ func end_day(passed_out: bool = false) -> void:
 	Projects.new_day()
 	VillageLife.new_day()
 	Soul.new_day()
+	Partners.new_day()
 	NightSky.new_day()
 	var ranch := Animals.new_day(TimeManager.season)
 	Marriage.new_day()

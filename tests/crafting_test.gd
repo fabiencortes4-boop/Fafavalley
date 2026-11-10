@@ -13,6 +13,11 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_main.call("_start", false)
 	await get_tree().process_frame
+	# Pas de plante sauvage au hasard sur les cases du test (elle serait
+	# ramassée à la place de l'action voulue) : on repart d'une ferme sans cueillette
+	Forage.spots["farm"] = {}
+	_main.call("_switch_to", "farm")
+	await get_tree().process_frame
 	var farm: Farm = _main.call("current_map")
 	# Ferme sans débris aléatoires : tests reproductibles
 	FarmState.debris.clear()

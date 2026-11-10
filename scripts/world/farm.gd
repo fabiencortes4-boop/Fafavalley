@@ -407,8 +407,8 @@ func _spawn_visitors() -> void:
 	if TimeManager.weekday() != "Dim." or TimeManager.season == 3:
 		return
 	var n := FarmState.visitors_count()
-	if n == 0:
-		return
+	if n == 0 or Partners.showroom_day():
+		return  # ferme vitrine : le dimanche est aux touristes, pas aux voisins
 	Tips.show("photo")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(["visite", TimeManager.year, TimeManager.season, TimeManager.day])

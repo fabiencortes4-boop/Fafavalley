@@ -311,6 +311,15 @@ func record(shop: String, gold: int) -> void:
 	changed.emit()
 
 
+## Un soutien qui n'est pas un achat (partenariat) : la balance penche vers
+## les nouveaux venus (points > 0) ou vers les artisans (points < 0).
+func lean(points: float) -> void:
+	if not arrived:
+		return
+	tilt = clampf(tilt + points, -TILT_MAX, TILT_MAX)
+	changed.emit()
+
+
 ## Prix dans une boutique d'artisan : les loyers montent ou la vie s'adoucit.
 func price_factor(shop: String) -> float:
 	if MODERN_SHOPS.has(shop) or (shop != "forge" and not shop in ARTISAN_SHOPS):

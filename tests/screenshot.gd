@@ -346,6 +346,13 @@ func _ready() -> void:
 			Inventory.add_item("melon", 1)
 		if "--journal" in args:
 			main.get("_hud").open_story()
+		if "--partners" in args:
+			# Partenariats : tous proposés, le Bocal signé avec sa commande
+			Soul.tilt = 30.0
+			for id: String in Partners.DEALS:
+				Partners.offered[id] = true
+			Partners.sign("bocal")
+			main.get("_hud").open_partners()
 		if "--soulpage" in args:
 			Soul.tilt = 24.0
 			main.get("_hud").open_soul()

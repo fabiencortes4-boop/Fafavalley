@@ -343,6 +343,20 @@ Sur PC, la souris simule le tactile. Raccourcis clavier :
   - *Partage* (2 paliers d'un côté, 1 de l'autre) : une troisième fin, « Valfleur partagée ».
   Un·e habitant·e marié·e au joueur ne part jamais. Ceux qui sont partis reviennent une
   journée par an, pour la Fête des récoltes. Une lettre conclut chacune des trois fins.
+- **Partenariats** (Journal → Âme de Valfleur → Partenariats) : quand la balance penche
+  vers les nouveaux venus, ils proposent par lettre de s'associer. Chaque contrat rapporte
+  gros, a un revers, et fait pencher la balance un peu plus :
+  - *Fournisseur du Bocal* (balance ≥ 15) : chaque lundi, 5 produits de qualité argent à
+    livrer dans la semaine, payés 2,5 fois leur prix ; deux commandes manquées d'affilée
+    et le contrat tombe.
+  - *Ferme pilote de l'Atelier Néo* (balance ≥ 25) : l'atelier à -25 % et un arroseur
+    connecté offert ; Hugo prélève 5 % de chaque vente expédiée.
+  - *Ferme vitrine du Studio Lin* (balance ≥ 20) : chaque dimanche, 15 or par point de
+    beauté (3000 au plus) si la beauté atteint 25 ; les habitants ne viennent plus en visite.
+  - *Label « Valfleur Origine »* (sous la nouvelle maire) : tout se vend 10 % plus cher,
+    contre une licence de 1500 or par saison.
+  Un palier des nouveaux venus ouvre aussi les trois premiers. On peut rompre (-150
+  d'amitié, porte fermée 28 jours) ; un contrat prend fin si le partenaire quitte Valfleur.
 - Compétences (Menu → Compétences) : agriculture, minage, pêche, combat, cueillette ;
   10 niveaux chacune, avec un bonus (récolte double, minerai en plus, filet plus large,
   vie max, cueillette double).
@@ -493,6 +507,7 @@ godot --headless res://tests/family_test.tscn     # arbres fruitiers, serre, mar
 godot --headless res://tests/crops_test.tscn      # les 24 cultures : croissance, récolte, repousse, 3D
 godot --headless res://tests/woods_test.tscn      # arbres à bois : abattage, souche, replantation, pousse
 godot --headless res://tests/year_test.tscn       # bilan de l'année, hiver, scènes de cœur, volumes, copie de secours
+godot --headless res://tests/partners_test.tscn   # partenariats : Bocal, ferme pilote, ferme vitrine, label
 godot --headless res://tests/soul_test.tscn       # l'âme de Valfleur : nouveaux venus, balance, départs, maire, fins
 godot --headless res://tests/valley_test.tscn     # rénovations visibles, malade, mariage, meunière, nuits, saisons, perfection
 godot --headless res://tests/fun_test.tscn        # défi, commande, rumeurs, météo, hybrides, musée, compagnon, jardin, grotte
